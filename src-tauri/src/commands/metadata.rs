@@ -1,0 +1,168 @@
+use std::{fs::File, io::Write};
+
+use audiotags::{traits::*, FlacTag, Id3v2Tag, Mp4Tag};
+use serde::Serialize;
+
+use crate::{
+    db::config_path,
+    interface::album::*,
+    interface::artist::*,
+    interface::track::*,
+    models::{Albums, Tracks},
+};
+
+#[derive(Debug, Serialize, Clone)]
+pub struct Metadata {
+    path: String,
+    artist: String,
+    name: String,
+    description: String,
+    album: String,
+    year: i32,
+}
+
+#[tauri::command]
+pub fn read_metadata(file: String) -> Metadata {
+    let path = file.to_string();
+    let ext = path.split('.').last().unwrap();
+    match ext {
+        "mp3" => {
+            let tag = Id3v2Tag::read_from_path(&path).unwrap();
+            Metadata {
+                path,
+                artist: tag.artist().unwrap().to_string(),
+                name: tag.title().unwrap().to_string(),
+                description: tag.comment().unwrap_or("Unknown").to_string(),
+                album: tag.album().unwrap().title.to_string(),
+                year: tag.year().unwrap(),
+            }
+        }
+        "flac" => {
+            let tag = FlacTag::read_from_path(&path).unwrap();
+
+            Metadata {
+                path,
+                artist: tag.artist().unwrap().to_string(),
+                name: tag.title().unwrap().to_string(),
+                description: tag.comment().unwrap_or("Unknown").to_string(),
+                album: tag.album().unwrap().title.to_string(),
+                year: tag.year().unwrap(),
+            }
+        }
+        "m4a" => {
+            let tag = Mp4Tag::read_from_path(&path).unwrap();
+            Metadata {
+                path,
+                artist: tag.artist().unwrap().to_string(),
+                name: tag.title().unwrap().to_string(),
+                description: tag.comment().unwrap_or("Unknown").to_string(),
+                album: tag.album().unwrap().title.to_string(),
+                year: tag.year().unwrap(),
+            }
+        }
+        _ => Metadata {
+            path,
+            artist: "Unknown".to_string(),
+            name: "Unknown".to_string(),
+            description: "Unknown".to_string(),
+            album: "Unknown".to_string(),
+            year: 0,
+        },
+    }
+}
+
+fn cover_path(artist: &str, album: &str) -> String {
+    config_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
+}
+
+pub fn write_cover(file: &str) {
+    let path = file.to_string();
+    let ext = file.split('.').last().unwrap();
+    match ext {
+        "mp3" => {
+            let tag = Id3v2Tag::read_from_path(&path).unwrap();
+            let album = tag.album_title().unwrap();
+            let artist = tag.artist().unwrap();
+            let cover_path = cover_path(&artist, &album);
+            if !std::path::Path::new(&cover_path).exists() {
+                let cover = tag.album_cover().unwrap();
+                let mut file = File::create(cover_path).unwrap();
+                file.write_all(&cover.data).unwrap();
+            }
+        }
+        "flac" => {
+            let tag = FlacTag::read_from_path(&path).unwrap();
+            let album = tag.album_title().unwrap();
+            let artist = tag.artist().unwrap();
+            let cover_path = cover_path(&artist, &album);
+            if !std::path::Path::new(&cover_path).exists() {
+                let cover = tag.album_cover().unwrap();
+                let mut file = File::create(cover_path).unwrap();
+                file.write_all(&cover.data).unwrap();
+            }
+        }
+        "m4a" => {
+            let tag = Mp4Tag::read_from_path(&path).unwrap();
+            let album = tag.album_title().unwrap();
+            let artist = tag.artist().unwrap();
+            let cover_path = cover_path(&artist, &album);
+            if !std::path::Path::new(&cover_path).exists() {
+                let cover = tag.album_cover().unwrap();
+                let mut file = File::create(cover_path).unwrap();
+                file.write_all(&cover.data).unwrap();
+            }
+        }
+        _ => (),
+    }
+}
+
+pub fn first_time_metadata(files: &Vec<String>) -> Vec<Metadata> {
+    let metadata: Vec<Metadata> = files
+        .iter()
+        .map(|file| {
+            let album_id;
+            let artist_id;
+            let metadata = read_metadata(file.to_string());
+            let artist = artist_by_name(&metadata.artist);
+
+            if artist.is_none() {
+                artist_id = new_artist(&metadata.artist);
+            } else {
+                artist_id = artist.unwrap().id
+            }
+
+            let album = spec_album_by_artist_id(&metadata.album, &artist_id);
+
+            if album.is_none() {
+                album_id = new_album(Albums {
+                    id: 0,
+                    artists_id: artist_id,
+                    name: metadata.album.clone(),
+                    cover_path: cover_path(&metadata.artist, &metadata.album),
+                    year: metadata.year,
+                    path: metadata.path.clone(),
+                });
+                write_cover(&file);
+            } else {
+                album_id = album.unwrap().id
+            }
+
+            let track = track_by_album_id(&metadata.name, &album_id);
+
+            if track.is_none() {
+                new_track(Tracks {
+                    id: 0,
+                    album: metadata.album.clone(),
+                    albums_id: album_id,
+                    artist: metadata.artist.clone(),
+                    name: metadata.name.clone(),
+                    path: metadata.path.clone(),
+                });
+            }
+
+            metadata
+        })
+        .collect();
+
+    metadata
+}
