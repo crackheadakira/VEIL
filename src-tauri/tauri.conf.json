@@ -11,9 +11,11 @@
   "app": {
     "windows": [
       {
-        "title": "sodapop-reimagined",
+        "title": "Sodapop Reimagined",
+        "label": "sodapop-reimagined",
         "width": 800,
-        "height": 600
+        "height": 600,
+        "zoomHotkeysEnabled": false
       }
     ],
     "security": {
