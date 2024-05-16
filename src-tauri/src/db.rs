@@ -18,11 +18,6 @@ pub fn init() {
     )
     .expect("Error setting PRAGMA");
 
-    let cover_path = config_path() + "/covers";
-    if !std::path::Path::new(&cover_path).exists() {
-        std::fs::create_dir(cover_path).expect("Error creating covers directory");
-    }
-
     conn.execute_batch(
         "
         BEGIN;
@@ -63,14 +58,11 @@ pub fn db_connect() -> r2d2::PooledConnection<SqliteConnectionManager> {
     POOL.get().expect("Error getting connection from pool")
 }
 
-// TODO: Cross-platform support, rather than just writing ~/.config/ check if Tauri
-// has a better way to do this
 fn db_path() -> String {
-    let home_dir = dirs::home_dir().unwrap();
-    return home_dir.to_str().unwrap().to_string() + "/.config/sodapop/db.sqlite";
+    return data_path() + "/db.sqlite";
 }
 
-pub fn config_path() -> String {
-    let home_dir = dirs::home_dir().unwrap();
-    home_dir.to_str().unwrap().to_string() + "/.config/sodapop"
+pub fn data_path() -> String {
+    let home_dir = dirs::data_local_dir().unwrap();
+    home_dir.to_str().unwrap().to_string() + "/sodapop-reimagined"
 }

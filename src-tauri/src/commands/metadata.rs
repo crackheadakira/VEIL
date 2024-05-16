@@ -5,7 +5,7 @@ use serde::Serialize;
 use specta::Type;
 
 use crate::{
-    db::config_path,
+    db::data_path,
     interface::album::*,
     interface::artist::*,
     interface::track::*,
@@ -74,7 +74,7 @@ pub fn read_metadata(file: String) -> Metadata {
 }
 
 fn cover_path(artist: &str, album: &str) -> String {
-    config_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
+    data_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
 }
 
 pub fn write_cover(file: &str) {

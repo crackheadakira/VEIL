@@ -19,10 +19,13 @@ use commands::metadata::*;
 use commands::music_folder::*;
 use commands::sqlite::*;
 
+use std::fs::create_dir;
+use std::path::Path;
+
 #[tokio::main]
 async fn main() {
     let invoke_handler = {
-        let builder = tauri_specta::ts::builder().commands(tauri_specta::collect_commands![
+        let builder = ts::builder().commands(collect_commands![
             read_metadata,
             select_music_folder,
             get_sqlite,
@@ -57,6 +60,16 @@ async fn main() {
                     .await
                     .unwrap();
             });
+
+            let data = db::data_path();
+            if !Path::new(&data).exists() {
+                create_dir(&data).expect("Error creating data directory");
+            }
+
+            let covers = data + "/covers";
+            if !Path::new(&covers).exists() {
+                create_dir(covers).expect("Error creating covers directory")
+            }
 
             db::init();
 
