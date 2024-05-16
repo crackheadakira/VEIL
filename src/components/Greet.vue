@@ -4,6 +4,8 @@
     <button @click="getID">Get album by ID</button>
     <button @click="getArtist">Get artist by ID</button>
 
+    <textarea ref="textArea" cols="1" rows="1"></textarea>
+
     <p v-if="selectedFile">{{ parsedFile }}</p>
     <audio controls v-if="selectedFile" ref="audioTag"></audio>
 
@@ -21,6 +23,7 @@ import { commands, type Metadata } from "../bindings.ts";
 const files = ref<Metadata[]>([]);
 const selectedFile = ref<string | null>(null);
 const audioTag = ref<HTMLAudioElement>();
+const textArea = ref<HTMLTextAreaElement>();
 const parsedFile = ref<string>("");
 
 async function debug() {
@@ -30,7 +33,7 @@ async function debug() {
 
 async function getID() {
     const perf = performance.now();
-    const res = await commands.getAlbumWithTracks(6);
+    const res = await commands.getAlbumWithTracks(+textArea.value!.value);
     console.log(res);
     const result = performance.now() - perf;
     console.log(`[Rust] Took ${result.toFixed(2)}ms`);
@@ -38,7 +41,7 @@ async function getID() {
 
 async function getArtist() {
     const perf = performance.now()
-    const res = await commands.getArtistWithAlbums(6);
+    const res = await commands.getArtistWithAlbums(+textArea.value!.value);
     console.log(res);
     const result = performance.now() - perf;
     console.log(`[Rust] Took ${result.toFixed(2)}ms`);

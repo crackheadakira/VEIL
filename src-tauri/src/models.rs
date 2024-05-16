@@ -28,11 +28,18 @@ pub struct Tracks {
     pub path: String,
 }
 
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Playlists {
     pub id: i32,
     pub name: String,
     pub description: String,
     pub cover_path: String,
+}
+
+#[derive(Debug, Serialize, Clone, Type)]
+pub struct PlaylistWithTracks {
+    pub playlist: Playlists,
+    pub tracks: Vec<Tracks>,
 }
 
 #[derive(Debug, Serialize, Clone, Type)]

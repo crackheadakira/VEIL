@@ -48,6 +48,11 @@ pub fn init() {
             description TEXT    NOT NULL,
             cover_path  TEXT    NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS playlist_tracks (
+            id          INTEGER NOT NULL PRIMARY KEY,
+            playlists_id INTEGER NOT NULL REFERENCES playlists(id),
+            tracks_id   INTEGER NOT NULL REFERENCES tracks(id)
+        );
         COMMIT;
     ",
     )

@@ -14,11 +14,10 @@ use crate::{
 
 #[derive(Debug, Serialize, Clone, Type)]
 pub struct Metadata {
-    path: String,
+    album: String,
     artist: String,
     name: String,
-    description: String,
-    album: String,
+    path: String,
     year: i32,
 }
 
@@ -34,7 +33,6 @@ pub fn read_metadata(file: String) -> Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
-                description: tag.comment().unwrap_or("Unknown").to_string(),
                 album: tag.album().unwrap().title.to_string(),
                 year: tag.year().unwrap(),
             }
@@ -46,7 +44,6 @@ pub fn read_metadata(file: String) -> Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
-                description: tag.comment().unwrap_or("Unknown").to_string(),
                 album: tag.album().unwrap().title.to_string(),
                 year: tag.year().unwrap(),
             }
@@ -57,7 +54,6 @@ pub fn read_metadata(file: String) -> Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
-                description: tag.comment().unwrap_or("Unknown").to_string(),
                 album: tag.album().unwrap().title.to_string(),
                 year: tag.year().unwrap(),
             }
@@ -66,7 +62,6 @@ pub fn read_metadata(file: String) -> Metadata {
             path,
             artist: "Unknown".to_string(),
             name: "Unknown".to_string(),
-            description: "Unknown".to_string(),
             album: "Unknown".to_string(),
             year: 0,
         },
