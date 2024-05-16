@@ -61,6 +61,17 @@ pub fn album_by_id(album_id: &i32) -> Albums {
     result.unwrap()
 }
 
+pub fn album_by_path(album_path: &str) -> Albums {
+    let conn = db_connect();
+
+    let mut stmt = conn
+        .prepare_cached("SELECT * FROM albums WHERE path = ?1")
+        .unwrap();
+    let result = stmt.query_row([album_path], |row| stmt_to_album(row));
+
+    result.unwrap()
+}
+
 pub fn album_with_tracks(album_id: &i32) -> AlbumWithTracks {
     let conn = db_connect();
 
@@ -76,6 +87,20 @@ pub fn album_with_tracks(album_id: &i32) -> AlbumWithTracks {
     let album = album_by_id(album_id);
 
     AlbumWithTracks { album, tracks }
+}
+
+pub fn album_tracks_length(album_id: &i32) -> i32 {
+    let conn = db_connect();
+
+    let mut stmt = conn
+        .prepare("SELECT COUNT(*) FROM tracks WHERE albums_id = ?1")
+        .unwrap();
+    let result = stmt.query_row([album_id], |row| row.get(0));
+
+    match result {
+        Ok(length) => length,
+        Err(e) => panic!("Error fetching album tracks length: {}", e),
+    }
 }
 
 pub fn new_album(album: Albums) -> i32 {
@@ -94,6 +119,19 @@ pub fn new_album(album: Albums) -> i32 {
     match result {
         Ok(_) => conn.last_insert_rowid() as i32,
         Err(e) => panic!("Error inserting album: {}", e),
+    }
+}
+
+pub fn delete_album<T: rusqlite::ToSql>(delete_by: &T) {
+    let conn = db_connect();
+    let mut stmt = conn
+        .prepare("DELETE FROM albums WHERE ID = ?1 OR path = ?1")
+        .unwrap();
+    let result = stmt.execute([delete_by]);
+
+    match result {
+        Ok(_) => (),
+        Err(e) => panic!("Error deleting artist: {}", e),
     }
 }
 

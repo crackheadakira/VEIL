@@ -4,6 +4,7 @@ use serde::Serialize;
 pub struct Artists {
     pub id: i32,
     pub name: String,
+    pub path: String,
 }
 
 #[derive(Debug, Serialize, Clone)]

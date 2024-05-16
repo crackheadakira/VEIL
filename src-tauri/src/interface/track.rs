@@ -17,6 +17,18 @@ pub fn all_tracks() -> Vec<Tracks> {
     }
 }
 
+pub fn get_all_tracks_path() -> Vec<String> {
+    let conn = db_connect();
+
+    let mut stmt = conn.prepare("SELECT path FROM tracks").unwrap();
+    let result = stmt.query_map([], |row| row.get(0)).unwrap().collect();
+
+    match result {
+        Ok(paths) => paths,
+        Err(e) => panic!("Error fetching all tracks path: {}", e),
+    }
+}
+
 pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
     let conn = db_connect();
 
@@ -48,6 +60,19 @@ pub fn new_track(track: Tracks) -> i64 {
     match result {
         Ok(_) => conn.last_insert_rowid(),
         Err(e) => panic!("Error inserting track: {}", e),
+    }
+}
+
+pub fn delete_track<T: rusqlite::ToSql>(delete_by: &T) {
+    let conn = db_connect();
+    let mut stmt = conn
+        .prepare("DELETE FROM tracks WHERE ID = ?1 OR path = ?1")
+        .unwrap();
+    let result = stmt.execute([delete_by]);
+
+    match result {
+        Ok(_) => (),
+        Err(e) => panic!("Error deleting track: {}", e),
     }
 }
 

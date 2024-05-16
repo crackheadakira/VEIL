@@ -116,7 +116,7 @@ pub fn write_cover(file: &str) {
     }
 }
 
-pub fn first_time_metadata(files: &Vec<String>) -> Vec<Metadata> {
+pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metadata> {
     let metadata: Vec<Metadata> = files
         .iter()
         .map(|file| {
@@ -126,7 +126,8 @@ pub fn first_time_metadata(files: &Vec<String>) -> Vec<Metadata> {
             let artist = artist_by_name(&metadata.artist);
 
             if artist.is_none() {
-                artist_id = new_artist(&metadata.artist);
+                let artist_path = get_artist_path(music_folder, &metadata.path);
+                artist_id = new_artist(&metadata.artist, &artist_path);
             } else {
                 artist_id = artist.unwrap().id
             }
@@ -140,7 +141,7 @@ pub fn first_time_metadata(files: &Vec<String>) -> Vec<Metadata> {
                     name: metadata.album.clone(),
                     cover_path: cover_path(&metadata.artist, &metadata.album),
                     year: metadata.year,
-                    path: metadata.path.clone(),
+                    path: get_album_path(music_folder, &metadata.path),
                 });
                 write_cover(&file);
             } else {
@@ -165,4 +166,16 @@ pub fn first_time_metadata(files: &Vec<String>) -> Vec<Metadata> {
         .collect();
 
     metadata
+}
+
+pub fn get_artist_path(music_folder: &str, full_path: &str) -> String {
+    let path = full_path.replace(music_folder, "");
+    let path = path.split('/').collect::<Vec<&str>>()[1];
+    music_folder.to_string() + "/" + path
+}
+
+pub fn get_album_path(music_folder: &str, full_path: &str) -> String {
+    let path = full_path.replace(music_folder, "");
+    let path = path.split('/').collect::<Vec<&str>>()[1..3].join("/");
+    music_folder.to_string() + "/" + &path
 }
