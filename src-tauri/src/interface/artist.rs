@@ -85,12 +85,12 @@ pub fn new_artist(artist: &str, path: &str) -> i32 {
     }
 }
 
-pub fn delete_artist<T: rusqlite::ToSql>(delete_by: &T) {
+pub fn delete_artist(artist_id: &i32) {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("DELETE FROM artists WHERE ID = ?1 OR name = ?1 OR path = ?1")
         .unwrap();
-    let result = stmt.execute([delete_by]);
+    let result = stmt.execute([artist_id]);
 
     match result {
         Ok(_) => (),
@@ -98,7 +98,7 @@ pub fn delete_artist<T: rusqlite::ToSql>(delete_by: &T) {
     }
 }
 
-fn stmt_to_artist(row: &Row) -> Result<Artists, Error> {
+pub fn stmt_to_artist(row: &Row) -> Result<Artists, Error> {
     Ok(Artists {
         id: row.get(0)?,
         name: row.get(1)?,

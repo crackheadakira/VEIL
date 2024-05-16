@@ -122,12 +122,12 @@ pub fn new_album(album: Albums) -> i32 {
     }
 }
 
-pub fn delete_album<T: rusqlite::ToSql>(delete_by: &T) {
+pub fn delete_album(album_id: &i32) {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("DELETE FROM albums WHERE ID = ?1 OR path = ?1")
         .unwrap();
-    let result = stmt.execute([delete_by]);
+    let result = stmt.execute([album_id]);
 
     match result {
         Ok(_) => (),
@@ -135,7 +135,7 @@ pub fn delete_album<T: rusqlite::ToSql>(delete_by: &T) {
     }
 }
 
-pub(crate) fn stmt_to_album(row: &Row) -> Result<Albums, Error> {
+pub fn stmt_to_album(row: &Row) -> Result<Albums, Error> {
     Ok(Albums {
         id: row.get(0)?,
         artists_id: row.get(1)?,
