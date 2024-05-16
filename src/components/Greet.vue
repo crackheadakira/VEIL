@@ -15,31 +15,22 @@
 </template>
 
 <script setup lang="ts">
-import { invoke } from "@tauri-apps/api/core";
 import { ref } from "vue";
+import { commands, type Metadata } from "../bindings.ts";
 
-type Track = {
-    id: number;
-    album: string;
-    albums_id: number;
-    artist: string;
-    name: string;
-    path: string;
-};
-
-const files = ref<Track[]>([]);
+const files = ref<Metadata[]>([]);
 const selectedFile = ref<string | null>(null);
 const audioTag = ref<HTMLAudioElement>();
 const parsedFile = ref<string>("");
 
 async function debug() {
-    const res = await invoke<void>("get_sqlite");
+    const res = await commands.getSqlite();
     console.log(res);
 }
 
 async function getID() {
     const perf = performance.now();
-    const res = await invoke<void>("get_album_with_tracks", { id: 6 });
+    const res = await commands.getAlbumWithTracks(6);
     console.log(res);
     const result = performance.now() - perf;
     console.log(`[Rust] Took ${result.toFixed(2)}ms`);
@@ -47,24 +38,22 @@ async function getID() {
 
 async function getArtist() {
     const perf = performance.now()
-    const res = await invoke<void>("get_artist_with_albums", { id: 10 });
+    const res = await commands.getArtistWithAlbums(6);
     console.log(res);
     const result = performance.now() - perf;
     console.log(`[Rust] Took ${result.toFixed(2)}ms`);
 }
 
 async function openDialog() {
-    const parsed = await invoke<Track[]>("select_music_folder");
+    const parsed = await commands.selectMusicFolder();
     files.value = parsed;
     console.log(parsed);
 }
 
-async function selectFile(file: Track) {
+async function selectFile(file: Metadata) {
     parsedFile.value = `${file.artist} - ${file.name} (${file.album}})`;
     selectedFile.value = file.path;
-    const fileSrc = await invoke<string>("convert_file", {
-        path: selectedFile.value,
-    });
+    const fileSrc = `http://localhost:16780${file.path}`;
     audioTag.value!.src = fileSrc;
     audioTag.value!.play();
 }

@@ -6,6 +6,7 @@ use std::fs;
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
+#[specta::specta]
 pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
     let file_path = app.dialog().file().blocking_pick_folder();
 

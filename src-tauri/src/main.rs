@@ -8,30 +8,39 @@ use axum::{
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
+use tauri_specta::*;
+
 mod commands;
 mod db;
 mod interface;
 mod models;
 
-use commands::convert_file::*;
 use commands::metadata::*;
 use commands::music_folder::*;
 use commands::sqlite::*;
 
 #[tokio::main]
 async fn main() {
+    let invoke_handler = {
+        let builder = tauri_specta::ts::builder().commands(tauri_specta::collect_commands![
+            read_metadata,
+            select_music_folder,
+            get_sqlite,
+            get_album_with_tracks,
+            get_artist_with_albums
+        ]);
+
+        #[cfg(debug_assertions)] // <- Only export on non-release builds
+        let builder = builder.path("../src/bindings.ts");
+
+        builder.build().unwrap()
+    };
+
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![
-            read_metadata,
-            select_music_folder,
-            convert_file,
-            get_sqlite,
-            get_album_with_tracks,
-            get_artist_with_albums
-        ])
+        .invoke_handler(invoke_handler)
         .setup(|_app| {
             #[cfg(target_os = "linux")]
             tokio::spawn(async move {

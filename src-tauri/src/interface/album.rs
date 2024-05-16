@@ -65,7 +65,7 @@ pub fn album_by_path(album_path: &str) -> Albums {
     let conn = db_connect();
 
     let mut stmt = conn
-        .prepare_cached("SELECT * FROM albums WHERE path = ?1")
+        .prepare("SELECT * FROM albums WHERE path = ?1")
         .unwrap();
     let result = stmt.query_row([album_path], |row| stmt_to_album(row));
 

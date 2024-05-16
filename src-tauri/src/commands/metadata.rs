@@ -2,6 +2,7 @@ use std::{fs::File, io::Write};
 
 use audiotags::{traits::*, FlacTag, Id3v2Tag, Mp4Tag};
 use serde::Serialize;
+use specta::Type;
 
 use crate::{
     db::config_path,
@@ -11,7 +12,7 @@ use crate::{
     models::{Albums, Tracks},
 };
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Metadata {
     path: String,
     artist: String,
@@ -22,6 +23,7 @@ pub struct Metadata {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn read_metadata(file: String) -> Metadata {
     let path = file.to_string();
     let ext = path.split('.').last().unwrap();

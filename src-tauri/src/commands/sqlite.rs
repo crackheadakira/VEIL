@@ -3,6 +3,7 @@ use crate::interface::artist::*;
 use crate::models::*;
 
 #[tauri::command]
+#[specta::specta]
 pub fn get_sqlite() -> String {
     /*
     let artists = get_all_artists();
@@ -22,11 +23,13 @@ pub fn get_sqlite() -> String {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn get_album_with_tracks(id: i32) -> AlbumWithTracks {
     album_with_tracks(&id)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn get_artist_with_albums(id: i32) -> ArtistWithAlbums {
     artist_with_albums(&id)
 }

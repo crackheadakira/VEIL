@@ -1,13 +1,14 @@
 use serde::Serialize;
+use specta::Type;
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Artists {
     pub id: i32,
     pub name: String,
     pub path: String,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Albums {
     pub id: i32,
     pub artists_id: i32,
@@ -17,7 +18,7 @@ pub struct Albums {
     pub path: String,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Tracks {
     pub id: i32,
     pub album: String,
@@ -34,13 +35,13 @@ pub struct Playlists {
     pub cover_path: String,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct AlbumWithTracks {
     pub album: Albums,
     pub tracks: Vec<Tracks>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct ArtistWithAlbums {
     pub artist: Artists,
     pub albums: Vec<AlbumWithTracks>,
