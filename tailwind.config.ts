@@ -20,6 +20,7 @@ export default {
       aspectRatio: {
         card: "3.9 / 1",
         secondaryCard: "0.75 / 1",
+        player: "16.5 / 1"
       },
     },
   },
