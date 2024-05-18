@@ -1,15 +1,20 @@
 <template>
     <div
-        class="flex items-center justify-between absolute bottom-0 w-screen aspect-player bg-card border-stroke-100 border-t p-4">
+        class="flex items-center justify-center gap-12 2xl:gap-20 absolute bottom-0 w-screen aspect-player bg-card border-stroke-100 border-t p-3">
+
         <div class="flex items-center gap-5">
             <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
                 src='/home/akira/.local/share/sodapop-reimagined/covers/DPR IAN - Moodswings In To Order.jpg'
                 alt="Album Cover">
             <div class="flex flex-col gap-1">
-                <p class="font-main-nonbold text-text">{{ music.title }}</p>
-                <p class="font-supporting text-supporting">{{ music.artist }}</p>
+                <p class="duration-150 font-main-nonbold text-text hover:text-placeholder cursor-pointer">{{ music.title
+                    }}
+                </p>
+                <p class="duration-150 font-supporting text-supporting hover:opacity-85 cursor-pointer">{{ music.artist
+                    }}</p>
             </div>
         </div>
+
         <div class="flex gap-2">
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-shuffle-bold w-6"></span>
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-back-fill w-6"></span>
@@ -18,14 +23,22 @@
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-forward-fill w-6"></span>
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-repeat-bold w-6"></span>
         </div>
-        <div class="flex gap-4 items-center text-supporting font-supporting select-none">
+
+        <div class="flex gap-4 flex-grow items-center text-supporting font-supporting select-none">
             <audio @loadedmetadata="initialLoad()" @timeupdate="handleProgress()" ref="audioTag"
                 :src="music.audio"></audio>
             <label for="progress" class=w-10>{{ currentProgress }}</label>
             <input @input="selectProgress()" type="range" ref="progressBar" name="progress" min="0" max="100" value="0"
-                class="w-[50.5rem] h-1.5 bg-stroke-100 rounded-lg accent-placeholder">
+                class="w-full h-1.5 bg-stroke-100 rounded-lg accent-placeholder">
             <label for="progress" class=w-10>{{ totalLength }}</label>
         </div>
+
+        <div class="flex gap-4 items-center">
+            <span class="cursor-pointer hover:text-placeholder duration-150 i-mingcute-volume-fill w-18"></span>
+            <input @input="handleVolume()" type="range" ref="volumeBar" min="0" max="100" value="75"
+                class="h-1.5 w-full bg-stroke-100 rounded-lg accent-placeholder focus:ring-0">
+        </div>
+
     </div>
 </template>
 
@@ -41,6 +54,7 @@ defineProps<{
 
 const audioTag = ref<HTMLAudioElement | null>(null);
 const progressBar = ref<HTMLInputElement | null>(null);
+const volumeBar = ref<HTMLInputElement | null>(null);
 const totalLength = ref('3:33');
 const currentProgress = ref('0:00');
 
@@ -61,6 +75,11 @@ function selectProgress() {
     handleProgress();
 }
 
+function handleVolume() {
+    if (!audioTag.value || !volumeBar.value) return;
+    audioTag.value.volume = volumeBar.value.valueAsNumber / 100;
+}
+
 function handlePlayAndPause() {
     const audio = unref(audioTag);
     if (!audio) return;
@@ -71,6 +90,7 @@ function handlePlayAndPause() {
 function initialLoad() {
     totalLength.value = makeReadableTime(audioTag.value!.duration);
     progressBar.value!.max = audioTag.value!.duration.toString();
+    audioTag.value!.volume = volumeBar.value!.valueAsNumber / 100;
 }
 
 function makeReadableTime(seconds: number) {
