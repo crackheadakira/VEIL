@@ -1,5 +1,5 @@
 [package]
-name = "sodapop-reimagined"
+name = "Sodapop-Reimagined"
 version = "0.0.0"
 description = "A local modern-looking music player written in Vue + Tauri"
 authors = ["crackheadakira"]

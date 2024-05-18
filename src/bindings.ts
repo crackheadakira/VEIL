@@ -26,7 +26,7 @@ export type AlbumWithTracks = { album: Albums; tracks: Tracks[] }
 export type Albums = { id: number; artists_id: number; name: string; cover_path: string; year: number; path: string }
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
 export type Artists = { id: number; name: string; path: string }
-export type Metadata = { path: string; artist: string; name: string; description: string; album: string; year: number }
+export type Metadata = { album: string; artist: string; name: string; path: string; year: number }
 export type Tracks = { id: number; album: string; albums_id: number; artist: string; name: string; path: string }
 
 /** tauri-specta globals **/

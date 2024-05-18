@@ -1,5 +1,5 @@
 {
-  "productName": "sodapop-reimagined",
+  "productName": "Sodapop Reimagined",
   "version": "0.0.0",
   "identifier": "com.tauri.dev",
   "build": {
@@ -13,8 +13,8 @@
       {
         "title": "Sodapop Reimagined",
         "label": "sodapop-reimagined",
-        "width": 800,
-        "height": 600
+        "width": 1280,
+        "height": 720
       }
     ],
     "security": {

@@ -1,10 +1,12 @@
 <template>
-    <button @click="openDialog">Select music folder</button>
-    <button @click="debug">Debug</button>
-    <button @click="getID">Get album by ID</button>
-    <button @click="getArtist">Get artist by ID</button>
+    <div class="flex gap-1 my-2">
+        <button class="p-2 border border-black rounded-md" @click="openDialog">Select music folder</button>
+        <button class="p-2 border border-black rounded-md" @click="debug">Debug</button>
+        <button class="p-2 border border-black rounded-md" @click="getID">Get album by ID</button>
+        <button class="p-2 border border-black rounded-md" @click="getArtist">Get artist by ID</button>
+    </div>
 
-    <textarea ref="textArea" cols="1" rows="1"></textarea>
+    <textarea class="p-1 px-2 border border-black rounded-md resize-none" ref="textArea" cols="1" rows="1"></textarea>
 
     <p v-if="selectedFile">{{ parsedFile }}</p>
     <audio controls v-if="selectedFile" ref="audioTag"></audio>

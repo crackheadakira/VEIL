@@ -63,12 +63,10 @@ pub fn new_track(track: Tracks) -> i64 {
     }
 }
 
-pub fn delete_track<T: rusqlite::ToSql>(delete_by: &T) {
+pub fn delete_track(track_path: &str) {
     let conn = db_connect();
-    let mut stmt = conn
-        .prepare("DELETE FROM tracks WHERE ID = ?1 OR path = ?1")
-        .unwrap();
-    let result = stmt.execute([delete_by]);
+    let mut stmt = conn.prepare("DELETE FROM tracks WHERE path = ?1").unwrap();
+    let result = stmt.execute([track_path]);
 
     match result {
         Ok(_) => (),

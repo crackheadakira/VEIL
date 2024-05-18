@@ -63,7 +63,7 @@ pub fn get_playlist_with_tracks(playlist_id: &i32) -> PlaylistWithTracks {
     }
 }
 
-pub fn update_playlist(playlist: Playlists) {
+pub fn update_playlist(playlist: &Playlists) {
     let conn = db_connect();
     conn.execute(
         "UPDATE playlists SET name = ?1, description = ?2, cover_path = ?3 WHERE id = ?4",
