@@ -1,5 +1,5 @@
 import type { Config } from 'tailwindcss'
-
+import { iconsPlugin, getIconCollections } from '@egoist/tailwindcss-icons';
 
 export default {
   content: ["./src/**/*.vue"],
@@ -23,5 +23,5 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [iconsPlugin({ collections: getIconCollections(["ph", "mingcute"]), scale: 2 })],
 } satisfies Config

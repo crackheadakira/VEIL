@@ -2,6 +2,7 @@
 import Greet from './components/Greet.vue';
 import PlaylistCard from './components/PlaylistCard.vue';
 import BigCard from './components/BigCard.vue';
+import SearchBar from './components/SearchBar.vue';
 
 </script>
 
@@ -11,6 +12,7 @@ import BigCard from './components/BigCard.vue';
     <div class="flex gap-2">
       <PlaylistCard />
       <BigCard />
+      <SearchBar />
     </div>
   </div>
 </template>
