@@ -14,3 +14,46 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
+
+html {
+  font-size: 20px;
+  line-height: 1.6,
+}
+
+@layer components {
+  .text-supporting {
+    @apply text-supporting font-medium;
+  }
+
+  .text-main {
+    @apply text-main font-semibold;
+  }
+
+  .text-main-nonbold {
+    @apply text-main font-medium;
+  }
+
+  .text-h6 {
+    @apply text-h6 font-semibold;
+  }
+
+  .text-h5 {
+    @apply text-h5 font-bold;
+  }
+
+  .text-h4 {
+    @apply text-h4 font-bold;
+  }
+
+  .text-h3 {
+    @apply text-h3 font-extrabold;
+  }
+
+  .text-h2 {
+    @apply text-h2 font-extrabold;
+  }
+
+  .text-h1 {
+    @apply text-h1 font-extrabold;
+  }
+}
