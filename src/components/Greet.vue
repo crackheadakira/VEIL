@@ -1,17 +1,20 @@
 <template>
     <div class=p-2>
         <div class="flex gap-1">
-            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="openDialog">Select music
+            <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="openDialog">Select
+                music
                 folder</button>
-            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="debug">Debug</button>
-            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="getID">Get album by
+            <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md"
+                @click="debug">Debug</button>
+            <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="getID">Get album by
                 ID</button>
-            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="getArtist">Get artist by
+            <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="getArtist">Get
+                artist by
                 ID</button>
         </div>
 
-        <textarea class="p-1 px-2 border bg-card border-stroke rounded-md resize-none" ref="textArea" cols="1"
-            rows="1"></textarea>
+        <textarea class="p-1 px-2 border font-supporting bg-card border-stroke-100 rounded-md resize-none"
+            ref="textArea" cols="1" rows="1"></textarea>
 
         <p v-if="selectedFile">{{ parsedFile }}</p>
         <audio controls v-if="selectedFile" ref="audioTag"></audio>
