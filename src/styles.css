@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('/fonts/Inter-VariableFont_slnt,wght.ttf') format('truetype');
+}
+
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 16px;
@@ -22,38 +30,47 @@ html {
 
 @layer components {
   .text-supporting {
-    @apply text-supporting font-medium;
+    font-size: 0.8rem;
+    @apply font-medium;
   }
 
   .text-main {
-    @apply text-main font-semibold;
+    font-size: 1rem;
+    @apply font-semibold;
   }
 
   .text-main-nonbold {
-    @apply text-main font-medium;
+    font-size: 1rem;
+    @apply font-medium;
   }
 
   .text-h6 {
-    @apply text-h6 font-semibold;
+    font-size: 1.25rem;
+    @apply font-semibold;
   }
 
   .text-h5 {
-    @apply text-h5 font-bold;
+    font-size: 1.563rem;
+    @apply font-bold;
   }
 
   .text-h4 {
-    @apply text-h4 font-bold;
+    font-size: 1.953rem;
+    @apply font-bold;
   }
 
   .text-h3 {
-    @apply text-h3 font-extrabold;
+    font-size: 2.441rem;
+    @apply font-extrabold;
   }
 
   .text-h2 {
-    @apply text-h2 font-extrabold;
+    font-size: 3.052rem;
+    @apply font-extrabold;
   }
 
   .text-h1 {
-    @apply text-h1 font-extrabold;
+    font-size: 3.815rem;
+    @apply font-extrabold;
   }
 }

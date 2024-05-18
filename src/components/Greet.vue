@@ -1,31 +1,36 @@
 <template>
-    <div class="flex gap-1 my-2">
-        <button class="p-2 border border-black rounded-md" @click="openDialog">Select music folder</button>
-        <button class="p-2 border border-black rounded-md" @click="debug">Debug</button>
-        <button class="p-2 border border-black rounded-md" @click="getID">Get album by ID</button>
-        <button class="p-2 border border-black rounded-md" @click="getArtist">Get artist by ID</button>
+    <div class=p-2>
+        <div class="flex gap-1">
+            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="openDialog">Select music
+                folder</button>
+            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="debug">Debug</button>
+            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="getID">Get album by
+                ID</button>
+            <button class="p-2 border text-main bg-card border-stroke rounded-md" @click="getArtist">Get artist by
+                ID</button>
+        </div>
+
+        <textarea class="p-1 px-2 border bg-card border-stroke rounded-md resize-none" ref="textArea" cols="1"
+            rows="1"></textarea>
+
+        <p v-if="selectedFile">{{ parsedFile }}</p>
+        <audio controls v-if="selectedFile" ref="audioTag"></audio>
+
+        <ul v-if="files">
+            <li v-for="file in files" @dblclick="selectFile(file)">
+                {{ file.artist }} - {{ file.name }} ({{ file.album }})
+            </li>
+        </ul>
     </div>
-
-    <textarea class="p-1 px-2 border border-black rounded-md resize-none" ref="textArea" cols="1" rows="1"></textarea>
-
-    <p v-if="selectedFile">{{ parsedFile }}</p>
-    <audio controls v-if="selectedFile" ref="audioTag"></audio>
-
-    <ul>
-        <li v-for="file in files" @dblclick="selectFile(file)">
-            {{ file.artist }} - {{ file.name }} ({{ file.album }})
-        </li>
-    </ul>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { commands, type Metadata } from "../bindings.ts";
+import { commands, type Metadata } from '../bindings';
 
 const files = ref<Metadata[]>([]);
 const selectedFile = ref<string | null>(null);
-const audioTag = ref<HTMLAudioElement>();
-const textArea = ref<HTMLTextAreaElement>();
+const audioTag = ref<HTMLAudioElement | null>(null);
+const textArea = ref<HTMLTextAreaElement | null>(null);
 const parsedFile = ref<string>("");
 
 async function debug() {
@@ -55,11 +60,14 @@ async function openDialog() {
     console.log(parsed);
 }
 
-async function selectFile(file: Metadata) {
-    parsedFile.value = `${file.artist} - ${file.name} (${file.album}})`;
+function selectFile(file: Metadata) {
+    parsedFile.value = `${file.artist} - ${file.name} (${file.album})`;
     selectedFile.value = file.path;
-    const fileSrc = `http://localhost:16780${file.path}`;
-    audioTag.value!.src = fileSrc;
-    audioTag.value!.play();
+    nextTick(() => {
+        const audio = unref(audioTag);
+        if (!audio) return console.log("Audio tag not found");
+        audio.src = `http://localhost:16780${file.path}`;
+        audio.play();
+    });
 }
 </script>
