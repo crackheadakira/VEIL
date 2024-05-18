@@ -3,6 +3,7 @@ import Greet from './components/Greet.vue';
 import PlaylistCard from './components/PlaylistCard.vue';
 import BigCard from './components/BigCard.vue';
 import SearchBar from './components/SearchBar.vue';
+import Dropdown from './components/Dropdown.vue';
 
 </script>
 
@@ -13,6 +14,7 @@ import SearchBar from './components/SearchBar.vue';
       <PlaylistCard />
       <BigCard />
       <SearchBar />
+      <Dropdown :title="'Filter by'" :options="['Albums', 'Artists', 'Tracks']" />
     </div>
   </div>
 </template>

@@ -1,5 +1,5 @@
 <template>
-    <div class="px-3 flex gap-2 bg-card border-stroke-100 border w-56 h-fit p-2 rounded-md font-supporting">
+    <div class="px-3 flex gap-2 bg-background border-stroke-100 border w-56 h-fit p-2 rounded-md font-supporting">
         <span class="text-supporting w-5 aspect-square i-mingcute-search-line"></span>
         <input @keyup.50="$emit('search', searchQuery)" :value="searchQuery" type="text"
             class="bg-transparent focus:outline-none text-text placeholder-supporting w-full" placeholder="Search..." />

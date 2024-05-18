@@ -20,7 +20,7 @@ export default {
       aspectRatio: {
         card: "3.9 / 1",
         secondaryCard: "0.75 / 1",
-      }
+      },
     },
   },
   plugins: [iconsPlugin({ collections: getIconCollections(["ph", "mingcute"]), scale: 2 })],
