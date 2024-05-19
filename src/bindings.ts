@@ -18,6 +18,9 @@ return await TAURI_INVOKE("get_artist_with_albums", { id });
 },
 async getAllAlbums() : Promise<Albums[]> {
 return await TAURI_INVOKE("get_all_albums");
+},
+async trackById(id: number) : Promise<Tracks> {
+return await TAURI_INVOKE("track_by_id", { id });
 }
 }
 
@@ -30,7 +33,7 @@ export type Albums = { id: number; artists_id: number; artist: string; name: str
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
 export type Artists = { id: number; name: string; path: string }
 export type Metadata = { duration: number; album: string; artist: string; name: string; path: string; album_type: string; year: number }
-export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; name: string; path: string }
+export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; name: string; path: string; cover_path: string }
 
 /** tauri-specta globals **/
 

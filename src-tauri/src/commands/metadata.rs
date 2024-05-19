@@ -142,6 +142,7 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metad
             }
 
             let album = spec_album_by_artist_id(&metadata.album, &artist_id);
+            let cover_path = cover_path(&metadata.artist, &metadata.album);
 
             if album.is_none() {
                 album_id = new_album(Albums {
@@ -149,7 +150,7 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metad
                     artists_id: artist_id,
                     artist: metadata.artist.clone(),
                     name: metadata.album.clone(),
-                    cover_path: cover_path(&metadata.artist, &metadata.album),
+                    cover_path: cover_path.clone(),
                     year: metadata.year,
                     album_type: metadata.album_type.clone(),
                     track_count: 0,
@@ -172,6 +173,7 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metad
                     artist: metadata.artist.clone(),
                     name: metadata.name.clone(),
                     path: metadata.path.clone(),
+                    cover_path,
                 });
             }
 

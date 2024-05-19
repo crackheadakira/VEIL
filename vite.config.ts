@@ -9,6 +9,7 @@ export default defineConfig(async () => ({
     presets: ['vue'],
     addons: { vueTemplate: true },
     dts: true,
+    dirs: ['src/composables/*']
   })],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

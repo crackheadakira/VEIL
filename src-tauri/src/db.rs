@@ -45,7 +45,8 @@ pub fn init() {
             artist      TEXT    NOT NULL,
             name        TEXT    NOT NULL,
             duration    INTEGER NOT NULL,
-            path        TEXT    NOT NULL UNIQUE
+            path        TEXT    NOT NULL UNIQUE,
+            cover_path  TEXT    NOT NULL
         ); 
         CREATE TABLE IF NOT EXISTS playlists (
             id          INTEGER NOT NULL PRIMARY KEY,

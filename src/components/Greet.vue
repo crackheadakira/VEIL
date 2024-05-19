@@ -2,15 +2,16 @@
     <div class=p-2>
         <div class="flex gap-1">
             <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="openDialog">Select
-                music
-                folder</button>
+                music folder</button>
             <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md"
                 @click="debug">Debug</button>
             <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="getID">Get album by
                 ID</button>
             <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="getArtist">Get
-                artist by
-                ID</button>
+                artist by ID</button>
+            <button class="p-2 border font-supporting bg-card border-stroke-100 text-text rounded-md"
+                @click="setTrack">Set
+                player track</button>
         </div>
 
         <textarea class="p-1 px-2 border font-supporting bg-card border-stroke-100 rounded-md resize-none"
@@ -35,6 +36,13 @@ const selectedFile = ref<string | null>(null);
 const audioTag = ref<HTMLAudioElement | null>(null);
 const textArea = ref<HTMLTextAreaElement | null>(null);
 const parsedFile = ref<string>("");
+
+async function setTrack() {
+    const textField = unref(textArea);
+    if (!textField) return;
+    const res = await commands.trackById(+textField.value);
+    setPlayerTrack(res);
+}
 
 async function debug() {
     const res = await commands.getSqlite();

@@ -4,9 +4,10 @@ import "./styles.css";
 import App from "./App.vue";
 
 import HomeView from "./pages/Home.vue"
-import AlbumView from "./pages/Albums.vue"
+import AlbumView from "./pages/Album.vue"
+import AllAlbumsView from "./pages/AllAlbums.vue"
 
-const routes = [{ path: "/albums", component: AlbumView }, { path: "/", component: HomeView }];
+const routes = [{ path: "/album/:id", component: AlbumView, props: true }, { path: "/all_albums", component: AllAlbumsView }, { path: "/", component: HomeView }];
 const router = createRouter({
     history: createMemoryHistory(),
     routes

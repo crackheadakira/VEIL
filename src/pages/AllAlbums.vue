@@ -15,8 +15,12 @@ import { commands, type Albums } from '../bindings';
 
 const albums = ref<Albums[]>([]);
 
-onMounted(async () => {
+onBeforeMount(async () => {
     const response = await commands.getAllAlbums();
     albums.value = response;
 });
+
+onMounted(() => {
+    setCurrentPage('/all_albums');
+})
 </script>

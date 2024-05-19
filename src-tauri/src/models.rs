@@ -31,6 +31,7 @@ pub struct Tracks {
     pub artist: String,
     pub name: String,
     pub path: String,
+    pub cover_path: String,
 }
 
 #[derive(Debug, Serialize, Clone, Type)]

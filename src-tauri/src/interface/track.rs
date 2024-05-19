@@ -44,10 +44,22 @@ pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
     }
 }
 
+pub fn get_track_by_id(track_id: &i32) -> Tracks {
+    let conn = db_connect();
+
+    let mut stmt = conn.prepare("SELECT * FROM tracks WHERE id = ?1").unwrap();
+    let result = stmt.query_row([track_id], |row| stmt_to_track(row));
+
+    match result {
+        Ok(track) => track,
+        Err(e) => panic!("Error fetching track: {}", e),
+    }
+}
+
 pub fn new_track(track: Tracks) -> i64 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
-        "INSERT INTO tracks (duration, album, albums_id, artist, name, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO tracks (duration, album, albums_id, artist, name, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     );
     let result = stmt.unwrap().execute((
         track.duration,
@@ -56,6 +68,7 @@ pub fn new_track(track: Tracks) -> i64 {
         track.artist,
         track.name,
         track.path,
+        track.cover_path,
     ));
 
     match result {
@@ -78,11 +91,12 @@ pub fn delete_track(track_path: &str) {
 pub fn stmt_to_track(row: &Row) -> Result<Tracks, Error> {
     Ok(Tracks {
         id: row.get(0)?,
-        duration: row.get(1)?,
-        album: row.get(2)?,
-        albums_id: row.get(3)?,
-        artist: row.get(4)?,
-        name: row.get(5)?,
+        album: row.get(1)?,
+        albums_id: row.get(2)?,
+        artist: row.get(3)?,
+        name: row.get(4)?,
+        duration: row.get(5)?,
         path: row.get(6)?,
+        cover_path: row.get(7)?,
     })
 }

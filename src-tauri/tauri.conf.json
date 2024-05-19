@@ -1,7 +1,7 @@
 {
   "productName": "Sodapop Reimagined",
   "version": "0.0.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "com.sodapop.reimagined",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",

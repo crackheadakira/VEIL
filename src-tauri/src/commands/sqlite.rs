@@ -1,5 +1,6 @@
 use crate::interface::album::*;
 use crate::interface::artist::*;
+use crate::interface::track::*;
 use crate::models::*;
 
 #[tauri::command]
@@ -26,6 +27,12 @@ pub fn get_sqlite() -> String {
 #[specta::specta]
 pub fn get_album_with_tracks(id: i32) -> AlbumWithTracks {
     album_with_tracks(&id)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn track_by_id(id: i32) -> Tracks {
+    get_track_by_id(&id)
 }
 
 #[tauri::command]
