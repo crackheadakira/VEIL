@@ -43,6 +43,7 @@ pub fn init() {
             album       TEXT    NOT NULL,
             albums_id   INTEGER NOT NULL REFERENCES albums(id),
             artist      TEXT    NOT NULL,
+            artists_id   INTEGER NOT NULL REFERENCES artists(id),
             name        TEXT    NOT NULL,
             duration    INTEGER NOT NULL,
             path        TEXT    NOT NULL UNIQUE,

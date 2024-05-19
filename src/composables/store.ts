@@ -1,4 +1,4 @@
-import { Tracks } from "../bindings";
+import { Albums, Tracks } from "../bindings";
 
 export function setPlayerTrack(track: Tracks) {
     localStorage.setItem("playerTrack", JSON.stringify(track));
@@ -8,6 +8,19 @@ export function setPlayerTrack(track: Tracks) {
     window.dispatchEvent(new CustomEvent("playerTrackChanged", {
         detail: track
     }));
+}
+
+export function setRecentlyPlayed(album: Albums) {
+    const albums = getRecentlyPlayed();
+    const index = albums.findIndex((a) => a.id === album.id);
+
+    if (index !== -1) albums.splice(index, 1);
+
+    albums.unshift(album);
+
+    if (albums.length > 10) albums.pop();
+
+    localStorage.setItem("recentlyPlayed", JSON.stringify(albums));
 }
 
 export function setCurrentPage(page: string) {
@@ -27,6 +40,11 @@ export function getPlayerTrack(): Tracks {
     return track ? JSON.parse(track) : {
         cover_path: "/placeholder.png",
     };
+}
+
+export function getRecentlyPlayed(): Albums[] {
+    const tracks = localStorage.getItem("recentlyPlayed");
+    return tracks ? JSON.parse(tracks) : [];
 }
 
 export function getCurrentPage(): string {

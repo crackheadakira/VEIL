@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col justify-between gap-4 bg-background min-h-screen h-fit">
-    <RouterView />
+    <RouterView class="p-16" />
     <Player class="bottom-0 sticky" />
   </div>
 </template>

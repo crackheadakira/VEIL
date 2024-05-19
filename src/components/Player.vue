@@ -6,13 +6,16 @@
             <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
                 :src="convertFileSrc(music.cover_path)" alt="Album Cover">
             <div class="flex flex-col gap-1 truncate">
-                <p class="duration-150 font-main-nonbold text-text hover:text-placeholder cursor-pointer truncate">{{
-                    music.name
-                }}
-                </p>
+                <RouterLink :to="{ name: 'album', params: { artist_id: music.artists_id, album_id: music.albums_id } }">
+                    <p class="duration-150 font-main-nonbold text-text hover:text-placeholder cursor-pointer truncate">
+                        {{
+                            music.name
+                        }}
+                    </p>
+                </RouterLink>
                 <p class="duration-150 font-supporting text-supporting hover:opacity-85 cursor-pointer truncate">{{
                     music.artist
-                    }}</p>
+                }}</p>
             </div>
         </div>
 

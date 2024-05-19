@@ -7,7 +7,7 @@ import HomeView from "./pages/Home.vue"
 import AlbumView from "./pages/Album.vue"
 import AllAlbumsView from "./pages/AllAlbums.vue"
 
-const routes = [{ path: "/album/:id", component: AlbumView, name: 'album' }, { path: "/all_albums", component: AllAlbumsView }, { path: "/", component: HomeView }];
+const routes = [{ path: "/album/:artist_id/:album_id", component: AlbumView, name: 'album' }, { path: "/all_albums", component: AllAlbumsView }, { path: "/", component: HomeView }];
 const router = createRouter({
     history: createMemoryHistory(),
     routes

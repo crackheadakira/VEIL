@@ -59,13 +59,14 @@ pub fn get_track_by_id(track_id: &i32) -> Tracks {
 pub fn new_track(track: Tracks) -> i64 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
-        "INSERT INTO tracks (duration, album, albums_id, artist, name, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        "INSERT INTO tracks (duration, album, albums_id, artist, artists_id, name, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
     );
     let result = stmt.unwrap().execute((
         track.duration,
         track.album,
         track.albums_id,
         track.artist,
+        track.artists_id,
         track.name,
         track.path,
         track.cover_path,
@@ -94,9 +95,10 @@ pub fn stmt_to_track(row: &Row) -> Result<Tracks, Error> {
         album: row.get(1)?,
         albums_id: row.get(2)?,
         artist: row.get(3)?,
-        name: row.get(4)?,
-        duration: row.get(5)?,
-        path: row.get(6)?,
-        cover_path: row.get(7)?,
+        artists_id: row.get(4)?,
+        name: row.get(5)?,
+        duration: row.get(6)?,
+        path: row.get(7)?,
+        cover_path: row.get(8)?,
     })
 }

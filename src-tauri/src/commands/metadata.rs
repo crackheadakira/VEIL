@@ -171,6 +171,7 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metad
                     album: metadata.album.clone(),
                     albums_id: album_id,
                     artist: metadata.artist.clone(),
+                    artists_id: artist_id,
                     name: metadata.name.clone(),
                     path: metadata.path.clone(),
                     cover_path,

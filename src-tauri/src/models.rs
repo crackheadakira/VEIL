@@ -29,6 +29,7 @@ pub struct Tracks {
     pub album: String,
     pub albums_id: i32,
     pub artist: String,
+    pub artists_id: i32,
     pub name: String,
     pub path: String,
     pub cover_path: String,

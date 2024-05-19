@@ -8,6 +8,12 @@
             <SearchBar />
             <Dropdown :title="'Filter by'" :options="['Albums', 'Artists', 'Tracks']" />
         </div>
+        <div>
+            <h6 class="font-h6 text-text mb-4">Recently listened</h6>
+            <div class="flex flex-wrap gap-4">
+                <BigCard v-for="album of recentlyPlayed" :data="album" />
+            </div>
+        </div>
     </div>
 </template>
 
@@ -16,6 +22,9 @@ import Greet from '../components/Greet.vue';
 import PlaylistCard from '../components/PlaylistCard.vue';
 import SearchBar from '../components/SearchBar.vue';
 import Dropdown from '../components/Dropdown.vue';
+import BigCard from '../components/BigCard.vue';
+
+const recentlyPlayed = ref(getRecentlyPlayed());
 
 onMounted(() => {
     setCurrentPage('/');
