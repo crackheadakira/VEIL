@@ -15,6 +15,20 @@ export function setQueue(queue: Tracks[]) {
     localStorage.setItem("shuffled", "false");
 }
 
+export function setPersonalQueue(queue: Tracks[]) {
+    localStorage.setItem("personalQueue", JSON.stringify(queue));
+}
+
+export function setQueueIndex(index: number) {
+    localStorage.setItem("queueIndex", index.toString());
+}
+
+export function addToPersonalQueue(track: Tracks) {
+    const queue = getPersonalQueue();
+    queue.push(track);
+    setPersonalQueue(queue);
+}
+
 export function setRecentlyPlayed(album: Albums) {
     const albums = getRecentlyPlayed();
     const index = albums.findIndex((a) => a.id === album.id);
@@ -26,6 +40,10 @@ export function setRecentlyPlayed(album: Albums) {
     if (albums.length > 10) albums.pop();
 
     localStorage.setItem("recentlyPlayed", JSON.stringify(albums));
+}
+
+export function getQueueIndex(): number {
+    return parseInt(localStorage.getItem("queueIndex") || "0");
 }
 
 export function setCurrentPage(page: string) {
@@ -49,17 +67,30 @@ export function getPlayerTrack(): Tracks {
 
 export function skipTrack(forward: boolean) {
     const queue = getQueue();
-    const track = getPlayerTrack();
-    const index = queue.findIndex((t) => t.id === track.id);
+    const personalQueue = getPersonalQueue();
+    const index = getQueueIndex();
+
+    if (personalQueue.length > 0) {
+        setPlayerTrack(personalQueue[0]);
+        setPersonalQueue(personalQueue.slice(1));
+        setQueueIndex(index);
+        return;
+    }
 
     if (forward) {
         if (index === queue.length - 1) return;
+        setQueueIndex(index + 1);
         setPlayerTrack(queue[index + 1]);
     } else {
         if (index === 0) return;
+        setQueueIndex(index - 1)
         setPlayerTrack(queue[index - 1]);
     }
+}
 
+export function getPersonalQueue(): Tracks[] {
+    const queue = localStorage.getItem("personalQueue");
+    return queue ? JSON.parse(queue) : [];
 }
 
 export function shuffleQueue() {

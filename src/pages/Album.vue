@@ -29,9 +29,9 @@
             </div>
         </div>
 
-        <div class="flex flex-col bg-card border-stroke-100 border rounded-md">
-            <div class="flex items-center gap-8 duration-150 px-8 py-4 select-none cursor-pointer hover:opacity-80"
-                v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track)">
+        <div class="flex flex-col bg-card border-stroke-100 border rounded-md" ref="trackList">
+            <div class="flex items-center gap-8 duration-150 px-8 py-4 select-none cursor-pointer hover:opacity-80 contextable"
+                v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track, idx)">
                 <p class="font-main text-supporting w-9">{{ idx + 1 }}</p>
                 <div class="flex-grow">
                     <p class="font-main-nonbold text-text">{{ track.name }}</p>
@@ -49,6 +49,7 @@
         </div>
         <RouterLink class="p-2 w-32 border font-supporting bg-card border-stroke-100 rounded-md text-center text-text"
             to="/">Go to Home</RouterLink>
+        <ContextMenu @add-to-queue="handleAddToQueue" />
     </div>
 </template>
 
@@ -57,6 +58,9 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks } from '../bindings';
 import { useRoute } from 'vue-router';
 import BigCard from '../components/BigCard.vue';
+import ContextMenu from '../components/ContextMenu.vue';
+
+const trackList = ref<HTMLDivElement | null>(null);
 
 const route = useRoute();
 const album_id = ref(route.params.album_id as string);
@@ -72,6 +76,14 @@ watch(() => route.params.album_id, (newId) => {
     window.scrollTo(0, 0);
 })
 
+async function handleAddToQueue(coords: { x: number, y: number }) {
+    if (!data.value) return;
+    const offsetTop = trackList.value?.offsetTop || 0;
+    const index = Math.floor((coords.y - offsetTop) / 76);
+    const track = data.value.tracks[index];
+    addToPersonalQueue(track);
+}
+
 async function updateData() {
     const res = await commands.getArtistWithAlbums(+artist_id.value);
     const current_album = res.albums.filter((album) => album.album.id === +album_id.value)[0];
@@ -81,13 +93,14 @@ async function updateData() {
     setCurrentPage(`/album/${artist_id.value}/${album_id.value}`);
 }
 
-function handleNewTrack(track: Tracks) {
+function handleNewTrack(track: Tracks, idx: number) {
     setPlayerTrack(track);
 
     if (!data.value) return;
     setRecentlyPlayed(data.value.album);
 
     setQueue(data.value.tracks);
+    setQueueIndex(idx);
 }
 
 onBeforeMount(async () => {
