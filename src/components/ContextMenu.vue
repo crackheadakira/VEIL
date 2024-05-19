@@ -1,7 +1,7 @@
 <template>
     <Transition enter-from-class="-translate-y-[25%] opacity-0" leave-to-class="-translate-y-[25%] opacity-0"
         enter-active-class="transition duration-150" leave-active-class="transition duration-150">
-        <div v-if="showDropdown" ref="contextMenu"
+        <div v-if="showDropdown" ref="contextMenu" @mouseleave="showDropdown = false, showPlaylists = false"
             :style="{ top: `${userCoords.y - 10}px`, left: `${userCoords.x - 50}px` }"
             class="absolute z-50 w-fit flex flex-col p-1 bg-card border-stroke-100 border h-fit rounded-md text-supporting font-supporting cursor-pointer select-none">
             <p @click="$emit('add-to-queue', userCoords), showDropdown = false"

@@ -12,7 +12,12 @@ export function setPlayerTrack(track: Tracks) {
 
 export function setQueue(queue: Tracks[]) {
     localStorage.setItem("queue", JSON.stringify(queue));
-    localStorage.setItem("shuffled", "false");
+    const isShuffled = localStorage.getItem("shuffled") === "true";
+
+    if (isShuffled) {
+        localStorage.setItem("shuffled", "false");
+        shuffleQueue();
+    }
 }
 
 export function setPersonalQueue(queue: Tracks[]) {
@@ -91,6 +96,30 @@ export function skipTrack(forward: boolean) {
 export function getPersonalQueue(): Tracks[] {
     const queue = localStorage.getItem("personalQueue");
     return queue ? JSON.parse(queue) : [];
+}
+
+export function getLoop(): "none" | "track" | "queue" {
+    return localStorage.getItem("loop") as "none" | "track" | "queue";
+}
+
+export function setLoop(loop: "none" | "track" | "queue") {
+    localStorage.setItem("loop", loop);
+}
+
+export function loopQueue() {
+    const loop = localStorage.getItem("loop");
+
+    if (loop === "none") {
+        setLoop("queue");
+        return;
+    }
+
+    if (loop === "queue") {
+        setLoop("track");
+        return;
+    }
+
+    setLoop("none");
 }
 
 export function shuffleQueue() {

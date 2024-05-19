@@ -11,6 +11,7 @@ declare global {
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentPage: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getCurrentPage']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getLoop: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getLoop']
   const getPersonalQueue: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPersonalQueue']
   const getPlayerProgress: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerProgress']
   const getPlayerTrack: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerTrack']
@@ -25,6 +26,7 @@ declare global {
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
   const isShuffled: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['isShuffled']
+  const loopQueue: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['loopQueue']
   const makeReadableTime: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeReadableTime']
   const makeTime: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeTime']
   const markRaw: typeof import('vue')['markRaw']
@@ -49,6 +51,7 @@ declare global {
   const ref: typeof import('vue')['ref']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const setCurrentPage: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']
+  const setLoop: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']
   const setPersonalQueue: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPersonalQueue']
   const setPlayerProgress: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerProgress']
   const setPlayerTrack: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerTrack']
@@ -97,6 +100,7 @@ declare module 'vue' {
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getCurrentPage']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getLoop']>
     readonly getPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPersonalQueue']>
     readonly getPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerProgress']>
     readonly getPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerTrack']>
@@ -111,6 +115,7 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShuffled: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['isShuffled']>
+    readonly loopQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['loopQueue']>
     readonly makeReadableTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeReadableTime']>
     readonly makeTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeTime']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -135,6 +140,7 @@ declare module 'vue' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly setCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']>
+    readonly setLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']>
     readonly setPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPersonalQueue']>
     readonly setPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerProgress']>
     readonly setPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerTrack']>
@@ -176,6 +182,7 @@ declare module '@vue/runtime-core' {
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getCurrentPage']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getLoop']>
     readonly getPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPersonalQueue']>
     readonly getPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerProgress']>
     readonly getPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerTrack']>
@@ -190,6 +197,7 @@ declare module '@vue/runtime-core' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShuffled: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['isShuffled']>
+    readonly loopQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['loopQueue']>
     readonly makeReadableTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeReadableTime']>
     readonly makeTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeTime']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -214,6 +222,7 @@ declare module '@vue/runtime-core' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly setCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']>
+    readonly setLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']>
     readonly setPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPersonalQueue']>
     readonly setPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerProgress']>
     readonly setPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerTrack']>

@@ -15,15 +15,14 @@
                 </RouterLink>
                 <p class="duration-150 font-supporting text-supporting hover:opacity-85 cursor-pointer truncate">{{
                     music.artist
-                    }}</p>
+                }}</p>
             </div>
         </div>
 
         <div class="flex gap-2">
-            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-shuffle-bold w-6" @click=handleShuffle()
-                v-if="!shuffled"></span>
-            <span class="text-primary cursor-pointer hover:opacity-90 duration-150 i-ph-shuffle-bold w-6"
-                @click=handleShuffle() v-if="shuffled"></span>
+            <span :class="shuffled ? 'text-primary' : ''"
+                class="cursor-pointer hover:opacity-90 duration-150 i-ph-shuffle-bold w-6"
+                @click=handleShuffle()></span>
             <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-skip-back-fill w-6"
                 @click="skipTrack(false)"></span>
             <div @click="handlePlayAndPause">
@@ -32,7 +31,9 @@
             </div>
             <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-skip-forward-fill w-6"
                 @click="skipTrack(true)"></span>
-            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-repeat-bold w-6"></span>
+            <span @click=handleLoop
+                :class="loop === 'queue' ? 'text-primary' : '' || loop === 'track' ? 'text-primary opacity-75' : ''"
+                class="cursor-pointer hover:opacity-90 duration-150 i-ph-repeat-bold w-6"></span>
         </div>
 
         <div class="flex gap-4 flex-grow items-center text-supporting font-supporting select-none">
@@ -60,6 +61,7 @@ const audioTag = ref<HTMLAudioElement | null>(null);
 const progressBar = ref<HTMLInputElement | null>(null);
 const volumeBar = ref<HTMLInputElement | null>(null);
 const shuffled = ref(isShuffled());
+const loop = ref(getLoop());
 
 const paused = ref(true);
 const totalLength = ref('3:33');
@@ -110,11 +112,36 @@ function handleShuffle() {
     shuffled.value = !shuffled.value;
 }
 
+function handleLoop() {
+    const currentLoop = getLoop();
+    if (currentLoop === 'queue') setLoop('track');
+    else if (currentLoop === 'track') setLoop('none');
+    else setLoop('queue');
+
+    loop.value = getLoop();
+}
+
 function handleSongEnd() {
     const queue = getQueue();
-    if (queue.length <= 1) {
-        audioTag.value!.pause();
-        paused.value = true;
+    const index = getQueueIndex();
+    const loop = getLoop();
+
+    if (loop === 'track') {
+        audioTag.value!.currentTime = 0;
+        audioTag.value!.play();
+        return;
+    }
+
+    if (queue.length <= 1 || queue.length === index + 1) {
+        if (loop === 'queue') {
+            setPlayerTrack(queue[0]);
+            setQueueIndex(0);
+            audioTag.value!.currentTime = 0;
+            audioTag.value!.play();
+        } else {
+            audioTag.value!.pause();
+            paused.value = true;
+        }
     } else {
         skipTrack(true);
     }
