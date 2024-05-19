@@ -1,6 +1,6 @@
 <template>
-    <div
-        class="flex items-center justify-center gap-8 w-screen aspect-player bg-card border-stroke-100 border-t p-3 text-text">
+    <div class="flex items-center justify-center gap-8 w-screen aspect-player bg-card border-stroke-100 border-t p-3 text-text"
+        v-if="music.album">
 
         <div class="flex items-center gap-5 w-1/5">
             <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
@@ -97,7 +97,7 @@ function handlePlayAndPause() {
     paused.value = audio.paused;
 }
 
-function initialLoad() {
+async function initialLoad() {
     const progress = getPlayerProgress();
     const volume = getPlayerVolume();
 

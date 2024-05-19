@@ -3,6 +3,7 @@ export function makeReadableTime(seconds: number) {
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
+
 export function makeTime(seconds: number) {
     let time = '';
     const hours = Math.floor(seconds / 3600);
@@ -20,4 +21,13 @@ export function makeTime(seconds: number) {
     time += `${remainingSeconds} sec`;
 
     return time;
+}
+
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { exists } from "@tauri-apps/plugin-fs";
+
+export async function placeholderIfEmpty(imagePath: string | undefined) {
+    if (!imagePath) return '/placeholder.png';
+    const imageExists = await exists(imagePath);
+    return imageExists ? convertFileSrc(imagePath) : '/placeholder.png';
 }

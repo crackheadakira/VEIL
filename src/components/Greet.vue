@@ -16,26 +16,13 @@
 
         <textarea class="p-1 px-2 border font-supporting bg-card border-stroke-100 rounded-md resize-none"
             ref="textArea" cols="1" rows="1"></textarea>
-
-        <p v-if="selectedFile">{{ parsedFile }}</p>
-        <audio controls v-if="selectedFile" ref="audioTag"></audio>
-
-        <ul v-if="files">
-            <li v-for="file in files" @dblclick="selectFile(file)">
-                {{ file.artist }} - {{ file.name }} ({{ file.album }})
-            </li>
-        </ul>
     </div>
 </template>
 
 <script setup lang="ts">
-import { commands, type Metadata } from '../bindings';
+import { commands } from '../bindings';
 
-const files = ref<Metadata[]>([]);
-const selectedFile = ref<string | null>(null);
-const audioTag = ref<HTMLAudioElement | null>(null);
 const textArea = ref<HTMLTextAreaElement | null>(null);
-const parsedFile = ref<string>("");
 
 async function setTrack() {
     const textField = unref(textArea);
@@ -66,19 +53,6 @@ async function getArtist() {
 }
 
 async function openDialog() {
-    const parsed = await commands.selectMusicFolder();
-    files.value = parsed;
-    console.log(parsed);
-}
-
-function selectFile(file: Metadata) {
-    parsedFile.value = `${file.artist} - ${file.name} (${file.album})`;
-    selectedFile.value = file.path;
-    nextTick(() => {
-        const audio = unref(audioTag);
-        if (!audio) return console.log("Audio tag not found");
-        audio.src = `http://localhost:16780${file.path}`;
-        audio.play();
-    });
+    await commands.selectMusicFolder();
 }
 </script>

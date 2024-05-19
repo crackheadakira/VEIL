@@ -24,7 +24,9 @@ export function setPlayerProgress(progress: number) {
 
 export function getPlayerTrack(): Tracks {
     const track = localStorage.getItem("playerTrack");
-    return track ? JSON.parse(track) : null;
+    return track ? JSON.parse(track) : {
+        cover_path: "/placeholder.png",
+    };
 }
 
 export function getCurrentPage(): string {

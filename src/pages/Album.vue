@@ -30,9 +30,9 @@
         </div>
 
         <div class="flex flex-col bg-card border-stroke-100 border rounded-md">
-            <div class="flex items-center gap-8 duration-150 px-8 py-4 cursor-pointer hover:opacity-80"
+            <div class="flex items-center gap-8 duration-150 px-8 py-4 select-none cursor-pointer hover:opacity-80"
                 v-for="(track, idx) of data.tracks" @dblclick="setPlayerTrack(track)">
-                <p class="font-main text-supporting">{{ idx + 1 }}</p>
+                <p class="font-main text-supporting w-9">{{ idx + 1 }}</p>
                 <div class="flex-grow">
                     <p class="font-main-nonbold text-text">{{ track.name }}</p>
                     <p class="font-supporting text-supporting">{{ track.artist }}</p>
