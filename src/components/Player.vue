@@ -1,11 +1,9 @@
 <template>
     <div
-        class="flex items-center justify-center gap-12 2xl:gap-20 absolute bottom-0 w-screen aspect-player bg-card border-stroke-100 border-t p-3">
+        class="flex items-center justify-center gap-12 2xl:gap-20 w-screen aspect-player bg-card border-stroke-100 border-t p-3 text-text">
 
         <div class="flex items-center gap-5">
-            <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
-                src='/home/akira/.local/share/sodapop-reimagined/covers/DPR IAN - Moodswings In To Order.jpg'
-                alt="Album Cover">
+            <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90" src='' alt="Album Cover">
             <div class="flex flex-col gap-1">
                 <p class="duration-150 font-main-nonbold text-text hover:text-placeholder cursor-pointer">{{ music.title
                     }}
@@ -35,7 +33,7 @@
 
         <div class="flex gap-4 items-center">
             <span class="cursor-pointer hover:text-placeholder duration-150 i-mingcute-volume-fill w-18"></span>
-            <input @input="handleVolume()" type="range" ref="volumeBar" min="0" max="100" value="75"
+            <input @input="handleVolume()" type="range" ref="volumeBar" min="0" max="100" value="40"
                 class="h-1.5 w-full bg-stroke-100 rounded-lg accent-placeholder focus:ring-0">
         </div>
 

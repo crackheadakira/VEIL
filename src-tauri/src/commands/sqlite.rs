@@ -30,6 +30,12 @@ pub fn get_album_with_tracks(id: i32) -> AlbumWithTracks {
 
 #[tauri::command]
 #[specta::specta]
+pub fn get_all_albums() -> Vec<Albums> {
+    all_albums()
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn get_artist_with_albums(id: i32) -> ArtistWithAlbums {
     artist_with_albums(&id)
 }

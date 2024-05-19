@@ -1,16 +1,19 @@
 <template>
     <div class="flex flex-col gap-4 w-48 aspect-secondaryCard select-none cursor-pointer group">
         <img class="aspect-square w-48 rounded-md duration-150 group-hover:opacity-90"
-            src="/home/akira/.local/share/sodapop-reimagined/covers/DPR IAN - Moodswings In To Order.jpg"
-            alt="Album Cover">
+            :src="convertFileSrc(data.cover_path)" alt="Album Cover">
         <div class="flex flex-col gap-1 text-supporting">
-            <p class="font-main text-text">Album Title</p>
-            <p class="font-supporting">Artist</p>
-            <p class="font-supporting">Album Type</p>
+            <p class="font-main text-text truncate">{{ data.name }}</p>
+            <p class="font-supporting truncate">{{ data.artists_id }}</p>
+            <p class="font-supporting">{{ data.album_type }}</p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-
+import { convertFileSrc } from '@tauri-apps/api/core';
+import type { Albums } from '../bindings';
+defineProps<{
+    data: Albums
+}>()
 </script>

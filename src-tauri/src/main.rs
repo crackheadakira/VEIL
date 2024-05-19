@@ -8,6 +8,7 @@ use axum::{
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
+use tauri_plugin_fs::FsExt;
 use tauri_specta::*;
 
 mod commands;
@@ -30,7 +31,8 @@ async fn main() {
             select_music_folder,
             get_sqlite,
             get_album_with_tracks,
-            get_artist_with_albums
+            get_artist_with_albums,
+            get_all_albums
         ]);
 
         #[cfg(debug_assertions)] // <- Only export on non-release builds
@@ -44,7 +46,7 @@ async fn main() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(invoke_handler)
-        .setup(|_app| {
+        .setup(|app| {
             #[cfg(target_os = "linux")]
             tokio::spawn(async move {
                 let serve_dir = ServeDir::new("/");
@@ -66,12 +68,15 @@ async fn main() {
                 create_dir(&data).expect("Error creating data directory");
             }
 
-            let covers = data + "/covers";
+            let covers = data.clone() + "/covers";
             if !Path::new(&covers).exists() {
                 create_dir(covers).expect("Error creating covers directory")
             }
 
             db::init();
+
+            let scope = app.fs_scope();
+            scope.allow_directory(data, true);
 
             Ok(())
         })

@@ -18,7 +18,13 @@
       }
     ],
     "security": {
-      "csp": null
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$LOCALDATA/sodapop-reimagined/**"
+        ]
+      },
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost"
     }
   },
   "bundle": {

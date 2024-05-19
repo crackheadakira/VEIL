@@ -106,12 +106,13 @@ pub fn album_tracks_length(album_id: &i32) -> i32 {
 pub fn new_album(album: Albums) -> i32 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
-        "INSERT INTO albums (artists_id, name, cover_path, year, path) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO albums (artists_id, name, cover_path, type, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
     );
     let result = stmt.unwrap().execute((
         album.artists_id,
         album.name,
         album.cover_path,
+        album.album_type,
         album.year,
         album.path,
     ));
@@ -141,7 +142,8 @@ pub fn stmt_to_album(row: &Row) -> Result<Albums, Error> {
         artists_id: row.get(1)?,
         name: row.get(2)?,
         cover_path: row.get(3)?,
-        year: row.get(4)?,
-        path: row.get(5)?,
+        album_type: row.get(4)?,
+        year: row.get(5)?,
+        path: row.get(6)?,
     })
 }

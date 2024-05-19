@@ -14,6 +14,7 @@ pub struct Albums {
     pub artists_id: i32,
     pub name: String,
     pub cover_path: String,
+    pub album_type: String,
     pub year: i32,
     pub path: String,
 }

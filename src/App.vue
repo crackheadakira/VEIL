@@ -1,11 +1,12 @@
-<script setup lang="ts">
-import Greet from './components/Greet.vue';
-import PlaylistCard from './components/PlaylistCard.vue';
-import BigCard from './components/BigCard.vue';
-import SearchBar from './components/SearchBar.vue';
-import Dropdown from './components/Dropdown.vue';
-import Player from './components/Player.vue';
+<template>
+  <div class="flex flex-col justify-between gap-4 bg-background min-h-screen h-fit">
+    <RouterView />
+    <Player :music="music" class="bottom-0 sticky" />
+  </div>
+</template>
 
+<script setup lang="ts">
+import Player from './components/Player.vue';
 
 const music = {
   title: 'Seraph',
@@ -14,18 +15,3 @@ const music = {
   audio: 'http://localhost:16780/home/akira/Music/music/DPR IAN/DPR IAN - Moodswings In To Order (2022)/01. Seraph.flac'
 }
 </script>
-
-<template>
-  <div class="bg-background w-screen h-screen text-text">
-    <Greet />
-    <div class="flex gap-2">
-      <PlaylistCard />
-      <BigCard />
-      <SearchBar />
-      <Dropdown :title="'Filter by'" :options="['Albums', 'Artists', 'Tracks']" />
-    </div>
-    <Player :music="music" />
-  </div>
-</template>
-
-<style scoped></style>

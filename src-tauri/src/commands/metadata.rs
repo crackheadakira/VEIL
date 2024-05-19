@@ -18,6 +18,7 @@ pub struct Metadata {
     artist: String,
     name: String,
     path: String,
+    album_type: String,
     year: i32,
 }
 
@@ -29,32 +30,40 @@ pub fn read_metadata(file: String) -> Metadata {
     match ext {
         "mp3" => {
             let tag = Id3v2Tag::read_from_path(&path).unwrap();
+            let total_tracks = tag.total_tracks().unwrap_or(0);
+            let duration = tag.duration().unwrap_or(0.0);
             Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
                 album: tag.album().unwrap().title.to_string(),
+                album_type: get_album_type(total_tracks, duration),
                 year: tag.year().unwrap(),
             }
         }
         "flac" => {
             let tag = FlacTag::read_from_path(&path).unwrap();
-
+            let total_tracks = tag.total_tracks().unwrap_or(0);
+            let duration = tag.duration().unwrap_or(0.0);
             Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
                 album: tag.album().unwrap().title.to_string(),
+                album_type: get_album_type(total_tracks, duration),
                 year: tag.year().unwrap(),
             }
         }
         "m4a" => {
             let tag = Mp4Tag::read_from_path(&path).unwrap();
+            let total_tracks = tag.total_tracks().unwrap_or(0);
+            let duration = tag.duration().unwrap_or(0.0);
             Metadata {
                 path,
                 artist: tag.artist().unwrap().to_string(),
                 name: tag.title().unwrap().to_string(),
                 album: tag.album().unwrap().title.to_string(),
+                album_type: get_album_type(total_tracks, duration),
                 year: tag.year().unwrap(),
             }
         }
@@ -63,6 +72,7 @@ pub fn read_metadata(file: String) -> Metadata {
             artist: "Unknown".to_string(),
             name: "Unknown".to_string(),
             album: "Unknown".to_string(),
+            album_type: "Unknown".to_string(),
             year: 0,
         },
     }
@@ -70,6 +80,19 @@ pub fn read_metadata(file: String) -> Metadata {
 
 fn cover_path(artist: &str, album: &str) -> String {
     data_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
+}
+
+// Singles are less than 3 tracks and 30 minutes,
+// EPs are up to 6 tracks and 30 minutes,
+// LPs/Albums are more than 6 tracks and 30 minutes.
+fn get_album_type(tracks: u16, duration: f64) -> String {
+    if tracks < 3 && duration < 1800.0 {
+        "Single".to_string()
+    } else if tracks <= 6 && duration < 1800.0 {
+        "EP".to_string()
+    } else {
+        "Album".to_string()
+    }
 }
 
 pub fn write_cover(file: &str) {
@@ -138,6 +161,7 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metad
                     name: metadata.album.clone(),
                     cover_path: cover_path(&metadata.artist, &metadata.album),
                     year: metadata.year,
+                    album_type: metadata.album_type.clone(),
                     path: get_album_path(music_folder, &metadata.path),
                 });
                 write_cover(&file);

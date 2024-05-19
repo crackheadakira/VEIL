@@ -31,6 +31,7 @@ pub fn init() {
             artists_id  INTEGER NOT NULL REFERENCES artists(id),
             name        TEXT    NOT NULL,
             cover_path  TEXT    NOT NULL,
+            type        TEXT    NOT NULL,
             year        INTEGER NOT NULL,
             path        TEXT    NOT NULL UNIQUE
         );

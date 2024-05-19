@@ -1,9 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the main window",
+  "description": "Capability for the sodapop-reimagined window",
   "windows": [
-    "main"
+    "sodapop-reimagined"
   ],
   "permissions": [
     "path:default",
@@ -14,7 +14,6 @@
     "resources:default",
     "menu:default",
     "tray:default",
-    "shell:allow-open",
-    "fs:allow-read-file"
+    "shell:allow-open"
   ]
 }
