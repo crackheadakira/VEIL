@@ -29,9 +29,12 @@ pub fn init() {
         CREATE TABLE IF NOT EXISTS albums (
             id          INTEGER NOT NULL PRIMARY KEY,
             artists_id  INTEGER NOT NULL REFERENCES artists(id),
+            artist      TEXT    NOT NULL,
             name        TEXT    NOT NULL,
             cover_path  TEXT    NOT NULL,
             type        TEXT    NOT NULL,
+            duration    INTEGER NOT NULL,
+            track_count INTEGER NOT NULL,
             year        INTEGER NOT NULL,
             path        TEXT    NOT NULL UNIQUE
         );
@@ -41,6 +44,7 @@ pub fn init() {
             albums_id   INTEGER NOT NULL REFERENCES albums(id),
             artist      TEXT    NOT NULL,
             name        TEXT    NOT NULL,
+            duration    INTEGER NOT NULL,
             path        TEXT    NOT NULL UNIQUE
         ); 
         CREATE TABLE IF NOT EXISTS playlists (

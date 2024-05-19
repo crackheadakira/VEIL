@@ -4,7 +4,7 @@
             :src="convertFileSrc(data.cover_path)" alt="Album Cover">
         <div class="flex flex-col gap-1 text-supporting">
             <p class="font-main text-text truncate">{{ data.name }}</p>
-            <p class="font-supporting truncate">{{ data.artists_id }}</p>
+            <p class="font-supporting truncate">{{ data.artist }}</p>
             <p class="font-supporting">{{ data.album_type }}</p>
         </div>
     </div>

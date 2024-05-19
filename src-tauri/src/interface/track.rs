@@ -47,9 +47,10 @@ pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
 pub fn new_track(track: Tracks) -> i64 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
-        "INSERT INTO tracks (album, albums_id, artist, name, path) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT INTO tracks (duration, album, albums_id, artist, name, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
     );
     let result = stmt.unwrap().execute((
+        track.duration,
         track.album,
         track.albums_id,
         track.artist,
@@ -77,10 +78,11 @@ pub fn delete_track(track_path: &str) {
 pub fn stmt_to_track(row: &Row) -> Result<Tracks, Error> {
     Ok(Tracks {
         id: row.get(0)?,
-        album: row.get(1)?,
-        albums_id: row.get(2)?,
-        artist: row.get(3)?,
-        name: row.get(4)?,
-        path: row.get(5)?,
+        duration: row.get(1)?,
+        album: row.get(2)?,
+        albums_id: row.get(3)?,
+        artist: row.get(4)?,
+        name: row.get(5)?,
+        path: row.get(6)?,
     })
 }

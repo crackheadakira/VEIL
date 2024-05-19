@@ -26,10 +26,10 @@ pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
             let db_paths = get_all_tracks_path();
 
             for db_path in db_paths {
-                if !all_paths.contains(&db_path) {
-                    let album_path = get_album_path(path.to_str().unwrap(), &db_path);
-                    let album = album_by_path(&album_path);
+                let album_path = get_album_path(path.to_str().unwrap(), &db_path);
+                let album = album_by_path(&album_path);
 
+                if !all_paths.contains(&db_path) {
                     delete_track(&db_path);
                     if album_tracks_length(&album.id) == 0 {
                         delete_album(&album.id);
@@ -37,6 +37,10 @@ pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
                             delete_artist(&album.artists_id);
                         }
                     }
+                } else {
+                    let duration = get_album_duration(&album.id);
+                    let album_type = get_album_type(duration.1, duration.0);
+                    update_album_type(&album.id, &album_type, &duration);
                 }
             }
 
@@ -80,4 +84,17 @@ pub fn recursive_dir(path: &str) -> Vec<String> {
         }
     }
     tracks
+}
+
+// Singles are less than 3 tracks and 30 minutes,
+// EPs are up to 6 tracks and 30 minutes,
+// LPs/Albums are more than 6 tracks and 30 minutes.
+fn get_album_type(tracks: i32, duration: i32) -> String {
+    if tracks < 3 && duration < 1800 {
+        "Single".to_string()
+    } else if tracks <= 6 && duration < 1800 {
+        "EP".to_string()
+    } else {
+        "Album".to_string()
+    }
 }

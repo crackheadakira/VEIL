@@ -26,11 +26,11 @@ return await TAURI_INVOKE("get_all_albums");
 /** user-defined types **/
 
 export type AlbumWithTracks = { album: Albums; tracks: Tracks[] }
-export type Albums = { id: number; artists_id: number; name: string; cover_path: string; album_type: string; year: number; path: string }
+export type Albums = { id: number; artists_id: number; artist: string; name: string; cover_path: string; album_type: string; duration: number; track_count: number; year: number; path: string }
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
 export type Artists = { id: number; name: string; path: string }
-export type Metadata = { album: string; artist: string; name: string; path: string; album_type: string; year: number }
-export type Tracks = { id: number; album: string; albums_id: number; artist: string; name: string; path: string }
+export type Metadata = { duration: number; album: string; artist: string; name: string; path: string; album_type: string; year: number }
+export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; name: string; path: string }
 
 /** tauri-specta globals **/
 

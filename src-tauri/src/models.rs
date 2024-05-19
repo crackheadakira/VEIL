@@ -12,9 +12,12 @@ pub struct Artists {
 pub struct Albums {
     pub id: i32,
     pub artists_id: i32,
+    pub artist: String,
     pub name: String,
     pub cover_path: String,
     pub album_type: String,
+    pub duration: i32,
+    pub track_count: i32,
     pub year: i32,
     pub path: String,
 }
@@ -22,6 +25,7 @@ pub struct Albums {
 #[derive(Debug, Serialize, Clone, Type)]
 pub struct Tracks {
     pub id: i32,
+    pub duration: i32,
     pub album: String,
     pub albums_id: i32,
     pub artist: String,

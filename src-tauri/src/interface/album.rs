@@ -61,6 +61,21 @@ pub fn album_by_id(album_id: &i32) -> Albums {
     result.unwrap()
 }
 
+pub fn get_album_duration(album_id: &i32) -> (i32, i32) {
+    let conn = db_connect();
+
+    let mut stmt = conn
+        .prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE albums_id = ?1")
+        .unwrap();
+
+    let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)));
+
+    match result {
+        Ok((duration, tracks)) => (duration, tracks),
+        Err(e) => panic!("Error fetching album duration: {}", e),
+    }
+}
+
 pub fn album_by_path(album_path: &str) -> Albums {
     let conn = db_connect();
 
@@ -106,13 +121,16 @@ pub fn album_tracks_length(album_id: &i32) -> i32 {
 pub fn new_album(album: Albums) -> i32 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
-        "INSERT INTO albums (artists_id, name, cover_path, type, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
     );
     let result = stmt.unwrap().execute((
         album.artists_id,
+        album.artist,
         album.name,
         album.cover_path,
         album.album_type,
+        album.duration,
+        album.track_count,
         album.year,
         album.path,
     ));
@@ -120,6 +138,19 @@ pub fn new_album(album: Albums) -> i32 {
     match result {
         Ok(_) => conn.last_insert_rowid() as i32,
         Err(e) => panic!("Error inserting album: {}", e),
+    }
+}
+
+pub fn update_album_type(album_id: &i32, album_type: &str, duration_count: &(i32, i32)) {
+    let conn = db_connect();
+    let mut stmt = conn
+        .prepare("UPDATE albums SET type = ?1, duration = ?2, track_count = ?3 WHERE ID = ?4")
+        .unwrap();
+    let result = stmt.execute((album_type, duration_count.0, duration_count.1, album_id));
+
+    match result {
+        Ok(_) => (),
+        Err(e) => panic!("Error updating album type: {}", e),
     }
 }
 
@@ -140,10 +171,13 @@ pub fn stmt_to_album(row: &Row) -> Result<Albums, Error> {
     Ok(Albums {
         id: row.get(0)?,
         artists_id: row.get(1)?,
-        name: row.get(2)?,
-        cover_path: row.get(3)?,
-        album_type: row.get(4)?,
-        year: row.get(5)?,
-        path: row.get(6)?,
+        artist: row.get(2)?,
+        name: row.get(3)?,
+        cover_path: row.get(4)?,
+        album_type: row.get(5)?,
+        duration: row.get(6)?,
+        track_count: row.get(7)?,
+        year: row.get(8)?,
+        path: row.get(9)?,
     })
 }
