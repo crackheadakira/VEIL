@@ -69,11 +69,6 @@ const currentProgress = ref('0:00');
 
 const music = ref(getPlayerTrack());
 
-window.addEventListener('playerTrackChanged', () => {
-    music.value = getPlayerTrack();
-    nextTick(() => handlePlayAndPause());
-})
-
 function handleProgress() {
     const audio = unref(audioTag);
     if (!audio) return;
@@ -162,4 +157,13 @@ async function initialLoad() {
     audioTag.value!.currentTime = progress;
     audioTag.value!.volume = volume;
 }
+
+window.addEventListener('playerTrackChanged', () => {
+    music.value = getPlayerTrack();
+    nextTick(() => handlePlayAndPause());
+})
+
+window.addEventListener('loopChanged', () => {
+    loop.value = getLoop();
+})
 </script>

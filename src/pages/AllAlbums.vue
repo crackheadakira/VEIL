@@ -3,9 +3,6 @@
         <div class="flex flex-wrap gap-4 items-center justify-center">
             <BigCard v-for="album of albums" :data="album" />
         </div>
-        <RouterLink class="p-2 w-32 border font-supporting bg-card border-stroke-100 rounded-md text-center" to="/">Go
-            to Home
-        </RouterLink>
     </div>
 </template>
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col text-text gap-8" v-if="data">
+    <div class="flex flex-col text-text gap-8 w-full" v-if="data">
         <div class="flex items-center p-8 gap-8 bg-card border-stroke-100 border rounded-md">
             <img class="aspect-square w-64 rounded-md" :src="convertFileSrc(data.album.cover_path)">
 
@@ -47,8 +47,6 @@
                 <BigCard v-for="album of artist.albums" :data="album.album" />
             </div>
         </div>
-        <RouterLink class="p-2 w-32 border font-supporting bg-card border-stroke-100 rounded-md text-center text-text"
-            to="/">Go to Home</RouterLink>
         <ContextMenu @add-to-queue="handleAddToQueue" />
     </div>
 </template>

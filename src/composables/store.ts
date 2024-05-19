@@ -75,6 +75,9 @@ export function skipTrack(forward: boolean) {
     const personalQueue = getPersonalQueue();
     const index = getQueueIndex();
 
+    const loop = getLoop();
+    if (loop === "track") setLoop("queue");
+
     if (personalQueue.length > 0) {
         setPlayerTrack(personalQueue[0]);
         setPersonalQueue(personalQueue.slice(1));
@@ -104,6 +107,10 @@ export function getLoop(): "none" | "track" | "queue" {
 
 export function setLoop(loop: "none" | "track" | "queue") {
     localStorage.setItem("loop", loop);
+
+    window.dispatchEvent(new CustomEvent("loopChanged", {
+        detail: loop
+    }));
 }
 
 export function loopQueue() {
