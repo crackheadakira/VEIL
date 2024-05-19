@@ -21,13 +21,15 @@
 
         <div class="flex gap-2">
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-shuffle-bold w-6"></span>
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-back-fill w-6"></span>
+            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-back-fill w-6"
+                @click="skipTrack(false)"></span>
             <div @click="handlePlayAndPause">
                 <span v-if="!paused"
                     class="cursor-pointer hover:text-placeholder duration-150 i-ph-pause-fill w-7"></span>
                 <span v-else class="cursor-pointer hover:text-placeholder duration-150 i-ph-play-fill w-7"></span>
             </div>
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-forward-fill w-6"></span>
+            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-forward-fill w-6"
+                @click="skipTrack(true)"></span>
             <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-repeat-bold w-6"></span>
         </div>
 

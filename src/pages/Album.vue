@@ -86,6 +86,8 @@ function handleNewTrack(track: Tracks) {
 
     if (!data.value) return;
     setRecentlyPlayed(data.value.album);
+
+    setQueue(data.value.tracks);
 }
 
 onBeforeMount(async () => {
