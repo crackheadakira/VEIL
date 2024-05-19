@@ -1,19 +1,17 @@
 use crate::interface::album::*;
 use crate::interface::artist::*;
 use crate::interface::track::*;
-use crate::{first_time_metadata, get_album_path, Metadata};
-use dirs::audio_dir;
+use crate::{first_time_metadata, get_album_path};
 use std::fs;
 use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
 #[specta::specta]
-pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
+pub async fn select_music_folder(app: tauri::AppHandle) {
     let file_path = app
         .dialog()
         .file()
         .set_title("Select your music folder")
-        .set_directory(audio_dir().unwrap())
         .blocking_pick_folder();
 
     match file_path {
@@ -21,7 +19,7 @@ pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
             let mut all_paths = recursive_dir(&path.to_str().unwrap());
             all_paths.sort();
 
-            let metadata = first_time_metadata(&all_paths, &path.to_str().unwrap());
+            let _ = first_time_metadata(&all_paths, &path.to_str().unwrap());
 
             let db_paths = get_all_tracks_path();
 
@@ -43,10 +41,8 @@ pub async fn select_music_folder(app: tauri::AppHandle) -> Vec<Metadata> {
                     update_album_type(&album.id, &album_type, &duration);
                 }
             }
-
-            metadata
         }
-        None => Vec::new(),
+        None => (),
     }
 }
 

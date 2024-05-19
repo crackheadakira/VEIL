@@ -84,7 +84,7 @@ fn cover_path(artist: &str, album: &str) -> String {
     data_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
 }
 
-pub fn write_cover(file: &str) {
+pub fn write_cover(file: &str, music_folder: &str) {
     let path = file.to_string();
     let ext = file.split('.').last().unwrap();
     match ext {
@@ -94,9 +94,14 @@ pub fn write_cover(file: &str) {
             let artist = tag.artist().unwrap();
             let cover_path = cover_path(&artist, &album);
             if !std::path::Path::new(&cover_path).exists() {
-                let cover = tag.album_cover().unwrap();
-                let mut file = File::create(cover_path).unwrap();
-                file.write_all(&cover.data).unwrap();
+                let cover = tag.album_cover();
+                match cover {
+                    Some(cover) => {
+                        let mut file = File::create(cover_path).unwrap();
+                        file.write_all(&cover.data).unwrap();
+                    }
+                    None => find_folder_cover(&cover_path, &path, music_folder),
+                }
             }
         }
         "flac" => {
@@ -105,9 +110,14 @@ pub fn write_cover(file: &str) {
             let artist = tag.artist().unwrap();
             let cover_path = cover_path(&artist, &album);
             if !std::path::Path::new(&cover_path).exists() {
-                let cover = tag.album_cover().unwrap();
-                let mut file = File::create(cover_path).unwrap();
-                file.write_all(&cover.data).unwrap();
+                let cover = tag.album_cover();
+                match cover {
+                    Some(cover) => {
+                        let mut file = File::create(cover_path).unwrap();
+                        file.write_all(&cover.data).unwrap();
+                    }
+                    None => find_folder_cover(&cover_path, &path, music_folder),
+                }
             }
         }
         "m4a" => {
@@ -116,73 +126,84 @@ pub fn write_cover(file: &str) {
             let artist = tag.artist().unwrap();
             let cover_path = cover_path(&artist, &album);
             if !std::path::Path::new(&cover_path).exists() {
-                let cover = tag.album_cover().unwrap();
-                let mut file = File::create(cover_path).unwrap();
-                file.write_all(&cover.data).unwrap();
+                let cover = tag.album_cover();
+                match cover {
+                    Some(cover) => {
+                        let mut file = File::create(cover_path).unwrap();
+                        file.write_all(&cover.data).unwrap();
+                    }
+                    None => find_folder_cover(&cover_path, &path, music_folder),
+                }
             }
         }
         _ => (),
     }
 }
 
-pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) -> Vec<Metadata> {
-    let metadata: Vec<Metadata> = files
-        .iter()
-        .map(|file| {
-            let album_id;
-            let artist_id;
-            let metadata = read_metadata(file.to_string());
-            let artist = artist_by_name(&metadata.artist);
+fn find_folder_cover(cover_path: &str, path: &str, music_folder: &str) {
+    let folder_cover = get_album_path(&music_folder, &path) + "/cover.jpg";
+    if std::path::Path::new(&folder_cover).exists() {
+        let cover = std::fs::read(folder_cover).unwrap();
+        let mut file = File::create(cover_path).unwrap();
+        file.write_all(&cover).unwrap();
+    } else {
+        let cover = std::fs::read("../../../public/placeholder.png").unwrap();
+        let mut file = File::create(cover_path).unwrap();
+        file.write_all(&cover).unwrap();
+    }
+}
 
-            if artist.is_none() {
-                let artist_path = get_artist_path(music_folder, &metadata.path);
-                artist_id = new_artist(&metadata.artist, &artist_path);
-            } else {
-                artist_id = artist.unwrap().id
-            }
+pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) {
+    files.iter().for_each(|file| {
+        let album_id;
+        let artist_id;
+        let metadata = read_metadata(file.to_string());
+        let artist = artist_by_name(&metadata.artist);
 
-            let album = spec_album_by_artist_id(&metadata.album, &artist_id);
-            let cover_path = cover_path(&metadata.artist, &metadata.album);
+        if artist.is_none() {
+            let artist_path = get_artist_path(music_folder, &metadata.path);
+            artist_id = new_artist(&metadata.artist, &artist_path);
+        } else {
+            artist_id = artist.unwrap().id
+        }
 
-            if album.is_none() {
-                album_id = new_album(Albums {
-                    id: 0,
-                    artists_id: artist_id,
-                    artist: metadata.artist.clone(),
-                    name: metadata.album.clone(),
-                    cover_path: cover_path.clone(),
-                    year: metadata.year,
-                    album_type: metadata.album_type.clone(),
-                    track_count: 0,
-                    duration: 0,
-                    path: get_album_path(music_folder, &metadata.path),
-                });
-                write_cover(&file);
-            } else {
-                album_id = album.unwrap().id
-            }
+        let album = spec_album_by_artist_id(&metadata.album, &artist_id);
+        let cover_path = cover_path(&metadata.artist, &metadata.album);
 
-            let track = track_by_album_id(&metadata.name, &album_id);
+        if album.is_none() {
+            album_id = new_album(Albums {
+                id: 0,
+                artists_id: artist_id,
+                artist: metadata.artist.clone(),
+                name: metadata.album.clone(),
+                cover_path: cover_path.clone(),
+                year: metadata.year,
+                album_type: metadata.album_type.clone(),
+                track_count: 0,
+                duration: 0,
+                path: get_album_path(music_folder, &metadata.path),
+            });
+            write_cover(&file, music_folder);
+        } else {
+            album_id = album.unwrap().id
+        }
 
-            if track.is_none() {
-                new_track(Tracks {
-                    id: 0,
-                    duration: metadata.duration.round() as i32,
-                    album: metadata.album.clone(),
-                    albums_id: album_id,
-                    artist: metadata.artist.clone(),
-                    artists_id: artist_id,
-                    name: metadata.name.clone(),
-                    path: metadata.path.clone(),
-                    cover_path,
-                });
-            }
+        let track = track_by_album_id(&metadata.name, &album_id);
 
-            metadata
-        })
-        .collect();
-
-    metadata
+        if track.is_none() {
+            new_track(Tracks {
+                id: 0,
+                duration: metadata.duration.round() as i32,
+                album: metadata.album.clone(),
+                albums_id: album_id,
+                artist: metadata.artist.clone(),
+                artists_id: artist_id,
+                name: metadata.name.clone(),
+                path: metadata.path.clone(),
+                cover_path,
+            });
+        }
+    });
 }
 
 pub fn get_artist_path(music_folder: &str, full_path: &str) -> String {

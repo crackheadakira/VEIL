@@ -4,8 +4,8 @@
 async readMetadata(file: string) : Promise<Metadata> {
 return await TAURI_INVOKE("read_metadata", { file });
 },
-async selectMusicFolder() : Promise<Metadata[]> {
-return await TAURI_INVOKE("select_music_folder");
+async selectMusicFolder() : Promise<void> {
+await TAURI_INVOKE("select_music_folder");
 },
 async getSqlite() : Promise<string> {
 return await TAURI_INVOKE("get_sqlite");
