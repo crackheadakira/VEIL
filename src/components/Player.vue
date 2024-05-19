@@ -15,27 +15,29 @@
                 </RouterLink>
                 <p class="duration-150 font-supporting text-supporting hover:opacity-85 cursor-pointer truncate">{{
                     music.artist
-                }}</p>
+                    }}</p>
             </div>
         </div>
 
         <div class="flex gap-2">
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-shuffle-bold w-6"></span>
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-back-fill w-6"
+            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-shuffle-bold w-6" @click=handleShuffle()
+                v-if="!shuffled"></span>
+            <span class="text-primary cursor-pointer hover:opacity-90 duration-150 i-ph-shuffle-bold w-6"
+                @click=handleShuffle() v-if="shuffled"></span>
+            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-skip-back-fill w-6"
                 @click="skipTrack(false)"></span>
             <div @click="handlePlayAndPause">
-                <span v-if="!paused"
-                    class="cursor-pointer hover:text-placeholder duration-150 i-ph-pause-fill w-7"></span>
-                <span v-else class="cursor-pointer hover:text-placeholder duration-150 i-ph-play-fill w-7"></span>
+                <span v-if="!paused" class="cursor-pointer hover:opacity-90 duration-150 i-ph-pause-fill w-7"></span>
+                <span v-else class="cursor-pointer hover:opacity-90 duration-150 i-ph-play-fill w-7"></span>
             </div>
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-skip-forward-fill w-6"
+            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-skip-forward-fill w-6"
                 @click="skipTrack(true)"></span>
-            <span class="cursor-pointer hover:text-placeholder duration-150 i-ph-repeat-bold w-6"></span>
+            <span class="cursor-pointer hover:opacity-90 duration-150 i-ph-repeat-bold w-6"></span>
         </div>
 
         <div class="flex gap-4 flex-grow items-center text-supporting font-supporting select-none">
             <audio @loadedmetadata="initialLoad()" @timeupdate="handleProgress()" ref="audioTag"
-                :src="`http://localhost:16780${music.path}`"></audio>
+                :src="`http://localhost:16780${music.path}`" @ended="handleSongEnd"></audio>
             <label for="progress" class=w-10>{{ currentProgress }}</label>
             <input @input="selectProgress()" type="range" ref="progressBar" name="progress" min="0" value=0 max="100"
                 class="w-full h-1.5 bg-stroke-100 rounded-lg accent-placeholder">
@@ -57,6 +59,7 @@ import { convertFileSrc } from '@tauri-apps/api/core'
 const audioTag = ref<HTMLAudioElement | null>(null);
 const progressBar = ref<HTMLInputElement | null>(null);
 const volumeBar = ref<HTMLInputElement | null>(null);
+const shuffled = ref(isShuffled());
 
 const paused = ref(true);
 const totalLength = ref('3:33');
@@ -100,6 +103,21 @@ function handlePlayAndPause() {
     if (audio.paused) audio.play();
     else audio.pause();
     paused.value = audio.paused;
+}
+
+function handleShuffle() {
+    shuffleQueue();
+    shuffled.value = !shuffled.value;
+}
+
+function handleSongEnd() {
+    const queue = getQueue();
+    if (queue.length <= 1) {
+        audioTag.value!.pause();
+        paused.value = true;
+    } else {
+        skipTrack(true);
+    }
 }
 
 async function initialLoad() {

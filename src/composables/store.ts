@@ -12,6 +12,7 @@ export function setPlayerTrack(track: Tracks) {
 
 export function setQueue(queue: Tracks[]) {
     localStorage.setItem("queue", JSON.stringify(queue));
+    localStorage.setItem("shuffled", "false");
 }
 
 export function setRecentlyPlayed(album: Albums) {
@@ -61,6 +62,29 @@ export function skipTrack(forward: boolean) {
 
 }
 
+export function shuffleQueue() {
+    const shuffled = localStorage.getItem("shuffled");
+
+    if (shuffled === "true") {
+        localStorage.setItem("shuffled", "false");
+        setQueue(getQueue().sort((a, b) => a.id - b.id));
+        return;
+    }
+
+    const queue = getQueue();
+    const track = getPlayerTrack();
+    const index = queue.findIndex((t) => t.id === track.id);
+
+    if (index === -1) return;
+
+    queue.splice(index, 1);
+    queue.sort(() => Math.random() - 0.5);
+    queue.unshift(track);
+
+    setQueue(queue);
+    localStorage.setItem("shuffled", "true");
+}
+
 export function getQueue(): Tracks[] {
     const queue = localStorage.getItem("queue");
     return queue ? JSON.parse(queue) : [];
@@ -81,4 +105,8 @@ export function getPlayerVolume(): number {
 
 export function getPlayerProgress(): number {
     return parseInt(localStorage.getItem("playerProgress") || "0");
+}
+
+export function isShuffled() {
+    return localStorage.getItem("shuffled") === "true";
 }
