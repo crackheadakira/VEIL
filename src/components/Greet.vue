@@ -14,6 +14,8 @@
                 player track</button>
         </div>
 
+        {{ musicLoaded ? 'Music loaded' : 'Music not loaded' }}
+
         <textarea class="p-1 px-2 border font-supporting bg-card border-stroke-100 rounded-md resize-none"
             ref="textArea" cols="1" rows="1"></textarea>
     </div>
@@ -23,6 +25,7 @@
 import { commands } from '../bindings';
 
 const textArea = ref<HTMLTextAreaElement | null>(null);
+const musicLoaded = ref(false);
 
 async function setTrack() {
     const textField = unref(textArea);
@@ -54,5 +57,6 @@ async function getArtist() {
 
 async function openDialog() {
     await commands.selectMusicFolder();
+    musicLoaded.value = true;
 }
 </script>
