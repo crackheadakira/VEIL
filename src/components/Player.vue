@@ -8,11 +8,11 @@
             <div class="flex flex-col gap-1 truncate">
                 <p class="duration-150 font-main-nonbold text-text hover:text-placeholder cursor-pointer truncate">{{
                     music.name
-                    }}
+                }}
                 </p>
                 <p class="duration-150 font-supporting text-supporting hover:opacity-85 cursor-pointer truncate">{{
                     music.artist
-                }}</p>
+                    }}</p>
             </div>
         </div>
 
@@ -61,7 +61,7 @@ const music = ref(getPlayerTrack());
 
 window.addEventListener('playerTrackChanged', () => {
     music.value = getPlayerTrack();
-    paused.value = true;
+    nextTick(() => handlePlayAndPause());
 })
 
 function handleProgress() {
@@ -111,11 +111,5 @@ function initialLoad() {
 
     audioTag.value!.currentTime = progress;
     audioTag.value!.volume = volume;
-}
-
-function makeReadableTime(seconds: number) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 </script>

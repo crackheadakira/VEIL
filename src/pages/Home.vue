@@ -3,8 +3,6 @@
         <Greet />
         <RouterLink class="text-center p-2 w-32 border font-supporting bg-card border-stroke-100 rounded-md"
             to="/all_albums">All Albums</RouterLink>
-        <RouterLink class="text-center p-2 w-32 border font-supporting bg-card border-stroke-100 rounded-md"
-            to="/album/4">Current Album</RouterLink>
         <div class="flex gap-2">
             <PlaylistCard />
             <SearchBar />

@@ -1,7 +1,9 @@
 <template>
     <div class="flex flex-col gap-4 w-48 aspect-secondaryCard select-none cursor-pointer group">
-        <img class="aspect-square w-48 rounded-md duration-150 group-hover:opacity-90"
-            :src="convertFileSrc(data.cover_path)" alt="Album Cover">
+        <RouterLink :to="{ name: 'album', params: { id: data.id } }">
+            <img class="aspect-square w-48 rounded-md duration-150 group-hover:opacity-90"
+                :src="convertFileSrc(data.cover_path)" alt="Album Cover">
+        </RouterLink>
         <div class="flex flex-col gap-1 text-supporting">
             <p class="font-main text-text truncate">{{ data.name }}</p>
             <p class="font-supporting truncate">{{ data.artist }}</p>
