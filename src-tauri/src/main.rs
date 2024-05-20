@@ -8,6 +8,7 @@ use axum::{
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
+use tauri::Manager;
 use tauri_plugin_fs::FsExt;
 use tauri_specta::*;
 
@@ -33,7 +34,7 @@ async fn main() {
             get_album_with_tracks,
             get_artist_with_albums,
             get_all_albums,
-            track_by_id
+            track_by_id,
         ]);
 
         #[cfg(debug_assertions)] // <- Only export on non-release builds

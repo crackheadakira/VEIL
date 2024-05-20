@@ -21,6 +21,9 @@ return await TAURI_INVOKE("get_all_albums");
 },
 async trackById(id: number) : Promise<Tracks> {
 return await TAURI_INVOKE("track_by_id", { id });
+},
+async resetDatabase() : Promise<void> {
+await TAURI_INVOKE("reset_database");
 }
 }
 

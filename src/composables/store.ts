@@ -177,3 +177,8 @@ export function getPlayerProgress(): number {
 export function isShuffled() {
     return localStorage.getItem("shuffled") === "true";
 }
+
+export function resetStore() {
+    localStorage.clear();
+    window.location.reload();
+}

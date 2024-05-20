@@ -67,10 +67,10 @@ pub fn init() {
 }
 
 pub fn db_connect() -> r2d2::PooledConnection<SqliteConnectionManager> {
-    POOL.get().expect("Error getting connection from pool")
+    POOL.get().expect("Error getting connection")
 }
 
-fn db_path() -> String {
+pub fn db_path() -> String {
     return data_path() + "/db.sqlite";
 }
 

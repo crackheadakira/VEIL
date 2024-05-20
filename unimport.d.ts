@@ -49,6 +49,7 @@ declare global {
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
   const ref: typeof import('vue')['ref']
+  const resetStore: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['resetStore']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const setCurrentPage: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']
   const setLoop: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']
@@ -138,6 +139,7 @@ declare module 'vue' {
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
+    readonly resetStore: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['resetStore']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly setCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']>
     readonly setLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']>
@@ -220,6 +222,7 @@ declare module '@vue/runtime-core' {
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
+    readonly resetStore: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['resetStore']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly setCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']>
     readonly setLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']>
