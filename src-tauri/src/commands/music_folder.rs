@@ -14,35 +14,32 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         .set_title("Select your music folder")
         .blocking_pick_folder();
 
-    match file_path {
-        Some(path) => {
-            let mut all_paths = recursive_dir(&path.to_str().unwrap());
-            all_paths.sort();
+    if let Some(path) = file_path {
+        let mut all_paths = recursive_dir(path.to_str().unwrap());
+        all_paths.sort();
 
-            let _ = first_time_metadata(&all_paths, &path.to_str().unwrap());
+        first_time_metadata(&all_paths, path.to_str().unwrap());
 
-            let db_paths = get_all_tracks_path();
+        let db_paths = get_all_tracks_path();
 
-            for db_path in db_paths {
-                let album_path = get_album_path(path.to_str().unwrap(), &db_path);
-                let album = album_by_path(&album_path);
+        for db_path in db_paths {
+            let album_path = get_album_path(path.to_str().unwrap(), &db_path);
+            let album = album_by_path(&album_path);
 
-                if !all_paths.contains(&db_path) {
-                    delete_track(&db_path);
-                    if album_tracks_length(&album.id) == 0 {
-                        delete_album(&album.id);
-                        if artist_albums_length(&album.artists_id) == 0 {
-                            delete_artist(&album.artists_id);
-                        }
+            if !all_paths.contains(&db_path) {
+                delete_track(&db_path);
+                if album_tracks_length(&album.id) == 0 {
+                    delete_album(&album.id);
+                    if artist_albums_length(&album.artists_id) == 0 {
+                        delete_artist(&album.artists_id);
                     }
-                } else {
-                    let duration = get_album_duration(&album.id);
-                    let album_type = get_album_type(duration.1, duration.0);
-                    update_album_type(&album.id, &album_type, &duration);
                 }
+            } else {
+                let duration = get_album_duration(&album.id);
+                let album_type = get_album_type(duration.1, duration.0);
+                update_album_type(&album.id, &album_type, &duration);
             }
         }
-        None => (),
     }
 }
 

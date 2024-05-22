@@ -8,10 +8,7 @@ pub fn all_artists() -> Vec<Artists> {
     let conn = db_connect();
 
     let mut stmt = conn.prepare("SELECT * FROM artists").unwrap();
-    let result: Result<Vec<Artists>> = stmt
-        .query_map([], |row| stmt_to_artist(row))
-        .unwrap()
-        .collect();
+    let result: Result<Vec<Artists>> = stmt.query_map([], stmt_to_artist).unwrap().collect();
 
     match result {
         Ok(artists) => artists,
@@ -39,7 +36,7 @@ pub fn artist_by_name(name: &str) -> Option<Artists> {
     let mut stmt = conn
         .prepare_cached("SELECT * FROM artists WHERE name = ?1")
         .unwrap();
-    let result: Result<Artists> = stmt.query_row([name], |row| stmt_to_artist(row));
+    let result: Result<Artists> = stmt.query_row([name], stmt_to_artist);
 
     match result {
         Ok(artist) => Some(artist),
@@ -54,7 +51,7 @@ pub fn artist_by_id(id: &i32) -> Artists {
     let mut stmt = conn
         .prepare_cached("SELECT * FROM artists WHERE ID = ?1")
         .unwrap();
-    let result = stmt.query_row([id], |row| stmt_to_artist(row));
+    let result = stmt.query_row([id], stmt_to_artist);
 
     result.unwrap()
 }

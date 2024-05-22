@@ -1,4 +1,3 @@
-use dirs;
 use lazy_static::*;
 use r2d2_sqlite::SqliteConnectionManager;
 
@@ -71,7 +70,7 @@ pub fn db_connect() -> r2d2::PooledConnection<SqliteConnectionManager> {
 }
 
 pub fn db_path() -> String {
-    return data_path() + "/db.sqlite";
+    data_path() + "/db.sqlite"
 }
 
 pub fn data_path() -> String {

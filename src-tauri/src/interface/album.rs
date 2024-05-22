@@ -8,10 +8,7 @@ pub fn all_albums() -> Vec<Albums> {
     let conn = db_connect();
 
     let mut stmt = conn.prepare("SELECT * FROM albums").unwrap();
-    let result = stmt
-        .query_map([], |row| stmt_to_album(row))
-        .unwrap()
-        .collect();
+    let result = stmt.query_map([], stmt_to_album).unwrap().collect();
 
     match result {
         Ok(albums) => albums,
@@ -26,7 +23,7 @@ pub fn spec_album_by_artist_id(album_name: &str, artist_id: &i32) -> Option<Albu
     let mut stmt = conn
         .prepare_cached("SELECT * FROM albums WHERE (name, artists_id) = (?1, ?2)")
         .unwrap();
-    let result = stmt.query_row((album_name, artist_id), |row| stmt_to_album(row));
+    let result = stmt.query_row((album_name, artist_id), stmt_to_album);
 
     match result {
         Ok(album) => Some(album),
@@ -42,7 +39,7 @@ pub fn album_by_artist_id(artist_id: &i32) -> Vec<Albums> {
         .prepare("SELECT * FROM albums WHERE artists_id = ?1")
         .unwrap();
     let result = stmt
-        .query_map([artist_id], |row| stmt_to_album(row))
+        .query_map([artist_id], stmt_to_album)
         .unwrap()
         .collect::<Result<Vec<Albums>>>()
         .unwrap();
@@ -56,7 +53,7 @@ pub fn album_by_id(album_id: &i32) -> Albums {
     let mut stmt = conn
         .prepare_cached("SELECT * FROM albums WHERE ID = ?1")
         .unwrap();
-    let result = stmt.query_row([album_id], |row| stmt_to_album(row));
+    let result = stmt.query_row([album_id], stmt_to_album);
 
     result.unwrap()
 }
@@ -82,7 +79,7 @@ pub fn album_by_path(album_path: &str) -> Albums {
     let mut stmt = conn
         .prepare("SELECT * FROM albums WHERE path = ?1")
         .unwrap();
-    let result = stmt.query_row([album_path], |row| stmt_to_album(row));
+    let result = stmt.query_row([album_path], stmt_to_album);
 
     result.unwrap()
 }
@@ -94,7 +91,7 @@ pub fn album_with_tracks(album_id: &i32) -> AlbumWithTracks {
         .prepare("SELECT * FROM tracks WHERE albums_id = ?1")
         .unwrap();
     let tracks = stmt
-        .query_map([album_id], |row| stmt_to_track(row))
+        .query_map([album_id], stmt_to_track)
         .unwrap()
         .collect::<Result<Vec<Tracks>>>()
         .unwrap();

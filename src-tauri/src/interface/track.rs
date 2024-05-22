@@ -6,10 +6,7 @@ pub fn all_tracks() -> Vec<Tracks> {
     let conn = db_connect();
 
     let mut stmt = conn.prepare("SELECT * FROM tracks").unwrap();
-    let result = stmt
-        .query_map([], |row| stmt_to_track(row))
-        .unwrap()
-        .collect();
+    let result = stmt.query_map([], stmt_to_track).unwrap().collect();
 
     match result {
         Ok(tracks) => tracks,
@@ -35,7 +32,7 @@ pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
     let mut stmt = conn
         .prepare_cached("SELECT * FROM tracks WHERE (name, albums_id) = (?1, ?2)")
         .unwrap();
-    let result: Result<Tracks> = stmt.query_row((track_name, album_id), |row| stmt_to_track(row));
+    let result: Result<Tracks> = stmt.query_row((track_name, album_id), stmt_to_track);
 
     match result {
         Ok(track) => Some(track),
@@ -48,7 +45,7 @@ pub fn get_track_by_id(track_id: &i32) -> Tracks {
     let conn = db_connect();
 
     let mut stmt = conn.prepare("SELECT * FROM tracks WHERE id = ?1").unwrap();
-    let result = stmt.query_row([track_id], |row| stmt_to_track(row));
+    let result = stmt.query_row([track_id], stmt_to_track);
 
     match result {
         Ok(track) => track,

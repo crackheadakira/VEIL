@@ -92,13 +92,13 @@ pub fn write_cover(file: &str, music_folder: &str) {
             let tag = Id3v2Tag::read_from_path(&path).unwrap();
             let album = tag.album_title().unwrap();
             let artist = tag.artist().unwrap();
-            let cover_path = cover_path(&artist, &album);
+            let cover_path = cover_path(artist, album);
             if !std::path::Path::new(&cover_path).exists() {
                 let cover = tag.album_cover();
                 match cover {
                     Some(cover) => {
                         let mut file = File::create(cover_path).unwrap();
-                        file.write_all(&cover.data).unwrap();
+                        file.write_all(cover.data).unwrap();
                     }
                     None => find_folder_cover(&cover_path, &path, music_folder),
                 }
@@ -108,13 +108,13 @@ pub fn write_cover(file: &str, music_folder: &str) {
             let tag = FlacTag::read_from_path(&path).unwrap();
             let album = tag.album_title().unwrap();
             let artist = tag.artist().unwrap();
-            let cover_path = cover_path(&artist, &album);
+            let cover_path = cover_path(artist, album);
             if !std::path::Path::new(&cover_path).exists() {
                 let cover = tag.album_cover();
                 match cover {
                     Some(cover) => {
                         let mut file = File::create(cover_path).unwrap();
-                        file.write_all(&cover.data).unwrap();
+                        file.write_all(cover.data).unwrap();
                     }
                     None => find_folder_cover(&cover_path, &path, music_folder),
                 }
@@ -124,13 +124,13 @@ pub fn write_cover(file: &str, music_folder: &str) {
             let tag = Mp4Tag::read_from_path(&path).unwrap();
             let album = tag.album_title().unwrap();
             let artist = tag.artist().unwrap();
-            let cover_path = cover_path(&artist, &album);
+            let cover_path = cover_path(artist, album);
             if !std::path::Path::new(&cover_path).exists() {
                 let cover = tag.album_cover();
                 match cover {
                     Some(cover) => {
                         let mut file = File::create(cover_path).unwrap();
-                        file.write_all(&cover.data).unwrap();
+                        file.write_all(cover.data).unwrap();
                     }
                     None => find_folder_cover(&cover_path, &path, music_folder),
                 }
@@ -141,7 +141,7 @@ pub fn write_cover(file: &str, music_folder: &str) {
 }
 
 fn find_folder_cover(cover_path: &str, path: &str, music_folder: &str) {
-    let folder_cover = get_album_path(&music_folder, &path) + "/cover.jpg";
+    let folder_cover = get_album_path(music_folder, path) + "/cover.jpg";
     if std::path::Path::new(&folder_cover).exists() {
         let cover = std::fs::read(folder_cover).unwrap();
         let mut file = File::create(cover_path).unwrap();
@@ -153,25 +153,26 @@ fn find_folder_cover(cover_path: &str, path: &str, music_folder: &str) {
     }
 }
 
-pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) {
+pub fn first_time_metadata(files: &[String], music_folder: &str) {
     files.iter().for_each(|file| {
-        let album_id;
-        let artist_id;
         let metadata = read_metadata(file.to_string());
         let artist = artist_by_name(&metadata.artist);
 
-        if artist.is_none() {
-            let artist_path = get_artist_path(music_folder, &metadata.path);
-            artist_id = new_artist(&metadata.artist, &artist_path);
+        let artist_id = if let Some(artist) = artist {
+            artist.id
         } else {
-            artist_id = artist.unwrap().id
-        }
+            let artist_path = get_artist_path(music_folder, &metadata.path);
+            new_artist(&metadata.artist, &artist_path)
+        };
 
         let album = spec_album_by_artist_id(&metadata.album, &artist_id);
         let cover_path = cover_path(&metadata.artist, &metadata.album);
 
-        if album.is_none() {
-            album_id = new_album(Albums {
+        let album_id = if let Some(album) = album {
+            album.id
+        } else {
+            write_cover(file, music_folder);
+            new_album(Albums {
                 id: 0,
                 artists_id: artist_id,
                 artist: metadata.artist.clone(),
@@ -182,11 +183,8 @@ pub fn first_time_metadata(files: &Vec<String>, music_folder: &str) {
                 track_count: 0,
                 duration: 0,
                 path: get_album_path(music_folder, &metadata.path),
-            });
-            write_cover(&file, music_folder);
-        } else {
-            album_id = album.unwrap().id
-        }
+            })
+        };
 
         let track = track_by_album_id(&metadata.name, &album_id);
 

@@ -6,10 +6,7 @@ use rusqlite::{Error, Result, Row};
 pub fn get_all_playlists() -> Vec<Playlists> {
     let conn = db_connect();
     let mut stmt = conn.prepare("SELECT * FROM playlists").unwrap();
-    let playlists = stmt
-        .query_map([], |row| stmt_to_playlist(row))
-        .unwrap()
-        .collect();
+    let playlists = stmt.query_map([], stmt_to_playlist).unwrap().collect();
 
     match playlists {
         Ok(playlists) => playlists,
@@ -21,7 +18,7 @@ pub fn new_playlist(playlist: Playlists) -> i32 {
     let conn = db_connect();
     conn.execute(
         "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
-        &[&playlist.name, &playlist.description, &playlist.cover_path],
+        [&playlist.name, &playlist.description, &playlist.cover_path],
     )
     .expect("Error inserting new playlist");
 
@@ -33,7 +30,7 @@ fn get_playlist_by_id(id: &i32) -> Playlists {
     let mut stmt = conn
         .prepare("SELECT * FROM playlists WHERE id = ?1")
         .unwrap();
-    let playlist = stmt.query_row(&[id], |row| stmt_to_playlist(row));
+    let playlist = stmt.query_row([id], stmt_to_playlist);
 
     match playlist {
         Ok(playlist) => playlist,
@@ -53,7 +50,7 @@ pub fn get_playlist_with_tracks(playlist_id: &i32) -> PlaylistWithTracks {
         )
         .unwrap();
     let tracks = stmt
-        .query_map(&[playlist_id], |row| stmt_to_track(row))
+        .query_map([playlist_id], stmt_to_track)
         .unwrap()
         .collect();
 
@@ -67,7 +64,7 @@ pub fn update_playlist(playlist: &Playlists) {
     let conn = db_connect();
     conn.execute(
         "UPDATE playlists SET name = ?1, description = ?2, cover_path = ?3 WHERE id = ?4",
-        &[&playlist.name, &playlist.description, &playlist.cover_path],
+        [&playlist.name, &playlist.description, &playlist.cover_path],
     )
     .expect("Error updating playlist");
 }
@@ -76,14 +73,14 @@ pub fn insert_track_to_playlist(playlist_id: &i32, track_id: &i32) {
     let conn = db_connect();
     conn.execute(
         "INSERT INTO playlist_tracks (playlists_id, tracks_id) VALUES (?1, ?2)",
-        &[playlist_id, track_id],
+        [playlist_id, track_id],
     )
     .expect("Error inserting track to playlist");
 }
 
 pub fn delete_playlist(id: &i32) {
     let conn = db_connect();
-    conn.execute("DELETE FROM playlists WHERE id = ?1", &[id])
+    conn.execute("DELETE FROM playlists WHERE id = ?1", [id])
         .expect("Error deleting playlist");
 }
 
