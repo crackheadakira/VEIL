@@ -3,7 +3,7 @@ use crate::interface::artist::*;
 use crate::interface::track::*;
 use crate::models::*;
 
-#[tauri::command]
+/*#[tauri::command]
 #[specta::specta]
 pub fn get_sqlite() -> String {
     /*
@@ -21,7 +21,7 @@ pub fn get_sqlite() -> String {
     data
      */
     "Not implemented yet".to_string()
-}
+}*/
 
 #[tauri::command]
 #[specta::specta]

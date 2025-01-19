@@ -1,6 +1,6 @@
 <template>
     <div class="flex aspect-player w-screen items-center justify-center gap-8 border-t border-stroke-100 bg-card p-3 text-text"
-        v-if="music.album">
+        v-if="music.path !== ''">
 
         <div class="flex w-1/5 items-center gap-5">
             <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
@@ -37,17 +37,16 @@
         </div>
 
         <div class="font-supporting flex flex-grow select-none items-center gap-4 text-supporting">
-            <audio @loadedmetadata="initialLoad()" @timeupdate="handleProgress()" ref="audioTag"
-                :src="`http://localhost:16780${music.path}`" @ended="handleSongEnd"></audio>
             <label for="progress" class=w-10>{{ currentProgress }}</label>
-            <input @input="selectProgress()" type="range" ref="progressBar" name="progress" min="0" value=0 max="100"
+            <input @mousedown="beingHeld = true" @mouseup="selectProgress()" type="range" ref="progressBar"
+                name="progress" min="0" value=0 max="100"
                 class="h-1.5 w-full rounded-lg bg-stroke-100 accent-placeholder">
             <label for="progress" class=w-10>{{ totalLength }}</label>
         </div>
 
         <div class="flex items-center gap-4">
             <span class="w-18 i-mingcute-volume-fill cursor-pointer duration-150 hover:text-placeholder"></span>
-            <input @input="handleVolume()" type="range" ref="volumeBar" min="0" max="1" value="0" step="0.01"
+            <input @input="handleVolume()" type="range" ref="volumeBar" min="-30" max="10" value="1" step="0.5"
                 class="h-1.5 w-full rounded-lg bg-stroke-100 accent-placeholder focus:ring-0">
         </div>
 
@@ -55,51 +54,63 @@
 </template>
 
 <script setup lang="ts">
-import { convertFileSrc } from '@tauri-apps/api/core'
+import { listen } from '@tauri-apps/api/event';
+import { convertFileSrc } from '@tauri-apps/api/core';
+import { commands } from '../bindings';
 
-const audioTag = ref<HTMLAudioElement | null>(null);
-const progressBar = ref<HTMLInputElement | null>(null);
-const volumeBar = ref<HTMLInputElement | null>(null);
+const progressBar = useTemplateRef<HTMLInputElement>("progressBar");
+const volumeBar = useTemplateRef<HTMLInputElement>("volumeBar");
 const shuffled = ref(isShuffled());
 const loop = ref(getLoop());
 
 const paused = ref(true);
 const totalLength = ref('3:33');
 const currentProgress = ref('0:00');
+const beingHeld = ref(false);
 
 const music = ref(getPlayerTrack());
 
-function handleProgress() {
-    const audio = unref(audioTag);
-    if (!audio) return;
+async function handleProgress() {
+    if (!await commands.playerHasTrack()) return;
     if (progressBar) {
-        const progress = audio.currentTime;
-        progressBar.value!.value = progress.toString();
+        const progress = await commands.getPlayerProgress();
         currentProgress.value = makeReadableTime(progress);
+
+        if (beingHeld.value) return;
+        progressBar.value!.value = progress.toString();
         setPlayerProgress(progress);
     }
 }
 
-function selectProgress() {
-    if (!audioTag.value) return;
+async function selectProgress() {
+    if (!await commands.playerHasTrack()) return;
     const progress = progressBar.value!.valueAsNumber;
-    audioTag.value.fastSeek(progress);
+    const skipTo = await commands.getPlayerState() === "Playing";
+    await commands.seekTrack(progress, skipTo);
+    beingHeld.value = false;
+
     handleProgress();
 }
 
-function handleVolume() {
-    if (!audioTag.value || !volumeBar.value) return;
-    const volume = volumeBar.value.valueAsNumber;
-    audioTag.value.volume = volume;
+async function handleVolume() {
+    if (!volumeBar.value) return;
+    let volume = volumeBar.value.valueAsNumber;
+    if (volume <= -30) volume = -60;
+    await commands.setVolume(volume);
     setPlayerVolume(volume);
 }
 
-function handlePlayAndPause() {
-    const audio = unref(audioTag);
-    if (!audio) return;
-    if (audio.paused) audio.play();
-    else audio.pause();
-    paused.value = audio.paused;
+async function handlePlayAndPause() {
+    if (!await commands.playerHasTrack()) {
+        await commands.playTrack(music.value.id);
+        paused.value = false;
+        return;
+    };
+
+    if (paused.value === true) await commands.resumeTrack();
+    else await commands.pauseTrack();
+
+    paused.value = !paused.value;
 }
 
 function handleShuffle() {
@@ -116,25 +127,27 @@ function handleLoop() {
     loop.value = getLoop();
 }
 
-function handleSongEnd() {
+async function handleSongEnd() {
+    // to let the song fully end as we emit slightly before the song ends
+    while (!(await commands.playerHasEnded())) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     const queue = getQueue();
     const index = getQueueIndex();
     const loop = getLoop();
 
     if (loop === 'track') {
-        audioTag.value!.currentTime = 0;
-        audioTag.value!.play();
+        // replay the same track
+        await setPlayerTrack(music.value);
+        await handlePlayAndPause();
         return;
     }
 
     if (queue.length <= 1 || queue.length === index + 1) {
         if (loop === 'queue') {
-            setPlayerTrack(queue[0]);
             setQueueIndex(0);
-            audioTag.value!.currentTime = 0;
-            audioTag.value!.play();
+            await setPlayerTrack(queue[0]);
         } else {
-            audioTag.value!.pause();
             paused.value = true;
         }
     } else {
@@ -143,27 +156,52 @@ function handleSongEnd() {
 }
 
 async function initialLoad() {
+    await commands.pauseTrack();
     const progress = getPlayerProgress();
     const volume = getPlayerVolume();
+    const duration = await commands.getPlayerDuration();
 
-    totalLength.value = makeReadableTime(audioTag.value!.duration);
+    totalLength.value = makeReadableTime(duration);
     currentProgress.value = makeReadableTime(progress);
 
-    progressBar.value!.value = progress.toString();
-    progressBar.value!.max = audioTag.value!.duration.toString();
+    nextTick(() => {
+        progressBar.value!.value = progress.toString();
+        progressBar.value!.max = duration.toString();
+        volumeBar.value!.value = volume.toString();
+    });
 
-    volumeBar.value!.value = volume.toString();
-
-    audioTag.value!.currentTime = progress;
-    audioTag.value!.volume = volume;
+    if (duration !== 0) await commands.seekTrack(progress, false);
+    await commands.setVolume(volume);
 }
 
-window.addEventListener('playerTrackChanged', () => {
+window.addEventListener('playerTrackChanged', async () => {
     music.value = getPlayerTrack();
-    nextTick(() => handlePlayAndPause());
+    paused.value = true;
+
+    const duration = await commands.getPlayerDuration();
+    totalLength.value = makeReadableTime(duration);
+    progressBar.value!.max = duration.toString();
+
+    await handlePlayAndPause();
 })
 
 window.addEventListener('loopChanged', () => {
     loop.value = getLoop();
+})
+
+onMounted(async () => {
+    await initialLoad();
+})
+
+onUnmounted(async () => {
+    await commands.stopPlayer();
+})
+
+listen('player-progress', async (_) => {
+    await handleProgress();
+})
+
+listen('track-end', async (_) => {
+    await handleSongEnd();
 })
 </script>

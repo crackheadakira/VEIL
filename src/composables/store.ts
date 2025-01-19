@@ -1,10 +1,14 @@
-import { Albums, Tracks } from "../bindings";
+import { Albums, Tracks, commands } from "../bindings";
 
-export function setPlayerTrack(track: Tracks) {
+export async function setPlayerTrack(track: Tracks) {
+    // Stop previous track
+    await commands.stopPlayer();
+
     localStorage.setItem("playerTrack", JSON.stringify(track));
-
+    await commands.setPlayerProgress(0);
     setPlayerProgress(0);
 
+    await commands.playTrack(track.id);
     window.dispatchEvent(new CustomEvent("playerTrackChanged", {
         detail: track
     }));
@@ -61,16 +65,25 @@ export function setPlayerVolume(volume: number) {
 
 export function setPlayerProgress(progress: number) {
     localStorage.setItem("playerProgress", progress.toString());
+
 }
 
 export function getPlayerTrack(): Tracks {
     const track = localStorage.getItem("playerTrack");
     return track ? JSON.parse(track) : {
         cover_path: "/placeholder.png",
+        id: 0,
+        duration: 0,
+        album: "Unknown",
+        albums_id: 0,
+        artist: "Unknown",
+        artists_id: 0,
+        name: "Unknown",
+        path: ""
     };
 }
 
-export function skipTrack(forward: boolean) {
+export async function skipTrack(forward: boolean) {
     const queue = getQueue();
     const personalQueue = getPersonalQueue();
     const index = getQueueIndex();
@@ -79,7 +92,7 @@ export function skipTrack(forward: boolean) {
     if (loop === "track") setLoop("queue");
 
     if (personalQueue.length > 0) {
-        setPlayerTrack(personalQueue[0]);
+        await setPlayerTrack(personalQueue[0]);
         setPersonalQueue(personalQueue.slice(1));
         setQueueIndex(index);
         return;
@@ -88,11 +101,11 @@ export function skipTrack(forward: boolean) {
     if (forward) {
         if (index === queue.length - 1) return;
         setQueueIndex(index + 1);
-        setPlayerTrack(queue[index + 1]);
+        await setPlayerTrack(queue[index + 1]);
     } else {
         if (index === 0) return;
         setQueueIndex(index - 1)
-        setPlayerTrack(queue[index - 1]);
+        await setPlayerTrack(queue[index - 1]);
     }
 }
 

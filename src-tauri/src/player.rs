@@ -2,17 +2,24 @@ use anyhow::Result;
 use kira::{
     sound::{
         streaming::{StreamingSoundData, StreamingSoundHandle},
-        FromFileError,
+        FromFileError, PlaybackState,
     },
     AudioManager, AudioManagerSettings, DefaultBackend, Tween,
 };
+use serde::Serialize;
 
 use crate::interface::track::get_track_by_id;
 
+#[derive(Clone, Copy, Serialize, specta::Type)]
 pub enum PlayerState {
     Playing,
     Paused,
-    Stopped,
+}
+
+impl Default for PlayerState {
+    fn default() -> Self {
+        PlayerState::Paused
+    }
 }
 
 pub struct Player {
@@ -26,10 +33,16 @@ pub struct Player {
     pub state: PlayerState,
 }
 
+impl Default for Player {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Player {
-    pub fn new() -> Result<Self> {
-        let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
-        Ok(Player {
+    pub fn new() -> Self {
+        let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+        Player {
             manager,
             sound_handle: None,
             tween: Tween::default(),
@@ -37,8 +50,8 @@ impl Player {
             progress: 0.0,
             duration: 0.0,
             volume: -6.0,
-            state: PlayerState::Stopped,
-        })
+            state: PlayerState::Paused,
+        }
     }
 
     pub fn set_volume(&mut self, volume: f32) {
@@ -54,7 +67,7 @@ impl Player {
         if let Some(ref mut track_id) = self.track {
             let track = get_track_by_id(&track_id);
             let sound_data: StreamingSoundData<FromFileError> =
-                StreamingSoundData::from_file(track.path)?;
+                StreamingSoundData::from_file(track.path)?.start_position(self.progress);
             self.duration = sound_data.duration().as_secs_f32();
             self.sound_handle = Some(self.manager.play(sound_data)?);
             self.sound_handle
@@ -64,6 +77,24 @@ impl Player {
         }
 
         Ok(())
+    }
+
+    pub fn initialize_player(&mut self, track_id: u32, progress: f64) -> Result<()> {
+        let track = get_track_by_id(&track_id);
+        let sound_data: StreamingSoundData<FromFileError> =
+            StreamingSoundData::from_file(track.path)?;
+        self.duration = sound_data.duration().as_secs_f32();
+        self.progress = progress as f64;
+
+        Ok(())
+    }
+
+    pub fn has_ended(&self) -> bool {
+        if let Some(ref sound_handle) = self.sound_handle {
+            sound_handle.state() == PlaybackState::Stopped
+        } else {
+            false
+        }
     }
 
     pub fn pause(&mut self) {
@@ -81,26 +112,44 @@ impl Player {
         }
     }
 
-    pub fn seek(&mut self, position: f64) {
+    pub fn seek(&mut self, position: f64, resume: bool) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             match self.state {
-                PlayerState::Playing => sound_handle.seek_to(position),
+                PlayerState::Playing => {
+                    sound_handle.seek_to(position);
+                    self.progress = position;
+                }
                 _ => {
                     sound_handle.seek_to(position);
-                    self.resume();
+                    self.progress = position;
+                    if resume {
+                        self.resume()
+                    };
                 }
             }
         }
     }
 
-    pub fn seek_by(&mut self, amount: f64) {
+    pub fn stop(&mut self) {
+        if let Some(ref mut sound_handle) = self.sound_handle {
+            sound_handle.stop(self.tween);
+            self.state = PlayerState::Paused;
+            self.progress = 0.0;
+            self.track = None;
+        }
+    }
+
+    pub fn set_progress(&mut self, progress: f64) {
+        self.progress = progress;
+    }
+
+    pub fn update(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             match self.state {
-                PlayerState::Playing => sound_handle.seek_by(amount),
-                _ => {
-                    sound_handle.seek_by(amount);
-                    self.resume()
+                PlayerState::Playing => {
+                    self.progress = sound_handle.position();
                 }
+                _ => (),
             }
         }
     }

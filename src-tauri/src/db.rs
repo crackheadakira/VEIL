@@ -77,3 +77,12 @@ pub fn data_path() -> String {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.to_str().unwrap().to_string() + "/sodapop-reimagined"
 }
+
+/*
+TODO: Add to Tauri State and improve DB interface
+
+pub fn initialize_pool() -> r2d2::Pool<SqliteConnectionManager> {
+    let manager = SqliteConnectionManager::file(db_path());
+    r2d2::Pool::new(manager).expect("Error creating connection pool")
+}
+*/

@@ -1,10 +1,10 @@
 <template>
-    <div class="flex flex-col text-text gap-8 w-full" v-if="data">
-        <div class="flex items-center p-8 gap-8 bg-card border-stroke-100 border rounded-md">
+    <div class="flex w-full flex-col gap-8 text-text" v-if="data">
+        <div class="flex items-center gap-8 rounded-md border border-stroke-100 bg-card p-8">
             <img class="aspect-square w-64 rounded-md" :src="convertFileSrc(data.album.cover_path)">
 
             <div class="flex flex-col gap-4">
-                <div class="flex flex-col gap-1 select-none cursor-default">
+                <div class="flex cursor-default select-none flex-col gap-1">
                     <p class="font-main-nonbold text-supporting">{{ data.album.album_type }}</p>
                     <h4 class="font-h4 text-text">{{ data.album.name }}</h4>
                     <p class="font-main text-supporting">{{ data.album.artist }}</p>
@@ -16,12 +16,12 @@
 
                 <div class="flex gap-4">
                     <button
-                        class="bg-primary rounded-md text flex justify-center items-center gap-2 text-background aspect-button h-12 duration-150 hover:opacity-90">
+                        class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md bg-primary text-background duration-150 hover:opacity-90">
                         <span class="i-ph-play-fill h-7"></span>
                         <p class="font-main">Play</p>
                     </button>
                     <button
-                        class="bg-background border-stroke-100 border rounded-md text flex justify-center items-center gap-2 text-supporting aspect-button h-12 duration-150 hover:opacity-80">
+                        class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md border border-stroke-100 bg-background text-supporting duration-150 hover:opacity-80">
                         <span class="i-ph-shuffle h-7"></span>
                         <p class="font-main">Shuffle</p>
                     </button>
@@ -29,10 +29,10 @@
             </div>
         </div>
 
-        <div class="flex flex-col bg-card border-stroke-100 border rounded-md" ref="trackList">
-            <div class="flex items-center gap-8 duration-150 px-8 py-4 select-none cursor-pointer hover:opacity-80 contextable"
+        <div class="flex flex-col rounded-md border border-stroke-100 bg-card" ref="trackList">
+            <div class="contextable flex cursor-pointer select-none items-center gap-8 px-8 py-4 hover:opacity-80"
                 v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track, idx)">
-                <p class="font-main text-supporting w-9">{{ idx + 1 }}</p>
+                <p class="font-main w-9 text-supporting">{{ idx + 1 }}</p>
                 <div class="flex-grow">
                     <p class="font-main-nonbold text-text">{{ track.name }}</p>
                     <p class="font-supporting text-supporting">{{ track.artist }}</p>
@@ -42,7 +42,7 @@
         </div>
 
         <div v-if="artist && artist.albums.length">
-            <h5 class=" font-h5 text-text mb-4">More from {{ artist.artist.name }}</h5>
+            <h5 class="font-h5 mb-4 text-text">More from {{ artist.artist.name }}</h5>
             <div class="flex flex-wrap gap-4">
                 <BigCard v-for="album of artist.albums" :data="album.album" />
             </div>
@@ -91,8 +91,8 @@ async function updateData() {
     setCurrentPage(`/album/${artist_id.value}/${album_id.value}`);
 }
 
-function handleNewTrack(track: Tracks, idx: number) {
-    setPlayerTrack(track);
+async function handleNewTrack(track: Tracks, idx: number) {
+    await setPlayerTrack(track);
 
     if (!data.value) return;
     setRecentlyPlayed(data.value.album);
@@ -103,5 +103,6 @@ function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
     await updateData();
+
 })
 </script>

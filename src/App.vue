@@ -12,12 +12,24 @@
 import { useRouter } from 'vue-router';
 import Player from './components/Player.vue';
 import SideBar from './components/SideBar.vue';
+import { commands } from './bindings';
 
 const router = useRouter();
 
-onBeforeMount(() => {
-  localStorage.clear();
+onBeforeMount(async () => {
+  // localStorage.clear(); // FOR TESTING PURPOSES
   const page = getCurrentPage();
   router.push(page);
+
+  const track = getPlayerTrack();
+  const progress = getPlayerProgress();
+  if (track.artist !== "Unknown") {
+    await commands.initializePlayer(track.id, progress);
+  }
+
+
+  setInterval(async () => {
+    await commands.updateProgress();
+  }, 100);
 })
 </script>

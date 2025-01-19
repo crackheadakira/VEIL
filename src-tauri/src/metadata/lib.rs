@@ -1,6 +1,6 @@
-mod error;
 mod flac;
 
+use anyhow::Result;
 use std::{collections::HashMap, path::PathBuf};
 
 use futures::future::join_all;
@@ -48,7 +48,7 @@ impl Metadata {
         Metadata {
             duration: file.stream_info.duration,
             album: get_field_value(&vc.fields, "ALBUM"),
-            artist: get_field_value(&vc.fields, "ARTIST"),
+            artist: get_field_value(&vc.fields, "ALBUMARTIST"),
             name: get_field_value(&vc.fields, "TITLE"),
             file_path: file.file_path,
             album_type: get_field_value(&vc.fields, "ALBUMTYPE"),
@@ -60,7 +60,7 @@ impl Metadata {
         }
     }
 
-    pub fn from_file(path: &std::path::Path) -> error::Result<Metadata> {
+    pub fn from_file(path: &std::path::Path) -> Result<Metadata> {
         let ext = path.extension().unwrap().to_str().unwrap();
 
         match ext {
@@ -68,7 +68,7 @@ impl Metadata {
                 let file = flac::Flac::new(path)?;
                 Ok(Metadata::from_flac(file))
             }
-            _ => Err("Unsupported file type".into()),
+            _ => Err(anyhow::anyhow!("Unsupported file type")),
         }
     }
 
@@ -92,7 +92,7 @@ impl Metadata {
     pub async fn from_files(
         file_paths: &Vec<PathBuf>,
         file_extension: &str,
-    ) -> error::Result<Vec<Metadata>> {
+    ) -> Result<Vec<Metadata>> {
         match file_extension {
             "flac" => {
                 let tasks: Vec<_> = file_paths
@@ -114,7 +114,7 @@ impl Metadata {
                 let metadata: Vec<Metadata> = results.into_iter().collect::<Result<_, _>>()?;
                 Ok(metadata)
             }
-            _ => Err("Unsupported file type".into()),
+            _ => Err(anyhow::anyhow!("Unsupported file type")),
         }
     }
 }

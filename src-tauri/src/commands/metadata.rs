@@ -122,8 +122,27 @@ pub async fn async_metadata(music_folder: String) {
     println!("Async metadata time: {:?}", start.elapsed());
 }
 
+fn sanitize_string(string: &str) -> String {
+    string
+        .replace("/", "")
+        .replace("\\", "")
+        .replace(":", "")
+        .replace("*", "")
+        .replace("?", "")
+        .replace("\"", "")
+        .replace("<", "")
+        .replace(">", "")
+        .replace("|", "")
+}
+
 fn cover_path(artist: &str, album: &str) -> String {
-    data_path().to_string() + "/covers/" + artist + " - " + album + ".jpg"
+    // have to sanitize the artist and album names to avoid issues with file paths
+    data_path().to_string()
+        + "/covers/"
+        + &sanitize_string(artist)
+        + " - "
+        + &sanitize_string(album)
+        + ".jpg"
 }
 
 pub fn write_cover(file: &str, music_folder: &str) {
