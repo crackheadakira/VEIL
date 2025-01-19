@@ -14,7 +14,7 @@ pub fn get_all_playlists() -> Vec<Playlists> {
     }
 }
 
-pub fn new_playlist(playlist: Playlists) -> i32 {
+pub fn new_playlist(playlist: Playlists) -> u32 {
     let conn = db_connect();
     conn.execute(
         "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
@@ -22,10 +22,10 @@ pub fn new_playlist(playlist: Playlists) -> i32 {
     )
     .expect("Error inserting new playlist");
 
-    conn.last_insert_rowid() as i32
+    conn.last_insert_rowid() as u32
 }
 
-fn get_playlist_by_id(id: &i32) -> Playlists {
+fn get_playlist_by_id(id: &u32) -> Playlists {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("SELECT * FROM playlists WHERE id = ?1")
@@ -38,7 +38,7 @@ fn get_playlist_by_id(id: &i32) -> Playlists {
     }
 }
 
-pub fn get_playlist_with_tracks(playlist_id: &i32) -> PlaylistWithTracks {
+pub fn get_playlist_with_tracks(playlist_id: &u32) -> PlaylistWithTracks {
     let playlist = get_playlist_by_id(playlist_id);
     let conn = db_connect();
     let mut stmt = conn
@@ -69,7 +69,7 @@ pub fn update_playlist(playlist: &Playlists) {
     .expect("Error updating playlist");
 }
 
-pub fn insert_track_to_playlist(playlist_id: &i32, track_id: &i32) {
+pub fn insert_track_to_playlist(playlist_id: &u32, track_id: &u32) {
     let conn = db_connect();
     conn.execute(
         "INSERT INTO playlist_tracks (playlists_id, tracks_id) VALUES (?1, ?2)",
@@ -78,7 +78,7 @@ pub fn insert_track_to_playlist(playlist_id: &i32, track_id: &i32) {
     .expect("Error inserting track to playlist");
 }
 
-pub fn delete_playlist(id: &i32) {
+pub fn delete_playlist(id: &u32) {
     let conn = db_connect();
     conn.execute("DELETE FROM playlists WHERE id = ?1", [id])
         .expect("Error deleting playlist");

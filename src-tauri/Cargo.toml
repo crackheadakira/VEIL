@@ -11,6 +11,7 @@ edition = "2021"
 tauri-build = { version = "2.0.0-beta", features = [] }
 
 [dependencies]
+byteorder = "1.5.0"
 tauri = { version = "2.0.0-beta", features = ["protocol-asset"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -20,6 +21,7 @@ tauri-plugin-fs = { git = "https://github.com/tauri-apps/plugins-workspace", bra
 audiotags = "0.5.0"
 axum = "0.6.19"
 tokio = { version = "1.29.1", features = ["full"] }
+futures = "0.3"
 tower-http = { version = "0.4.3", features = ["fs", "cors"] }
 dirs = "5.0.1"
 rusqlite = { version = "0.31.0", features = ["bundled"] }
@@ -29,3 +31,7 @@ r2d2 = "0.8.10"
 lazy_static = "1.4.0"
 specta = "=2.0.0-rc.12"
 tauri-specta = { version = "=2.0.0-rc.9", features = ["typescript"] }
+
+[lib]
+name = "audio_metadata"
+path = "src/metadata/lib.rs"

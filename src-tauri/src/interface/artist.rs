@@ -16,7 +16,7 @@ pub fn all_artists() -> Vec<Artists> {
     }
 }
 
-pub fn artist_albums_length(artist_id: &i32) -> i32 {
+pub fn artist_albums_length(artist_id: &u32) -> u32 {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -45,7 +45,7 @@ pub fn artist_by_name(name: &str) -> Option<Artists> {
     }
 }
 
-pub fn artist_by_id(id: &i32) -> Artists {
+pub fn artist_by_id(id: &u32) -> Artists {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -56,7 +56,7 @@ pub fn artist_by_id(id: &i32) -> Artists {
     result.unwrap()
 }
 
-pub fn artist_with_albums(id: &i32) -> ArtistWithAlbums {
+pub fn artist_with_albums(id: &u32) -> ArtistWithAlbums {
     let artist = artist_by_id(id);
     let albums = album_by_artist_id(id);
 
@@ -71,18 +71,18 @@ pub fn artist_with_albums(id: &i32) -> ArtistWithAlbums {
     }
 }
 
-pub fn new_artist(artist: &str, path: &str) -> i32 {
+pub fn new_artist(artist: &str, path: &str) -> u32 {
     let conn = db_connect();
     let stmt = conn.prepare_cached("INSERT INTO artists (name, path) VALUES (?1, ?2)");
     let result = stmt.unwrap().execute((artist, path));
 
     match result {
-        Ok(_) => conn.last_insert_rowid() as i32,
+        Ok(_) => conn.last_insert_rowid() as u32,
         Err(e) => panic!("Error inserting artist: {}", e),
     }
 }
 
-pub fn delete_artist(artist_id: &i32) {
+pub fn delete_artist(artist_id: &u32) {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("DELETE FROM artists WHERE ID = ?1 OR name = ?1 OR path = ?1")

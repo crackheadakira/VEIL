@@ -5,6 +5,8 @@ use crate::{first_time_metadata, get_album_path};
 use std::fs;
 use tauri_plugin_dialog::DialogExt;
 
+use std::path::PathBuf;
+
 #[tauri::command]
 #[specta::specta]
 pub async fn select_music_folder(app: tauri::AppHandle) {
@@ -15,10 +17,12 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         .blocking_pick_folder();
 
     if let Some(path) = file_path {
-        let mut all_paths = recursive_dir(path.to_str().unwrap());
+        let mut all_paths = recursive_dir_to_strings(&path);
         all_paths.sort();
 
+        let start = std::time::Instant::now();
         first_time_metadata(&all_paths, path.to_str().unwrap());
+        println!("First time metadata read time: {:?}", start.elapsed());
 
         let db_paths = get_all_tracks_path();
 
@@ -40,49 +44,44 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
                 update_album_type(&album.id, &album_type, &duration);
             }
         }
+
+        println!("Finished indexing: {:?}", start.elapsed());
     }
 }
 
-fn recursive(path: &str) -> Vec<String> {
+pub fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
     let paths = fs::read_dir(path).unwrap();
     let mut tracks = Vec::new();
+
     for path in paths {
         let path = path.unwrap().path();
         if path.is_dir() {
-            tracks.append(&mut recursive(path.to_str().unwrap()));
+            tracks.extend(recursive_dir(&path));
         } else {
             let extension = path.extension().unwrap();
             if extension != "mp3" && extension != "flac" && extension != "m4a" {
                 continue;
             }
-            tracks.push(path.display().to_string());
+
+            tracks.push(path); // Return PathBuf directly
         }
     }
+
     tracks
 }
 
-pub fn recursive_dir(path: &str) -> Vec<String> {
-    let paths = fs::read_dir(path).unwrap();
-    let mut tracks = Vec::new();
-    for path in paths {
-        let path = path.unwrap().path();
-        if path.is_dir() {
-            tracks.append(&mut recursive(path.to_str().unwrap()));
-        } else {
-            let extension = path.extension().unwrap();
-            if extension != "mp3" && extension != "flac" && extension != "m4a" {
-                continue;
-            }
-            tracks.push(path.display().to_string());
-        }
-    }
-    tracks
+pub fn recursive_dir_to_strings(path: &PathBuf) -> Vec<String> {
+    let paths = recursive_dir(path);
+    paths
+        .into_iter()
+        .map(|path| path.display().to_string())
+        .collect()
 }
 
 // Singles are less than 3 tracks and 30 minutes,
 // EPs are up to 6 tracks and 30 minutes,
 // LPs/Albums are more than 6 tracks and 30 minutes.
-fn get_album_type(tracks: i32, duration: i32) -> String {
+fn get_album_type(tracks: u32, duration: u32) -> String {
     if tracks < 3 && duration < 1800 {
         "Single".to_string()
     } else if tracks <= 6 && duration < 1800 {

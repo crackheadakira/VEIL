@@ -17,7 +17,7 @@ pub fn all_albums() -> Vec<Albums> {
 }
 
 /// This returns an option due to it's usage in metadata.rs
-pub fn spec_album_by_artist_id(album_name: &str, artist_id: &i32) -> Option<Albums> {
+pub fn spec_album_by_artist_id(album_name: &str, artist_id: &u32) -> Option<Albums> {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -32,7 +32,7 @@ pub fn spec_album_by_artist_id(album_name: &str, artist_id: &i32) -> Option<Albu
     }
 }
 
-pub fn album_by_artist_id(artist_id: &i32) -> Vec<Albums> {
+pub fn album_by_artist_id(artist_id: &u32) -> Vec<Albums> {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -47,7 +47,7 @@ pub fn album_by_artist_id(artist_id: &i32) -> Vec<Albums> {
     result
 }
 
-pub fn album_by_id(album_id: &i32) -> Albums {
+pub fn album_by_id(album_id: &u32) -> Albums {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -58,7 +58,7 @@ pub fn album_by_id(album_id: &i32) -> Albums {
     result.unwrap()
 }
 
-pub fn get_album_duration(album_id: &i32) -> (i32, i32) {
+pub fn get_album_duration(album_id: &u32) -> (u32, u32) {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -84,7 +84,7 @@ pub fn album_by_path(album_path: &str) -> Albums {
     result.unwrap()
 }
 
-pub fn album_with_tracks(album_id: &i32) -> AlbumWithTracks {
+pub fn album_with_tracks(album_id: &u32) -> AlbumWithTracks {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -101,7 +101,7 @@ pub fn album_with_tracks(album_id: &i32) -> AlbumWithTracks {
     AlbumWithTracks { album, tracks }
 }
 
-pub fn album_tracks_length(album_id: &i32) -> i32 {
+pub fn album_tracks_length(album_id: &u32) -> u32 {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -115,7 +115,7 @@ pub fn album_tracks_length(album_id: &i32) -> i32 {
     }
 }
 
-pub fn new_album(album: Albums) -> i32 {
+pub fn new_album(album: Albums) -> u32 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
         "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
@@ -133,12 +133,12 @@ pub fn new_album(album: Albums) -> i32 {
     ));
 
     match result {
-        Ok(_) => conn.last_insert_rowid() as i32,
+        Ok(_) => conn.last_insert_rowid() as u32,
         Err(e) => panic!("Error inserting album: {}", e),
     }
 }
 
-pub fn update_album_type(album_id: &i32, album_type: &str, duration_count: &(i32, i32)) {
+pub fn update_album_type(album_id: &u32, album_type: &str, duration_count: &(u32, u32)) {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("UPDATE albums SET type = ?1, duration = ?2, track_count = ?3 WHERE ID = ?4")
@@ -151,7 +151,7 @@ pub fn update_album_type(album_id: &i32, album_type: &str, duration_count: &(i32
     }
 }
 
-pub fn delete_album(album_id: &i32) {
+pub fn delete_album(album_id: &u32) {
     let conn = db_connect();
     let mut stmt = conn
         .prepare("DELETE FROM albums WHERE ID = ?1 OR path = ?1")

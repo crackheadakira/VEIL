@@ -26,7 +26,7 @@ pub fn get_all_tracks_path() -> Vec<String> {
     }
 }
 
-pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
+pub fn track_by_album_id(track_name: &str, album_id: &u32) -> Option<Tracks> {
     let conn = db_connect();
 
     let mut stmt = conn
@@ -41,7 +41,7 @@ pub fn track_by_album_id(track_name: &str, album_id: &i32) -> Option<Tracks> {
     }
 }
 
-pub fn get_track_by_id(track_id: &i32) -> Tracks {
+pub fn get_track_by_id(track_id: &u32) -> Tracks {
     let conn = db_connect();
 
     let mut stmt = conn.prepare("SELECT * FROM tracks WHERE id = ?1").unwrap();
@@ -53,7 +53,7 @@ pub fn get_track_by_id(track_id: &i32) -> Tracks {
     }
 }
 
-pub fn new_track(track: Tracks) -> i64 {
+pub fn new_track(track: Tracks) -> u32 {
     let conn = db_connect();
     let stmt = conn.prepare_cached(
         "INSERT INTO tracks (duration, album, albums_id, artist, artists_id, name, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
@@ -70,7 +70,7 @@ pub fn new_track(track: Tracks) -> i64 {
     ));
 
     match result {
-        Ok(_) => conn.last_insert_rowid(),
+        Ok(_) => conn.last_insert_rowid() as u32,
         Err(e) => panic!("Error inserting track: {}", e),
     }
 }

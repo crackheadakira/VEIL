@@ -25,13 +25,13 @@ pub fn get_sqlite() -> String {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_album_with_tracks(id: i32) -> AlbumWithTracks {
+pub fn get_album_with_tracks(id: u32) -> AlbumWithTracks {
     album_with_tracks(&id)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn track_by_id(id: i32) -> Tracks {
+pub fn track_by_id(id: u32) -> Tracks {
     get_track_by_id(&id)
 }
 
@@ -43,6 +43,6 @@ pub fn get_all_albums() -> Vec<Albums> {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_artist_with_albums(id: i32) -> ArtistWithAlbums {
+pub fn get_artist_with_albums(id: u32) -> ArtistWithAlbums {
     artist_with_albums(&id)
 }
