@@ -68,19 +68,10 @@ export function setPlayerProgress(progress: number) {
 
 }
 
-export function getPlayerTrack(): Tracks {
+export function getPlayerTrack(): Tracks | null {
     const track = localStorage.getItem("playerTrack");
-    return track ? JSON.parse(track) : {
-        cover_path: "/placeholder.png",
-        id: 0,
-        duration: 0,
-        album: "Unknown",
-        albums_id: 0,
-        artist: "Unknown",
-        artists_id: 0,
-        name: "Unknown",
-        path: ""
-    };
+    if (track) return JSON.parse(track);
+    else return null;
 }
 
 export async function skipTrack(forward: boolean) {
@@ -153,6 +144,8 @@ export function shuffleQueue() {
 
     const queue = getQueue();
     const track = getPlayerTrack();
+    if (!track) return;
+
     const index = queue.findIndex((t) => t.id === track.id);
 
     if (index === -1) return;

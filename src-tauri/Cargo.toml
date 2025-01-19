@@ -40,6 +40,7 @@ tauri-plugin-fs = "2.2.0"
 specta = "2.0.0-rc.21"
 specta-typescript = "0.0.9"
 tauri-specta = { version = "2.0.0-rc.21", features = ["typescript"] }
+tauri-plugin-log = "2"
 
 [lib]
 name = "audio_metadata"

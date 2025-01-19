@@ -1,6 +1,6 @@
 <template>
     <div class="flex aspect-player w-screen items-center justify-center gap-8 border-t border-stroke-100 bg-card p-3 text-text"
-        v-if="music.path !== ''">
+        v-if="music">
 
         <div class="flex w-1/5 items-center gap-5">
             <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
@@ -101,7 +101,7 @@ async function handleVolume() {
 }
 
 async function handlePlayAndPause() {
-    if (!await commands.playerHasTrack()) {
+    if (!await commands.playerHasTrack() && music.value) {
         await commands.playTrack(music.value.id);
         paused.value = false;
         return;
@@ -128,6 +128,7 @@ function handleLoop() {
 }
 
 async function handleSongEnd() {
+    if (!music.value) return;
     // to let the song fully end as we emit slightly before the song ends
     while (!(await commands.playerHasEnded())) {
         await new Promise((resolve) => setTimeout(resolve, 100));

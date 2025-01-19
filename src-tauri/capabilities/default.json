@@ -13,6 +13,7 @@
         "$LOCALDATA/sodapop-reimagined/*"
       ]
     },
-    "fs:allow-exists"
+    "fs:allow-exists",
+    "log:default"
   ]
 }

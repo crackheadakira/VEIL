@@ -17,13 +17,18 @@ import { commands } from './bindings';
 const router = useRouter();
 
 onBeforeMount(async () => {
-  // localStorage.clear(); // FOR TESTING PURPOSES
+  const allAlbums = await commands.getAllAlbums();
+  if (allAlbums.length === 0) {
+    localStorage.clear();
+  }
+
   const page = getCurrentPage();
   router.push(page);
 
+
   const track = getPlayerTrack();
   const progress = getPlayerProgress();
-  if (track.artist !== "Unknown") {
+  if (track) {
     await commands.initializePlayer(track.id, progress);
   }
 
