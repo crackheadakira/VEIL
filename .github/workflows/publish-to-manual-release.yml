@@ -1,11 +1,7 @@
 name: "publish"
 
 on:
-    workflow_dispatch: {}
-
-# `tauri-action` can also upload app bundles to an existing GitHub release.
-# This workflow uses different actions to create and publish the release.
-# `tauri-action` will only build and upload the app bundles to the specified release.
+  workflow_dispatch: {}
 
 jobs:
   create-release:
@@ -50,7 +46,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "ubuntu-22.04" # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: "ubuntu-22.04"
+            args: ""
+          - platform: "macos-latest"
+            args: ""
+          - platform: "windows-latest"
             args: ""
 
     runs-on: ${{ matrix.platform }}
@@ -65,19 +65,17 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          # Only needed for macOS builds
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libasound2-dev
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
       - name: install frontend dependencies
-        run: bun install # change this to npm, pnpm or bun depending on which one you use.
+        run: bun install
 
       - uses: tauri-apps/tauri-action@v0
         env:
@@ -85,3 +83,12 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
+        
+      - uses: actions/upload-artifact@v4
+        if: matrix.platform == 'ubuntu-22.04'
+        with:
+          name: binaries-linux
+          path: |
+            ${{ github.workspace }}/src-tauri/target/release/bundle/**/*.deb
+            ${{ github.workspace }}/src-tauri/target/release/bundle/**/*.rpm
+            ${{ github.workspace }}/src-tauri/target/release/bundle/**/*.AppImage
