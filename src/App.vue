@@ -16,7 +16,7 @@ import SideBar from './components/SideBar.vue';
 const router = useRouter();
 
 onBeforeMount(() => {
-  // localStorage.clear();
+  localStorage.clear();
   const page = getCurrentPage();
   router.push(page);
 })

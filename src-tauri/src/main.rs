@@ -15,6 +15,7 @@ mod commands;
 mod db;
 mod interface;
 mod models;
+mod player;
 
 use commands::metadata::*;
 use commands::music_folder::*;
@@ -35,16 +36,6 @@ async fn main() {
         track_by_id,
         async_metadata,
     ]);
-    /*let builder = ts::builder().commands(collect_commands![
-        read_metadata,
-        select_music_folder,
-        get_sqlite,
-        get_album_with_tracks,
-        get_artist_with_albums,
-        get_all_albums,
-        track_by_id,
-        async_metadata,
-    ]);*/
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     builder
