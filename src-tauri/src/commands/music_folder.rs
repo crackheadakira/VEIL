@@ -17,6 +17,7 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         .blocking_pick_folder();
 
     if let Some(path) = file_path {
+        let path = path.try_into().unwrap();
         let mut all_paths = recursive_dir_to_strings(&path);
         all_paths.sort();
 

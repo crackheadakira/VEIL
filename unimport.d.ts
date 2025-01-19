@@ -44,6 +44,7 @@ declare global {
   const onServerPrefetch: typeof import('vue')['onServerPrefetch']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
+  const onWatcherCleanup: typeof import('vue')['onWatcherCleanup']
   const placeholderIfEmpty: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['placeholderIfEmpty']
   const provide: typeof import('vue')['provide']
   const reactive: typeof import('vue')['reactive']
@@ -74,7 +75,10 @@ declare global {
   const useAttrs: typeof import('vue')['useAttrs']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useId: typeof import('vue')['useId']
+  const useModel: typeof import('vue')['useModel']
   const useSlots: typeof import('vue')['useSlots']
+  const useTemplateRef: typeof import('vue')['useTemplateRef']
   const watch: typeof import('vue')['watch']
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
@@ -83,7 +87,7 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { Component, ComponentPublicInstance, ComputedRef, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, VNode, WritableComputedRef } from 'vue'
+  export type { Component, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
 }
 // for vue template auto import
@@ -134,6 +138,7 @@ declare module 'vue' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
+    readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
     readonly placeholderIfEmpty: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['placeholderIfEmpty']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
@@ -164,90 +169,10 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
-    readonly watch: UnwrapRef<typeof import('vue')['watch']>
-    readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
-    readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
-    readonly watchSyncEffect: UnwrapRef<typeof import('vue')['watchSyncEffect']>
-  }
-}
-declare module '@vue/runtime-core' {
-  interface ComponentCustomProperties {
-    readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
-    readonly addToPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['addToPersonalQueue']>
-    readonly computed: UnwrapRef<typeof import('vue')['computed']>
-    readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
-    readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
-    readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
-    readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
-    readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
-    readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
-    readonly getCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getCurrentPage']>
-    readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
-    readonly getLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getLoop']>
-    readonly getPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPersonalQueue']>
-    readonly getPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerProgress']>
-    readonly getPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerTrack']>
-    readonly getPlayerVolume: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getPlayerVolume']>
-    readonly getQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getQueue']>
-    readonly getQueueIndex: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getQueueIndex']>
-    readonly getRecentlyPlayed: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['getRecentlyPlayed']>
-    readonly h: UnwrapRef<typeof import('vue')['h']>
-    readonly inject: UnwrapRef<typeof import('vue')['inject']>
-    readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
-    readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
-    readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
-    readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
-    readonly isShuffled: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['isShuffled']>
-    readonly loopQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['loopQueue']>
-    readonly makeReadableTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeReadableTime']>
-    readonly makeTime: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['makeTime']>
-    readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
-    readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
-    readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
-    readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
-    readonly onBeforeUnmount: UnwrapRef<typeof import('vue')['onBeforeUnmount']>
-    readonly onBeforeUpdate: UnwrapRef<typeof import('vue')['onBeforeUpdate']>
-    readonly onDeactivated: UnwrapRef<typeof import('vue')['onDeactivated']>
-    readonly onErrorCaptured: UnwrapRef<typeof import('vue')['onErrorCaptured']>
-    readonly onMounted: UnwrapRef<typeof import('vue')['onMounted']>
-    readonly onRenderTracked: UnwrapRef<typeof import('vue')['onRenderTracked']>
-    readonly onRenderTriggered: UnwrapRef<typeof import('vue')['onRenderTriggered']>
-    readonly onScopeDispose: UnwrapRef<typeof import('vue')['onScopeDispose']>
-    readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
-    readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
-    readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
-    readonly placeholderIfEmpty: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['placeholderIfEmpty']>
-    readonly provide: UnwrapRef<typeof import('vue')['provide']>
-    readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
-    readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
-    readonly ref: UnwrapRef<typeof import('vue')['ref']>
-    readonly resetStore: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['resetStore']>
-    readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly setCurrentPage: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setCurrentPage']>
-    readonly setLoop: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setLoop']>
-    readonly setPersonalQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPersonalQueue']>
-    readonly setPlayerProgress: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerProgress']>
-    readonly setPlayerTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerTrack']>
-    readonly setPlayerVolume: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setPlayerVolume']>
-    readonly setQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setQueue']>
-    readonly setQueueIndex: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setQueueIndex']>
-    readonly setRecentlyPlayed: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['setRecentlyPlayed']>
-    readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
-    readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
-    readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
-    readonly shuffleQueue: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['shuffleQueue']>
-    readonly skipTrack: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/store')['skipTrack']>
-    readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
-    readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
-    readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
-    readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
-    readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
-    readonly unref: UnwrapRef<typeof import('vue')['unref']>
-    readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
-    readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
-    readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
-    readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

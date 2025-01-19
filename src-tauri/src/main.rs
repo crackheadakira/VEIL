@@ -1,15 +1,15 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use axum::{
-    http::{HeaderValue, Method},
-    Router,
-};
-use tower_http::cors::CorsLayer;
+use axum::{http, routing::get, serve, Router};
+use tauri_specta::collect_commands;
+use tokio::net::TcpListener;
+use tower_http::cors;
 use tower_http::services::ServeDir;
 
+use specta_typescript::Typescript;
 use tauri_plugin_fs::FsExt;
-use tauri_specta::*;
+use tauri_specta::Builder;
 
 mod commands;
 mod db;
@@ -25,44 +25,57 @@ use std::path::Path;
 
 #[tokio::main]
 async fn main() {
-    let invoke_handler = {
-        let builder = ts::builder().commands(collect_commands![
-            read_metadata,
-            select_music_folder,
-            get_sqlite,
-            get_album_with_tracks,
-            get_artist_with_albums,
-            get_all_albums,
-            track_by_id,
-            async_metadata,
-        ]);
+    let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+        read_metadata,
+        select_music_folder,
+        get_sqlite,
+        get_album_with_tracks,
+        get_artist_with_albums,
+        get_all_albums,
+        track_by_id,
+        async_metadata,
+    ]);
+    /*let builder = ts::builder().commands(collect_commands![
+        read_metadata,
+        select_music_folder,
+        get_sqlite,
+        get_album_with_tracks,
+        get_artist_with_albums,
+        get_all_albums,
+        track_by_id,
+        async_metadata,
+    ]);*/
 
-        #[cfg(debug_assertions)] // <- Only export on non-release builds
-        let builder = builder.path("../src/bindings.ts");
-
-        builder.build().unwrap()
-    };
+    #[cfg(debug_assertions)] // <- Only export on non-release builds
+    builder
+        .export(Typescript::default(), "../src/bindings.ts")
+        .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
-        .invoke_handler(invoke_handler)
+        .invoke_handler(builder.invoke_handler())
         .setup(|app| {
             #[cfg(target_os = "linux")]
             tokio::spawn(async move {
                 let serve_dir = ServeDir::new("/");
 
-                let axum_app = Router::new().nest_service("/", serve_dir).layer(
-                    CorsLayer::new()
-                        .allow_origin("*".parse::<HeaderValue>().unwrap())
-                        .allow_methods([Method::GET]),
-                );
+                let app = Router::new()
+                    .route("/health", get(|| async { "Server is running" }))
+                    .layer(
+                        cors::CorsLayer::new()
+                            .allow_origin(cors::Any)
+                            .allow_methods([http::Method::GET]),
+                    )
+                    .fallback_service(serve_dir);
 
-                axum::Server::bind(&"127.0.0.1:16780".parse().unwrap())
-                    .serve(axum_app.into_make_service())
+                let listener = TcpListener::bind("127.0.0.1:16780")
                     .await
-                    .unwrap();
+                    .expect("Error binding to port");
+
+                serve(listener, app)
+                    .await
+                    .expect("Error initializing server");
             });
 
             let data = db::data_path();
@@ -78,7 +91,9 @@ async fn main() {
             db::init();
 
             let scope = app.fs_scope();
-            scope.allow_directory(data, true);
+            if let Err(e) = scope.allow_directory(data, true) {
+                eprintln!("Error allowing directory: {}", e);
+            }
 
             Ok(())
         })

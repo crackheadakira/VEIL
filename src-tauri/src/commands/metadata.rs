@@ -72,7 +72,6 @@ pub async fn async_metadata(music_folder: String) {
     println!("Async metadata read time: {:?}", start.elapsed());
 
     for metadata in metadatas.unwrap() {
-        let metadata = metadata;
         let artist = artist_by_name(&metadata.artist);
 
         let artist_id = if let Some(artist) = artist {

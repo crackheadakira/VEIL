@@ -1,6 +1,6 @@
 <template>
     <div class="flex gap-1">
-        <button class="p-2 border font-supporting bg-card border-stroke-100 rounded-md" @click="openDialog">Select
+        <button class="font-supporting rounded-md border border-stroke-100 bg-card p-2" @click="openDialog">Select
             music folder</button>
     </div>
 </template>
@@ -12,6 +12,7 @@ const musicLoaded = ref(false);
 
 async function openDialog() {
     await commands.selectMusicFolder();
+    // await commands.asyncMetadata("/run/media/akira/3TB/music");
     musicLoaded.value = true;
 }
 </script>

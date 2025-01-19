@@ -1,10 +1,10 @@
 <template>
-  <div class="flex flex-col justify-between bg-background min-h-screen">
+  <div class="flex min-h-screen flex-col justify-between bg-background">
     <div class="flex items-stretch">
-      <SideBar class="w-72 fixed h-lvh z-40 top-0 left-0 self-start" />
-      <RouterView class="ml-72 p-16 overflow-scroll" />
+      <SideBar class="fixed left-0 top-0 z-40 h-lvh w-72 self-start" />
+      <RouterView class="ml-72 overflow-scroll p-16" />
     </div>
-    <Player class="bottom-0 sticky z-50" />
+    <Player class="sticky bottom-0 z-50" />
   </div>
 </template>
 
@@ -16,6 +16,7 @@ import SideBar from './components/SideBar.vue';
 const router = useRouter();
 
 onBeforeMount(() => {
+  // localStorage.clear();
   const page = getCurrentPage();
   router.push(page);
 })
