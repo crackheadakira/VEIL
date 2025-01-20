@@ -30,7 +30,7 @@
         </div>
 
         <div class="flex flex-col rounded-md border border-stroke-100 bg-card" ref="trackList">
-            <div class="contextable flex cursor-pointer select-none items-center gap-8 px-8 py-4 hover:opacity-80"
+            <div class="contextable flex cursor-pointer select-none items-center gap-8 px-8 py-4 duration-75 hover:bg-background"
                 v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track, idx)">
                 <p class="font-main w-9 text-supporting">{{ idx + 1 }}</p>
                 <div class="flex-grow">

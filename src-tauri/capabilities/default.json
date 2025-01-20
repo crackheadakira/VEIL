@@ -3,7 +3,7 @@
   "identifier": "default",
   "description": "Capability for the sodapop-reimagined window",
   "windows": [
-    "sodapop-reimagined"
+    "Sodapop-Reimagined"
   ],
   "permissions": [
     "core:default",

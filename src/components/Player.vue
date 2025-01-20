@@ -3,37 +3,32 @@
         v-if="music">
 
         <div class="flex w-1/5 items-center gap-5">
-            <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"
-                :src="convertFileSrc(music.cover_path)" alt="Album Cover">
+            <img class="aspect-square w-20 rounded-md group-hover:opacity-90" :src="convertFileSrc(music.cover_path)"
+                alt="Album Cover">
             <div class="flex flex-col gap-1 truncate">
                 <RouterLink :to="{ name: 'album', params: { artist_id: music.artists_id, album_id: music.albums_id } }">
-                    <p class="font-main-nonbold cursor-pointer truncate text-text duration-150 hover:text-placeholder">
-                        {{
-                            music.name
-                        }}
+                    <p class="font-main-nonbold cursor-pointer truncate text-text hover:text-placeholder">
+                        {{ music.name }}
                     </p>
                 </RouterLink>
-                <p class="font-supporting cursor-pointer truncate text-supporting duration-150 hover:opacity-85">{{
-                    music.artist
-                }}</p>
+                <p class="font-supporting cursor-pointer truncate text-supporting hover:opacity-85">
+                    {{ music.artist }}
+                </p>
             </div>
         </div>
 
         <div class="flex gap-2">
-            <span :class="shuffled ? 'text-primary' : ''"
-                class="i-ph-shuffle-bold w-6 cursor-pointer duration-150 hover:opacity-90"
+            <span :class="shuffled ? 'text-primary' : ''" class="i-ph-shuffle-bold w-6 cursor-pointer hover:opacity-90"
                 @click=handleShuffle()></span>
-            <span class="i-ph-skip-back-fill w-6 cursor-pointer duration-150 hover:opacity-90"
-                @click="skipTrack(false)"></span>
+            <span class="i-ph-skip-back-fill w-6 cursor-pointer hover:opacity-90" @click="skipTrack(false)"></span>
             <div @click="handlePlayAndPause">
-                <span v-if="!paused" class="i-ph-pause-fill w-7 cursor-pointer duration-150 hover:opacity-90"></span>
-                <span v-else class="i-ph-play-fill w-7 cursor-pointer duration-150 hover:opacity-90"></span>
+                <span v-if="!paused" class="i-ph-pause-fill w-7 cursor-pointer hover:opacity-90"></span>
+                <span v-else class="i-ph-play-fill w-7 cursor-pointer hover:opacity-90"></span>
             </div>
-            <span class="i-ph-skip-forward-fill w-6 cursor-pointer duration-150 hover:opacity-90"
-                @click="skipTrack(true)"></span>
+            <span class="i-ph-skip-forward-fill w-6 cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
             <span @click=handleLoop
                 :class="(loop === 'queue' ? 'text-primary' : '') || (loop === 'track' ? 'text-primary opacity-75' : '')"
-                class="i-ph-repeat-bold w-6 cursor-pointer duration-150 hover:opacity-90"></span>
+                class="i-ph-repeat-bold w-6 cursor-pointer hover:opacity-90"></span>
         </div>
 
         <div class="font-supporting flex flex-grow select-none items-center gap-4 text-supporting">
@@ -45,8 +40,8 @@
         </div>
 
         <div class="flex items-center gap-4">
-            <span class="w-18 i-mingcute-volume-fill cursor-pointer duration-150 hover:text-placeholder"></span>
-            <input @input="handleVolume()" type="range" ref="volumeBar" min="-30" max="10" value="1" step="0.5"
+            <span class="w-18 i-mingcute-volume-fill cursor-pointer hover:text-placeholder"></span>
+            <input @input="handleVolume()" type="range" ref="volumeBar" min="-30" max="1.2" value="1" step="0.5"
                 class="h-1.5 w-full rounded-lg bg-stroke-100 accent-placeholder focus:ring-0">
         </div>
 
