@@ -6,3 +6,4 @@
 ### In Progress 
 
 ### Done
+- [x] Improve the database code (pool)

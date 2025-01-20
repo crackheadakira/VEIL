@@ -1,6 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-use tauri::Manager;
+
 use tauri_specta::collect_commands;
 
 use specta_typescript::Typescript;
@@ -9,7 +9,6 @@ use tauri_specta::Builder;
 
 mod commands;
 mod db;
-mod interface;
 mod models;
 mod player;
 
@@ -68,18 +67,11 @@ async fn main() {
         }))
         .setup(|app| {
             let data_path = db::data_path();
-            if !Path::new(&data_path).exists() {
-                create_dir(&data_path).expect("Error creating data directory");
-            }
 
             let covers = data_path.clone() + "/covers";
             if !Path::new(&covers).exists() {
                 create_dir(covers).expect("Error creating covers directory")
             }
-
-            let binding = app.state::<Mutex<SodapopState>>();
-            let mut state_guard = binding.lock().unwrap();
-            state_guard.db.init();
 
             let scope = app.fs_scope();
             if let Err(e) = scope.allow_directory(data_path, true) {

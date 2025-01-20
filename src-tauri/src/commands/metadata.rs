@@ -4,10 +4,8 @@ use audio_metadata::Metadata;
 use audiotags::{traits::*, Id3v2Tag, Mp4Tag};
 
 use crate::{
-    db::data_path,
-    interface::{album::*, artist::*, track::*},
+    db::{data_path, Database},
     models::{Albums, Tracks},
-    recursive_dir,
 };
 
 #[tauri::command]
@@ -124,16 +122,7 @@ pub async fn async_metadata(music_folder: String) {
 }*/
 
 fn sanitize_string(string: &str) -> String {
-    string
-        .replace("/", "")
-        .replace("\\", "")
-        .replace(":", "")
-        .replace("*", "")
-        .replace("?", "")
-        .replace("\"", "")
-        .replace("<", "")
-        .replace(">", "")
-        .replace("|", "")
+    string.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
 }
 
 fn cover_path(artist: &str, album: &str) -> String {
@@ -208,26 +197,26 @@ fn find_folder_cover(cover_path: &str, path: &str, music_folder: &str) {
     }
 }
 
-pub fn first_time_metadata(files: &[String], music_folder: &str) {
+pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) {
     files.iter().for_each(|file| {
         let metadata = read_metadata(file.to_string());
-        let artist = artist_by_name(&metadata.artist);
+        let artist = &db.artist_by_name(&metadata.artist);
 
         let artist_id = if let Some(artist) = artist {
             artist.id
         } else {
             let artist_path = get_artist_path(music_folder, &metadata.file_path);
-            new_artist(&metadata.artist, &artist_path)
+            db.new_artist(&metadata.artist, &artist_path)
         };
 
-        let album = spec_album_by_artist_id(&metadata.album, &artist_id);
+        let album = &db.spec_album_by_artist_id(&metadata.album, &artist_id);
         let cover_path = cover_path(&metadata.artist, &metadata.album);
 
         let album_id = if let Some(album) = album {
             album.id
         } else {
             write_cover(file, music_folder);
-            new_album(Albums {
+            db.new_album(Albums {
                 id: 0,
                 artists_id: artist_id,
                 artist: metadata.artist.clone(),
@@ -241,10 +230,10 @@ pub fn first_time_metadata(files: &[String], music_folder: &str) {
             })
         };
 
-        let track = track_by_album_id(&metadata.name, &album_id);
+        let track = &db.track_by_album_id(&metadata.name, &album_id);
 
         if track.is_none() {
-            new_track(Tracks {
+            db.new_track(Tracks {
                 id: 0,
                 duration: metadata.duration.round() as u32,
                 album: metadata.album.clone(),

@@ -12,7 +12,8 @@ pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
         state_guard.player.stop();
     };
 
-    let _ = state_guard.player.play(track_id);
+    let track = state_guard.db.get_track_by_id(&track_id);
+    let _ = state_guard.player.play(track);
 }
 
 #[tauri::command]
@@ -91,13 +92,10 @@ pub fn update_progress(app: AppHandle) {
     let state = app.state::<Mutex<SodapopState>>();
     let mut state_guard = state.lock().unwrap();
 
-    match state_guard.player.state {
-        PlayerState::Playing => {
-            state_guard.player.update();
-            app.emit("player-progress", state_guard.player.progress)
-                .unwrap();
-        }
-        _ => (),
+    if let PlayerState::Playing = state_guard.player.state {
+        state_guard.player.update();
+        app.emit("player-progress", state_guard.player.progress)
+            .unwrap();
     };
 
     if state_guard.player.progress >= (state_guard.player.duration - 0.2) as f64 {
@@ -109,7 +107,8 @@ pub fn update_progress(app: AppHandle) {
 #[specta::specta]
 pub fn initialize_player(track_id: u32, progress: f64, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
-    let _ = state_guard.player.initialize_player(track_id, progress);
+    let track = state_guard.db.get_track_by_id(&track_id);
+    let _ = state_guard.player.initialize_player(track, progress);
 }
 
 #[tauri::command]

@@ -1,48 +1,33 @@
-use crate::interface::album::*;
-use crate::interface::artist::*;
-use crate::interface::track::*;
-use crate::models::*;
+use std::sync::Mutex;
 
-/*#[tauri::command]
-#[specta::specta]
-pub fn get_sqlite() -> String {
-    /*
-    let artists = get_all_artists();
+use tauri::State;
 
-    let mut data = Vec::new();
-    for artist in artists {
-        let artist_albums = get_artist_albums(artist.id);
-        for album in &artist_albums {
-            let album_tracks = get_album_tracks(album.id);
-            data.push((artist.clone(), (vec![album.clone()], album_tracks)));
-        }
-    }
-
-    data
-     */
-    "Not implemented yet".to_string()
-}*/
+use crate::{models::*, SodapopState};
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_album_with_tracks(id: u32) -> AlbumWithTracks {
-    album_with_tracks(&id)
+pub fn get_album_with_tracks(id: u32, state: State<'_, Mutex<SodapopState>>) -> AlbumWithTracks {
+    let state_guard = state.lock().unwrap();
+    state_guard.db.album_with_tracks(&id)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn track_by_id(id: u32) -> Tracks {
-    get_track_by_id(&id)
+pub fn track_by_id(id: u32, state: State<'_, Mutex<SodapopState>>) -> Tracks {
+    let state_guard = state.lock().unwrap();
+    state_guard.db.get_track_by_id(&id)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_all_albums() -> Vec<Albums> {
-    all_albums()
+pub fn get_all_albums(state: State<'_, Mutex<SodapopState>>) -> Vec<Albums> {
+    let state_guard = state.lock().unwrap();
+    state_guard.db.all_albums()
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_artist_with_albums(id: u32) -> ArtistWithAlbums {
-    artist_with_albums(&id)
+pub fn get_artist_with_albums(id: u32, state: State<'_, Mutex<SodapopState>>) -> ArtistWithAlbums {
+    let state_guard = state.lock().unwrap();
+    state_guard.db.artist_with_albums(&id)
 }

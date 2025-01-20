@@ -8,18 +8,13 @@ use kira::{
 };
 use serde::Serialize;
 
-use crate::interface::track::get_track_by_id;
+use crate::models::Tracks;
 
-#[derive(Clone, Copy, Serialize, specta::Type)]
+#[derive(Clone, Copy, Serialize, specta::Type, Default)]
 pub enum PlayerState {
     Playing,
+    #[default]
     Paused,
-}
-
-impl Default for PlayerState {
-    fn default() -> Self {
-        PlayerState::Paused
-    }
 }
 
 pub struct Player {
@@ -61,11 +56,10 @@ impl Player {
         self.volume = volume;
     }
 
-    pub fn play(&mut self, track_id: u32) -> Result<()> {
-        self.track = Some(track_id);
+    pub fn play(&mut self, track: Tracks) -> Result<()> {
+        self.track = Some(track.id);
 
-        if let Some(ref mut track_id) = self.track {
-            let track = get_track_by_id(&track_id);
+        if self.track.is_some() {
             let sound_data: StreamingSoundData<FromFileError> =
                 StreamingSoundData::from_file(track.path)?.start_position(self.progress);
             self.duration = sound_data.duration().as_secs_f32();
@@ -79,12 +73,11 @@ impl Player {
         Ok(())
     }
 
-    pub fn initialize_player(&mut self, track_id: u32, progress: f64) -> Result<()> {
-        let track = get_track_by_id(&track_id);
+    pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<()> {
         let sound_data: StreamingSoundData<FromFileError> =
             StreamingSoundData::from_file(track.path)?;
         self.duration = sound_data.duration().as_secs_f32();
-        self.progress = progress as f64;
+        self.progress = progress;
 
         Ok(())
     }
@@ -145,11 +138,8 @@ impl Player {
 
     pub fn update(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
-            match self.state {
-                PlayerState::Playing => {
-                    self.progress = sound_handle.position();
-                }
-                _ => (),
+            if let PlayerState::Playing = self.state {
+                self.progress = sound_handle.position();
             }
         }
     }
