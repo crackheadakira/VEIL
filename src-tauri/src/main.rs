@@ -1,6 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
+use tauri::Manager;
 use tauri_specta::collect_commands;
 
 use specta_typescript::Typescript;
@@ -22,9 +22,9 @@ use std::fs::create_dir;
 use std::path::Path;
 use std::sync::Mutex;
 
-#[derive(Default)]
 pub struct SodapopState {
     pub player: player::Player,
+    pub db: db::Database,
 }
 
 #[tokio::main]
@@ -62,22 +62,27 @@ async fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())
-        .manage(Mutex::new(SodapopState::default()))
+        .manage(Mutex::new(SodapopState {
+            player: player::Player::new(),
+            db: db::Database::new(),
+        }))
         .setup(|app| {
-            let data = db::data_path();
-            if !Path::new(&data).exists() {
-                create_dir(&data).expect("Error creating data directory");
+            let data_path = db::data_path();
+            if !Path::new(&data_path).exists() {
+                create_dir(&data_path).expect("Error creating data directory");
             }
 
-            let covers = data.clone() + "/covers";
+            let covers = data_path.clone() + "/covers";
             if !Path::new(&covers).exists() {
                 create_dir(covers).expect("Error creating covers directory")
             }
 
-            db::init();
+            let binding = app.state::<Mutex<SodapopState>>();
+            let mut state_guard = binding.lock().unwrap();
+            state_guard.db.init();
 
             let scope = app.fs_scope();
-            if let Err(e) = scope.allow_directory(data, true) {
+            if let Err(e) = scope.allow_directory(data_path, true) {
                 eprintln!("Error allowing directory: {}", e);
             }
 

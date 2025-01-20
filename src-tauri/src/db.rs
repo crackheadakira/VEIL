@@ -1,24 +1,38 @@
 use lazy_static::*;
 use r2d2_sqlite::SqliteConnectionManager;
 
-lazy_static! {
+/*lazy_static! {
     static ref POOL: r2d2::Pool<SqliteConnectionManager> = {
         let manager = SqliteConnectionManager::file(db_path());
         r2d2::Pool::new(manager).expect("Error creating connection pool")
     };
+}*/
+
+pub struct Database {
+    pub conn: r2d2::PooledConnection<SqliteConnectionManager>,
 }
 
-pub fn init() {
-    let conn = db_connect();
-    conn.execute_batch(
-        "PRAGMA journal_mode = WAL;
-    PRAGMA journal_size_limit = 6144000;
-    PRAGMA synchronous = NORMAL;",
-    )
-    .expect("Error setting PRAGMA");
+impl Database {
+    pub fn new() -> Self {
+        let manager = SqliteConnectionManager::file(get_db_path());
+        let pool = r2d2::Pool::new(manager).expect("Error creating connection pool");
+        let conn = pool.get().expect("Error getting connection");
 
-    conn.execute_batch(
-        "
+        Self { conn }
+    }
+
+    pub fn init(&mut self) {
+        self.conn
+            .execute_batch(
+                "PRAGMA journal_mode = WAL;
+            PRAGMA journal_size_limit = 6144000;
+            PRAGMA synchronous = NORMAL;",
+            )
+            .expect("Error setting PRAGMA");
+
+        self.conn
+            .execute_batch(
+                "
         BEGIN;
         CREATE TABLE IF NOT EXISTS artists (
             id          INTEGER NOT NULL PRIMARY KEY,
@@ -61,15 +75,12 @@ pub fn init() {
         );
         COMMIT;
     ",
-    )
-    .expect("Error creating tables");
+            )
+            .expect("Error creating tables");
+    }
 }
 
-pub fn db_connect() -> r2d2::PooledConnection<SqliteConnectionManager> {
-    POOL.get().expect("Error getting connection")
-}
-
-pub fn db_path() -> String {
+fn get_db_path() -> String {
     data_path() + "/db.sqlite"
 }
 
@@ -77,12 +88,3 @@ pub fn data_path() -> String {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.to_str().unwrap().to_string() + "/sodapop-reimagined"
 }
-
-/*
-TODO: Add to Tauri State and improve DB interface
-
-pub fn initialize_pool() -> r2d2::Pool<SqliteConnectionManager> {
-    let manager = SqliteConnectionManager::file(db_path());
-    r2d2::Pool::new(manager).expect("Error creating connection pool")
-}
-*/
