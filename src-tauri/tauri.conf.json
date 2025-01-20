@@ -12,7 +12,7 @@
     "windows": [
       {
         "title": "Sodapop Reimagined",
-        "label": "sodapop-reimagined",
+        "label": "Sodapop-Reimagined",
         "url": "http://localhost:1420",
         "width": 1280,
         "height": 720
@@ -22,7 +22,7 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$LOCALDATA/sodapop-reimagined/**"
+          "$LOCALDATA/Sodapop-Reimagined/**"
         ]
       },
       "csp": {

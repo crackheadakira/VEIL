@@ -57,7 +57,6 @@ async fn main() {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())

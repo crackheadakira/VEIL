@@ -10,10 +10,9 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        "$LOCALDATA/sodapop-reimagined/*"
+        "$LOCALDATA/Sodapop-Reimagined/*"
       ]
     },
-    "fs:allow-exists",
-    "log:default"
+    "fs:allow-exists"
   ]
 }

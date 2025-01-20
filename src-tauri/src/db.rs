@@ -499,7 +499,7 @@ fn get_db_path() -> String {
 
 pub fn data_path() -> String {
     let home_dir = dirs::data_local_dir().unwrap();
-    home_dir.to_str().unwrap().to_string() + "/sodapop-reimagined"
+    home_dir.to_str().unwrap().to_string() + "/Sodapop-Reimagined"
 }
 
 fn stmt_to_track(row: &Row) -> Result<Tracks, Error> {
