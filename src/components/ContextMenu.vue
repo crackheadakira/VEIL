@@ -8,7 +8,7 @@
             <div @mouseenter="showPlaylists = true"
                 class="flex items-center rounded-md p-2 duration-150 hover:bg-stroke-100 hover:text-text">
                 <p>Add to Playlist</p>
-                <span class="i-ph-caret-right-fill h-5 w-6"></span>
+                <span class="i-fluent-caret-right-24-filled h-5 w-6"></span>
             </div>
             <div @mouseleave="handleMouseLeave(true)" v-if=showPlaylists
                 :style="{ top: 0, left: `${width - 4}px`, width: `${width}px` }"

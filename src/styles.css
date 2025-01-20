@@ -28,6 +28,10 @@
   -webkit-text-size-adjust: 100%;
 }
 
+svg {
+  shape-rendering: crispEdges;
+}
+
 @layer components {
   .font-supporting {
     font-size: 1rem;

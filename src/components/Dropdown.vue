@@ -1,16 +1,16 @@
 <template>
     <div
-        class="relative flex flex-col gap-2 bg-background border-stroke-100 border w-56 h-fit rounded-md text-supporting font-supporting cursor-pointer select-none">
-        <div @click="handleShow()" class="flex gap-2 items-center px-3 p-2">
-            <span id="dropdown_icon" class="i-ph-caret-down-fill w-6 duration-150"></span>
+        class="font-supporting relative flex h-fit w-56 cursor-pointer select-none flex-col gap-2 rounded-md border border-stroke-100 bg-background text-supporting">
+        <div @click="handleShow()" class="flex items-center gap-2 p-2 px-3">
+            <span id="dropdown_icon" class="i-fluent-caret-down-24-filled w-6 duration-150"></span>
             <p>{{ selectedValue }}</p>
         </div>
         <Transition enter-from-class="-translate-y-[25%] opacity-0" leave-to-class="-translate-y-[25%] opacity-0"
             enter-active-class="transition duration-150" leave-active-class="transition duration-150">
             <div v-if="showOptions"
-                class="flex flex-col w-56 absolute -left-[1px] top-[100%] bg-background border border-stroke-100 rounded-b-md duration-150">
+                class="absolute -left-[1px] top-[100%] flex w-56 flex-col rounded-b-md border border-stroke-100 bg-background duration-150">
                 <div v-for="option in options" @click="handleSelect(option), $emit('dropdownSelected', option)"
-                    class="duration-150 hover:text-text hover:bg-card p-3">{{ option }}</div>
+                    class="p-3 duration-150 hover:bg-card hover:text-text">{{ option }}</div>
             </div>
         </Transition>
     </div>

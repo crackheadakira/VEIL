@@ -4,6 +4,7 @@ export async function setPlayerTrack(track: Tracks) {
     // Stop previous track
     await commands.stopPlayer();
 
+    console.log(track);
     localStorage.setItem("playerTrack", JSON.stringify(track));
     await commands.setPlayerProgress(0);
     setPlayerProgress(0);
@@ -16,7 +17,7 @@ export async function setPlayerTrack(track: Tracks) {
 
 export function setQueue(queue: Tracks[]) {
     localStorage.setItem("queue", JSON.stringify(queue));
-    shuffleQueue();
+    // shuffleQueue();
 }
 
 export function setPersonalQueue(queue: Tracks[]) {
@@ -128,29 +129,29 @@ export function loopQueue() {
     setLoop("none");
 }
 
+function fisherYatesShuffle<T>(array: T[]) {
+    const newArray = [];
+
+    // While there remain elements to shuffle...
+    while (array.length) {
+        const randomIndex = Math.floor(Math.random() * array.length);
+        const element = array.splice(randomIndex, 1)[0];
+        newArray.push(element);
+    }
+
+    return newArray;
+}
+
 export function shuffleQueue() {
     const shuffled = localStorage.getItem("shuffled");
+    const queue = getQueue();
 
     if (shuffled === "true") {
         localStorage.setItem("shuffled", "false");
-        const queue = getQueue();
-        let currentIndex = queue.length;
-        while (currentIndex != 0) {
-
-            // Pick a remaining element...
-            let randomIndex = Math.floor(Math.random() * currentIndex);
-            currentIndex--;
-
-            // And swap it with the current element.
-            [queue[currentIndex], queue[randomIndex]] = [
-                queue[randomIndex], queue[currentIndex]];
-        }
-
-        setQueue(queue);
+        setQueue(queue.sort((a, b) => a.id - b.id));
         return;
     }
 
-    const queue = getQueue();
     const track = getPlayerTrack();
     if (!track) return;
 
@@ -159,10 +160,10 @@ export function shuffleQueue() {
     if (index === -1) return;
 
     queue.splice(index, 1);
-    queue.sort(() => Math.random() - 0.5);
-    queue.unshift(track);
+    const shuffledQueue = fisherYatesShuffle(queue);
+    shuffledQueue.unshift(track);
 
-    setQueue(queue);
+    setQueue(shuffledQueue);
     localStorage.setItem("shuffled", "true");
 }
 

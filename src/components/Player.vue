@@ -17,18 +17,19 @@
             </div>
         </div>
 
-        <div class="flex gap-2">
-            <span :class="shuffled ? 'text-primary' : ''" class="i-ph-shuffle-bold w-6 cursor-pointer hover:opacity-90"
-                @click=handleShuffle()></span>
-            <span class="i-ph-skip-back-fill w-6 cursor-pointer hover:opacity-90" @click="skipTrack(false)"></span>
+        <div class="flex items-center gap-2">
+            <span :class="shuffled ? 'text-primary' : ''"
+                class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90" @click=handleShuffle()></span>
+            <span class="i-fluent-previous-24-filled w-6 cursor-pointer hover:opacity-90"
+                @click="skipTrack(false)"></span>
             <div @click="handlePlayAndPause">
-                <span v-if="!paused" class="i-ph-pause-fill w-7 cursor-pointer hover:opacity-90"></span>
-                <span v-else class="i-ph-play-fill w-7 cursor-pointer hover:opacity-90"></span>
+                <span v-if="!paused" class="i-fluent-pause-24-filled cursor-pointer hover:opacity-90"></span>
+                <span v-else class="i-fluent-play-24-filled cursor-pointer hover:opacity-90"></span>
             </div>
-            <span class="i-ph-skip-forward-fill w-6 cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
+            <span class="i-fluent-next-24-filled cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
             <span @click=handleLoop
                 :class="(loop === 'queue' ? 'text-primary' : '') || (loop === 'track' ? 'text-primary opacity-75' : '')"
-                class="i-ph-repeat-bold w-6 cursor-pointer hover:opacity-90"></span>
+                class="i-fluent-arrow-repeat-all-24-filled cursor-pointer hover:opacity-90"></span>
         </div>
 
         <div class="font-supporting flex flex-grow select-none items-center gap-4 text-supporting">
@@ -132,12 +133,10 @@ function handleLoop() {
 
 async function handleSongEnd() {
     if (!music.value) return;
-    // to let the song fully end as we emit slightly before the song ends
     while (!(await commands.playerHasEnded())) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 10));
     }
-    const queue = getQueue();
-    const index = getQueueIndex();
+
     const loop = getLoop();
 
     if (loop === 'track') {
@@ -147,8 +146,10 @@ async function handleSongEnd() {
         return;
     }
 
+    const queue = getQueue();
+    const index = getQueueIndex();
+
     if (queue.length <= 1 || queue.length === index + 1) {
-        console.log("in here");
         if (loop === 'queue') {
             setQueueIndex(0);
             await setPlayerTrack(queue[0]);

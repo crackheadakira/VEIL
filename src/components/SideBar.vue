@@ -1,22 +1,22 @@
 <template>
-    <div class="flex flex-col items-center text-text bg-card border-stroke-100 border-r p-8 gap-8">
+    <div class="flex flex-col items-center gap-8 border-r border-stroke-100 bg-card p-8 text-text">
         <SearchBar />
-        <div class="flex flex-col w-full gap-4 font-main-nonbold">
-            <RouterLink class="flex items-center gap-4 hover:bg-stroke-100 p-2 rounded-md duration-150" to="/">
-                <span class="i-ph-house h-8"></span>
+        <div class="font-main-nonbold flex w-full flex-col gap-4">
+            <RouterLink class="flex items-center gap-4 rounded-md p-2 duration-150 hover:bg-stroke-100" to="/">
+                <span class="i-fluent-home-16-filled h-8"></span>
                 <p>Home</p>
             </RouterLink>
-            <div class="flex items-center gap-4 hover:bg-stroke-100 p-2 rounded-md duration-150">
-                <span class="i-ph-heart-straight h-8"></span>
+            <div class="flex items-center gap-4 rounded-md p-2 duration-150 hover:bg-stroke-100">
+                <span class="i-fluent-heart-16-filled h-8"></span>
                 <p>Liked Songs</p>
             </div>
-            <RouterLink class="flex items-center gap-4 hover:bg-stroke-100 p-2 rounded-md duration-150"
+            <RouterLink class="flex items-center gap-4 rounded-md p-2 duration-150 hover:bg-stroke-100"
                 to="/all_albums">
-                <span class="i-ph-music-notes h-8"></span>
+                <span class="i-fluent-music-note-2-16-filled h-8"></span>
                 <p>Albums</p>
             </RouterLink>
-            <div class="flex items-center gap-4 hover:bg-stroke-100 p-2 rounded-md duration-150">
-                <span class="i-mingcute-settings-3-line h-8"></span>
+            <div class="flex items-center gap-4 rounded-md p-2 duration-150 hover:bg-stroke-100">
+                <span class="i-fluent-settings-16-filled h-8"></span>
                 <p>Settings</p>
             </div>
         </div>
