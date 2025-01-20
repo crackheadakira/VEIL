@@ -29,15 +29,15 @@
             </div>
         </div>
 
-        <div class="flex flex-col rounded-md border border-stroke-100 bg-card" ref="trackList">
-            <div class="contextable flex cursor-pointer select-none items-center gap-8 px-8 py-4 duration-75 hover:bg-background"
+        <div class="flex flex-col rounded-md border border-stroke-100 bg-card p-4" ref="trackList">
+            <div class="font-supporting contextable flex cursor-pointer select-none items-center gap-8 p-3 px-4 duration-75 hover:bg-background"
                 v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track, idx)">
-                <p class="font-main w-9 text-supporting">{{ idx + 1 }}</p>
-                <div class="flex-grow">
-                    <p class="font-main-nonbold text-text">{{ track.name }}</p>
-                    <p class="font-supporting text-supporting">{{ track.artist }}</p>
+                <p class="w-9 text-supporting">{{ idx + 1 }}</p>
+                <div class="gap flex-grow">
+                    <p class="mb-1 text-text">{{ track.name }}</p>
+                    <p class="text-supporting">{{ track.artist }}</p>
                 </div>
-                <p class="font-main-nonbold text-text">{{ makeReadableTime(track.duration) }}</p>
+                <p class="text-text">{{ makeReadableTime(track.duration) }}</p>
             </div>
         </div>
 

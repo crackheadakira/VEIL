@@ -1,7 +1,7 @@
 <template>
     <div v-if="showDropdown" ref="contextMenu" @mouseleave="handleMouseLeave()" @mouseenter="reEntered = true"
         :style="{ top: `${userCoords.y - 10}px`, left: `${userCoords.x - 50}px` }"
-        class="font-supporting absolute z-30 flex h-fit w-fit cursor-pointer select-none flex-col rounded-md border border-stroke-100 bg-card p-2 text-supporting">
+        class="font-supporting absolute z-50 flex h-fit w-fit cursor-pointer select-none flex-col rounded-md border border-stroke-100 bg-card p-2 text-supporting">
         <p @click="$emit('add-to-queue', userCoords), showDropdown = false"
             class="rounded-md p-2 duration-150 hover:bg-stroke-100 hover:text-text">Add to Queue</p>
         <div @click="showDropdown = false" class="relative rounded-md">

@@ -8,7 +8,7 @@
         <Transition enter-from-class="-translate-y-[25%] opacity-0" leave-to-class="-translate-y-[25%] opacity-0"
             enter-active-class="transition duration-150" leave-active-class="transition duration-150">
             <div v-if="showOptions"
-                class="absolute -left-[1px] top-[100%] flex w-56 flex-col rounded-b-md border border-stroke-100 bg-background duration-150">
+                class="absolute -left-[1px] top-[100%] z-10 flex w-56 flex-col rounded-b-md border border-stroke-100 bg-background duration-150">
                 <div v-for="option in options" @click="handleSelect(option), $emit('dropdownSelected', option)"
                     class="p-3 duration-150 hover:bg-card hover:text-text">{{ option }}</div>
             </div>

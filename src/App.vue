@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-screen flex-col justify-between bg-background">
     <div class="flex items-stretch">
-      <SideBar class="fixed left-0 top-0 z-40 h-lvh w-72 self-start" />
+      <SideBar class="fixed left-0 top-0 z-40 h-lvh self-start" />
       <RouterView class="ml-72 overflow-scroll p-16" />
     </div>
     <Player class="sticky bottom-0 z-50" />

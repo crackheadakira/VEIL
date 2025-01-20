@@ -18,19 +18,19 @@
         </div>
 
         <div class="flex w-full flex-col gap-4 px-8">
-            <div class="flex w-full justify-center gap-2">
+            <div class="flex w-full items-center justify-center gap-4">
                 <span :class="shuffled ? 'text-primary' : ''"
                     class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
                     @click=handleShuffle()></span>
-                <span class="i-fluent-previous-24-filled w-6 cursor-pointer hover:opacity-90"
+                <span class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
                     @click="skipTrack(false)"></span>
                 <span @click="handlePlayAndPause"
                     :class="!paused ? 'i-fluent-pause-24-filled' : 'i-fluent-play-24-filled'"
-                    class="i-fluent-pause-24-filled cursor-pointer hover:opacity-90"></span>
-                <span class="i-fluent-next-24-filled cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
+                    class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"></span>
+                <span class="i-fluent-next-20-filled cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
                 <span @click=handleLoop
                     :class="(loop === 'queue' ? 'text-primary' : '') || (loop === 'track' ? 'text-primary opacity-75' : '')"
-                    class="i-fluent-arrow-repeat-all-24-filled cursor-pointer hover:opacity-90"></span>
+                    class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"></span>
             </div>
 
             <div class="font-supporting flex select-none items-center gap-4 text-supporting">
