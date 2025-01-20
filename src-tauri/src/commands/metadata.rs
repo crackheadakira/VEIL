@@ -61,6 +61,7 @@ pub fn read_metadata(file: String) -> Metadata {
     }
 }
 
+/*
 #[tauri::command]
 #[specta::specta]
 pub async fn async_metadata(music_folder: String) {
@@ -120,7 +121,7 @@ pub async fn async_metadata(music_folder: String) {
     }
 
     println!("Async metadata time: {:?}", start.elapsed());
-}
+}*/
 
 fn sanitize_string(string: &str) -> String {
     string

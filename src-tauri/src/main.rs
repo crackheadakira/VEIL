@@ -36,7 +36,6 @@ async fn main() {
         get_artist_with_albums,
         get_all_albums,
         track_by_id,
-        async_metadata,
         play_track,
         pause_track,
         resume_track,

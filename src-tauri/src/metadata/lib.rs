@@ -1,12 +1,11 @@
 mod flac;
 
 use anyhow::Result;
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
-use futures::future::join_all;
+// use futures::future::join_all;
 use serde::Serialize;
 use specta::Type;
-use tokio;
 
 #[derive(Debug, Serialize, Clone, Type)]
 pub struct Metadata {
@@ -89,7 +88,7 @@ impl Metadata {
         }
     }*/
 
-    pub async fn from_files(
+    /*pub async fn from_files(
         file_paths: &Vec<PathBuf>,
         file_extension: &str,
     ) -> Result<Vec<Metadata>> {
@@ -115,8 +114,7 @@ impl Metadata {
                 Ok(metadata)
             }
             _ => Err(anyhow::anyhow!("Unsupported file type")),
-        }
-    }
+        }*/
 }
 
 fn get_field_value(fields: &HashMap<String, Vec<String>>, key: &str) -> String {
