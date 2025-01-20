@@ -16,12 +16,7 @@ export async function setPlayerTrack(track: Tracks) {
 
 export function setQueue(queue: Tracks[]) {
     localStorage.setItem("queue", JSON.stringify(queue));
-    const isShuffled = localStorage.getItem("shuffled") === "true";
-
-    if (isShuffled) {
-        localStorage.setItem("shuffled", "false");
-        shuffleQueue();
-    }
+    shuffleQueue();
 }
 
 export function setPersonalQueue(queue: Tracks[]) {
@@ -138,7 +133,20 @@ export function shuffleQueue() {
 
     if (shuffled === "true") {
         localStorage.setItem("shuffled", "false");
-        setQueue(getQueue().sort((a, b) => a.id - b.id));
+        const queue = getQueue();
+        let currentIndex = queue.length;
+        while (currentIndex != 0) {
+
+            // Pick a remaining element...
+            let randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+
+            // And swap it with the current element.
+            [queue[currentIndex], queue[randomIndex]] = [
+                queue[randomIndex], queue[currentIndex]];
+        }
+
+        setQueue(queue);
         return;
     }
 

@@ -96,14 +96,22 @@ async function handleVolume() {
 }
 
 async function handlePlayAndPause() {
-    if (!await commands.playerHasTrack() && music.value) {
+    const hasTrack = await commands.playerHasTrack();
+
+    if (!hasTrack && music.value) {
         await commands.playTrack(music.value.id);
         paused.value = false;
         return;
-    };
+    } else if (!hasTrack) {
+        paused.value = true;
+        return;
+    }
 
-    if (paused.value === true) await commands.resumeTrack();
-    else await commands.pauseTrack();
+    if (paused.value === true) {
+        await commands.resumeTrack()
+    } else {
+        await commands.pauseTrack();
+    }
 
     paused.value = !paused.value;
 }
@@ -140,6 +148,7 @@ async function handleSongEnd() {
     }
 
     if (queue.length <= 1 || queue.length === index + 1) {
+        console.log("in here");
         if (loop === 'queue') {
             setQueueIndex(0);
             await setPlayerTrack(queue[0]);
@@ -170,21 +179,6 @@ async function initialLoad() {
     await commands.setVolume(volume);
 }
 
-window.addEventListener('playerTrackChanged', async () => {
-    music.value = getPlayerTrack();
-    paused.value = true;
-
-    const duration = await commands.getPlayerDuration();
-    totalLength.value = makeReadableTime(duration);
-    progressBar.value!.max = duration.toString();
-
-    await handlePlayAndPause();
-})
-
-window.addEventListener('loopChanged', () => {
-    loop.value = getLoop();
-})
-
 onMounted(async () => {
     await initialLoad();
 })
@@ -199,5 +193,20 @@ listen('player-progress', async (_) => {
 
 listen('track-end', async (_) => {
     await handleSongEnd();
+})
+
+window.addEventListener('playerTrackChanged', async () => {
+    music.value = getPlayerTrack();
+    paused.value = true;
+
+    const duration = await commands.getPlayerDuration();
+    totalLength.value = makeReadableTime(duration);
+    progressBar.value!.max = duration.toString();
+
+    await handlePlayAndPause();
+})
+
+window.addEventListener('loopChanged', () => {
+    loop.value = getLoop();
 })
 </script>
