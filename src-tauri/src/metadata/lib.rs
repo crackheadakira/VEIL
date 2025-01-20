@@ -51,7 +51,7 @@ impl Metadata {
             name: get_field_value(&vc.fields, "TITLE"),
             file_path: file.file_path,
             album_type: get_field_value(&vc.fields, "ALBUMTYPE"),
-            year: get_field_value(&vc.fields, "DATE").parse().unwrap_or(0),
+            year: get_field_value(&vc.fields, "YEAR").parse().unwrap_or(0),
             track_number: get_field_value(&vc.fields, "TRACKNUMBER")
                 .parse()
                 .unwrap_or(0),

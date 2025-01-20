@@ -11,7 +11,7 @@
                     <p class="font-supporting text-supporting">{{ makeTime(data.album.duration) }}, {{
                         data.album.track_count }} {{ data.album.track_count > 1 ?
                             "songs" : "song" }}</p>
-                    <p class="font-supporting text-supporting">{{ data.album.year }}</p>
+                    <p v-if="data.album.year" class="font-supporting text-supporting">{{ data.album.year }}</p>
                 </div>
 
                 <div class="flex gap-4">

@@ -2,6 +2,7 @@
 
 ### Todo
 - [ ] Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)
+- [ ] Migrate away from audiotags and use custom readers
 
 ### In Progress 
 
