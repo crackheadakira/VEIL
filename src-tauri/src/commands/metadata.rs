@@ -1,4 +1,4 @@
-use std::{fs::File, io::Write};
+use std::{fs::File, io::Write, path::Path};
 
 use audio_metadata::Metadata;
 
@@ -6,68 +6,6 @@ use crate::{
     db::{data_path, Database},
     models::{Albums, Artists, Tracks},
 };
-
-/*
-#[tauri::command]
-#[specta::specta]
-pub async fn async_metadata(music_folder: String) {
-    println!("Async metadata start");
-    let music_folder_path = std::path::PathBuf::from(&music_folder);
-    let files = recursive_dir(&music_folder_path);
-    let start = std::time::Instant::now();
-    let metadatas = audio_metadata::Metadata::from_files(&files, "flac").await;
-    println!("Async metadata read time: {:?}", start.elapsed());
-
-    for metadata in metadatas.unwrap() {
-        let artist = artist_by_name(&metadata.artist);
-
-        let artist_id = if let Some(artist) = artist {
-            artist.id
-        } else {
-            let artist_path = get_artist_path(&music_folder, &metadata.file_path);
-            new_artist(&metadata.artist, &artist_path)
-        };
-
-        let album = spec_album_by_artist_id(&metadata.album, &artist_id);
-        let cover_path = cover_path(&metadata.artist, &metadata.album);
-
-        let album_id = if let Some(album) = album {
-            album.id
-        } else {
-            write_cover(&metadata.file_path, &music_folder);
-            new_album(Albums {
-                id: 0,
-                path: get_album_path(&music_folder, &metadata.file_path),
-                artists_id: artist_id,
-                artist: metadata.artist.clone(),
-                name: metadata.album.clone(),
-                cover_path: cover_path.clone(),
-                year: metadata.year,
-                album_type: metadata.album_type.clone(),
-                track_count: 0,
-                duration: 0,
-            })
-        };
-
-        let track = track_by_album_id(&metadata.name, &album_id);
-
-        if track.is_none() {
-            new_track(Tracks {
-                id: 0,
-                duration: metadata.duration.round() as u32,
-                album: metadata.album.clone(),
-                albums_id: album_id,
-                artist: metadata.artist.clone(),
-                artists_id: artist_id,
-                name: metadata.name.clone(),
-                path: metadata.file_path.clone(),
-                cover_path: cover_path,
-            });
-        }
-    }
-
-    println!("Async metadata time: {:?}", start.elapsed());
-}*/
 
 fn sanitize_string(string: &str) -> String {
     string.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
@@ -83,29 +21,21 @@ fn cover_path(artist: &str, album: &str) -> String {
         + ".jpg"
 }
 
-pub fn write_cover(file: &str) {
-    let path = file.to_string();
-    let ext = file.split('.').last().unwrap();
-    match ext {
-        "flac" | "mp3" => {
-            let file = Metadata::from_file(std::path::Path::new(&path)).unwrap();
-            let cover_path = cover_path(&file.artist, &file.album);
-            if !std::path::Path::new(&cover_path).exists() {
-                let mut cover = file.picture_data;
-                if cover.is_empty() {
-                    cover = std::fs::read("../../../public/placeholder.png").unwrap();
-                }
-                let mut file = File::create(cover_path).unwrap();
-                file.write_all(&cover).unwrap();
-            }
-        }
-        _ => (),
+pub fn write_cover(metadata: &Metadata, cover_path: &str) {
+    if !Path::new(&cover_path).exists() {
+        let cover = if metadata.picture_data.is_empty() {
+            &include_bytes!("../../../public/placeholder.png").to_vec()
+        } else {
+            &metadata.picture_data
+        };
+        let mut file = File::create(cover_path).unwrap();
+        file.write_all(&cover).unwrap();
     }
 }
 
 pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) {
     files.iter().for_each(|file| {
-        let metadata = Metadata::from_file(std::path::Path::new(file)).unwrap();
+        let metadata = Metadata::from_file(Path::new(file)).unwrap();
         let artist = &db.artist_by_name(&metadata.artist);
 
         let artist_id = if let Some(artist) = artist {
@@ -125,7 +55,7 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
         let album_id = if let Some(album) = album {
             album.id
         } else {
-            write_cover(file);
+            write_cover(&metadata, &cover_path);
             db.insert::<Albums>(Albums {
                 id: 0,
                 artists_id: artist_id,
