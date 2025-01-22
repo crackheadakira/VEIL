@@ -103,7 +103,7 @@ impl Database {
 
         match result {
             Ok(items) => items,
-            Err(e) => panic!("Error fetching all items: {}", e),
+            Err(e) => panic!("Error fetching all {}: {}", T::table_name(), e),
         }
     }
 
@@ -113,13 +113,13 @@ impl Database {
     {
         let conn = self.pool.get().unwrap();
         let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
-        let mut stmt = conn.prepare(&stmt_to_call).unwrap();
+        let mut stmt = conn.prepare_cached(&stmt_to_call).unwrap();
 
         let result = stmt.query_row([id], T::from_row);
 
         match result {
             Ok(item) => item,
-            Err(e) => panic!("Error fetching item by id: {}", e),
+            Err(e) => panic!("Error fetching {} by id: {}", T::table_name(), e),
         }
     }
 
@@ -146,18 +146,22 @@ impl Database {
         }
     }
 
-    // TRACK
-
-    pub fn get_all_tracks_path(&self) -> Vec<String> {
+    pub fn delete<T>(&self, id: u32)
+    where
+        T: NeedForDatabase,
+    {
         let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT path FROM tracks").unwrap();
-        let result = stmt.query_map([], |row| row.get(0)).unwrap().collect();
+        let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
+        let stmt = conn.prepare_cached(&stmt_to_call);
+        let result = stmt.unwrap().execute([id]);
 
         match result {
-            Ok(paths) => paths,
-            Err(e) => panic!("Error fetching all tracks path: {}", e),
+            Ok(_) => (),
+            Err(e) => panic!("Error deleting {}: {}", T::table_name(), e),
         }
     }
+
+    // TRACK
 
     pub fn track_by_album_id(&self, track_name: &str, album_id: &u32) -> Option<Tracks> {
         let conn = self.pool.get().unwrap();
@@ -169,17 +173,6 @@ impl Database {
             Ok(track) => Some(track),
             Err(rusqlite::Error::QueryReturnedNoRows) => None,
             Err(e) => panic!("Error fetching track: {}", e),
-        }
-    }
-
-    pub fn delete_track(&self, track_path: &str) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("DELETE FROM tracks WHERE path = ?1").unwrap();
-        let result = stmt.execute([track_path]);
-
-        match result {
-            Ok(_) => (),
-            Err(e) => panic!("Error deleting track: {}", e),
         }
     }
 
@@ -254,7 +247,7 @@ impl Database {
         AlbumWithTracks { album, tracks }
     }
 
-    pub fn album_tracks_length(&self, album_id: &u32) -> u32 {
+    pub fn album_tracks_length(&self, album_id: u32) -> u32 {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
             .prepare("SELECT COUNT(*) FROM tracks WHERE albums_id = ?1")
@@ -280,22 +273,9 @@ impl Database {
         }
     }
 
-    pub fn delete_album(&self, album_id: u32) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("DELETE FROM albums WHERE ID = ?1 OR path = ?1")
-            .unwrap();
-        let result = stmt.execute([album_id]);
-
-        match result {
-            Ok(_) => (),
-            Err(e) => panic!("Error deleting artist: {}", e),
-        }
-    }
-
     // ARTIST
 
-    pub fn artist_albums_length(&self, artist_id: &u32) -> u32 {
+    pub fn artist_albums_length(&self, artist_id: u32) -> u32 {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
             .prepare("SELECT COUNT(*) FROM albums WHERE artists_id = ?1")
@@ -334,19 +314,6 @@ impl Database {
         ArtistWithAlbums {
             artist,
             albums: albums_with_tracks,
-        }
-    }
-
-    pub fn delete_artist(&self, artist_id: u32) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("DELETE FROM artists WHERE ID = ?1 OR name = ?1 OR path = ?1")
-            .unwrap();
-        let result = stmt.execute([artist_id]);
-
-        match result {
-            Ok(_) => (),
-            Err(e) => panic!("Error deleting artist: {}", e),
         }
     }
 
@@ -390,12 +357,6 @@ impl Database {
             [playlist_id, track_id],
         )
         .expect("Error inserting track to playlist");
-    }
-
-    pub fn delete_playlist(&self, id: &u32) {
-        let conn = self.pool.get().unwrap();
-        conn.execute("DELETE FROM playlists WHERE id = ?1", [id])
-            .expect("Error deleting playlist");
     }
 }
 

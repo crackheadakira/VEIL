@@ -1,4 +1,8 @@
-use crate::{first_time_metadata, get_album_path, SodapopState};
+use crate::{
+    first_time_metadata, get_album_path,
+    models::{Albums, Artists, Tracks},
+    SodapopState,
+};
 use std::{fs, sync::Mutex};
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
@@ -26,26 +30,25 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         first_time_metadata(&all_paths, path.to_str().unwrap(), &state_guard.db);
         println!("First time metadata read time: {:?}", start.elapsed());
 
-        let db_paths = &state_guard.db.get_all_tracks_path();
+        let all_tracks = &state_guard.db.all::<Tracks>();
 
-        for db_path in db_paths {
-            let album_path = get_album_path(path.to_str().unwrap(), db_path);
-            let album = &state_guard.db.album_by_path(&album_path);
+        for track in all_tracks {
+            if !all_paths.contains(&track.path) {
+                state_guard.db.delete::<Tracks>(track.id);
 
-            if !all_paths.contains(db_path) {
-                state_guard.db.delete_track(db_path);
-                if state_guard.db.album_tracks_length(&album.id) == 0 {
-                    state_guard.db.delete_album(album.id);
-                    if state_guard.db.artist_albums_length(&album.artists_id) == 0 {
-                        state_guard.db.delete_artist(album.artists_id);
+                if state_guard.db.album_tracks_length(track.albums_id) == 0 {
+                    state_guard.db.delete::<Albums>(track.albums_id);
+
+                    if state_guard.db.artist_albums_length(track.artists_id) == 0 {
+                        state_guard.db.delete::<Artists>(track.artists_id);
                     }
                 }
             } else {
-                let duration = &state_guard.db.get_album_duration(&album.id);
+                let duration = &state_guard.db.get_album_duration(&track.albums_id);
                 let album_type = get_album_type(duration.1, duration.0);
                 state_guard
                     .db
-                    .update_album_type(&album.id, &album_type, duration);
+                    .update_album_type(&track.albums_id, &album_type, duration);
             }
         }
 
