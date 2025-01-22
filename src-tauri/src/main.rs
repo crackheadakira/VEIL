@@ -1,83 +1,31 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri_specta::collect_commands;
-
-use specta_typescript::Typescript;
-use tauri_plugin_fs::FsExt;
-use tauri_specta::Builder;
+use souvlaki::MediaControls;
 
 mod commands;
 mod db;
 mod models;
 mod player;
+mod setup;
 
 use commands::metadata::*;
-use commands::music_folder::*;
-use commands::player::*;
-use commands::sqlite::*;
-
-use std::fs::create_dir;
-use std::path::Path;
-use std::sync::Mutex;
 
 pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
+    pub controls: MediaControls,
 }
 
 #[tokio::main]
 async fn main() {
-    let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
-        select_music_folder,
-        get_album_with_tracks,
-        get_artist_with_albums,
-        get_all_albums,
-        track_by_id,
-        play_track,
-        pause_track,
-        resume_track,
-        seek_track,
-        set_volume,
-        get_player_state,
-        player_has_track,
-        get_player_progress,
-        get_player_duration,
-        stop_player,
-        update_progress,
-        initialize_player,
-        set_player_progress,
-        player_has_ended,
-    ]);
-
-    #[cfg(debug_assertions)] // <- Only export on non-release builds
-    builder
-        .export(Typescript::default(), "../src/bindings.ts")
-        .expect("Failed to export TypeScript bindings");
+    let builder = setup::get_builder();
 
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())
-        .manage(Mutex::new(SodapopState {
-            player: player::Player::new(),
-            db: db::Database::new(),
-        }))
-        .setup(|app| {
-            let data_path = db::data_path();
-
-            let covers = data_path.clone() + "/covers";
-            if !Path::new(&covers).exists() {
-                create_dir(covers).expect("Error creating covers directory")
-            }
-
-            let scope = app.fs_scope();
-            if let Err(e) = scope.allow_directory(data_path, true) {
-                eprintln!("Error allowing directory: {}", e);
-            }
-
-            Ok(())
-        })
+        .setup(setup::setup)
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

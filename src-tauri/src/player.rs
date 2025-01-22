@@ -37,6 +37,7 @@ impl Default for Player {
 impl Player {
     pub fn new() -> Self {
         let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+
         Player {
             manager,
             sound_handle: None,
@@ -60,7 +61,7 @@ impl Player {
         self.track = Some(track.id);
 
         if self.track.is_some() {
-            let sound_data: StreamingSoundData<FromFileError> =
+            let sound_data =
                 StreamingSoundData::from_file(track.path)?.start_position(self.progress);
             self.duration = sound_data.duration().as_secs_f32();
             self.sound_handle = Some(self.manager.play(sound_data)?);

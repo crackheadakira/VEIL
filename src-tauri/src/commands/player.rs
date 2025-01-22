@@ -1,3 +1,4 @@
+use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -13,35 +14,88 @@ pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
     };
 
     let track = state_guard.db.by_id::<Tracks>(&track_id);
+
+    state_guard
+        .controls
+        .set_metadata(MediaMetadata {
+            title: Some(&track.name),
+            album: Some(&track.album),
+            artist: Some(&track.artist),
+            cover_url: Some(&track.cover_path),
+            duration: Some(std::time::Duration::from_secs(track.duration as u64)),
+        })
+        .unwrap();
     let _ = state_guard.player.play(track);
+
+    state_guard
+        .controls
+        .set_playback(MediaPlayback::Playing {
+            progress: progress_as_position(0.0),
+        })
+        .unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn pause_track(state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard = state.lock().unwrap();
-    state_guard.player.pause()
+    state_guard.player.pause();
+
+    let progress = state_guard.player.progress;
+    state_guard
+        .controls
+        .set_playback(MediaPlayback::Paused {
+            progress: progress_as_position(progress),
+        })
+        .unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn resume_track(state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard = state.lock().unwrap();
-    state_guard.player.resume()
+    state_guard.player.resume();
+
+    let progress = state_guard.player.progress;
+    state_guard
+        .controls
+        .set_playback(MediaPlayback::Playing {
+            progress: progress_as_position(progress),
+        })
+        .unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn seek_track(position: f64, resume: bool, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard = state.lock().unwrap();
-    state_guard.player.seek(position, resume)
+    state_guard.player.seek(position, resume);
+
+    let progress = state_guard.player.progress;
+    let playback = if resume {
+        MediaPlayback::Playing {
+            progress: progress_as_position(progress),
+        }
+    } else {
+        MediaPlayback::Paused {
+            progress: progress_as_position(progress),
+        }
+    };
+    state_guard.controls.set_playback(playback).unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn set_volume(volume: f32, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard = state.lock().unwrap();
+
     state_guard.player.set_volume(volume);
+
+    let converted_volume = (volume + 60.0) / 61.2;
+    state_guard
+        .controls
+        .set_volume(converted_volume as f64)
+        .unwrap();
 }
 
 #[tauri::command]
@@ -84,6 +138,11 @@ pub fn get_player_duration(state: State<'_, Mutex<SodapopState>>) -> f32 {
 pub fn stop_player(state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard = state.lock().unwrap();
     state_guard.player.stop();
+
+    state_guard
+        .controls
+        .set_playback(MediaPlayback::Stopped)
+        .unwrap();
 }
 
 #[tauri::command]
@@ -91,14 +150,21 @@ pub fn stop_player(state: State<'_, Mutex<SodapopState>>) {
 pub fn update_progress(app: AppHandle) {
     let state = app.state::<Mutex<SodapopState>>();
     let mut state_guard = state.lock().unwrap();
+    let progress = state_guard.player.progress;
 
     if let PlayerState::Playing = state_guard.player.state {
         state_guard.player.update();
-        app.emit("player-progress", state_guard.player.progress)
+        app.emit("player-progress", progress).unwrap();
+
+        state_guard
+            .controls
+            .set_playback(MediaPlayback::Playing {
+                progress: progress_as_position(progress),
+            })
             .unwrap();
     };
 
-    if state_guard.player.progress >= (state_guard.player.duration - 0.2) as f64 {
+    if progress >= (state_guard.player.duration - 0.2) as f64 {
         app.emit("track-end", 0.0).unwrap();
     };
 }
@@ -108,6 +174,18 @@ pub fn update_progress(app: AppHandle) {
 pub fn initialize_player(track_id: u32, progress: f64, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
     let track = state_guard.db.by_id::<Tracks>(&track_id);
+
+    state_guard
+        .controls
+        .set_metadata(MediaMetadata {
+            title: Some(&track.name),
+            album: Some(&track.album),
+            artist: Some(&track.artist),
+            cover_url: Some(&track.cover_path),
+            duration: Some(std::time::Duration::from_secs(track.duration as u64)),
+        })
+        .unwrap();
+
     let _ = state_guard.player.initialize_player(track, progress);
 }
 
@@ -116,4 +194,17 @@ pub fn initialize_player(track_id: u32, progress: f64, state: State<'_, Mutex<So
 pub fn set_player_progress(progress: f64, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
     state_guard.player.set_progress(progress);
+
+    state_guard
+        .controls
+        .set_playback(MediaPlayback::Playing {
+            progress: progress_as_position(progress),
+        })
+        .unwrap();
+}
+
+fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
+    Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
+        progress,
+    )))
 }
