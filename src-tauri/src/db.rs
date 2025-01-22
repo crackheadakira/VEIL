@@ -11,12 +11,12 @@ pub struct Database {
 
 impl Default for Database {
     fn default() -> Self {
-        Self::start()
+        Self::new()
     }
 }
 
 impl Database {
-    pub fn start() -> Self {
+    pub fn new() -> Self {
         let data_path = data_path();
         if !Path::new(&data_path).exists() {
             create_dir(&data_path).expect("Error creating data directory");
@@ -123,7 +123,7 @@ impl Database {
         }
     }
 
-    pub fn new<T>(&self, data_to_pass: T) -> u32
+    pub fn insert<T>(&self, data_to_pass: T) -> u32
     where
         T: NeedForDatabase,
     {

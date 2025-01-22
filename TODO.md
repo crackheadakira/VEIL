@@ -3,7 +3,14 @@
 
 
 - [ ] Database
-    - [x] Pool
+    - [x] Database pool
     - [x] Lessening repetiton in db.rs 
     - [ ] Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)
-- [ ] Migrate away from audiotags and use custom readers
+- [x] Migrate away from audiotags and use custom readers
+- [ ] Add documentation / comments
+    - [ ] Frontend
+    - [ ] Backend
+- [ ] Playlist support
+    - [x] Database methods
+    - [ ] Context menu
+    - [ ] Playlist page

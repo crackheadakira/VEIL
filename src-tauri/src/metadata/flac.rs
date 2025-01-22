@@ -8,6 +8,8 @@ use std::{
 
 use anyhow::Result;
 
+use crate::{read_n_bits, read_u32_from_bytes};
+
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum BlockType {
@@ -37,14 +39,14 @@ pub enum Block {
 }
 
 impl Block {
-    pub fn read_from(reader: &mut dyn Read) -> Result<(bool, u32, Block)> {
+    pub fn read_from(reader: &mut dyn Read) -> Result<(bool, Block)> {
         let byte = reader.read_u8()?;
         let is_last = (byte & 0x80) != 0;
         let block_type = BlockType::from_u8(byte & 0x7F);
         let length = reader.read_uint::<BE>(3)?;
 
         let mut data = Vec::new();
-        reader.take(length).read_to_end(&mut data).unwrap();
+        reader.take(length).read_to_end(&mut data)?;
 
         let block = match block_type {
             BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),
@@ -53,7 +55,7 @@ impl Block {
             BlockType::Unknown => Block::Unknown,
         };
 
-        Ok((is_last, (length as u32) + 4, block))
+        Ok((is_last, block))
     }
 }
 
@@ -117,7 +119,7 @@ impl StreamInfo {
 #[derive(Debug, Clone)]
 pub struct VorbisComment {
     pub vendor_string: String,
-    pub fields: HashMap<String, Vec<String>>,
+    pub fields: HashMap<String, String>,
 }
 
 impl Default for VorbisComment {
@@ -159,11 +161,7 @@ impl VorbisComment {
             let key = comments_split[0].to_ascii_uppercase();
             let value = comments_split[1].to_owned();
 
-            vorbis
-                .fields
-                .entry(key)
-                .or_insert_with(|| Vec::with_capacity(1))
-                .push(value);
+            vorbis.fields.insert(key, value);
         }
 
         vorbis
@@ -260,7 +258,7 @@ impl Flac {
 
         loop {
             let result = Block::read_from(&mut reader)?;
-            let (flag, _, block) = result;
+            let (flag, block) = result;
 
             match block {
                 Block::StreamInfo(si) => {
@@ -289,33 +287,4 @@ impl Flac {
             picture,
         })
     }
-}
-
-fn read_u32_from_bytes(bytes: &[u8], offset: &mut usize) -> u32 {
-    let length = u32::from_be_bytes((&bytes[*offset..*offset + 4]).try_into().unwrap());
-    *offset += 4;
-    length
-}
-
-fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
-where
-    T: Default + Copy + std::ops::Shl<u32, Output = T> + std::ops::BitOr<Output = T> + From<u8>,
-{
-    assert!(
-        n_bits <= std::mem::size_of::<T>() * 8,
-        "Cannot read more bits than fit in T."
-    );
-    let total_bits = bytes.len() * 8;
-    assert!(start_bit + n_bits <= total_bits, "Not enough bits to read.");
-
-    let mut value = T::default();
-    for bit_index in 0..n_bits {
-        let bit_position = start_bit + bit_index;
-        let byte_index = bit_position / 8;
-        let bit_in_byte = 7 - (bit_position % 8); // Most significant bit first
-        let bit = (bytes[byte_index] >> bit_in_byte) & 1;
-        value = (value << 1) | T::from(bit);
-    }
-
-    value
 }

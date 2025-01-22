@@ -1,13 +1,10 @@
 mod flac;
+mod id3;
 
 use anyhow::Result;
 use std::collections::HashMap;
 
-// use futures::future::join_all;
-use serde::Serialize;
-use specta::Type;
-
-#[derive(Debug, Serialize, Clone, Type)]
+#[derive(Debug, Clone)]
 pub struct Metadata {
     pub duration: f32,
     pub album: String,
@@ -59,6 +56,26 @@ impl Metadata {
         }
     }
 
+    fn from_id3(file: id3::Id3) -> Metadata {
+        Metadata {
+            duration: 0.0,
+            album: get_field_value(&file.text_frames, "TALB"),
+            artist: get_field_value(&file.text_frames, "TPE1"),
+            name: get_field_value(&file.text_frames, "TIT2"),
+            file_path: file.file_path,
+            album_type: "Unknown".to_string(),
+            year: get_field_value(&file.text_frames, "TYER")
+                .parse()
+                .unwrap_or(0),
+            track_number: get_field_value(&file.text_frames, "TRCK") //
+                .split('/')
+                .next()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0),
+            picture_data: file.attached_picture.unwrap().picture_data,
+        }
+    }
+
     pub fn from_file(path: &std::path::Path) -> Result<Metadata> {
         let ext = path.extension().unwrap().to_str().unwrap();
 
@@ -67,60 +84,64 @@ impl Metadata {
                 let file = flac::Flac::new(path)?;
                 Ok(Metadata::from_flac(file))
             }
+            "mp3" => {
+                let file = id3::Id3::new(path)?;
+                Ok(Metadata::from_id3(file))
+            }
             _ => Err(anyhow::anyhow!("Unsupported file type")),
         }
     }
 
-    /*pub fn from_files(
-        file_paths: &Vec<std::path::PathBuf>,
+    pub fn from_files(
+        file_paths: &[std::path::PathBuf],
         file_extension: &str,
-    ) -> error::Result<Vec<Metadata>> {
+    ) -> Result<Vec<Metadata>> {
         match file_extension {
             "flac" => {
                 let files: Vec<flac::Flac> = file_paths
-                    .par_iter()
+                    .iter()
                     .map(|path| flac::Flac::new(path).unwrap())
                     .collect();
 
                 Ok(files.into_iter().map(Metadata::from_flac).collect())
             }
-            _ => Err("Unsupported file type".into()),
-        }
-    }*/
-
-    /*pub async fn from_files(
-        file_paths: &Vec<PathBuf>,
-        file_extension: &str,
-    ) -> Result<Vec<Metadata>> {
-        match file_extension {
-            "flac" => {
-                let tasks: Vec<_> = file_paths
-                    .iter()
-                    .map(|path| {
-                        let path = path.clone(); // Clone the PathBuf so the async block owns it
-                        tokio::spawn(async move {
-                            // This will run the FLAC loading asynchronously
-                            let file = flac::Flac::new(&path).unwrap(); // Unwrap or handle error as needed
-                            Metadata::from_flac(file) // Convert FLAC to Metadata
-                        })
-                    })
-                    .collect();
-
-                // Await all tasks concurrently
-                let results: Vec<_> = join_all(tasks).await;
-
-                // Collect results and handle errors
-                let metadata: Vec<Metadata> = results.into_iter().collect::<Result<_, _>>()?;
-                Ok(metadata)
-            }
             _ => Err(anyhow::anyhow!("Unsupported file type")),
-        }*/
+        }
+    }
 }
 
-fn get_field_value(fields: &HashMap<String, Vec<String>>, key: &str) -> String {
+fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
     fields
         .get(key)
-        .and_then(|v| v.first())
-        .map(|s| s.to_string()) // Converts &str to String
-        .unwrap_or_else(|| "Unknown".to_string()) // Default value if not found
+        .unwrap_or(&String::from("Unknown"))
+        .to_string()
+}
+
+pub fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
+where
+    T: Default + Copy + std::ops::Shl<u32, Output = T> + std::ops::BitOr<Output = T> + From<u8>,
+{
+    assert!(
+        n_bits <= std::mem::size_of::<T>() * 8,
+        "Cannot read more bits than fit in T."
+    );
+    let total_bits = bytes.len() * 8;
+    assert!(start_bit + n_bits <= total_bits, "Not enough bits to read.");
+
+    let mut value = T::default();
+    for bit_index in 0..n_bits {
+        let bit_position = start_bit + bit_index;
+        let byte_index = bit_position / 8;
+        let bit_in_byte = 7 - (bit_position % 8); // Most significant bit first
+        let bit = (bytes[byte_index] >> bit_in_byte) & 1;
+        value = (value << 1) | T::from(bit);
+    }
+
+    value
+}
+
+pub fn read_u32_from_bytes(bytes: &[u8], offset: &mut usize) -> u32 {
+    let length = u32::from_be_bytes((&bytes[*offset..*offset + 4]).try_into().unwrap());
+    *offset += 4;
+    length
 }

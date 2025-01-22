@@ -70,7 +70,7 @@ pub fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
             tracks.extend(recursive_dir(&path));
         } else {
             let extension = path.extension().unwrap();
-            if extension != "mp3" && extension != "flac" && extension != "m4a" {
+            if extension != "mp3" && extension != "flac" {
                 continue;
             }
 

@@ -29,7 +29,6 @@ pub struct SodapopState {
 #[tokio::main]
 async fn main() {
     let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
-        read_metadata,
         select_music_folder,
         get_album_with_tracks,
         get_artist_with_albums,
@@ -62,7 +61,7 @@ async fn main() {
         .invoke_handler(builder.invoke_handler())
         .manage(Mutex::new(SodapopState {
             player: player::Player::new(),
-            db: db::Database::start(),
+            db: db::Database::new(),
         }))
         .setup(|app| {
             let data_path = db::data_path();
