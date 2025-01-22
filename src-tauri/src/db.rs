@@ -161,8 +161,26 @@ impl Database {
         }
     }
 
-    // TRACK
+    pub fn count<T>(&self, id: u32, call_where: &str) -> u32
+    where
+        T: NeedForDatabase,
+    {
+        let conn = self.pool.get().unwrap();
+        let stmt_to_call = format!(
+            "SELECT COUNT(*) FROM {} WHERE {} = ?1",
+            T::table_name(),
+            call_where
+        );
+        let mut stmt = conn.prepare_cached(&stmt_to_call).unwrap();
+        let result = stmt.query_row([id], |row| row.get(0));
 
+        match result {
+            Ok(count) => count,
+            Err(e) => panic!("Error counting {}: {}", T::table_name(), e),
+        }
+    }
+
+    // TRACK
     pub fn track_by_album_id(&self, track_name: &str, album_id: &u32) -> Option<Tracks> {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
@@ -221,16 +239,6 @@ impl Database {
         }
     }
 
-    pub fn album_by_path(&self, album_path: &str) -> Albums {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT * FROM albums WHERE path = ?1")
-            .unwrap();
-        let result = stmt.query_row([album_path], stmt_to_album);
-
-        result.unwrap()
-    }
-
     pub fn album_with_tracks(&self, album_id: &u32) -> AlbumWithTracks {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
@@ -247,19 +255,6 @@ impl Database {
         AlbumWithTracks { album, tracks }
     }
 
-    pub fn album_tracks_length(&self, album_id: u32) -> u32 {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT COUNT(*) FROM tracks WHERE albums_id = ?1")
-            .unwrap();
-        let result = stmt.query_row([album_id], |row| row.get(0));
-
-        match result {
-            Ok(length) => length,
-            Err(e) => panic!("Error fetching album tracks length: {}", e),
-        }
-    }
-
     pub fn update_album_type(&self, album_id: &u32, album_type: &str, duration_count: &(u32, u32)) {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
@@ -274,19 +269,6 @@ impl Database {
     }
 
     // ARTIST
-
-    pub fn artist_albums_length(&self, artist_id: u32) -> u32 {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT COUNT(*) FROM albums WHERE artists_id = ?1")
-            .unwrap();
-        let result = stmt.query_row([artist_id], |row| row.get(0));
-
-        match result {
-            Ok(count) => count,
-            Err(e) => panic!("Error fetching artist albums length: {}", e),
-        }
-    }
 
     pub fn artist_by_name(&self, name: &str) -> Option<Artists> {
         let conn = self.pool.get().unwrap();
@@ -341,22 +323,20 @@ impl Database {
         }
     }
 
-    pub fn update_playlist(&self, playlist: &Playlists) {
+    pub fn update_playlist(&self, playlist: &Playlists) -> Result<usize> {
         let conn = self.pool.get().unwrap();
         conn.execute(
             "UPDATE playlists SET name = ?1, description = ?2, cover_path = ?3 WHERE id = ?4",
             [&playlist.name, &playlist.description, &playlist.cover_path],
         )
-        .expect("Error updating playlist");
     }
 
-    pub fn insert_track_to_playlist(&self, playlist_id: &u32, track_id: &u32) {
+    pub fn insert_track_to_playlist(&self, playlist_id: &u32, track_id: &u32) -> Result<usize> {
         let conn = self.pool.get().unwrap();
         conn.execute(
             "INSERT INTO playlist_tracks (playlists_id, tracks_id) VALUES (?1, ?2)",
             [playlist_id, track_id],
         )
-        .expect("Error inserting track to playlist");
     }
 }
 
@@ -403,14 +383,5 @@ fn stmt_to_artist(row: &Row) -> Result<Artists, Error> {
         id: row.get(0)?,
         name: row.get(1)?,
         path: row.get(2)?,
-    })
-}
-
-fn stmt_to_playlist(row: &Row) -> Result<Playlists, Error> {
-    Ok(Playlists {
-        id: row.get(0)?,
-        name: row.get(1)?,
-        description: row.get(2)?,
-        cover_path: row.get(3)?,
     })
 }

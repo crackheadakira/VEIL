@@ -10,8 +10,7 @@ use crate::{
 
 #[tauri::command]
 #[specta::specta]
-pub fn read_metadata(file: String) -> Metadata {
-    let path = file.to_string();
+pub fn read_metadata(path: String) -> Metadata {
     let ext = path.split('.').last().unwrap();
     match ext {
         "mp3" => {

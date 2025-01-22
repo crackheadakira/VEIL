@@ -5,7 +5,8 @@
 - [ ] Migrate away from audiotags and use custom readers
 
 ### In Progress 
-- [ ] Lessening repetiton in db.rs 
 
 ### Done
-- [x] Improve the database code (pool)
+- [x] Improve database code
+    - [x] Pool
+    - [x] Lessening repetiton in db.rs 

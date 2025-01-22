@@ -1,5 +1,5 @@
 use crate::{
-    first_time_metadata, get_album_path,
+    first_time_metadata,
     models::{Albums, Artists, Tracks},
     SodapopState,
 };
@@ -36,10 +36,14 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
             if !all_paths.contains(&track.path) {
                 state_guard.db.delete::<Tracks>(track.id);
 
-                if state_guard.db.album_tracks_length(track.albums_id) == 0 {
+                if state_guard.db.count::<Tracks>(track.albums_id, "albums_id") == 0 {
                     state_guard.db.delete::<Albums>(track.albums_id);
 
-                    if state_guard.db.artist_albums_length(track.artists_id) == 0 {
+                    if state_guard
+                        .db
+                        .count::<Albums>(track.artists_id, "artists_id")
+                        == 0
+                    {
                         state_guard.db.delete::<Artists>(track.artists_id);
                     }
                 }
@@ -90,10 +94,10 @@ pub fn recursive_dir_to_strings(path: &PathBuf) -> Vec<String> {
 // LPs/Albums are more than 6 tracks and 30 minutes.
 fn get_album_type(tracks: u32, duration: u32) -> String {
     if tracks < 3 && duration < 1800 {
-        "Single".to_string()
+        String::from("Single")
     } else if tracks <= 6 && duration < 1800 {
-        "EP".to_string()
+        String::from("EP")
     } else {
-        "Album".to_string()
+        String::from("Album")
     }
 }
