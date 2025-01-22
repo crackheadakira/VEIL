@@ -34,7 +34,7 @@ onBeforeMount(async () => {
 
 
   setInterval(async () => {
-    await commands.updateProgress();
+    if (await commands.getPlayerState() === 'Playing') await commands.updateProgress();
   }, 100);
 })
 </script>

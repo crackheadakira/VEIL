@@ -1,5 +1,12 @@
+use rusqlite::Result;
 use serde::Serialize;
 use specta::Type;
+
+pub trait NeedForDatabase: Sized {
+    fn from_row(row: &rusqlite::Row) -> Result<Self>;
+    fn table_name() -> &'static str;
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
+}
 
 #[derive(Debug, Serialize, Clone, Type)]
 pub struct Artists {
@@ -59,4 +66,109 @@ pub struct AlbumWithTracks {
 pub struct ArtistWithAlbums {
     pub artist: Artists,
     pub albums: Vec<AlbumWithTracks>,
+}
+
+impl NeedForDatabase for Artists {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Artists {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            path: row.get(2)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "artists"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.name, &self.path]
+    }
+}
+
+impl NeedForDatabase for Albums {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Albums {
+            id: row.get(0)?,
+            artists_id: row.get(1)?,
+            artist: row.get(2)?,
+            name: row.get(3)?,
+            cover_path: row.get(4)?,
+            album_type: row.get(5)?,
+            duration: row.get(6)?,
+            track_count: row.get(7)?,
+            year: row.get(8)?,
+            path: row.get(9)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "albums"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![
+            &self.artists_id,
+            &self.artist,
+            &self.name,
+            &self.cover_path,
+            &self.album_type,
+            &self.duration,
+            &self.track_count,
+            &self.year,
+            &self.path,
+        ]
+    }
+}
+
+impl NeedForDatabase for Tracks {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Tracks {
+            id: row.get(0)?,
+            album: row.get(1)?,
+            albums_id: row.get(2)?,
+            artist: row.get(3)?,
+            artists_id: row.get(4)?,
+            name: row.get(5)?,
+            duration: row.get(6)?,
+            path: row.get(7)?,
+            cover_path: row.get(8)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "tracks"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![
+            &self.album,
+            &self.albums_id,
+            &self.artist,
+            &self.artists_id,
+            &self.name,
+            &self.duration,
+            &self.path,
+            &self.cover_path,
+        ]
+    }
+}
+
+impl NeedForDatabase for Playlists {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Playlists {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            description: row.get(2)?,
+            cover_path: row.get(3)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "playlists"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.name, &self.description, &self.cover_path]
+    }
 }

@@ -5,7 +5,7 @@ use audiotags::{traits::*, Id3v2Tag, Mp4Tag};
 
 use crate::{
     db::{data_path, Database},
-    models::{Albums, Tracks},
+    models::{Albums, Artists, Tracks},
 };
 
 #[tauri::command]
@@ -206,7 +206,11 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
             artist.id
         } else {
             let artist_path = get_artist_path(music_folder, &metadata.file_path);
-            db.new_artist(&metadata.artist, &artist_path)
+            db.new::<Artists>(Artists {
+                id: 0,
+                name: metadata.artist.clone(),
+                path: artist_path.clone(),
+            })
         };
 
         let album = &db.spec_album_by_artist_id(&metadata.album, &artist_id);
@@ -216,7 +220,7 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
             album.id
         } else {
             write_cover(file, music_folder);
-            db.new_album(Albums {
+            db.new::<Albums>(Albums {
                 id: 0,
                 artists_id: artist_id,
                 artist: metadata.artist.clone(),
@@ -233,7 +237,7 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
         let track = &db.track_by_album_id(&metadata.name, &album_id);
 
         if track.is_none() {
-            db.new_track(Tracks {
+            db.new::<Tracks>(Tracks {
                 id: 0,
                 duration: metadata.duration.round() as u32,
                 album: metadata.album.clone(),

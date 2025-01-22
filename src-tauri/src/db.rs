@@ -11,12 +11,12 @@ pub struct Database {
 
 impl Default for Database {
     fn default() -> Self {
-        Self::new()
+        Self::start()
     }
 }
 
 impl Database {
-    pub fn new() -> Self {
+    pub fn start() -> Self {
         let data_path = data_path();
         if !Path::new(&data_path).exists() {
             create_dir(&data_path).expect("Error creating data directory");
@@ -85,18 +85,68 @@ impl Database {
         Self { pool }
     }
 
-    // TRACK
-
-    pub fn all_tracks(&self) -> Vec<Tracks> {
+    pub fn all<T>(&self) -> Vec<T>
+    where
+        T: NeedForDatabase,
+    {
         let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM tracks").unwrap();
-        let result = stmt.query_map([], stmt_to_track).unwrap().collect();
+        let stmt_to_call = match T::table_name() {
+            "artists" => "SELECT * FROM tracks",
+            "albums" => "SELECT * FROM albums",
+            "tracks" => "SELECT * FROM tracks",
+            "playlists" => "SELECT * FROM playlists",
+            _ => panic!("Invalid table name"),
+        };
+
+        let mut stmt = conn.prepare(stmt_to_call).unwrap();
+        let result = stmt.query_map([], T::from_row).unwrap().collect();
 
         match result {
-            Ok(tracks) => tracks,
-            Err(e) => panic!("Error fetching all tracks: {}", e),
+            Ok(items) => items,
+            Err(e) => panic!("Error fetching all items: {}", e),
         }
     }
+
+    pub fn by_id<T>(&self, id: &u32) -> T
+    where
+        T: NeedForDatabase,
+    {
+        let conn = self.pool.get().unwrap();
+        let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
+        let mut stmt = conn.prepare(&stmt_to_call).unwrap();
+
+        let result = stmt.query_row([id], T::from_row);
+
+        match result {
+            Ok(item) => item,
+            Err(e) => panic!("Error fetching item by id: {}", e),
+        }
+    }
+
+    pub fn new<T>(&self, data_to_pass: T) -> u32
+    where
+        T: NeedForDatabase,
+    {
+        let conn = self.pool.get().unwrap();
+        let stmt_to_call = match T::table_name() {
+            "artists" => "INSERT INTO artists (name, path) VALUES (?1, ?2)",
+            "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
+            _ => panic!("Invalid table name"),
+        };
+
+        let stmt = conn.prepare_cached(stmt_to_call);
+        let params = data_to_pass.to_params();
+        let result = stmt.unwrap().execute(&params[..]);
+
+        match result {
+            Ok(_) => conn.last_insert_rowid() as u32,
+            Err(e) => panic!("Error inserting {}: {}", T::table_name(), e),
+        }
+    }
+
+    // TRACK
 
     pub fn get_all_tracks_path(&self) -> Vec<String> {
         let conn = self.pool.get().unwrap();
@@ -122,39 +172,6 @@ impl Database {
         }
     }
 
-    pub fn get_track_by_id(&self, track_id: &u32) -> Tracks {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM tracks WHERE id = ?1").unwrap();
-        let result = stmt.query_row([track_id], stmt_to_track);
-
-        match result {
-            Ok(track) => track,
-            Err(e) => panic!("Error fetching track: {}", e),
-        }
-    }
-
-    pub fn new_track(&self, track: Tracks) -> u32 {
-        let conn = self.pool.get().unwrap();
-        let stmt = conn.prepare_cached(
-            "INSERT INTO tracks (duration, album, albums_id, artist, artists_id, name, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        );
-        let result = stmt.unwrap().execute((
-            track.duration,
-            track.album,
-            track.albums_id,
-            track.artist,
-            track.artists_id,
-            track.name,
-            track.path,
-            track.cover_path,
-        ));
-
-        match result {
-            Ok(_) => conn.last_insert_rowid() as u32,
-            Err(e) => panic!("Error inserting track: {}", e),
-        }
-    }
-
     pub fn delete_track(&self, track_path: &str) {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn.prepare("DELETE FROM tracks WHERE path = ?1").unwrap();
@@ -167,17 +184,6 @@ impl Database {
     }
 
     // ALBUM
-
-    pub fn all_albums(&self) -> Vec<Albums> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM albums").unwrap();
-        let result = stmt.query_map([], stmt_to_album).unwrap().collect();
-
-        match result {
-            Ok(albums) => albums,
-            Err(e) => panic!("Error fetching all albums: {}", e),
-        }
-    }
 
     // This returns an option due to it's usage in metadata.rs
     pub fn spec_album_by_artist_id(&self, album_name: &str, artist_id: &u32) -> Option<Albums> {
@@ -206,16 +212,6 @@ impl Database {
             .unwrap();
 
         result
-    }
-
-    pub fn album_by_id(&self, album_id: &u32) -> Albums {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare_cached("SELECT * FROM albums WHERE ID = ?1")
-            .unwrap();
-        let result = stmt.query_row([album_id], stmt_to_album);
-
-        result.unwrap()
     }
 
     pub fn get_album_duration(&self, album_id: &u32) -> (u32, u32) {
@@ -253,7 +249,7 @@ impl Database {
             .collect::<Result<Vec<Tracks>>>()
             .unwrap();
 
-        let album = self.album_by_id(album_id);
+        let album = self.by_id::<Albums>(album_id);
 
         AlbumWithTracks { album, tracks }
     }
@@ -268,29 +264,6 @@ impl Database {
         match result {
             Ok(length) => length,
             Err(e) => panic!("Error fetching album tracks length: {}", e),
-        }
-    }
-
-    pub fn new_album(&self, album: Albums) -> u32 {
-        let conn = self.pool.get().unwrap();
-        let stmt = conn.prepare_cached(
-            "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-        );
-        let result = stmt.unwrap().execute((
-            album.artists_id,
-            album.artist,
-            album.name,
-            album.cover_path,
-            album.album_type,
-            album.duration,
-            album.track_count,
-            album.year,
-            album.path,
-        ));
-
-        match result {
-            Ok(_) => conn.last_insert_rowid() as u32,
-            Err(e) => panic!("Error inserting album: {}", e),
         }
     }
 
@@ -322,17 +295,6 @@ impl Database {
 
     // ARTIST
 
-    pub fn all_artists(&self) -> Vec<Artists> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM artists").unwrap();
-        let result: Result<Vec<Artists>> = stmt.query_map([], stmt_to_artist).unwrap().collect();
-
-        match result {
-            Ok(artists) => artists,
-            Err(e) => panic!("Error fetching all artists: {}", e),
-        }
-    }
-
     pub fn artist_albums_length(&self, artist_id: &u32) -> u32 {
         let conn = self.pool.get().unwrap();
         let mut stmt = conn
@@ -360,18 +322,8 @@ impl Database {
         }
     }
 
-    pub fn artist_by_id(&self, id: &u32) -> Artists {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare_cached("SELECT * FROM artists WHERE ID = ?1")
-            .unwrap();
-        let result = stmt.query_row([id], stmt_to_artist);
-
-        result.unwrap()
-    }
-
     pub fn artist_with_albums(&self, id: &u32) -> ArtistWithAlbums {
-        let artist = self.artist_by_id(id);
+        let artist = self.by_id::<Artists>(id);
         let albums = self.album_by_artist_id(id);
 
         let albums_with_tracks = albums
@@ -382,17 +334,6 @@ impl Database {
         ArtistWithAlbums {
             artist,
             albums: albums_with_tracks,
-        }
-    }
-
-    pub fn new_artist(&self, artist: &str, path: &str) -> u32 {
-        let conn = self.pool.get().unwrap();
-        let stmt = conn.prepare_cached("INSERT INTO artists (name, path) VALUES (?1, ?2)");
-        let result = stmt.unwrap().execute((artist, path));
-
-        match result {
-            Ok(_) => conn.last_insert_rowid() as u32,
-            Err(e) => panic!("Error inserting artist: {}", e),
         }
     }
 
@@ -411,44 +352,9 @@ impl Database {
 
     // PLAYLIST
 
-    pub fn get_all_playlists(&self) -> Vec<Playlists> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn.prepare("SELECT * FROM playlists").unwrap();
-        let playlists = stmt.query_map([], stmt_to_playlist).unwrap().collect();
-
-        match playlists {
-            Ok(playlists) => playlists,
-            Err(e) => panic!("Error fetching all playlists: {}", e),
-        }
-    }
-
-    pub fn new_playlist(&self, playlist: Playlists) -> u32 {
-        let conn = self.pool.get().unwrap();
-        conn.execute(
-            "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
-            [&playlist.name, &playlist.description, &playlist.cover_path],
-        )
-        .expect("Error inserting new playlist");
-
-        conn.last_insert_rowid() as u32
-    }
-
-    fn get_playlist_by_id(&self, id: &u32) -> Playlists {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT * FROM playlists WHERE id = ?1")
-            .unwrap();
-        let playlist = stmt.query_row([id], stmt_to_playlist);
-
-        match playlist {
-            Ok(playlist) => playlist,
-            Err(e) => panic!("Error fetching playlist by id: {}", e),
-        }
-    }
-
     pub fn get_playlist_with_tracks(&self, playlist_id: &u32) -> PlaylistWithTracks {
         let conn = self.pool.get().unwrap();
-        let playlist = self.get_playlist_by_id(playlist_id);
+        let playlist = self.by_id::<Playlists>(playlist_id);
         let mut stmt = conn
             .prepare(
                 "SELECT t.id, t.album, t.albums_id, t.artist, t.name, t.path

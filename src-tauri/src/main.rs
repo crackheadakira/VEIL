@@ -62,7 +62,7 @@ async fn main() {
         .invoke_handler(builder.invoke_handler())
         .manage(Mutex::new(SodapopState {
             player: player::Player::new(),
-            db: db::Database::new(),
+            db: db::Database::start(),
         }))
         .setup(|app| {
             let data_path = db::data_path();

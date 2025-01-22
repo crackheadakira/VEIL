@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
-use crate::{player::PlayerState, SodapopState};
+use crate::{models::Tracks, player::PlayerState, SodapopState};
 
 #[tauri::command]
 #[specta::specta]
@@ -12,7 +12,7 @@ pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
         state_guard.player.stop();
     };
 
-    let track = state_guard.db.get_track_by_id(&track_id);
+    let track = state_guard.db.by_id::<Tracks>(&track_id);
     let _ = state_guard.player.play(track);
 }
 
@@ -107,7 +107,7 @@ pub fn update_progress(app: AppHandle) {
 #[specta::specta]
 pub fn initialize_player(track_id: u32, progress: f64, state: State<'_, Mutex<SodapopState>>) {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
-    let track = state_guard.db.get_track_by_id(&track_id);
+    let track = state_guard.db.by_id::<Tracks>(&track_id);
     let _ = state_guard.player.initialize_player(track, progress);
 }
 
