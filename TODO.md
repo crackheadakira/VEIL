@@ -1,12 +1,9 @@
 # Sodapop Reimagined
 
-### Todo
-- [ ] Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)
-- [ ] Migrate away from audiotags and use custom readers
 
-### In Progress 
 
-### Done
-- [x] Improve database code
+- [ ] Database
     - [x] Pool
     - [x] Lessening repetiton in db.rs 
+    - [ ] Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)
+- [ ] Migrate away from audiotags and use custom readers
