@@ -12,6 +12,7 @@
     - [x] Database methods
     - [ ] Context menu
     - [ ] Playlist page
-- [ ] Implement souvlaki
+- [x] Implement souvlaki
     - [x] Get it working on backend side
-    - [ ] Control frontend actions
+    - [x] Control frontend actions
+    - [ ] Fix out small kinks

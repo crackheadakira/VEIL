@@ -78,6 +78,7 @@ export type AlbumWithTracks = { album: Albums; tracks: Tracks[] }
 export type Albums = { id: number; artists_id: number; artist: string; name: string; cover_path: string; album_type: string; duration: number; track_count: number; year: number; path: string }
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
 export type Artists = { id: number; name: string; path: string }
+export type MediaPayload = { Play: boolean } | { Pause: boolean } | { Next: boolean } | { Previous: boolean } | { Volume: number } | { Seek: number } | { Position: number }
 export type PlayerState = "Playing" | "Paused"
 export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; artists_id: number; name: string; path: string; cover_path: string }
 

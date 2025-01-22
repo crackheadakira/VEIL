@@ -52,9 +52,9 @@
 </template>
 
 <script setup lang="ts">
-import { listen } from '@tauri-apps/api/event';
+import { Event, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { commands } from '../bindings';
+import { commands, MediaPayload } from '../bindings';
 
 const progressBar = useTemplateRef<HTMLInputElement>("progressBar");
 const volumeBar = useTemplateRef<HTMLInputElement>("volumeBar");
@@ -196,6 +196,39 @@ listen('player-progress', async (_) => {
 
 listen('track-end', async (_) => {
     await handleSongEnd();
+})
+
+listen('media-control', async (e: Event<MediaPayload>) => {
+    const payload = e.payload;
+    console.log(payload);
+
+    switch (true) {
+        case 'Play' in payload:
+            await handlePlayAndPause();
+            break;
+        case 'Pause' in payload:
+            await handlePlayAndPause();
+            break;
+        case 'Next' in payload:
+            skipTrack(true);
+            break;
+        case 'Previous' in payload:
+            skipTrack(false);
+            break;
+        case 'Seek' in payload:
+            console.log(payload.Seek);
+            await commands.seekTrack(payload.Seek, true);
+            break;
+        case 'Volume' in payload:
+            // currently 0.0 to 1.0, but needs to be converted -30 to 1.2
+            const convertedVolume = payload.Volume * 31.2 - 30;
+            console.log(convertedVolume);
+            await commands.setVolume(convertedVolume);
+            break;
+        case 'Position' in payload:
+            await commands.seekTrack(payload.Position, false);
+            break;
+    }
 })
 
 window.addEventListener('playerTrackChanged', async () => {

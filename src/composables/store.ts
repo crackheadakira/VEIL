@@ -4,7 +4,6 @@ export async function setPlayerTrack(track: Tracks) {
     // Stop previous track
     await commands.stopPlayer();
 
-    console.log(track);
     localStorage.setItem("playerTrack", JSON.stringify(track));
     await commands.setPlayerProgress(0);
     setPlayerProgress(0);
@@ -85,15 +84,17 @@ export async function skipTrack(forward: boolean) {
         return;
     }
 
+    let desiredIndex = index + 1;
     if (forward) {
-        if (index === queue.length - 1) return;
-        setQueueIndex(index + 1);
-        await setPlayerTrack(queue[index + 1]);
+        if (index === queue.length - 1) desiredIndex = 0;
+        else desiredIndex = index + 1;
     } else {
-        if (index === 0) return;
-        setQueueIndex(index - 1)
-        await setPlayerTrack(queue[index - 1]);
+        if (index === 0) desiredIndex = queue.length - 1;
+        else desiredIndex = index - 1;
     }
+
+    setQueueIndex(desiredIndex)
+    await setPlayerTrack(queue[desiredIndex]);
 }
 
 export function getPersonalQueue(): Tracks[] {
