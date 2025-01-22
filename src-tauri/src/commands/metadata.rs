@@ -63,7 +63,7 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
                 name: metadata.album.clone(),
                 cover_path: cover_path.clone(),
                 year: metadata.year,
-                album_type: metadata.album_type.clone(),
+                album_type: metadata.album_type,
                 track_count: 0,
                 duration: 0,
                 path: get_album_path(music_folder, &metadata.file_path),

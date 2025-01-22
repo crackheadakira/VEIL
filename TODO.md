@@ -1,7 +1,5 @@
 # Sodapop Reimagined
 
-
-
 - [ ] Database
     - [x] Database pool
     - [x] Lessening repetiton in db.rs 
