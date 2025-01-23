@@ -61,6 +61,9 @@ async setPlayerProgress(progress: number) : Promise<void> {
 },
 async playerHasEnded() : Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
+},
+async getFeatures(trackId: number) : Promise<Artists[]> {
+    return await TAURI_INVOKE("get_features", { trackId });
 }
 }
 
@@ -74,12 +77,13 @@ async playerHasEnded() : Promise<boolean> {
 
 /** user-defined types **/
 
-export type AlbumWithTracks = { album: Albums; tracks: Tracks[] }
+export type AlbumWithTracks = { album: Albums; tracks: TrackWithFeatures[] }
 export type Albums = { id: number; artists_id: number; artist: string; name: string; cover_path: string; album_type: string; duration: number; track_count: number; year: number; path: string }
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
-export type Artists = { id: number; name: string; path: string }
+export type Artists = { id: number; name: string }
 export type MediaPayload = { Play: boolean } | { Pause: boolean } | { Next: boolean } | { Previous: boolean } | { Volume: number } | { Seek: number } | { Position: number }
 export type PlayerState = "Playing" | "Paused"
+export type TrackWithFeatures = { track: Tracks; features: Artists[] }
 export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; artists_id: number; name: string; path: string; cover_path: string }
 
 /** tauri-specta globals **/

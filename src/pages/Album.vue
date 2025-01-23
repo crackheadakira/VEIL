@@ -31,13 +31,17 @@
 
         <div class="flex flex-col rounded-md border border-stroke-100 bg-card p-4" ref="trackList">
             <div class="font-supporting contextable flex cursor-pointer select-none items-center gap-8 p-3 px-4 duration-75 hover:bg-background"
-                v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track, idx)">
+                v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track.track, idx)">
                 <p class="w-9 text-supporting">{{ idx + 1 }}</p>
                 <div class="gap flex-grow">
-                    <p class="mb-1 text-text">{{ track.name }}</p>
-                    <p class="text-supporting">{{ track.artist }}</p>
+                    <p class="mb-1 text-text">{{ track.track.name }}</p>
+                    <p class="text-supporting">
+                        <span class="hover:text-text" v-for="artist in getAsArtists(track)" :key="artist">
+                            {{ `${artist} ` }}
+                        </span>
+                    </p>
                 </div>
-                <p class="text-text">{{ makeReadableTime(track.duration) }}</p>
+                <p class="text-text">{{ makeReadableTime(track.track.duration) }}</p>
             </div>
         </div>
 
@@ -53,7 +57,7 @@
 
 <script setup lang="ts">
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks } from '../bindings';
+import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks, TrackWithFeatures } from '../bindings';
 import { useRoute } from 'vue-router';
 import BigCard from '../components/BigCard.vue';
 import ContextMenu from '../components/ContextMenu.vue';
@@ -74,12 +78,18 @@ watch(() => route.params.album_id, (newId) => {
     window.scrollTo(0, 0);
 })
 
+function getAsArtists(tracks: TrackWithFeatures) {
+    const artists = tracks.features.map((artist) => artist.name);
+    artists.unshift(tracks.track.artist);
+    return artists;
+}
+
 async function handleAddToQueue(coords: { x: number, y: number }) {
     if (!data.value) return;
     const offsetTop = trackList.value?.offsetTop || 0;
     const index = Math.floor((coords.y - offsetTop) / 76);
     const track = data.value.tracks[index];
-    addToPersonalQueue(track);
+    addToPersonalQueue(track.track);
 }
 
 async function updateData() {
@@ -97,7 +107,8 @@ async function handleNewTrack(track: Tracks, idx: number) {
     if (!data.value) return;
     setRecentlyPlayed(data.value.album);
 
-    setQueue(data.value.tracks);
+    const queue = data.value.tracks.map((track) => track.track);
+    setQueue(queue);
     setQueueIndex(idx);
 }
 

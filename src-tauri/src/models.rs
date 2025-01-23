@@ -12,7 +12,6 @@ pub trait NeedForDatabase: Sized {
 pub struct Artists {
     pub id: u32,
     pub name: String,
-    pub path: String,
 }
 
 #[derive(Debug, Serialize, Clone, Type)]
@@ -43,6 +42,13 @@ pub struct Tracks {
 }
 
 #[derive(Debug, Serialize, Clone, Type)]
+pub struct Features {
+    pub id: u32,
+    pub track_id: u32,
+    pub feature_id: u32,
+}
+
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct Playlists {
     pub id: u32,
     pub name: String,
@@ -57,9 +63,15 @@ pub struct PlaylistWithTracks {
 }
 
 #[derive(Debug, Serialize, Clone, Type)]
+pub struct TrackWithFeatures {
+    pub track: Tracks,
+    pub features: Vec<Artists>,
+}
+
+#[derive(Debug, Serialize, Clone, Type)]
 pub struct AlbumWithTracks {
     pub album: Albums,
-    pub tracks: Vec<Tracks>,
+    pub tracks: Vec<TrackWithFeatures>,
 }
 
 #[derive(Debug, Serialize, Clone, Type)]
@@ -73,7 +85,6 @@ impl NeedForDatabase for Artists {
         Ok(Artists {
             id: row.get(0)?,
             name: row.get(1)?,
-            path: row.get(2)?,
         })
     }
 
@@ -82,7 +93,7 @@ impl NeedForDatabase for Artists {
     }
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![&self.name, &self.path]
+        vec![&self.name]
     }
 }
 
@@ -170,5 +181,23 @@ impl NeedForDatabase for Playlists {
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![&self.name, &self.description, &self.cover_path]
+    }
+}
+
+impl NeedForDatabase for Features {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Features {
+            id: row.get(0)?,
+            track_id: row.get(1)?,
+            feature_id: row.get(2)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "features"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.track_id, &self.feature_id]
     }
 }

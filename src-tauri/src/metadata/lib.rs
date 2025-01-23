@@ -15,6 +15,7 @@ pub struct Metadata {
     pub year: u16,
     pub track_number: u16,
     pub picture_data: Vec<u8>,
+    pub features: Vec<String>,
 }
 
 impl Default for Metadata {
@@ -35,11 +36,26 @@ impl Metadata {
             year: 0,
             track_number: 0,
             picture_data: Vec::new(),
+            features: Vec::new(),
         }
     }
 
     fn from_flac(file: flac::Flac) -> Metadata {
         let vc = file.vorbis_comment.unwrap();
+
+        let album_artist = get_field_value(&vc.fields, "ALBUMARTIST");
+
+        let artists = get_field_value(&vc.fields, "ARTIST");
+
+        let mut features = artists.replace(&album_artist, "");
+        let mut features_vec = Vec::new();
+        if features.len() > 0 {
+            if features.starts_with(", ") {
+                features.remove(0);
+            }
+
+            features_vec = features.split(", ").map(|s| s.trim().to_string()).collect();
+        };
 
         Metadata {
             duration: file.stream_info.duration,
@@ -53,6 +69,7 @@ impl Metadata {
                 .parse()
                 .unwrap_or(0),
             picture_data: file.picture.unwrap().data,
+            features: features_vec,
         }
     }
 
@@ -73,6 +90,7 @@ impl Metadata {
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(0),
             picture_data: file.attached_picture.unwrap().picture_data,
+            features: vec![],
         }
     }
 

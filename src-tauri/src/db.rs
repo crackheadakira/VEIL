@@ -38,8 +38,7 @@ impl Database {
         BEGIN;
         CREATE TABLE IF NOT EXISTS artists (
             id          INTEGER NOT NULL PRIMARY KEY,
-            name        TEXT    NOT NULL,
-            path        TEXT    NOT NULL UNIQUE
+            name        TEXT    NOT NULL
         );
         CREATE TABLE IF NOT EXISTS albums (
             id          INTEGER NOT NULL PRIMARY KEY,
@@ -75,6 +74,11 @@ impl Database {
             playlists_id INTEGER NOT NULL REFERENCES playlists(id),
             tracks_id   INTEGER NOT NULL REFERENCES tracks(id)
         );
+        CREATE TABLE IF NOT EXISTS features (
+            id          INTEGER NOT NULL PRIMARY KEY,
+            track_id    INTEGER NOT NULL REFERENCES tracks(id),
+            feature_id  INTEGER NOT NULL REFERENCES artists(id)
+        );  
         COMMIT;
         ",
         )
@@ -95,6 +99,7 @@ impl Database {
             "albums" => "SELECT * FROM albums",
             "tracks" => "SELECT * FROM tracks",
             "playlists" => "SELECT * FROM playlists",
+            "features" => "SELECT * FROM features",
             _ => panic!("Invalid table name"),
         };
 
@@ -129,10 +134,11 @@ impl Database {
     {
         let conn = self.pool.get().unwrap();
         let stmt_to_call = match T::table_name() {
-            "artists" => "INSERT INTO artists (name, path) VALUES (?1, ?2)",
+            "artists" => "INSERT INTO artists (name) VALUES (?1)",
             "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
+            "features" => "INSERT INTO features (track_id, feature_id) VALUES (?1, ?2)",
             _ => panic!("Invalid table name"),
         };
 
@@ -178,6 +184,23 @@ impl Database {
             Ok(count) => count,
             Err(e) => panic!("Error counting {}: {}", T::table_name(), e),
         }
+    }
+
+    pub fn features_by_track(&self, track_id: &u32) -> Vec<Artists> {
+        let conn = self.pool.get().unwrap();
+        let mut stmt = conn
+            .prepare("SELECT * FROM features WHERE track_id = ?1")
+            .unwrap();
+        let result = stmt
+            .query_map([track_id], |row| {
+                let feature_id: u32 = row.get(2)?;
+                Ok(self.by_id::<Artists>(&feature_id))
+            })
+            .unwrap()
+            .collect::<Result<Vec<Artists>>>()
+            .unwrap();
+
+        result
     }
 
     pub fn update_duration(&self, track_id: &u32, album_id: &u32, duration: &u32) {
@@ -266,15 +289,30 @@ impl Database {
         let mut stmt = conn
             .prepare("SELECT * FROM tracks WHERE albums_id = ?1")
             .unwrap();
+
         let tracks = stmt
             .query_map([album_id], stmt_to_track)
             .unwrap()
             .collect::<Result<Vec<Tracks>>>()
             .unwrap();
 
+        let features = tracks
+            .iter()
+            .map(|track| {
+                let features = self.features_by_track(&track.id);
+                TrackWithFeatures {
+                    track: track.clone(),
+                    features,
+                }
+            })
+            .collect();
+
         let album = self.by_id::<Albums>(album_id);
 
-        AlbumWithTracks { album, tracks }
+        AlbumWithTracks {
+            album,
+            tracks: features,
+        }
     }
 
     pub fn update_album_type(&self, album_id: &u32, album_type: &str, duration_count: &(u32, u32)) {
@@ -404,6 +442,5 @@ fn stmt_to_artist(row: &Row) -> Result<Artists, Error> {
     Ok(Artists {
         id: row.get(0)?,
         name: row.get(1)?,
-        path: row.get(2)?,
     })
 }

@@ -4,7 +4,7 @@ use audio_metadata::Metadata;
 
 use crate::{
     db::{data_path, Database},
-    models::{Albums, Artists, Tracks},
+    models::{Albums, Artists, Features, Tracks},
 };
 
 fn sanitize_string(string: &str) -> String {
@@ -41,13 +41,26 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
         let artist_id = if let Some(artist) = artist {
             artist.id
         } else {
-            let artist_path = get_artist_path(music_folder, &metadata.file_path);
             db.insert::<Artists>(Artists {
                 id: 0,
                 name: metadata.artist.clone(),
-                path: artist_path.clone(),
             })
         };
+
+        let mut features_id = Vec::new();
+        for feature in &metadata.features {
+            let feature_artist = &db.artist_by_name(feature);
+            let feature_id = if let Some(artist) = feature_artist {
+                artist.id
+            } else {
+                db.insert::<Artists>(Artists {
+                    id: 0,
+                    name: feature.clone(),
+                })
+            };
+
+            features_id.push(feature_id);
+        }
 
         let album = &db.spec_album_by_artist_id(&metadata.album, &artist_id);
         let cover_path = cover_path(&metadata.artist, &metadata.album);
@@ -72,7 +85,9 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
 
         let track = &db.track_by_album_id(&metadata.name, &album_id);
 
-        if track.is_none() {
+        let track_id = if let Some(track) = track {
+            track.id
+        } else {
             db.insert::<Tracks>(Tracks {
                 id: 0,
                 duration: metadata.duration.round() as u32,
@@ -83,15 +98,17 @@ pub fn first_time_metadata(files: &[String], music_folder: &str, db: &Database) 
                 name: metadata.name.clone(),
                 path: metadata.file_path.clone(),
                 cover_path,
+            })
+        };
+
+        for feature_id in features_id {
+            db.insert::<Features>(Features {
+                id: 0,
+                track_id,
+                feature_id,
             });
         }
     });
-}
-
-pub fn get_artist_path(music_folder: &str, full_path: &str) -> String {
-    let path = full_path.replace(music_folder, "");
-    let path = path.split('/').collect::<Vec<&str>>()[1];
-    music_folder.to_string() + "/" + path
 }
 
 pub fn get_album_path(music_folder: &str, full_path: &str) -> String {

@@ -64,6 +64,7 @@ async fn main() {
             initialize_player,
             set_player_progress,
             player_has_ended,
+            get_features,
         ])
         .typ::<MediaPayload>();
 
