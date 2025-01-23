@@ -2,11 +2,11 @@ use anyhow::Result;
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, Read, Seek, SeekFrom},
     path::Path,
 };
 
-use crate::read_u32_from_bytes;
+use crate::{read_n_bits, read_u32_from_bytes};
 
 pub enum FrameType {
     AttachedPicture,
@@ -125,11 +125,13 @@ pub struct Id3 {
     pub file_path: String,
     pub text_frames: HashMap<String, String>,
     pub attached_picture: Option<AttachedPicture>,
+    pub duration: f32,
 }
 
 impl Id3 {
     pub fn new(file_path: &Path) -> Result<Self> {
         let file = File::open(file_path)?;
+        let total_file_size = file.metadata()?.len();
         let mut reader = BufReader::new(file);
 
         // Check the header
@@ -139,17 +141,17 @@ impl Id3 {
             return Err(anyhow::anyhow!("Invalid ID3 signature."));
         }
 
+        let size_bytes: &[u8] = &header[6..10];
+        let total_id3_size = ((size_bytes[0] as usize & 0x7F) << 21)
+            | ((size_bytes[1] as usize & 0x7F) << 14)
+            | ((size_bytes[2] as usize & 0x7F) << 7)
+            | (size_bytes[3] as usize & 0x7F);
+
         let has_extended_header = &header[6] & 0x40 != 0;
         if has_extended_header {
             // just skip past the extended_header
             reader.read_exact(&mut [0u8; 10])?;
         }
-
-        let size_bytes = &header[6..10];
-        let total_size = ((size_bytes[0] as usize & 0x7F) << 21)
-            | ((size_bytes[1] as usize & 0x7F) << 14)
-            | ((size_bytes[2] as usize & 0x7F) << 7)
-            | (size_bytes[3] as usize & 0x7F);
 
         let mut text_frames: HashMap<String, String> = HashMap::new();
         let mut attached_picture = None;
@@ -166,7 +168,7 @@ impl Id3 {
                 Frame::Unknown => (),
             };
 
-            if total_read >= total_size
+            if total_read >= total_id3_size
                 || (text_frames.contains_key("TIT2")
                     && text_frames.contains_key("TRCK")
                     && text_frames.contains_key("TYER")
@@ -178,10 +180,77 @@ impl Id3 {
             }
         }
 
+        reader.seek(SeekFrom::Start(total_id3_size as u64 + 10))?;
+
+        let mut audio_frame_header = vec![0u8; 4];
+        reader.read_exact(&mut audio_frame_header)?;
+
+        let duration = if let Ok(mpeg) = Mpeg::from_bytes(audio_frame_header) {
+            let audio_data_size = total_file_size - total_id3_size as u64;
+            let bitrate_per_second = mpeg.bitrate as u64 * 125;
+            println!(
+                "audio_data_size: {}, bitrate_per_second: {}, kilobits: {}",
+                audio_data_size, bitrate_per_second, mpeg.bitrate
+            );
+            audio_data_size as f32 / bitrate_per_second as f32
+        } else {
+            0.0
+        };
+        println!("Duration: {}", duration);
+
         Ok(Id3 {
             file_path: file_path.to_string_lossy().into_owned(),
+            duration,
             text_frames,
             attached_picture,
         })
+    }
+}
+
+struct Mpeg {
+    pub version: u8,
+    pub bitrate: u16,
+}
+
+impl Mpeg {
+    fn new() -> Self {
+        Self {
+            version: 0,
+            bitrate: 0,
+        }
+    }
+
+    pub fn from_bytes(data: Vec<u8>) -> Result<Self> {
+        let mut mpeg = Mpeg::new();
+
+        println!("{:02X?}", data);
+        if read_n_bits::<u16>(&data[0..2], 0, 11) != 0b11111111111 {
+            return Err(anyhow::anyhow!("Invalid frame sync."));
+        }
+
+        mpeg.version = &data[1] >> 3 & 0b11;
+
+        let layer = &data[1] >> 1 & 0b11;
+        let bitrate_index = (&data[2] >> 4) as usize;
+        let column_to_read = match (mpeg.version, layer) {
+            (0b00 | 0b10, 0b01 | 0b10) => Ok(5),
+            (0b00 | 0b10, 0b11) => Ok(4),
+            (0b11, 0b01) => Ok(3),
+            (0b11, 0b10) => Ok(2),
+            (0b11, 0b11) => Ok(1),
+            _ => Err(anyhow::anyhow!("Invalid MPEG version or layer.")),
+        }?;
+
+        mpeg.bitrate = match column_to_read {
+            1 => [32, 64, 96, 128, 160, 192, 224, 256, 288, 320][bitrate_index],
+            2 => [32, 48, 56, 64, 80, 96, 112, 128, 160, 192][bitrate_index],
+            3 => [32, 40, 48, 56, 64, 80, 96, 112, 128, 144][bitrate_index],
+            4 => [32, 48, 56, 64, 80, 96, 112, 128, 144, 160][bitrate_index],
+            5 => [8, 16, 24, 32, 40, 48, 56, 64, 80, 96][bitrate_index],
+            6 => [8, 16, 24, 32, 40, 48, 56, 64, 80, 96][bitrate_index],
+            _ => panic!("Invalid column to read."),
+        };
+
+        Ok(mpeg)
     }
 }

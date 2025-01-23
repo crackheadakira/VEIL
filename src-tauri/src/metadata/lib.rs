@@ -58,7 +58,7 @@ impl Metadata {
 
     fn from_id3(file: id3::Id3) -> Metadata {
         Metadata {
-            duration: 0.0,
+            duration: file.duration,
             album: get_field_value(&file.text_frames, "TALB"),
             artist: get_field_value(&file.text_frames, "TPE1"),
             name: get_field_value(&file.text_frames, "TIT2"),
