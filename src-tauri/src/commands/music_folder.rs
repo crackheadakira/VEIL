@@ -92,7 +92,7 @@ pub fn recursive_dir_to_strings(path: &PathBuf) -> Vec<String> {
 // Singles are less than 3 tracks and 30 minutes,
 // EPs are up to 6 tracks and 30 minutes,
 // LPs/Albums are more than 6 tracks and 30 minutes.
-fn get_album_type(tracks: u32, duration: u32) -> String {
+pub fn get_album_type(tracks: u32, duration: u32) -> String {
     if tracks < 3 && duration < 1800 {
         String::from("Single")
     } else if tracks <= 6 && duration < 1800 {

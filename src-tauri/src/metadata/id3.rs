@@ -2,11 +2,11 @@ use anyhow::Result;
 use std::{
     collections::HashMap,
     fs::File,
-    io::{BufReader, Read, Seek, SeekFrom},
+    io::{BufReader, Read},
     path::Path,
 };
 
-use crate::{read_n_bits, read_u32_from_bytes};
+use crate::read_u32_from_bytes;
 
 pub enum FrameType {
     AttachedPicture,
@@ -125,13 +125,11 @@ pub struct Id3 {
     pub file_path: String,
     pub text_frames: HashMap<String, String>,
     pub attached_picture: Option<AttachedPicture>,
-    pub duration: f32,
 }
 
 impl Id3 {
     pub fn new(file_path: &Path) -> Result<Self> {
         let file = File::open(file_path)?;
-        let total_file_size = file.metadata()?.len();
         let mut reader = BufReader::new(file);
 
         // Check the header
@@ -180,77 +178,10 @@ impl Id3 {
             }
         }
 
-        reader.seek(SeekFrom::Start(total_id3_size as u64 + 10))?;
-
-        let mut audio_frame_header = vec![0u8; 4];
-        reader.read_exact(&mut audio_frame_header)?;
-
-        let duration = if let Ok(mpeg) = Mpeg::from_bytes(audio_frame_header) {
-            let audio_data_size = total_file_size - total_id3_size as u64;
-            let bitrate_per_second = mpeg.bitrate as u64 * 125;
-            println!(
-                "audio_data_size: {}, bitrate_per_second: {}, kilobits: {}",
-                audio_data_size, bitrate_per_second, mpeg.bitrate
-            );
-            audio_data_size as f32 / bitrate_per_second as f32
-        } else {
-            0.0
-        };
-        println!("Duration: {}", duration);
-
         Ok(Id3 {
             file_path: file_path.to_string_lossy().into_owned(),
-            duration,
             text_frames,
             attached_picture,
         })
-    }
-}
-
-struct Mpeg {
-    pub version: u8,
-    pub bitrate: u16,
-}
-
-impl Mpeg {
-    fn new() -> Self {
-        Self {
-            version: 0,
-            bitrate: 0,
-        }
-    }
-
-    pub fn from_bytes(data: Vec<u8>) -> Result<Self> {
-        let mut mpeg = Mpeg::new();
-
-        println!("{:02X?}", data);
-        if read_n_bits::<u16>(&data[0..2], 0, 11) != 0b11111111111 {
-            return Err(anyhow::anyhow!("Invalid frame sync."));
-        }
-
-        mpeg.version = &data[1] >> 3 & 0b11;
-
-        let layer = &data[1] >> 1 & 0b11;
-        let bitrate_index = (&data[2] >> 4) as usize;
-        let column_to_read = match (mpeg.version, layer) {
-            (0b00 | 0b10, 0b01 | 0b10) => Ok(5),
-            (0b00 | 0b10, 0b11) => Ok(4),
-            (0b11, 0b01) => Ok(3),
-            (0b11, 0b10) => Ok(2),
-            (0b11, 0b11) => Ok(1),
-            _ => Err(anyhow::anyhow!("Invalid MPEG version or layer.")),
-        }?;
-
-        mpeg.bitrate = match column_to_read {
-            1 => [32, 64, 96, 128, 160, 192, 224, 256, 288, 320][bitrate_index],
-            2 => [32, 48, 56, 64, 80, 96, 112, 128, 160, 192][bitrate_index],
-            3 => [32, 40, 48, 56, 64, 80, 96, 112, 128, 144][bitrate_index],
-            4 => [32, 48, 56, 64, 80, 96, 112, 128, 144, 160][bitrate_index],
-            5 => [8, 16, 24, 32, 40, 48, 56, 64, 80, 96][bitrate_index],
-            6 => [8, 16, 24, 32, 40, 48, 56, 64, 80, 96][bitrate_index],
-            _ => panic!("Invalid column to read."),
-        };
-
-        Ok(mpeg)
     }
 }

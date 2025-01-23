@@ -14,6 +14,15 @@ pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
     };
 
     let track = state_guard.db.by_id::<Tracks>(&track_id);
+    let duration = state_guard.player.duration;
+
+    if track.duration == 0 {
+        state_guard
+            .db
+            .update_duration(&track_id, &track.albums_id, &(duration as u32));
+    }
+
+    let _ = state_guard.player.play(track.clone());
 
     state_guard
         .controls
@@ -22,10 +31,9 @@ pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
             album: Some(&track.album),
             artist: Some(&track.artist),
             cover_url: Some(&track.cover_path),
-            duration: Some(std::time::Duration::from_secs(track.duration as u64)),
+            duration: Some(std::time::Duration::from_secs(duration as u64)),
         })
         .unwrap();
-    let _ = state_guard.player.play(track);
 
     let progress = state_guard.player.progress;
     state_guard

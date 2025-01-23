@@ -1,6 +1,6 @@
 use std::{fs::create_dir, path::Path};
 
-use crate::models::*;
+use crate::{get_album_type, models::*};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, Result, Row};
@@ -177,6 +177,28 @@ impl Database {
         match result {
             Ok(count) => count,
             Err(e) => panic!("Error counting {}: {}", T::table_name(), e),
+        }
+    }
+
+    pub fn update_duration(&self, track_id: &u32, album_id: &u32, duration: &u32) {
+        let conn = self.pool.get().unwrap();
+        let mut stmt = conn
+            .prepare("UPDATE tracks SET duration = ?1 WHERE id = ?2")
+            .unwrap();
+        let result = stmt.execute((duration, track_id));
+
+        match result {
+            Ok(_) => {
+                let mut album = self.by_id::<Albums>(album_id);
+                album.duration += duration;
+                let new_album_type = get_album_type(album.track_count, album.duration);
+                self.update_album_type(
+                    album_id,
+                    &new_album_type,
+                    &(album.duration, album.track_count),
+                );
+            }
+            Err(e) => panic!("Error updating duration: {}", e),
         }
     }
 

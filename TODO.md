@@ -20,7 +20,7 @@
     - [ ] Allow adding custom key
     - [ ] Scrobble track > 30s
 - [ ] ID3
-    - [ ] Find a way to calculate duration for ID3 files
+    - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
     - [ ] Add support for ID3v2.4
 - [ ] Better error handling
     - [ ] Metadata
