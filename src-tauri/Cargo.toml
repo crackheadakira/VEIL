@@ -9,7 +9,7 @@ edition = "2021"
 tauri-build = { version = "2.0.5", features = [] }
 
 [dependencies]
-souvlaki = { version = "0.8.0", default_features = false, features = [
+souvlaki = { version = "0.8.0", default-features = false, features = [
     "use_zbus",
 ] }
 anyhow = "1.0.95"

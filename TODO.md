@@ -15,4 +15,13 @@
 - [x] Implement souvlaki
     - [x] Get it working on backend side
     - [x] Control frontend actions
-    - [ ] Fix out small kinks
+    - [ ] Desync when seeking
+- [ ] Add last.fm support
+    - [ ] Allow adding custom key
+    - [ ] Scrobble track > 30s
+- [ ] ID3
+    - [ ] Find a way to calculate duration for ID3 files
+    - [ ] Add support for ID3v2.4
+- [ ] Better error handling
+    - [ ] Metadata
+    - [ ] Database
