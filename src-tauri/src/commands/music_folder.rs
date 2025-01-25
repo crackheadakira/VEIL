@@ -1,7 +1,7 @@
 use crate::{
     db::data_path,
     models::{Albums, Artists, Features, Tracks},
-    SodapopState,
+    FrontendError, SodapopState,
 };
 
 use audio_metadata::Metadata;
@@ -18,7 +18,7 @@ use tauri_plugin_dialog::DialogExt;
 
 #[tauri::command]
 #[specta::specta]
-pub async fn select_music_folder(app: tauri::AppHandle) {
+pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
     let file_path = app
         .dialog()
         .file()
@@ -34,7 +34,7 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         all_paths.sort();
 
         let start = std::time::Instant::now();
-        let all_metadata = Metadata::from_files(&all_paths).unwrap();
+        let all_metadata = Metadata::from_files(&all_paths)?;
 
         all_metadata.into_iter().for_each(|metadata| {
             let artist = &state_guard.db.artist_by_name(&metadata.artist);
@@ -114,7 +114,7 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
         });
 
         // Remove tracks that are no longer in the music folder
-        let all_tracks = &state_guard.db.all::<Tracks>();
+        let all_tracks = &state_guard.db.all::<Tracks>().unwrap();
 
         for track in all_tracks {
             if !all_paths.contains(&PathBuf::from(&track.path)) {
@@ -142,6 +142,8 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
 
         println!("Finished indexing: {:?}", start.elapsed());
     }
+
+    Ok(())
 }
 
 fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {

@@ -1,7 +1,6 @@
 mod flac;
 mod id3;
 
-use anyhow::Result;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -22,6 +21,25 @@ impl Default for Metadata {
     fn default() -> Self {
         Self::new()
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum MetadataError {
+    #[error("Unsupported file type")]
+    UnsupportedFileType,
+    #[error("Invalid FLAC signature")]
+    InvalidFlacSignature,
+    #[error("Invalid ID3 signature")]
+    InvalidId3Signature,
+    #[error("Unsupported ID3 version")]
+    UnsupportedId3Version,
+
+    #[error(transparent)]
+    Io(#[from] std::io::Error),
+    #[error(transparent)]
+    Utf8(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    Str(#[from] std::str::Utf8Error),
 }
 
 impl Metadata {
@@ -93,7 +111,7 @@ impl Metadata {
         }
     }
 
-    pub fn from_file(path: &std::path::Path) -> Result<Metadata> {
+    pub fn from_file(path: &std::path::Path) -> Result<Metadata, MetadataError> {
         let ext = path.extension().unwrap().to_str().unwrap();
 
         match ext {
@@ -105,11 +123,11 @@ impl Metadata {
                 let file = id3::Id3::new(path)?;
                 Ok(Metadata::from_id3(file))
             }
-            _ => Err(anyhow::anyhow!("Unsupported file type")),
+            _ => Err(MetadataError::UnsupportedFileType),
         }
     }
 
-    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
+    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>, MetadataError> {
         let mut all_metadata = Vec::new();
         for path in file_paths {
             all_metadata.push(Metadata::from_file(path)?);

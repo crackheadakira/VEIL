@@ -1,4 +1,4 @@
-use std::{fs::create_dir, path::Path};
+use std::{fs::create_dir, intrinsics::unreachable, path::Path};
 
 use crate::{commands::music_folder::get_album_type, models::*};
 use r2d2::Pool;
@@ -89,82 +89,72 @@ impl Database {
         Self { pool }
     }
 
-    pub fn all<T>(&self) -> Vec<T>
+    pub fn all<T>(&self) -> anyhow::Result<Vec<T>>
     where
         T: NeedForDatabase,
     {
-        let conn = self.pool.get().unwrap();
+        let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => "SELECT * FROM tracks",
             "albums" => "SELECT * FROM albums",
             "tracks" => "SELECT * FROM tracks",
             "playlists" => "SELECT * FROM playlists",
             "features" => "SELECT * FROM features",
-            _ => panic!("Invalid table name"),
+            _ => unreachable!("Invalid table name"),
         };
 
-        let mut stmt = conn.prepare(stmt_to_call).unwrap();
-        let result = stmt.query_map([], T::from_row).unwrap().collect();
+        let mut stmt = conn.prepare(stmt_to_call)?;
+        let result = stmt
+            .query_map([], T::from_row)?
+            .collect::<Result<Vec<T>>>()?;
 
-        match result {
-            Ok(items) => items,
-            Err(e) => panic!("Error fetching all {}: {}", T::table_name(), e),
-        }
+        Ok(result)
     }
 
-    pub fn by_id<T>(&self, id: &u32) -> T
+    pub fn by_id<T>(&self, id: &u32) -> anyhow::Result<T>
     where
         T: NeedForDatabase,
     {
-        let conn = self.pool.get().unwrap();
+        let conn = self.pool.get()?;
         let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
-        let mut stmt = conn.prepare_cached(&stmt_to_call).unwrap();
+        let mut stmt = conn.prepare_cached(&stmt_to_call)?;
 
-        let result = stmt.query_row([id], T::from_row);
+        let result = stmt.query_row([id], T::from_row)?;
 
-        match result {
-            Ok(item) => item,
-            Err(e) => panic!("Error fetching {} by id: {}", T::table_name(), e),
-        }
+        Ok(result)
     }
 
-    pub fn insert<T>(&self, data_to_pass: T) -> u32
+    pub fn insert<T>(&self, data_to_pass: T) -> anyhow::Result<u32>
     where
         T: NeedForDatabase,
     {
-        let conn = self.pool.get().unwrap();
+        let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => "INSERT INTO artists (name) VALUES (?1)",
             "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
             "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
             "features" => "INSERT INTO features (track_id, feature_id) VALUES (?1, ?2)",
-            _ => panic!("Invalid table name"),
+            _ => unreachable!("Invalid table name"),
         };
 
-        let stmt = conn.prepare_cached(stmt_to_call);
+        let mut stmt = conn.prepare_cached(stmt_to_call)?;
         let params = data_to_pass.to_params();
-        let result = stmt.unwrap().execute(&params[..]);
+        stmt.execute(&params[..])?;
 
-        match result {
-            Ok(_) => conn.last_insert_rowid() as u32,
-            Err(e) => panic!("Error inserting {}: {}", T::table_name(), e),
-        }
+        Ok(conn.last_insert_rowid() as u32)
     }
 
-    pub fn delete<T>(&self, id: u32)
+    pub fn delete<T>(&self, id: u32) -> anyhow::Result<()>
     where
         T: NeedForDatabase,
     {
-        let conn = self.pool.get().unwrap();
+        let conn = self.pool.get()?;
         let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
-        let stmt = conn.prepare_cached(&stmt_to_call);
-        let result = stmt.unwrap().execute([id]);
+        let mut stmt = conn.prepare_cached(&stmt_to_call)?;
+        stmt.execute([id])?;
 
-        match result {
-            Ok(_) => (),
-            Err(e) => panic!("Error deleting {}: {}", T::table_name(), e),
-        }
+        Ok(())
     }
 
     pub fn count<T>(&self, id: u32, call_where: &str) -> u32

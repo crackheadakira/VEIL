@@ -19,6 +19,18 @@ mod db;
 mod models;
 mod player;
 
+#[derive(thiserror::Error, Debug, serde::Serialize, specta::Type)]
+#[serde(tag = "type", content = "data")]
+pub enum FrontendError {
+    // On the frontend this variant will be "IoError" with no data.
+    #[error("io error: {0}")]
+    IoError(
+        #[serde(skip)] // io::Error is not `Serialize` or `Type`
+        #[from]
+        std::io::Error,
+    ),
+}
+
 pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
