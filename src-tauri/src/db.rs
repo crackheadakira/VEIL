@@ -1,6 +1,6 @@
 use std::{fs::create_dir, path::Path};
 
-use crate::{get_album_type, models::*};
+use crate::{commands::music_folder::get_album_type, models::*};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, Result, Row};

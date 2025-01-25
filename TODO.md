@@ -23,7 +23,8 @@
     - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
     - [ ] Add support for ID3v2.4
 - [ ] Better error handling
-    - [ ] Metadata
-        - [ ] FLAC
-        - [ ] ID3 
+    - [x] Metadata
+        - [x] FLAC
+        - [x] ID3 
     - [ ] Database
+    - [ ] Commands

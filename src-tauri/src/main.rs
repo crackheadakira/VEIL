@@ -19,10 +19,6 @@ mod db;
 mod models;
 mod player;
 
-use commands::music_folder::*;
-use commands::player::*;
-use commands::sqlite::*;
-
 pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
@@ -44,26 +40,26 @@ pub enum MediaPayload {
 async fn main() {
     let builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
-            select_music_folder,
-            get_album_with_tracks,
-            get_artist_with_albums,
-            get_all_albums,
-            track_by_id,
-            play_track,
-            pause_track,
-            resume_track,
-            seek_track,
-            set_volume,
-            get_player_state,
-            player_has_track,
-            get_player_progress,
-            get_player_duration,
-            stop_player,
-            update_progress,
-            initialize_player,
-            set_player_progress,
-            player_has_ended,
-            get_features,
+            commands::music_folder::select_music_folder,
+            commands::sqlite::get_album_with_tracks,
+            commands::sqlite::get_artist_with_albums,
+            commands::sqlite::get_all_albums,
+            commands::sqlite::track_by_id,
+            commands::sqlite::get_features,
+            commands::player::play_track,
+            commands::player::pause_track,
+            commands::player::resume_track,
+            commands::player::seek_track,
+            commands::player::set_volume,
+            commands::player::get_player_state,
+            commands::player::player_has_track,
+            commands::player::get_player_progress,
+            commands::player::get_player_duration,
+            commands::player::stop_player,
+            commands::player::update_progress,
+            commands::player::initialize_player,
+            commands::player::set_player_progress,
+            commands::player::player_has_ended,
         ])
         .typ::<MediaPayload>();
 
