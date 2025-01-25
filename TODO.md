@@ -26,5 +26,5 @@
     - [x] Metadata
         - [x] FLAC
         - [x] ID3 
-    - [ ] Database
-    - [ ] Commands
+    - [x] Database
+    - [x] Commands

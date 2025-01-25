@@ -1,6 +1,6 @@
 <template>
-    <div class="flex flex-col gap-4 bg-background text-text items-center">
-        <div class="flex flex-wrap gap-4 items-center justify-center">
+    <div class="flex flex-col items-center gap-4 bg-background text-text">
+        <div class="flex flex-wrap items-center justify-center gap-4">
             <BigCard v-for="album of albums" :data="album" />
         </div>
     </div>
@@ -13,7 +13,10 @@ import { commands, type Albums } from '../bindings';
 const albums = ref<Albums[]>([]);
 
 onBeforeMount(async () => {
-    const response = await commands.getAllAlbums();
+    const result = await commands.getAllAlbums();
+    if (result.status === 'error') throw new Error(`[${result.error.type}] ${result.error.data}`);
+
+    const response = result.data;
     albums.value = response;
 });
 

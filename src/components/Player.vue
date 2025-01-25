@@ -102,7 +102,8 @@ async function handlePlayAndPause() {
     const hasTrack = await commands.playerHasTrack();
 
     if (!hasTrack && music.value) {
-        await commands.playTrack(music.value.id);
+        const result = await commands.playTrack(music.value.id);
+        if (result.status === 'error') throw new Error(`[${result.error.type}] ${result.error.data}`);
         paused.value = false;
         return;
     } else if (!hasTrack) {

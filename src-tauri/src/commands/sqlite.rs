@@ -2,32 +2,41 @@ use std::sync::Mutex;
 
 use tauri::State;
 
-use crate::{models::*, SodapopState};
+use crate::{error::FrontendError, models::*, SodapopState};
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_album_with_tracks(id: u32, state: State<'_, Mutex<SodapopState>>) -> AlbumWithTracks {
+pub fn get_album_with_tracks(
+    id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<AlbumWithTracks, FrontendError> {
     let state_guard = state.lock().unwrap();
-    state_guard.db.album_with_tracks(&id)
+    Ok(state_guard.db.album_with_tracks(&id)?)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn track_by_id(id: u32, state: State<'_, Mutex<SodapopState>>) -> Tracks {
+pub fn track_by_id(
+    id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<Tracks, FrontendError> {
     let state_guard = state.lock().unwrap();
-    state_guard.db.by_id::<Tracks>(&id)
+    Ok(state_guard.db.by_id::<Tracks>(&id)?)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_all_albums(state: State<'_, Mutex<SodapopState>>) -> Vec<Albums> {
+pub fn get_all_albums(state: State<'_, Mutex<SodapopState>>) -> Result<Vec<Albums>, FrontendError> {
     let state_guard = state.lock().unwrap();
-    state_guard.db.all::<Albums>()
+    Ok(state_guard.db.all::<Albums>()?)
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_artist_with_albums(id: u32, state: State<'_, Mutex<SodapopState>>) -> ArtistWithAlbums {
+pub fn get_artist_with_albums(
+    id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<ArtistWithAlbums, FrontendError> {
     let state_guard = state.lock().unwrap();
-    state_guard.db.artist_with_albums(&id)
+    Ok(state_guard.db.artist_with_albums(&id)?)
 }

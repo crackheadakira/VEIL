@@ -16,32 +16,9 @@ use tauri_specta::{collect_commands, Builder};
 
 mod commands;
 mod db;
+mod error;
 mod models;
 mod player;
-
-#[derive(thiserror::Error, Debug, serde::Serialize, specta::Type)]
-#[serde(tag = "type", content = "data")]
-pub enum FrontendError {
-    // On the frontend this variant will be "IoError" with no data.
-    #[error("io error: {0}")]
-    IoError(
-        #[serde(skip)] // io::Error is not `Serialize` or `Type`
-        #[from]
-        std::io::Error,
-    ),
-    #[error("metadata error: {0}")]
-    MetadataError(
-        #[serde(skip)] // MetadataError is not `Serialize` or `Type`
-        #[from]
-        audio_metadata::MetadataError,
-    ),
-    #[error("database error: {0}")]
-    DatabaseError(
-        #[serde(skip)] // rusqlite::Error is not `Serialize` or `Type`
-        #[from]
-        db::DatabaseError,
-    ),
-}
 
 pub struct SodapopState {
     pub player: player::Player,
@@ -60,8 +37,7 @@ pub enum MediaPayload {
     Position(f64), // Position in seconds
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::music_folder::select_music_folder,

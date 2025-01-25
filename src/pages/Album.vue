@@ -93,7 +93,10 @@ async function handleAddToQueue(coords: { x: number, y: number }) {
 }
 
 async function updateData() {
-    const res = await commands.getArtistWithAlbums(+artist_id.value);
+    const result = await commands.getArtistWithAlbums(+artist_id.value);
+    if (result.status === 'error') throw new Error(`[${result.error.type}] ${result.error.data}`);
+
+    const res = result.data;
     const current_album = res.albums.filter((album) => album.album.id === +album_id.value)[0];
     data.value = current_album;
     res.albums.splice(res.albums.indexOf(current_album), 1);

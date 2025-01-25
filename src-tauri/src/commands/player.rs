@@ -2,46 +2,45 @@ use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, State};
 
-use crate::{models::Tracks, player::PlayerState, SodapopState};
+use crate::{error::FrontendError, models::Tracks, player::PlayerState, SodapopState};
 
 #[tauri::command]
 #[specta::specta]
-pub fn play_track(track_id: u32, state: State<'_, Mutex<SodapopState>>) {
+pub fn play_track(
+    track_id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<(), FrontendError> {
     let mut state_guard = state.lock().unwrap();
 
     if state_guard.player.track.is_some() {
         state_guard.player.stop();
     };
 
-    let track = state_guard.db.by_id::<Tracks>(&track_id);
+    let track = state_guard.db.by_id::<Tracks>(&track_id)?;
     let duration = state_guard.player.duration;
 
     if track.duration == 0 {
         state_guard
             .db
-            .update_duration(&track_id, &track.albums_id, &(duration as u32));
+            .update_duration(&track_id, &track.albums_id, &(duration as u32))?;
     }
 
     let _ = state_guard.player.play(track.clone());
 
-    state_guard
-        .controls
-        .set_metadata(MediaMetadata {
-            title: Some(&track.name),
-            album: Some(&track.album),
-            artist: Some(&track.artist),
-            cover_url: Some(&track.cover_path),
-            duration: Some(std::time::Duration::from_secs(duration as u64)),
-        })
-        .unwrap();
+    state_guard.controls.set_metadata(MediaMetadata {
+        title: Some(&track.name),
+        album: Some(&track.album),
+        artist: Some(&track.artist),
+        cover_url: Some(&track.cover_path),
+        duration: Some(std::time::Duration::from_secs(duration as u64)),
+    })?;
 
     let progress = state_guard.player.progress;
-    state_guard
-        .controls
-        .set_playback(MediaPlayback::Playing {
-            progress: progress_as_position(progress),
-        })
-        .unwrap();
+    state_guard.controls.set_playback(MediaPlayback::Playing {
+        progress: progress_as_position(progress),
+    })?;
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -181,22 +180,25 @@ pub fn update_progress(app: AppHandle) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn initialize_player(track_id: u32, progress: f64, state: State<'_, Mutex<SodapopState>>) {
+pub fn initialize_player(
+    track_id: u32,
+    progress: f64,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<(), FrontendError> {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
-    let track = state_guard.db.by_id::<Tracks>(&track_id);
+    let track = state_guard.db.by_id::<Tracks>(&track_id)?;
 
-    state_guard
-        .controls
-        .set_metadata(MediaMetadata {
-            title: Some(&track.name),
-            album: Some(&track.album),
-            artist: Some(&track.artist),
-            cover_url: Some(&track.cover_path),
-            duration: Some(std::time::Duration::from_secs(track.duration as u64)),
-        })
-        .unwrap();
+    state_guard.controls.set_metadata(MediaMetadata {
+        title: Some(&track.name),
+        album: Some(&track.album),
+        artist: Some(&track.artist),
+        cover_url: Some(&track.cover_path),
+        duration: Some(std::time::Duration::from_secs(track.duration as u64)),
+    })?;
 
-    let _ = state_guard.player.initialize_player(track, progress);
+    let _ = state_guard.player.initialize_player(track, progress)?;
+
+    Ok(())
 }
 
 #[tauri::command]

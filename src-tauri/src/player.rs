@@ -1,4 +1,3 @@
-use anyhow::Result;
 use kira::{
     sound::{
         streaming::{StreamingSoundData, StreamingSoundHandle},
@@ -9,6 +8,14 @@ use kira::{
 use serde::Serialize;
 
 use crate::models::Tracks;
+
+#[derive(Debug, thiserror::Error)]
+pub enum PlayerError {
+    #[error(transparent)]
+    KiraError(#[from] kira::PlaySoundError<FromFileError>),
+    #[error(transparent)]
+    FromFileError(#[from] FromFileError),
+}
 
 #[derive(Clone, Copy, Serialize, specta::Type, Default)]
 pub enum PlayerState {
@@ -57,7 +64,7 @@ impl Player {
         self.volume = volume;
     }
 
-    pub fn play(&mut self, track: Tracks) -> Result<()> {
+    pub fn play(&mut self, track: Tracks) -> Result<(), PlayerError> {
         self.track = Some(track.id);
 
         if self.track.is_some() {
@@ -74,7 +81,7 @@ impl Player {
         Ok(())
     }
 
-    pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<()> {
+    pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<(), PlayerError> {
         let sound_data: StreamingSoundData<FromFileError> =
             StreamingSoundData::from_file(track.path)?;
         self.duration = sound_data.duration().as_secs_f32();

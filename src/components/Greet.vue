@@ -11,8 +11,8 @@ import { commands } from '../bindings';
 const musicLoaded = ref(false);
 
 async function openDialog() {
-    await commands.selectMusicFolder();
-    // await commands.asyncMetadata("/run/media/akira/3TB/music");
+    const result = await commands.selectMusicFolder();
+    if (result.status === "error") throw new Error(`[${result.error.type}] ${result.error.data}`);
     musicLoaded.value = true;
 }
 </script>

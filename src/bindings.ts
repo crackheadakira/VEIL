@@ -5,23 +5,53 @@
 
 
 export const commands = {
-async selectMusicFolder() : Promise<void> {
-    await TAURI_INVOKE("select_music_folder");
+async selectMusicFolder() : Promise<Result<null, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("select_music_folder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
-async getAlbumWithTracks(id: number) : Promise<AlbumWithTracks> {
-    return await TAURI_INVOKE("get_album_with_tracks", { id });
+async getAlbumWithTracks(id: number) : Promise<Result<AlbumWithTracks, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_album_with_tracks", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
-async getArtistWithAlbums(id: number) : Promise<ArtistWithAlbums> {
-    return await TAURI_INVOKE("get_artist_with_albums", { id });
+async getArtistWithAlbums(id: number) : Promise<Result<ArtistWithAlbums, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_artist_with_albums", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
-async getAllAlbums() : Promise<Albums[]> {
-    return await TAURI_INVOKE("get_all_albums");
+async getAllAlbums() : Promise<Result<Albums[], FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_all_albums") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
-async trackById(id: number) : Promise<Tracks> {
-    return await TAURI_INVOKE("track_by_id", { id });
+async trackById(id: number) : Promise<Result<Tracks, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("track_by_id", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
-async playTrack(trackId: number) : Promise<void> {
-    await TAURI_INVOKE("play_track", { trackId });
+async playTrack(trackId: number) : Promise<Result<null, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("play_track", { trackId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 async pauseTrack() : Promise<void> {
     await TAURI_INVOKE("pause_track");
@@ -53,17 +83,19 @@ async stopPlayer() : Promise<void> {
 async updateProgress() : Promise<void> {
     await TAURI_INVOKE("update_progress");
 },
-async initializePlayer(trackId: number, progress: number) : Promise<void> {
-    await TAURI_INVOKE("initialize_player", { trackId, progress });
+async initializePlayer(trackId: number, progress: number) : Promise<Result<null, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("initialize_player", { trackId, progress }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
 },
 async setPlayerProgress(progress: number) : Promise<void> {
     await TAURI_INVOKE("set_player_progress", { progress });
 },
 async playerHasEnded() : Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
-},
-async getFeatures(trackId: number) : Promise<Artists[]> {
-    return await TAURI_INVOKE("get_features", { trackId });
 }
 }
 
@@ -81,6 +113,7 @@ export type AlbumWithTracks = { album: Albums; tracks: TrackWithFeatures[] }
 export type Albums = { id: number; artists_id: number; artist: string; name: string; cover_path: string; album_type: string; duration: number; track_count: number; year: number; path: string }
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] }
 export type Artists = { id: number; name: string }
+export type FrontendError = { type: "IoError"; data: string } | { type: "MetadataError"; data: string } | { type: "DatabaseError"; data: string } | { type: "PlayerError"; data: string } | { type: "SouvlakiError"; data: string }
 export type MediaPayload = { Play: boolean } | { Pause: boolean } | { Next: boolean } | { Previous: boolean } | { Volume: number } | { Seek: number } | { Position: number }
 export type PlayerState = "Playing" | "Paused"
 export type TrackWithFeatures = { track: Tracks; features: Artists[] }

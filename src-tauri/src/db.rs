@@ -233,7 +233,7 @@ impl Database {
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
         let new_album_type = get_album_type(track_count, new_duration);
-        self.update_album_type(album_id, &new_album_type, &(new_duration, track_count));
+        self.update_album_type(album_id, &new_album_type, &(new_duration, track_count))?;
 
         Ok(())
     }

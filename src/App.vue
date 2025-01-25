@@ -17,7 +17,10 @@ import { commands } from './bindings';
 const router = useRouter();
 
 onBeforeMount(async () => {
-  const allAlbums = await commands.getAllAlbums();
+  const result = await commands.getAllAlbums();
+  if (result.status === 'error') throw new Error(`[${result.error.type}] ${result.error.data}`);
+
+  const allAlbums = result.data;
   if (allAlbums.length === 0) {
     localStorage.clear();
   }
