@@ -6,7 +6,7 @@ use std::{
     path::Path,
 };
 
-use crate::read_u32_from_bytes;
+use crate::{u32_from_bytes, Endian};
 
 pub enum FrameType {
     AttachedPicture,
@@ -38,7 +38,7 @@ impl Frame {
 
         let frame_type_str = std::str::from_utf8(&overview[0..4])?;
         let frame_type = FrameType::from_str(frame_type_str);
-        let size = read_u32_from_bytes(&overview[4..8], &mut 0_usize);
+        let size = u32_from_bytes(Endian::Big, &overview[4..8], &mut 0_usize);
 
         let mut data = Vec::new();
         reader.take(size as u64).read_to_end(&mut data)?;
@@ -87,6 +87,12 @@ pub struct AttachedPicture {
     pub picture_type: u8,
     pub description: String,
     pub picture_data: Vec<u8>,
+}
+
+impl Default for AttachedPicture {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AttachedPicture {

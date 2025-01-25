@@ -8,7 +8,7 @@ use std::{
 
 use anyhow::Result;
 
-use crate::{read_n_bits, read_u32_from_bytes};
+use crate::{read_n_bits, u32_from_bytes, Endian};
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
@@ -118,7 +118,7 @@ impl StreamInfo {
 
 #[derive(Debug, Clone)]
 pub struct VorbisComment {
-    pub vendor_string: String,
+    pub vendor_string: Option<String>,
     pub fields: HashMap<String, String>,
 }
 
@@ -131,7 +131,7 @@ impl Default for VorbisComment {
 impl VorbisComment {
     pub fn new() -> VorbisComment {
         VorbisComment {
-            vendor_string: String::new(),
+            vendor_string: None,
             fields: HashMap::new(),
         }
     }
@@ -140,19 +140,15 @@ impl VorbisComment {
         let mut vorbis = VorbisComment::new();
         let mut i = 0;
 
-        let vendor_length = u32::from_le_bytes((&bytes[i..i + 4]).try_into().unwrap()) as usize;
-        i += 4;
+        let vendor_length = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i) as usize;
 
-        vorbis.vendor_string = String::from_utf8_lossy(&bytes[i..i + vendor_length]).to_string();
+        vorbis.vendor_string =
+            Some(String::from_utf8_lossy(&bytes[i..i + vendor_length]).to_string());
         i += vendor_length;
 
-        let num_comments = u32::from_le_bytes((&bytes[i..i + 4]).try_into().unwrap());
-        i += 4;
-
+        let num_comments = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i);
         for _ in 0..num_comments {
-            let comment_length =
-                u32::from_le_bytes((&bytes[i..i + 4]).try_into().unwrap()) as usize;
-            i += 4;
+            let comment_length = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i) as usize;
 
             let comments = String::from_utf8_lossy(&bytes[i..i + comment_length]).to_string();
             i += comment_length;
@@ -204,28 +200,28 @@ impl Picture {
         let mut picture = Picture::new();
         let mut i = 0;
 
-        picture.picture_type = read_u32_from_bytes(&bytes, &mut i);
+        picture.picture_type = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        let mime_length = read_u32_from_bytes(&bytes, &mut i) as usize;
+        let mime_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
         picture.mime_type = String::from_utf8_lossy(&bytes[i..i + mime_length]).to_string();
         i += mime_length;
 
-        let description_length = read_u32_from_bytes(&bytes, &mut i) as usize;
+        let description_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
         picture.description =
             String::from_utf8_lossy(&bytes[i..i + description_length]).to_string();
         i += description_length;
 
-        picture.width = read_u32_from_bytes(&bytes, &mut i);
+        picture.width = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.height = read_u32_from_bytes(&bytes, &mut i);
+        picture.height = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.color_depth = read_u32_from_bytes(&bytes, &mut i);
+        picture.color_depth = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.indexed_color = read_u32_from_bytes(&bytes, &mut i);
+        picture.indexed_color = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        let picture_length = read_u32_from_bytes(&bytes, &mut i) as usize;
+        let picture_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
         picture.data = bytes[i..i + picture_length].to_vec();
 
@@ -237,7 +233,7 @@ impl Picture {
 pub struct Flac {
     pub file_path: String,
     pub stream_info: StreamInfo,
-    pub vorbis_comment: Option<VorbisComment>,
+    pub vorbis_comment: VorbisComment,
     pub picture: Option<Picture>,
 }
 
@@ -252,8 +248,12 @@ impl Flac {
         if &signature != b"fLaC" {
             return Err(anyhow::anyhow!("Invalid FLAC signature."));
         }
+
         let mut stream_info = StreamInfo::new();
-        let mut vorbis_comment = None;
+        // We don't use none for vorbis_comment because inside of lib
+        // the HashMap will return a string containing "Unknown"
+        // if the key is not found
+        let mut vorbis_comment = VorbisComment::new();
         let mut picture = None;
 
         loop {
@@ -265,7 +265,7 @@ impl Flac {
                     stream_info = si;
                 }
                 Block::VorbisComment(vc) => {
-                    vorbis_comment = Some(vc);
+                    vorbis_comment = vc;
                 }
                 Block::Picture(pic) => {
                     picture = Some(pic);
@@ -274,7 +274,9 @@ impl Flac {
             }
 
             if flag
-                || (vorbis_comment.is_some() && picture.is_some() && stream_info.total_samples > 0)
+                || (vorbis_comment.vendor_string.is_some()
+                    && picture.is_some()
+                    && stream_info.total_samples > 0)
             {
                 break;
             }

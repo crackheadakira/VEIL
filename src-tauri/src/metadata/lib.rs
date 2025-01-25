@@ -41,10 +41,9 @@ impl Metadata {
     }
 
     fn from_flac(file: flac::Flac) -> Metadata {
-        let vc = file.vorbis_comment.unwrap();
+        let vc = file.vorbis_comment;
 
         let album_artist = get_field_value(&vc.fields, "ALBUMARTIST");
-
         let artists = get_field_value(&vc.fields, "ARTIST");
 
         let mut features = artists.replace(&album_artist, "");
@@ -68,7 +67,7 @@ impl Metadata {
             track_number: get_field_value(&vc.fields, "TRACKNUMBER")
                 .parse()
                 .unwrap_or(0),
-            picture_data: file.picture.unwrap().data,
+            picture_data: file.picture.unwrap_or_default().data,
             features: features_vec,
         }
     }
@@ -89,7 +88,7 @@ impl Metadata {
                 .next()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(0),
-            picture_data: file.attached_picture.unwrap().picture_data,
+            picture_data: file.attached_picture.unwrap_or_default().picture_data,
             features: vec![],
         }
     }
@@ -111,11 +110,11 @@ impl Metadata {
     }
 
     pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
-        let mut metadata = Vec::new();
+        let mut all_metadata = Vec::new();
         for path in file_paths {
-            metadata.push(Metadata::from_file(path)?);
+            all_metadata.push(Metadata::from_file(path)?);
         }
-        Ok(metadata)
+        Ok(all_metadata)
     }
 }
 
@@ -149,8 +148,21 @@ where
     value
 }
 
-pub fn read_u32_from_bytes(bytes: &[u8], offset: &mut usize) -> u32 {
-    let length = u32::from_be_bytes((&bytes[*offset..*offset + 4]).try_into().unwrap());
+pub enum Endian {
+    Big,
+    Little,
+}
+
+pub fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
+    // We unwrap here because we know that the slice has 4 bytes
+    // and we know that the conversion from slice to array will not fail
+    let slice: [u8; 4] = (&bytes[*offset..*offset + 4]).try_into().unwrap();
+
+    let length = match endian {
+        Endian::Big => u32::from_be_bytes(slice),
+        Endian::Little => u32::from_le_bytes(slice),
+    };
+
     *offset += 4;
     length
 }

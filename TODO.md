@@ -24,4 +24,6 @@
     - [ ] Add support for ID3v2.4
 - [ ] Better error handling
     - [ ] Metadata
+        - [ ] FLAC
+        - [ ] ID3 
     - [ ] Database
