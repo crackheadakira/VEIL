@@ -187,7 +187,7 @@ impl Database {
     {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
-            "SELECT EXISTS(SELECT 1 FROM {} WHERE {} = ?1)",
+            "SELECT 1 FROM {} WHERE {} = ?1",
             T::table_name(),
             field_to_view
         );
@@ -291,7 +291,7 @@ impl Database {
         let mut stmt = conn.prepare("SELECT * FROM tracks WHERE albums_id = ?1")?;
 
         let tracks = stmt
-            .query_map([], Tracks::from_row)?
+            .query_map([album_id], Tracks::from_row)?
             .collect::<Result<Vec<Tracks>, Error>>()?;
 
         let album = self.by_id::<Albums>(album_id)?;

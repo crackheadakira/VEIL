@@ -138,15 +138,15 @@ impl VorbisComment {
         let mut vorbis = VorbisComment::new();
         let mut i = 0;
 
-        let vendor_length = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i) as usize;
+        let vendor_length = u32_from_bytes(Endian::Little, &bytes, &mut i) as usize;
 
         vorbis.vendor_string =
             Some(String::from_utf8_lossy(&bytes[i..i + vendor_length]).to_string());
         i += vendor_length;
 
-        let num_comments = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i);
+        let num_comments = u32_from_bytes(Endian::Little, &bytes, &mut i);
         for _ in 0..num_comments {
-            let comment_length = u32_from_bytes(Endian::Little, &bytes[i..i + 4], &mut i) as usize;
+            let comment_length = u32_from_bytes(Endian::Little, &bytes, &mut i) as usize;
 
             let comments = String::from_utf8_lossy(&bytes[i..i + comment_length]).to_string();
             i += comment_length;

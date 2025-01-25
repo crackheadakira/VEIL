@@ -17,7 +17,7 @@ use std::{
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 
-#[tauri::command]
+#[tauri::command(async)] // summon on async thread du to `.blocking_pick_folder()``
 #[specta::specta]
 pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
     let folder_path = app
