@@ -70,7 +70,7 @@ const music = ref(getPlayerTrack());
 
 async function handleProgress() {
     if (!await commands.playerHasTrack()) return;
-    if (progressBar) {
+    if (progressBar.value) {
         const progress = await commands.getPlayerProgress();
         currentProgress.value = makeReadableTime(progress);
 
@@ -173,35 +173,24 @@ async function initialLoad() {
     totalLength.value = makeReadableTime(duration);
     currentProgress.value = makeReadableTime(progress);
 
-    nextTick(() => {
-        progressBar.value!.value = progress.toString();
-        progressBar.value!.max = duration.toString();
-        volumeBar.value!.value = volume.toString();
-    });
+    progressBar.value!.value = progress.toString();
+    progressBar.value!.max = duration.toString();
+    volumeBar.value!.value = volume.toString();
 
     if (duration !== 0) await commands.seekTrack(progress, false);
     await commands.setVolume(volume);
 }
 
-onMounted(async () => {
-    await initialLoad();
-})
-
-onUnmounted(async () => {
-    await commands.stopPlayer();
-})
-
-listen('player-progress', async (_) => {
+const playerProgress = listen('player-progress', async (_) => {
     await handleProgress();
 })
 
-listen('track-end', async (_) => {
+const trackEnd = listen('track-end', async (_) => {
     await handleSongEnd();
 })
 
-listen('media-control', async (e: Event<MediaPayload>) => {
+const mediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
     const payload = e.payload;
-    console.log(payload);
 
     switch (true) {
         case 'Play' in payload:
@@ -217,13 +206,11 @@ listen('media-control', async (e: Event<MediaPayload>) => {
             skipTrack(false);
             break;
         case 'Seek' in payload:
-            console.log(payload.Seek);
             await commands.seekTrack(payload.Seek, true);
             break;
         case 'Volume' in payload:
             // currently 0.0 to 1.0, but needs to be converted -30 to 1.2
             const convertedVolume = payload.Volume * 31.2 - 30;
-            console.log(convertedVolume);
             await commands.setVolume(convertedVolume);
             break;
         case 'Position' in payload:
@@ -245,5 +232,20 @@ window.addEventListener('playerTrackChanged', async () => {
 
 window.addEventListener('loopChanged', () => {
     loop.value = getLoop();
+})
+
+onMounted(async () => {
+    await initialLoad();
+})
+
+onUnmounted(async () => {
+    await commands.stopPlayer();
+
+    window.removeEventListener('playerTrackChanged', () => { });
+    window.removeEventListener('loopChanged', () => { });
+
+    (await playerProgress)();
+    (await trackEnd)();
+    (await mediaControl)();
 })
 </script>

@@ -15,12 +15,12 @@
                 </div>
 
                 <div class="flex gap-4">
-                    <button
+                    <button @click="handlePlayButton(false)"
                         class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md bg-primary text-background duration-150 hover:opacity-90">
                         <span class="i-fluent-play-24-filled h-7"></span>
                         <p class="font-main">Play</p>
                     </button>
-                    <button
+                    <button @click="handlePlayButton(true)"
                         class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md border border-stroke-100 bg-background text-supporting duration-150 hover:opacity-80">
                         <span class="i-fluent-arrow-shuffle-20-filled h-7"></span>
                         <p class="font-main">Shuffle</p>
@@ -82,6 +82,15 @@ function getAsArtists(tracks: TrackWithFeatures) {
     const artists = tracks.features.map((artist) => artist.name);
     artists.unshift(tracks.track.artist);
     return artists;
+}
+
+async function handlePlayButton(shuffle: boolean) {
+    if (!data.value) return;
+    const queue = data.value.tracks.map((track) => track.track);
+    setQueue(queue);
+    if (shuffle) shuffleQueue();
+    setQueueIndex(0);
+    await setPlayerTrack(getQueue()[0]);
 }
 
 async function handleAddToQueue(coords: { x: number, y: number }) {
