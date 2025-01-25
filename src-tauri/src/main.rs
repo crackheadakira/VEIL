@@ -29,6 +29,18 @@ pub enum FrontendError {
         #[from]
         std::io::Error,
     ),
+    #[error("metadata error: {0}")]
+    MetadataError(
+        #[serde(skip)] // MetadataError is not `Serialize` or `Type`
+        #[from]
+        audio_metadata::MetadataError,
+    ),
+    #[error("database error: {0}")]
+    DatabaseError(
+        #[serde(skip)] // rusqlite::Error is not `Serialize` or `Type`
+        #[from]
+        db::DatabaseError,
+    ),
 }
 
 pub struct SodapopState {
@@ -57,7 +69,6 @@ async fn main() {
             commands::sqlite::get_artist_with_albums,
             commands::sqlite::get_all_albums,
             commands::sqlite::track_by_id,
-            commands::sqlite::get_features,
             commands::player::play_track,
             commands::player::pause_track,
             commands::player::resume_track,

@@ -1,9 +1,17 @@
-use std::{fs::create_dir, intrinsics::unreachable, path::Path};
+use std::{fs::create_dir, path::Path};
 
 use crate::{commands::music_folder::get_album_type, models::*};
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Error, Result, Row};
+use rusqlite::Error;
+
+#[derive(Debug, thiserror::Error)]
+pub enum DatabaseError {
+    #[error(transparent)]
+    R2D2Error(#[from] r2d2::Error),
+    #[error(transparent)]
+    RusqliteError(#[from] rusqlite::Error),
+}
 
 pub struct Database {
     pub pool: Pool<SqliteConnectionManager>,
@@ -89,7 +97,7 @@ impl Database {
         Self { pool }
     }
 
-    pub fn all<T>(&self) -> anyhow::Result<Vec<T>>
+    pub fn all<T>(&self) -> Result<Vec<T>, DatabaseError>
     where
         T: NeedForDatabase,
     {
@@ -106,12 +114,12 @@ impl Database {
         let mut stmt = conn.prepare(stmt_to_call)?;
         let result = stmt
             .query_map([], T::from_row)?
-            .collect::<Result<Vec<T>>>()?;
+            .collect::<Result<Vec<T>, Error>>()?;
 
         Ok(result)
     }
 
-    pub fn by_id<T>(&self, id: &u32) -> anyhow::Result<T>
+    pub fn by_id<T>(&self, id: &u32) -> Result<T, DatabaseError>
     where
         T: NeedForDatabase,
     {
@@ -124,28 +132,28 @@ impl Database {
         Ok(result)
     }
 
-    pub fn insert<T>(&self, data_to_pass: T) -> anyhow::Result<u32>
+    pub fn insert<T>(&self, data_to_pass: T) -> Result<u32, DatabaseError>
     where
         T: NeedForDatabase,
     {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => "INSERT INTO artists (name) VALUES (?1)",
-            "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3)",
-            "features" => "INSERT INTO features (track_id, feature_id) VALUES (?1, ?2)",
+            "artists" => "INSERT INTO artists (name) VALUES (?1) RETURNING id",
+            "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING id",
+            "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING id",
+            "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3) RETURNING id",
+            "features" => "INSERT INTO features (track_id, feature_id) VALUES (?1, ?2) RETURNING id",
             _ => unreachable!("Invalid table name"),
         };
 
         let mut stmt = conn.prepare_cached(stmt_to_call)?;
         let params = data_to_pass.to_params();
-        stmt.execute(&params[..])?;
+        let id = stmt.query_row(params.as_slice(), |row| row.get(0))?;
 
-        Ok(conn.last_insert_rowid() as u32)
+        Ok(id)
     }
 
-    pub fn delete<T>(&self, id: u32) -> anyhow::Result<()>
+    pub fn delete<T>(&self, id: u32) -> Result<(), DatabaseError>
     where
         T: NeedForDatabase,
     {
@@ -157,236 +165,228 @@ impl Database {
         Ok(())
     }
 
-    pub fn count<T>(&self, id: u32, call_where: &str) -> u32
+    pub fn count<T>(&self, id: u32, call_where: &str) -> Result<u32, DatabaseError>
     where
         T: NeedForDatabase,
     {
-        let conn = self.pool.get().unwrap();
+        let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT COUNT(*) FROM {} WHERE {} = ?1",
             T::table_name(),
             call_where
         );
-        let mut stmt = conn.prepare_cached(&stmt_to_call).unwrap();
-        let result = stmt.query_row([id], |row| row.get(0));
+        let mut stmt = conn.prepare_cached(&stmt_to_call)?;
+        let result = stmt.query_row([id], |row| row.get(0))?;
 
-        match result {
-            Ok(count) => count,
-            Err(e) => panic!("Error counting {}: {}", T::table_name(), e),
-        }
+        Ok(result)
     }
 
-    pub fn features_by_track(&self, track_id: &u32) -> Vec<Artists> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT * FROM features WHERE track_id = ?1")
-            .unwrap();
-        let result = stmt
-            .query_map([track_id], |row| {
-                let feature_id: u32 = row.get(2)?;
-                Ok(self.by_id::<Artists>(&feature_id))
-            })
-            .unwrap()
-            .collect::<Result<Vec<Artists>>>()
-            .unwrap();
+    pub fn exists<T>(&self, field_to_view: &str, field_data: &str) -> Result<bool, DatabaseError>
+    where
+        T: NeedForDatabase,
+    {
+        let conn = self.pool.get()?;
+        let stmt_to_call = format!(
+            "SELECT EXISTS(SELECT 1 FROM {} WHERE {} = ?1)",
+            T::table_name(),
+            field_to_view
+        );
+        let mut stmt = conn.prepare(&stmt_to_call)?;
+        let result = stmt.exists([field_data])?;
 
-        result
+        Ok(result)
     }
 
-    pub fn update_duration(&self, track_id: &u32, album_id: &u32, duration: &u32) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("UPDATE tracks SET duration = ?1 WHERE id = ?2")
-            .unwrap();
-        let result = stmt.execute((duration, track_id));
+    fn features_for_tracks(
+        &self,
+        tracks: Vec<Tracks>,
+    ) -> Result<Vec<TrackWithFeatures>, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("SELECT * FROM features WHERE track_id = ?1")?;
 
-        match result {
-            Ok(_) => {
-                let mut album = self.by_id::<Albums>(album_id);
-                album.duration += duration;
-                let new_album_type = get_album_type(album.track_count, album.duration);
-                self.update_album_type(
-                    album_id,
-                    &new_album_type,
-                    &(album.duration, album.track_count),
-                );
-            }
-            Err(e) => panic!("Error updating duration: {}", e),
+        let mut tracks_with_features = Vec::new();
+        for track in tracks {
+            let features_ids = stmt
+                .query_map([track.id], Features::from_row)?
+                .collect::<Result<Vec<Features>, Error>>()?;
+
+            let features = features_ids
+                .iter()
+                .map(|feature| self.by_id::<Artists>(&feature.feature_id))
+                .collect::<Result<Vec<Artists>, DatabaseError>>()?;
+
+            tracks_with_features.push(TrackWithFeatures { track, features });
         }
+
+        Ok(tracks_with_features)
+    }
+
+    pub fn update_duration(
+        &self,
+        track_id: &u32,
+        album_id: &u32,
+        duration: &u32,
+    ) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("UPDATE tracks SET duration = ?1 WHERE id = ?2")?;
+        stmt.execute((duration, track_id))?;
+
+        let (new_duration, track_count) = self.get_album_duration(album_id)?;
+        let new_album_type = get_album_type(track_count, new_duration);
+        self.update_album_type(album_id, &new_album_type, &(new_duration, track_count));
+
+        Ok(())
     }
 
     // TRACK
-    pub fn track_by_album_id(&self, track_name: &str, album_id: &u32) -> Option<Tracks> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare_cached("SELECT * FROM tracks WHERE (name, albums_id) = (?1, ?2)")
-            .unwrap();
+    pub fn track_by_album_id(
+        &self,
+        track_name: &str,
+        album_id: &u32,
+    ) -> Result<Tracks, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt =
+            conn.prepare_cached("SELECT * FROM tracks WHERE (name, albums_id) = (?1, ?2)")?;
+        let result = stmt.query_row((track_name, album_id), Tracks::from_row)?;
 
-        match stmt.query_row((track_name, album_id), stmt_to_track) {
-            Ok(track) => Some(track),
-            Err(rusqlite::Error::QueryReturnedNoRows) => None,
-            Err(e) => panic!("Error fetching track: {}", e),
-        }
+        Ok(result)
     }
 
     // ALBUM
+    pub fn album_by_name(
+        &self,
+        album_name: &str,
+        artist_id: &u32,
+    ) -> Result<Albums, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt =
+            conn.prepare_cached("SELECT * FROM albums WHERE (name, artists_id) = (?1, ?2)")?;
+        let result = stmt.query_row((album_name, artist_id), Albums::from_row)?;
 
-    // This returns an option due to it's usage in metadata.rs
-    pub fn spec_album_by_artist_id(&self, album_name: &str, artist_id: &u32) -> Option<Albums> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare_cached("SELECT * FROM albums WHERE (name, artists_id) = (?1, ?2)")
-            .unwrap();
-        let result = stmt.query_row((album_name, artist_id), stmt_to_album);
-
-        match result {
-            Ok(album) => Some(album),
-            Err(rusqlite::Error::QueryReturnedNoRows) => None,
-            Err(e) => panic!("Error fetching album: {}", e),
-        }
+        Ok(result)
     }
 
-    pub fn album_by_artist_id(&self, artist_id: &u32) -> Vec<Albums> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT * FROM albums WHERE artists_id = ?1")
-            .unwrap();
+    pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("SELECT * FROM albums WHERE artists_id = ?1")?;
         let result = stmt
-            .query_map([artist_id], stmt_to_album)
-            .unwrap()
-            .collect::<Result<Vec<Albums>>>()
-            .unwrap();
+            .query_map([artist_id], Albums::from_row)?
+            .collect::<Result<Vec<Albums>, Error>>()?;
 
-        result
+        Ok(result)
     }
 
-    pub fn get_album_duration(&self, album_id: &u32) -> (u32, u32) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE albums_id = ?1")
-            .unwrap();
+    pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt =
+            conn.prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE albums_id = ?1")?;
 
-        let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)));
+        let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
-        match result {
-            Ok((duration, tracks)) => (duration, tracks),
-            Err(e) => panic!("Error fetching album duration: {}", e),
-        }
+        Ok(result)
     }
 
-    pub fn album_with_tracks(&self, album_id: &u32) -> AlbumWithTracks {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("SELECT * FROM tracks WHERE albums_id = ?1")
-            .unwrap();
+    pub fn album_with_tracks(&self, album_id: &u32) -> Result<AlbumWithTracks, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("SELECT * FROM tracks WHERE albums_id = ?1")?;
 
         let tracks = stmt
-            .query_map([album_id], stmt_to_track)
-            .unwrap()
-            .collect::<Result<Vec<Tracks>>>()
-            .unwrap();
+            .query_map([], Tracks::from_row)?
+            .collect::<Result<Vec<Tracks>, Error>>()?;
 
-        let features = tracks
-            .iter()
-            .map(|track| {
-                let features = self.features_by_track(&track.id);
-                TrackWithFeatures {
-                    track: track.clone(),
-                    features,
-                }
-            })
-            .collect();
+        let album = self.by_id::<Albums>(album_id)?;
+        let features = self.features_for_tracks(tracks)?;
 
-        let album = self.by_id::<Albums>(album_id);
-
-        AlbumWithTracks {
+        Ok(AlbumWithTracks {
             album,
             tracks: features,
-        }
+        })
     }
 
-    pub fn update_album_type(&self, album_id: &u32, album_type: &str, duration_count: &(u32, u32)) {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare("UPDATE albums SET type = ?1, duration = ?2, track_count = ?3 WHERE ID = ?4")
-            .unwrap();
-        let result = stmt.execute((album_type, duration_count.0, duration_count.1, album_id));
+    pub fn update_album_type(
+        &self,
+        album_id: &u32,
+        album_type: &str,
+        duration_count: &(u32, u32),
+    ) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare(
+            "UPDATE albums SET type = ?1, duration = ?2, track_count = ?3 WHERE ID = ?4",
+        )?;
+        stmt.execute((album_type, duration_count.0, duration_count.1, album_id))?;
 
-        match result {
-            Ok(_) => (),
-            Err(e) => panic!("Error updating album type: {}", e),
-        }
+        Ok(())
     }
 
     // ARTIST
 
-    pub fn artist_by_name(&self, name: &str) -> Option<Artists> {
-        let conn = self.pool.get().unwrap();
-        let mut stmt = conn
-            .prepare_cached("SELECT * FROM artists WHERE name = ?1")
-            .unwrap();
-        let result: Result<Artists> = stmt.query_row([name], stmt_to_artist);
+    pub fn artist_by_name(&self, name: &str) -> Result<Artists, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare_cached("SELECT * FROM artists WHERE name = ?1")?;
+        let result = stmt.query_row([name], Artists::from_row)?;
 
-        match result {
-            Ok(artist) => Some(artist),
-            Err(rusqlite::Error::QueryReturnedNoRows) => None,
-            Err(e) => panic!("Error fetching artist: {}", e),
-        }
+        Ok(result)
     }
 
-    pub fn artist_with_albums(&self, id: &u32) -> ArtistWithAlbums {
-        let artist = self.by_id::<Artists>(id);
-        let albums = self.album_by_artist_id(id);
+    pub fn artist_with_albums(&self, id: &u32) -> Result<ArtistWithAlbums, DatabaseError> {
+        let artist = self.by_id::<Artists>(id)?;
+        let albums = self.albums_by_artist_id(id)?;
 
         let albums_with_tracks = albums
             .iter()
             .map(|album| self.album_with_tracks(&album.id))
-            .collect();
+            .collect::<Result<Vec<AlbumWithTracks>, DatabaseError>>()?;
 
-        ArtistWithAlbums {
+        Ok(ArtistWithAlbums {
             artist,
             albums: albums_with_tracks,
-        }
+        })
     }
 
     // PLAYLIST
 
-    pub fn get_playlist_with_tracks(&self, playlist_id: &u32) -> PlaylistWithTracks {
-        let conn = self.pool.get().unwrap();
-        let playlist = self.by_id::<Playlists>(playlist_id);
-        let mut stmt = conn
-            .prepare(
-                "SELECT t.id, t.album, t.albums_id, t.artist, t.name, t.path
+    pub fn get_playlist_with_tracks(
+        &self,
+        playlist_id: &u32,
+    ) -> Result<PlaylistWithTracks, DatabaseError> {
+        let conn = self.pool.get()?;
+        let playlist = self.by_id::<Playlists>(playlist_id)?;
+        let mut stmt = conn.prepare(
+            "SELECT t.id, t.album, t.albums_id, t.artist, t.name, t.path
             FROM playlist_tracks pt
             JOIN tracks t ON pt.tracks_id = t.id
             WHERE pt.playlists_id = ?1;",
-            )
-            .unwrap();
+        )?;
+
         let tracks = stmt
-            .query_map([playlist_id], stmt_to_track)
-            .unwrap()
-            .collect();
+            .query_map([playlist_id], Tracks::from_row)?
+            .collect::<Result<Vec<Tracks>, Error>>()?;
 
-        match tracks {
-            Ok(tracks) => PlaylistWithTracks { playlist, tracks },
-            Err(e) => panic!("Error fetching playlist with tracks: {}", e),
-        }
+        Ok(PlaylistWithTracks { playlist, tracks })
     }
 
-    pub fn update_playlist(&self, playlist: &Playlists) -> Result<usize> {
-        let conn = self.pool.get().unwrap();
-        conn.execute(
+    pub fn update_playlist(&self, playlist: &Playlists) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare(
             "UPDATE playlists SET name = ?1, description = ?2, cover_path = ?3 WHERE id = ?4",
-            [&playlist.name, &playlist.description, &playlist.cover_path],
-        )
+        )?;
+        stmt.execute(playlist.to_params().as_slice())?;
+
+        Ok(())
     }
 
-    pub fn insert_track_to_playlist(&self, playlist_id: &u32, track_id: &u32) -> Result<usize> {
-        let conn = self.pool.get().unwrap();
+    pub fn insert_track_to_playlist(
+        &self,
+        playlist_id: &u32,
+        track_id: &u32,
+    ) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
         conn.execute(
             "INSERT INTO playlist_tracks (playlists_id, tracks_id) VALUES (?1, ?2)",
             [playlist_id, track_id],
-        )
+        )?;
+
+        Ok(())
     }
 }
 
@@ -397,40 +397,4 @@ fn get_db_path() -> String {
 pub fn data_path() -> String {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.to_str().unwrap().to_string() + "/Sodapop-Reimagined"
-}
-
-fn stmt_to_track(row: &Row) -> Result<Tracks, Error> {
-    Ok(Tracks {
-        id: row.get(0)?,
-        album: row.get(1)?,
-        albums_id: row.get(2)?,
-        artist: row.get(3)?,
-        artists_id: row.get(4)?,
-        name: row.get(5)?,
-        duration: row.get(6)?,
-        path: row.get(7)?,
-        cover_path: row.get(8)?,
-    })
-}
-
-fn stmt_to_album(row: &Row) -> Result<Albums, Error> {
-    Ok(Albums {
-        id: row.get(0)?,
-        artists_id: row.get(1)?,
-        artist: row.get(2)?,
-        name: row.get(3)?,
-        cover_path: row.get(4)?,
-        album_type: row.get(5)?,
-        duration: row.get(6)?,
-        track_count: row.get(7)?,
-        year: row.get(8)?,
-        path: row.get(9)?,
-    })
-}
-
-fn stmt_to_artist(row: &Row) -> Result<Artists, Error> {
-    Ok(Artists {
-        id: row.get(0)?,
-        name: row.get(1)?,
-    })
 }

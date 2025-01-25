@@ -36,16 +36,16 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
         let start = std::time::Instant::now();
         let all_metadata = Metadata::from_files(&all_paths)?;
 
-        all_metadata.into_iter().for_each(|metadata| {
-            let artist = &state_guard.db.artist_by_name(&metadata.artist);
+        for metadata in all_metadata {
+            let artist_exists = state_guard.db.exists::<Artists>("name", &metadata.artist)?;
 
-            let artist_id = if let Some(artist) = artist {
-                artist.id
+            let artist_id = if artist_exists {
+                state_guard.db.artist_by_name(&metadata.artist)?.id
             } else {
                 state_guard.db.insert::<Artists>(Artists {
                     id: 0,
                     name: metadata.artist.clone(),
-                })
+                })?
             };
 
             let mut features_id = Vec::new();
@@ -57,18 +57,18 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     state_guard.db.insert::<Artists>(Artists {
                         id: 0,
                         name: feature.clone(),
-                    })
+                    })?
                 };
 
                 features_id.push(feature_id);
             }
 
-            let album = &state_guard
-                .db
-                .spec_album_by_artist_id(&metadata.album, &artist_id);
+            let album = &state_guard.db.album_by_name(&metadata.album, &artist_id)?;
             let cover_path = cover_path(&metadata.artist, &metadata.album);
 
-            let album_id = if let Some(album) = album {
+            // album_by_artist_id doesn't return an Option anymore
+
+            /*let album_id = if let Some(album) = album {
                 album.id
             } else {
                 write_cover(&metadata, &cover_path);
@@ -83,8 +83,8 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     track_count: 0,
                     duration: 0,
                     path: get_album_path(path.to_str().unwrap(), &metadata.file_path),
-                })
-            };
+                })?
+            };*/
 
             let track = &state_guard.db.track_by_album_id(&metadata.name, &album_id);
 
@@ -101,7 +101,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     name: metadata.name.clone(),
                     path: metadata.file_path.clone(),
                     cover_path,
-                })
+                })?
             };
 
             for feature_id in features_id {
@@ -111,7 +111,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     feature_id,
                 });
             }
-        });
+        }
 
         // Remove tracks that are no longer in the music folder
         let all_tracks = &state_guard.db.all::<Tracks>().unwrap();

@@ -31,10 +31,3 @@ pub fn get_artist_with_albums(id: u32, state: State<'_, Mutex<SodapopState>>) ->
     let state_guard = state.lock().unwrap();
     state_guard.db.artist_with_albums(&id)
 }
-
-#[tauri::command]
-#[specta::specta]
-pub fn get_features(track_id: u32, state: State<'_, Mutex<SodapopState>>) -> Vec<Artists> {
-    let state_guard = state.lock().unwrap();
-    state_guard.db.features_by_track(&track_id)
-}
