@@ -110,21 +110,12 @@ impl Metadata {
         }
     }
 
-    pub fn from_files(
-        file_paths: &[std::path::PathBuf],
-        file_extension: &str,
-    ) -> Result<Vec<Metadata>> {
-        match file_extension {
-            "flac" => {
-                let files: Vec<flac::Flac> = file_paths
-                    .iter()
-                    .map(|path| flac::Flac::new(path).unwrap())
-                    .collect();
-
-                Ok(files.into_iter().map(Metadata::from_flac).collect())
-            }
-            _ => Err(anyhow::anyhow!("Unsupported file type")),
+    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
+        let mut metadata = Vec::new();
+        for path in file_paths {
+            metadata.push(Metadata::from_file(path)?);
         }
+        Ok(metadata)
     }
 }
 

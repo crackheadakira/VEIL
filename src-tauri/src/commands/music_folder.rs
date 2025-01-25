@@ -1,13 +1,20 @@
 use crate::{
-    first_time_metadata,
-    models::{Albums, Artists, Tracks},
+    db::data_path,
+    models::{Albums, Artists, Features, Tracks},
     SodapopState,
 };
-use std::{fs, sync::Mutex};
+
+use audio_metadata::Metadata;
+
+use std::{
+    fs::{self, File},
+    io::Write,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
+
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
-
-use std::path::PathBuf;
 
 #[tauri::command]
 #[specta::specta]
@@ -23,17 +30,94 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
 
     if let Some(path) = file_path {
         let path = path.try_into().unwrap();
-        let mut all_paths = recursive_dir_to_strings(&path);
+        let mut all_paths = recursive_dir(&path);
         all_paths.sort();
 
         let start = std::time::Instant::now();
-        first_time_metadata(&all_paths, path.to_str().unwrap(), &state_guard.db);
-        println!("First time metadata read time: {:?}", start.elapsed());
+        let all_metadata = Metadata::from_files(&all_paths).unwrap();
 
+        all_metadata.into_iter().for_each(|metadata| {
+            let artist = &state_guard.db.artist_by_name(&metadata.artist);
+
+            let artist_id = if let Some(artist) = artist {
+                artist.id
+            } else {
+                state_guard.db.insert::<Artists>(Artists {
+                    id: 0,
+                    name: metadata.artist.clone(),
+                })
+            };
+
+            let mut features_id = Vec::new();
+            for feature in &metadata.features {
+                let feature_artist = &state_guard.db.artist_by_name(feature);
+                let feature_id = if let Some(artist) = feature_artist {
+                    artist.id
+                } else {
+                    state_guard.db.insert::<Artists>(Artists {
+                        id: 0,
+                        name: feature.clone(),
+                    })
+                };
+
+                features_id.push(feature_id);
+            }
+
+            let album = &state_guard
+                .db
+                .spec_album_by_artist_id(&metadata.album, &artist_id);
+            let cover_path = cover_path(&metadata.artist, &metadata.album);
+
+            let album_id = if let Some(album) = album {
+                album.id
+            } else {
+                write_cover(&metadata, &cover_path);
+                state_guard.db.insert::<Albums>(Albums {
+                    id: 0,
+                    artists_id: artist_id,
+                    artist: metadata.artist.clone(),
+                    name: metadata.album.clone(),
+                    cover_path: cover_path.clone(),
+                    year: metadata.year,
+                    album_type: metadata.album_type,
+                    track_count: 0,
+                    duration: 0,
+                    path: get_album_path(path.to_str().unwrap(), &metadata.file_path),
+                })
+            };
+
+            let track = &state_guard.db.track_by_album_id(&metadata.name, &album_id);
+
+            let track_id = if let Some(track) = track {
+                track.id
+            } else {
+                state_guard.db.insert::<Tracks>(Tracks {
+                    id: 0,
+                    duration: metadata.duration.round() as u32,
+                    album: metadata.album.clone(),
+                    albums_id: album_id,
+                    artist: metadata.artist.clone(),
+                    artists_id: artist_id,
+                    name: metadata.name.clone(),
+                    path: metadata.file_path.clone(),
+                    cover_path,
+                })
+            };
+
+            for feature_id in features_id {
+                state_guard.db.insert::<Features>(Features {
+                    id: 0,
+                    track_id,
+                    feature_id,
+                });
+            }
+        });
+
+        // Remove tracks that are no longer in the music folder
         let all_tracks = &state_guard.db.all::<Tracks>();
 
         for track in all_tracks {
-            if !all_paths.contains(&track.path) {
+            if !all_paths.contains(&PathBuf::from(&track.path)) {
                 state_guard.db.delete::<Tracks>(track.id);
 
                 if state_guard.db.count::<Tracks>(track.albums_id, "albums_id") == 0 {
@@ -60,7 +144,7 @@ pub async fn select_music_folder(app: tauri::AppHandle) {
     }
 }
 
-pub fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
+fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
     let paths = fs::read_dir(path).unwrap();
     let mut tracks = Vec::new();
 
@@ -81,14 +165,6 @@ pub fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
     tracks
 }
 
-pub fn recursive_dir_to_strings(path: &PathBuf) -> Vec<String> {
-    let paths = recursive_dir(path);
-    paths
-        .into_iter()
-        .map(|path| path.display().to_string())
-        .collect()
-}
-
 // Singles are less than 3 tracks and 30 minutes,
 // EPs are up to 6 tracks and 30 minutes,
 // LPs/Albums are more than 6 tracks and 30 minutes.
@@ -100,4 +176,36 @@ pub fn get_album_type(tracks: u32, duration: u32) -> String {
     } else {
         String::from("Album")
     }
+}
+
+fn sanitize_string(string: &str) -> String {
+    string.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
+}
+
+fn cover_path(artist: &str, album: &str) -> String {
+    // have to sanitize the artist and album names to avoid issues with file paths
+    data_path().to_string()
+        + "/covers/"
+        + &sanitize_string(artist)
+        + " - "
+        + &sanitize_string(album)
+        + ".jpg"
+}
+
+fn write_cover(metadata: &Metadata, cover_path: &str) {
+    if !Path::new(&cover_path).exists() {
+        let cover = if metadata.picture_data.is_empty() {
+            &include_bytes!("../../../public/placeholder.png").to_vec()
+        } else {
+            &metadata.picture_data
+        };
+        let mut file = File::create(cover_path).unwrap();
+        file.write_all(&cover).unwrap();
+    }
+}
+
+fn get_album_path(music_folder: &str, full_path: &str) -> String {
+    let path = full_path.replace(music_folder, "");
+    let path = path.split('/').collect::<Vec<&str>>()[1..3].join("/");
+    music_folder.to_string() + "/" + &path
 }

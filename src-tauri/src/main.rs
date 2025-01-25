@@ -19,7 +19,6 @@ mod db;
 mod models;
 mod player;
 
-use commands::metadata::*;
 use commands::music_folder::*;
 use commands::player::*;
 use commands::sqlite::*;
