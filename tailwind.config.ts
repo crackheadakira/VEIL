@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss";
 import { iconsPlugin, getIconCollections } from '@egoist/tailwindcss-icons';
 
 export default {

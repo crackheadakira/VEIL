@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @font-face {
   font-family: 'Inter';
@@ -30,6 +28,24 @@
 
 svg {
   shape-rendering: crispEdges;
+}
+
+@theme {
+  /* Sodapop Colors */
+  --color-primary: #CD1919;
+  --color-placeholder: #b29e95;
+  --color-text: #C5BBB7;
+  --color-supporting: #6D6D6D;
+  --color-stroke-100: #222222;
+  --color-stroke-200: #303030;
+  --color-background: #0F0F0F;
+  --color-card: #111111;
+
+  /* Sodapop Aspect Ratios */
+  --aspect-card: 3.9 / 1;
+  --aspect-secondaryCard: 0.75 / 1;
+  --aspect-player: 16.5 / 1;
+  --aspect-button: 2.96 / 1;
 }
 
 @layer components {

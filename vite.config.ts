@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import Unimport from 'unimport/unplugin'
@@ -6,13 +7,15 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
-  plugins: [vue(),
-  Unimport.vite({
-    presets: ['vue'],
-    addons: { vueTemplate: true },
-    dts: true,
-    dirs: ['src/composables/*']
-  })],
+  plugins: [
+    tailwindcss(),
+    vue(),
+    Unimport.vite({
+      presets: ['vue'],
+      addons: { vueTemplate: true },
+      dts: true,
+      dirs: ['src/composables/*']
+    })],
 
   clearScreen: false,
   envPrefix: ['VITE_', 'TAURI_ENV_*'],
