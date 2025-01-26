@@ -196,7 +196,7 @@ pub fn initialize_player(
         duration: Some(std::time::Duration::from_secs(track.duration as u64)),
     })?;
 
-    let _ = state_guard.player.initialize_player(track, progress)?;
+    state_guard.player.initialize_player(track, progress)?;
 
     Ok(())
 }

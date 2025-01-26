@@ -209,7 +209,7 @@ fn write_cover(metadata: &Metadata, cover_path: &str) -> Result<(), FrontendErro
             &metadata.picture_data
         };
         let mut file = File::create(cover_path)?;
-        file.write_all(&cover)?;
+        file.write_all(cover)?;
     }
 
     Ok(())

@@ -97,10 +97,7 @@ impl Database {
         Self { pool }
     }
 
-    pub fn all<T>(&self) -> Result<Vec<T>, DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => "SELECT * FROM tracks",
@@ -119,10 +116,7 @@ impl Database {
         Ok(result)
     }
 
-    pub fn by_id<T>(&self, id: &u32) -> Result<T, DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
@@ -132,10 +126,7 @@ impl Database {
         Ok(result)
     }
 
-    pub fn insert<T>(&self, data_to_pass: T) -> Result<u32, DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<u32, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => "INSERT INTO artists (name) VALUES (?1) RETURNING id",
@@ -153,10 +144,7 @@ impl Database {
         Ok(id)
     }
 
-    pub fn delete<T>(&self, id: u32) -> Result<(), DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn delete<T: NeedForDatabase>(&self, id: u32) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
@@ -165,10 +153,11 @@ impl Database {
         Ok(())
     }
 
-    pub fn count<T>(&self, id: u32, call_where: &str) -> Result<u32, DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn count<T: NeedForDatabase>(
+        &self,
+        id: u32,
+        call_where: &str,
+    ) -> Result<u32, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT COUNT(*) FROM {} WHERE {} = ?1",
@@ -181,10 +170,11 @@ impl Database {
         Ok(result)
     }
 
-    pub fn exists<T>(&self, field_to_view: &str, field_data: &str) -> Result<bool, DatabaseError>
-    where
-        T: NeedForDatabase,
-    {
+    pub fn exists<T: NeedForDatabase>(
+        &self,
+        field_to_view: &str,
+        field_data: &str,
+    ) -> Result<bool, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT 1 FROM {} WHERE {} = ?1",

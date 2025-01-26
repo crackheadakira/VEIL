@@ -25,7 +25,7 @@ impl FrameType {
 
 #[derive(Debug)]
 pub enum Frame {
-    TextFrame(TextFrame),
+    Text(TextFrame),
     AttachedPicture(AttachedPicture),
     Unknown,
 }
@@ -43,9 +43,7 @@ impl Frame {
         reader.take(size as u64).read_to_end(&mut data)?;
 
         let frame = match frame_type {
-            FrameType::Text(string_type) => {
-                Frame::TextFrame(TextFrame::from_bytes(data, string_type)?)
-            }
+            FrameType::Text(string_type) => Frame::Text(TextFrame::from_bytes(data, string_type)?),
             FrameType::AttachedPicture => {
                 Frame::AttachedPicture(AttachedPicture::from_bytes(data)?)
             }
@@ -167,7 +165,7 @@ impl Id3 {
             let (frame_size, result) = Frame::read_from(&mut reader)?;
             total_read += frame_size as usize;
             match result {
-                Frame::TextFrame(tf) => {
+                Frame::Text(tf) => {
                     text_frames.insert(tf.text_type, tf.string_value);
                 }
                 Frame::AttachedPicture(ap) => attached_picture = Some(ap),

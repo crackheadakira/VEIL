@@ -66,7 +66,7 @@ impl Metadata {
 
         let mut features = artists.replace(&album_artist, "");
         let mut features_vec = Vec::new();
-        if features.len() > 0 {
+        if !features.is_empty() {
             if features.starts_with(", ") {
                 features.remove(0);
             }
