@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { convertFileSrc } from '@tauri-apps/api/core';
-import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks, TrackWithFeatures } from '../bindings';
+import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks } from '../bindings';
 import { useRoute } from 'vue-router';
 import BigCard from '../components/BigCard.vue';
 import TrackList from '../components/TrackList.vue';
@@ -67,7 +67,10 @@ async function handlePlayButton(shuffle: boolean) {
     if (!data.value) return;
     const queue = data.value.tracks.map((track) => track.track);
     playerStore.queue = queue;
-    if (shuffle) playerStore.updateShuffle();
+    if (shuffle) {
+        playerStore.isShuffled = false;
+        playerStore.updateShuffle()
+    };
     playerStore.queueIndex = 0;
     await playerStore.setPlayerTrack(playerStore.queue[0]);
 }

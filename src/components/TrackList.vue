@@ -24,6 +24,7 @@ import ContextMenu from '../components/ContextMenu.vue';
 const playerStore = usePlayerStore();
 
 const trackList = ref<HTMLDivElement | null>(null);
+
 const props = defineProps<{
     data: AlbumWithTracks;
 }>()
@@ -40,9 +41,13 @@ function getAsArtists(tracks: TrackWithFeatures) {
 
 async function handleAddToQueue(coords: { x: number, y: number }) {
     if (!props.data) return;
+    const trackHeight = trackList.value?.children[0].clientHeight || 76;
     const offsetTop = trackList.value?.offsetTop || 0;
-    const index = Math.floor((coords.y - offsetTop) / 76);
+    const index = Math.floor((coords.y - offsetTop) / trackHeight);
     const track = props.data.tracks[index];
+    console.log(track.track.name);
+
+    return;
     playerStore.personalQueue.push(track.track);
 }
 </script>
