@@ -18,6 +18,8 @@ export const usePlayerStore = defineStore('player', () => {
         await commands.stopPlayer();
 
         currentTrack.value = track;
+        playerProgress.value = 0;
+
         await commands.playTrack(track.id);
     }
 

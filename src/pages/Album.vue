@@ -29,21 +29,7 @@
             </div>
         </div>
 
-        <div class="flex flex-col rounded-md border border-stroke-100 bg-card p-4" ref="trackList">
-            <div class="font-supporting contextable flex cursor-pointer select-none items-center gap-8 p-3 px-4 duration-75 hover:bg-background"
-                v-for="(track, idx) of data.tracks" @dblclick="handleNewTrack(track.track, idx)">
-                <p class="w-9 text-supporting">{{ idx + 1 }}</p>
-                <div class="gap flex-grow">
-                    <p class="mb-1 text-text">{{ track.track.name }}</p>
-                    <p class="text-supporting">
-                        <span class="hover:text-text" v-for="artist in getAsArtists(track)" :key="artist">
-                            {{ `${artist} ` }}
-                        </span>
-                    </p>
-                </div>
-                <p class="text-text">{{ makeReadableTime(track.track.duration) }}</p>
-            </div>
-        </div>
+        <TrackList :data="data" @new-track="handleNewTrack" />
 
         <div v-if="artist && artist.albums.length">
             <h5 class="font-h5 mb-4 text-text">More from {{ artist.artist.name }}</h5>
@@ -51,7 +37,6 @@
                 <BigCard v-for="album of artist.albums" :data="album.album" />
             </div>
         </div>
-        <ContextMenu @add-to-queue="handleAddToQueue" />
     </div>
 </template>
 
@@ -60,10 +45,9 @@ import { convertFileSrc } from '@tauri-apps/api/core';
 import { ArtistWithAlbums, commands, AlbumWithTracks, Tracks, TrackWithFeatures } from '../bindings';
 import { useRoute } from 'vue-router';
 import BigCard from '../components/BigCard.vue';
-import ContextMenu from '../components/ContextMenu.vue';
+import TrackList from '../components/TrackList.vue';
 
 const playerStore = usePlayerStore();
-const trackList = ref<HTMLDivElement | null>(null);
 
 const route = useRoute();
 const album_id = ref(route.params.album_id as string);
@@ -79,12 +63,6 @@ watch(() => route.params.album_id, (newId) => {
     window.scrollTo(0, 0);
 })
 
-function getAsArtists(tracks: TrackWithFeatures) {
-    const artists = tracks.features.map((artist) => artist.name);
-    artists.unshift(tracks.track.artist);
-    return artists;
-}
-
 async function handlePlayButton(shuffle: boolean) {
     if (!data.value) return;
     const queue = data.value.tracks.map((track) => track.track);
@@ -92,14 +70,6 @@ async function handlePlayButton(shuffle: boolean) {
     if (shuffle) playerStore.updateShuffle();
     playerStore.queueIndex = 0;
     await playerStore.setPlayerTrack(playerStore.queue[0]);
-}
-
-async function handleAddToQueue(coords: { x: number, y: number }) {
-    if (!data.value) return;
-    const offsetTop = trackList.value?.offsetTop || 0;
-    const index = Math.floor((coords.y - offsetTop) / 76);
-    const track = data.value.tracks[index];
-    playerStore.personalQueue.push(track.track);
 }
 
 async function updateData() {
@@ -126,9 +96,6 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
     await updateData();
-})
-
-onMounted(() => {
     playerStore.currentPage = `/album/${artist_id.value}/${album_id.value}`;
 })
 </script>

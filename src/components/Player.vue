@@ -11,9 +11,11 @@
                         {{ music.name }}
                     </p>
                 </RouterLink>
-                <p class="font-supporting cursor-pointer truncate font-normal text-supporting hover:opacity-85">
-                    {{ music.artist }}
-                </p>
+                <RouterLink :to="{ name: 'artist', params: { artist_id: music.artists_id } }">
+                    <p class="font-supporting cursor-pointer truncate font-normal text-supporting hover:opacity-85">
+                        {{ music.artist }}
+                    </p>
+                </RouterLink>
             </div>
         </div>
 
@@ -57,6 +59,7 @@ import { Event, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { commands, MediaPayload } from '../bindings';
 import { usePlayerStore } from '../composables/playerStore';
+import { RouterLink } from 'vue-router';
 
 const playerStore = usePlayerStore();
 

@@ -25,7 +25,6 @@ onBeforeMount(async () => {
   const page = playerStore.currentPage;
   router.push({ path: page });
 
-
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;
   if (track) {
