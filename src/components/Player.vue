@@ -7,14 +7,14 @@
                 alt="Album Cover">
             <div class="flex flex-col gap-1 truncate">
                 <RouterLink :to="{ name: 'album', params: { artist_id: music.artists_id, album_id: music.albums_id } }">
-                    <p class="font-supporting cursor-pointer truncate text-text hover:text-placeholder">
+                    <small class="cursor-pointer truncate text-text hover:text-placeholder">
                         {{ music.name }}
-                    </p>
+                    </small>
                 </RouterLink>
                 <RouterLink :to="{ name: 'artist', params: { artist_id: music.artists_id } }">
-                    <p class="font-supporting cursor-pointer truncate font-normal text-supporting hover:opacity-85">
+                    <small class="cursor-pointer truncate font-normal text-supporting hover:opacity-85">
                         {{ music.artist }}
-                    </p>
+                    </small>
                 </RouterLink>
             </div>
         </div>
@@ -36,7 +36,7 @@
                     class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"></span>
             </div>
 
-            <div class="font-supporting flex select-none items-center gap-4 text-supporting">
+            <div class="flex select-none items-center gap-4 text-supporting">
                 <label for="progress" class=w-10>{{ currentProgress }}</label>
                 <input @mousedown="beingHeld = true" @mouseup="selectProgress()" type="range" ref="progressBar"
                     name="progress" min="0" value=0 max="100"

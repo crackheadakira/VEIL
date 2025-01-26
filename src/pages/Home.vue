@@ -6,7 +6,7 @@
             <Dropdown :title="'Filter by'" :options="['Albums', 'Artists', 'Tracks']" />
         </div>
         <div>
-            <h6 class="font-h6 mb-4 text-text">Recently listened</h6>
+            <h6 class="mb-4 text-text">Recently listened</h6>
             <div v-if="recentlyPlayed.length > 0" class="flex flex-wrap gap-4">
                 <BigCard v-for="album of recentlyPlayed" :data="album" />
             </div>

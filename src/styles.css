@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@plugin "@egoist/tailwindcss-icons";
+
+
+@plugin "@egoist/tailwindcss-icons" {
+  collections: "fluent";
+  scale: 1.5;
+}
 
 @font-face {
   font-family: 'Inter';
@@ -48,49 +55,60 @@ svg {
   --aspect-button: 2.96 / 1;
 }
 
-@layer components {
-  .font-supporting {
-    font-size: 1rem;
-    @apply font-medium;
-  }
-
-  .font-main {
-    font-size: 1.25rem;
-    @apply font-semibold;
-  }
-
-  .font-main-nonbold {
-    font-size: 1.25rem;
-    @apply font-medium;
-  }
-
-  .font-h6 {
-    font-size: 1.563rem;
-    @apply font-semibold;
-  }
-
-  .font-h5 {
-    font-size: 1.953rem;
-    @apply font-bold;
-  }
-
-  .font-h4 {
-    font-size: 2.441rem;
-    @apply font-bold;
-  }
-
-  .font-h3 {
-    font-size: 3.052rem;
-    @apply font-extrabold;
-  }
-
-  .font-h2 {
-    font-size: 3.815rem;
-    @apply font-extrabold;
-  }
-
-  .font-h1 {
+@layer base {
+  h1 {
     font-size: 4.769rem;
-    @apply font-extrabold;
+    font-weight: 800;
   }
+
+  h2 {
+    font-size: 3.815rem;
+    font-weight: 800;
+  }
+
+  h3 {
+    font-size: 3.052rem;
+    font-weight: 800;
+  }
+
+  h4 {
+    font-size: 2.441rem;
+    font-weight: 700;
+  }
+
+  h5 {
+    font-size: 1.953rem;
+    font-weight: 700;
+  }
+
+  h6 {
+    font-size: 1.563rem;
+    font-weight: 600;
+  }
+
+  p {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  small, label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+}
+
+@utility font-supporting {
+  font-size: 1rem;
+  font-weight: var(--font-medium);
+}
+
+@utility font-main {
+  font-size: 1.25rem;
+  font-weight: var(--font-semibold);
+}
+
+@utility font-main-nonbold {
+  font-size: 1.25rem;
+  font-weight: var(--font-medium);
 }

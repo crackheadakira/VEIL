@@ -1,7 +1,8 @@
 <template>
     <div class="flex gap-1">
-        <button class="font-supporting rounded-md border border-stroke-100 bg-card p-2" @click="openDialog">Select
-            music folder</button>
+        <button class="rounded-md border border-stroke-100 bg-card p-2" @click="openDialog">
+            <small>Select music folder</small>
+        </button>
     </div>
 </template>
 

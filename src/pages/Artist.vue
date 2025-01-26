@@ -2,7 +2,7 @@
     <div class="flex w-full flex-col gap-8 text-text" v-if="artist_data">
         <div class="flex h-72 items-center justify-between overflow-hidden rounded-md border border-stroke-100 bg-card">
             <div class="flex h-full flex-col justify-end gap-4 p-8">
-                <h4 class="font-h4 text-text">{{ artist_data.artist.name }}</h4>
+                <h4 class="text-text">{{ artist_data.artist.name }}</h4>
                 <div class="flex gap-4">
                     <button
                         class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md bg-primary text-background duration-150 hover:opacity-90">
@@ -21,7 +21,7 @@
         </div>
 
         <div>
-            <p class="font-supporting mb-2 text-supporting">View all</p>
+            <small class="mb-2 text-supporting">View all</small>
             <div class="flex flex-wrap gap-4">
                 <BigCard v-for="album of artist_data.albums" :data="album" />
             </div>

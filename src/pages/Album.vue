@@ -6,12 +6,14 @@
             <div class="flex flex-col gap-4">
                 <div class="flex cursor-default select-none flex-col gap-1">
                     <p class="font-main-nonbold text-supporting">{{ data.album.album_type }}</p>
-                    <h4 class="font-h4 text-text">{{ data.album.name }}</h4>
+                    <h4 class="text-text">{{ data.album.name }}</h4>
                     <p class="font-main text-supporting">{{ data.album.artist }}</p>
-                    <p class="font-supporting text-supporting">{{ makeTime(data.album.duration) }}, {{
-                        data.album.track_count }} {{ data.album.track_count > 1 ?
-                            "songs" : "song" }}</p>
-                    <p v-if="data.album.year" class="font-supporting text-supporting">{{ data.album.year }}</p>
+                    <small class="text-supporting">
+                        {{ makeTime(data.album.duration) }},
+                        {{ data.album.track_count }}
+                        {{ data.album.track_count > 1 ? "songs" : "song" }}
+                    </small>
+                    <small v-if="data.album.year" class="text-supporting">{{ data.album.year }}</small>
                 </div>
 
                 <div class="flex gap-4">
@@ -32,7 +34,7 @@
         <TrackList :data="data" @new-track="handleNewTrack" />
 
         <div v-if="artist && artist.albums.length">
-            <h5 class="font-h5 mb-4 text-text">More from {{ artist.artist.name }}</h5>
+            <h5 class="mb-4 text-text">More from {{ artist.artist.name }}</h5>
             <div class="flex flex-wrap gap-4">
                 <BigCard v-for="album of artist.albums" :data="album.album" />
             </div>

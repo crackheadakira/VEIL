@@ -6,8 +6,8 @@
         </RouterLink>
         <div class="flex flex-col gap-1 text-supporting">
             <p class="font-main truncate text-text">{{ album_data.name }}</p>
-            <p class="font-supporting truncate">{{ album_data.artist }}</p>
-            <p class="font-supporting">{{ album_data.album_type }}</p>
+            <small class="truncate">{{ album_data.artist }}</small>
+            <small>{{ album_data.album_type }}</small>
         </div>
     </div>
 </template>

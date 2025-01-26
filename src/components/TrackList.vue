@@ -1,15 +1,15 @@
 <template>
     <div class="flex flex-col rounded-md border border-stroke-100 bg-card p-4" ref="trackList">
-        <div class="font-supporting contextable flex cursor-pointer select-none items-center gap-8 p-3 px-4 duration-75 hover:bg-background"
+        <div class="ontextable flex cursor-pointer select-none items-center gap-8 p-3 px-4 duration-75 hover:bg-background"
             v-for="(track, idx) of data.tracks" @dblclick="$emit('new-track', track.track, idx)">
-            <p class="w-9 text-supporting">{{ idx + 1 }}</p>
-            <div class="gap flex-grow">
+            <small class="w-9 text-supporting">{{ idx + 1 }}</small>
+            <div class="gap grow">
                 <p class="mb-1 text-text">{{ track.track.name }}</p>
-                <p class="text-supporting">
+                <small class="text-supporting">
                     <span v-for="artist in getAsArtists(track)" :key="artist">
                         {{ `${artist} ` }}
                     </span>
-                </p>
+                </small>
             </div>
             <p class="text-text">{{ makeReadableTime(track.track.duration) }}</p>
         </div>
