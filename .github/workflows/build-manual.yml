@@ -1,15 +1,15 @@
-name: "publish"
+name: "build"
 
 on:
   workflow_dispatch: {}
 
 jobs:
-  create-release:
+  create-build:
     permissions:
       contents: write
     runs-on: ubuntu-latest
     outputs:
-      release_id: ${{ steps.create-release.outputs.result }}
+      release_id: ${{ steps.create-build.outputs.result }}
 
     steps:
       - uses: actions/checkout@v4
@@ -22,8 +22,8 @@ jobs:
       - name: get version
         run: echo "PACKAGE_VERSION=$(bun get version)" >> $GITHUB_ENV
 
-      - name: create release
-        id: create-release
+      - name: create build
+        id: create-build
         uses: actions/github-script@v6
         with:
           script: |
@@ -39,7 +39,7 @@ jobs:
             return data.id
 
   build-tauri:
-    needs: create-release
+    needs: create-build
     permissions:
       contents: write
     strategy:
@@ -47,10 +47,6 @@ jobs:
       matrix:
         include:
           - platform: "ubuntu-22.04"
-            args: ""
-          - platform: "macos-latest"
-            args: ""
-          - platform: "windows-latest"
             args: ""
 
     runs-on: ${{ matrix.platform }}
@@ -64,9 +60,6 @@ jobs:
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          # Only needed for macOS builds
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -81,7 +74,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
+          releaseId: ${{ needs.create-build.outputs.release_id }}
           args: ${{ matrix.args }}
         
       - uses: actions/upload-artifact@v4
