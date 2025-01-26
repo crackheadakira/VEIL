@@ -4,21 +4,21 @@ import { createPinia } from "pinia";
 import "./styles.css";
 import App from "./App.vue";
 
-import HomeView from "./pages/Home.vue"
-import AlbumView from "./pages/Album.vue"
-import AllAlbumsView from "./pages/AllAlbums.vue"
-import ArtistView from "./pages/Artist.vue"
+import HomeView from "./pages/Home.vue";
+import AlbumView from "./pages/Album.vue";
+import AllAlbumsView from "./pages/AllAlbums.vue";
+import ArtistView from "./pages/Artist.vue";
 
 const routes = [
-    { path: "/album/:artist_id/:album_id", component: AlbumView, name: 'album' },
-    { path: "/artist/:artist_id", component: ArtistView, name: 'artist' },
-    { path: "/all_albums", component: AllAlbumsView },
-    { path: "/", component: HomeView },
+  { path: "/album/:artist_id/:album_id", component: AlbumView, name: "album" },
+  { path: "/artist/:artist_id", component: ArtistView, name: "artist" },
+  { path: "/all_albums", component: AllAlbumsView },
+  { path: "/", component: HomeView },
 ];
 const router = createRouter({
-    history: createMemoryHistory(),
-    routes
-})
+  history: createMemoryHistory(),
+  routes,
+});
 
 const pinia = createPinia();
 const app = createApp(App);

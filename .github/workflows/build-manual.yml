@@ -76,7 +76,7 @@ jobs:
         with:
           releaseId: ${{ needs.create-build.outputs.release_id }}
           args: ${{ matrix.args }}
-        
+
       - uses: actions/upload-artifact@v4
         if: matrix.platform == 'ubuntu-22.04'
         with:

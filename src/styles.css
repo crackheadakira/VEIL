@@ -6,11 +6,11 @@
 }
 
 @font-face {
-  font-family: 'Inter';
+  font-family: "Inter";
   font-style: normal;
   font-weight: 100 800;
   font-display: swap;
-  src: url('/fonts/Inter-VariableFont_slnt,wght.ttf') format('truetype');
+  src: url("/fonts/Inter-VariableFont_slnt,wght.ttf") format("truetype");
 }
 
 * {
@@ -37,13 +37,13 @@ svg {
 
 @theme {
   /* Sodapop Colors */
-  --color-primary: #CD1919;
+  --color-primary: #cd1919;
   --color-placeholder: #b29e95;
-  --color-text: #C5BBB7;
-  --color-supporting: #6D6D6D;
+  --color-text: #c5bbb7;
+  --color-supporting: #6d6d6d;
   --color-stroke-100: #222222;
   --color-stroke-200: #303030;
-  --color-background: #0F0F0F;
+  --color-background: #0f0f0f;
   --color-card: #111111;
 
   /* Sodapop Aspect Ratios */
@@ -89,7 +89,8 @@ svg {
     font-weight: 600;
   }
 
-  small, label {
+  small,
+  label {
     display: block;
     font-size: 1rem;
     font-weight: 500;
