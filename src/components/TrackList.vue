@@ -4,7 +4,7 @@
             v-for="(track, idx) of data.tracks" @dblclick="$emit('new-track', track.track, idx)">
             <small class="w-9 text-supporting">{{ idx + 1 }}</small>
             <div class="gap grow">
-                <p class="mb-1 text-text">{{ track.track.name }}</p>
+                <small class="mb-1 text-text">{{ track.track.name }}</small>
                 <small class="text-supporting">
                     <span v-for="artist in getAsArtists(track)" :key="artist">
                         {{ `${artist} ` }}

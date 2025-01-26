@@ -5,7 +5,7 @@
                 :src="convertFileSrc(album_data.cover_path)" alt="Album Cover" width="192" height="192">
         </RouterLink>
         <div class="flex flex-col gap-1 text-supporting">
-            <p class="font-main truncate text-text">{{ album_data.name }}</p>
+            <p class="truncate text-text">{{ album_data.name }}</p>
             <small class="truncate">{{ album_data.artist }}</small>
             <small>{{ album_data.album_type }}</small>
         </div>

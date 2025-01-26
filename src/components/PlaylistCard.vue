@@ -4,7 +4,7 @@
         <img class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90" src="/placeholder.png"
             alt="Album Cover">
         <div class="w-72 select-none">
-            <p class="font-main text-text truncate">Nice long playlist name that also cuts</p>
+            <p class="text-text truncate">Nice long playlist name that also cuts</p>
             <small class="text-supporting truncate">This is a really long playlist description that should
                 cut off</small>
         </div>

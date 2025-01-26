@@ -7,12 +7,12 @@
                     <button
                         class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md bg-primary text-background duration-150 hover:opacity-90">
                         <span class="i-fluent-play-24-filled h-7"></span>
-                        <p class="font-main">Play</p>
+                        <p>Play</p>
                     </button>
                     <button
                         class="text flex aspect-button h-12 items-center justify-center gap-2 rounded-md border border-stroke-100 bg-background text-supporting duration-150 hover:opacity-80">
                         <span class="i-fluent-arrow-shuffle-20-filled h-7"></span>
-                        <p class="font-main">Shuffle</p>
+                        <p>Shuffle</p>
                     </button>
                 </div>
             </div>

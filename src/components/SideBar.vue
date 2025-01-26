@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col items-center gap-8 border-r border-stroke-100 bg-card p-8 text-text">
         <SearchBar />
-        <div class="font-main flex w-full flex-col gap-2 font-medium *:select-none">
+        <div class="flex w-full flex-col gap-2 font-medium *:select-none">
             <div class="flex w-full flex-col gap-4">
                 <small class="text-supporting">General</small>
                 <hr class="border-t-2 border-stroke-100">

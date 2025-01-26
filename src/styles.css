@@ -97,18 +97,3 @@ svg {
     font-weight: 500;
   }
 }
-
-@utility font-supporting {
-  font-size: 1rem;
-  font-weight: var(--font-medium);
-}
-
-@utility font-main {
-  font-size: 1.25rem;
-  font-weight: var(--font-semibold);
-}
-
-@utility font-main-nonbold {
-  font-size: 1.25rem;
-  font-weight: var(--font-medium);
-}
