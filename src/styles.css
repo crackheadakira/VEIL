@@ -1,9 +1,7 @@
 @import "tailwindcss";
 @plugin "@egoist/tailwindcss-icons";
 
-
 @plugin "@egoist/tailwindcss-icons" {
-  collections: "fluent";
   scale: 1.5;
 }
 
