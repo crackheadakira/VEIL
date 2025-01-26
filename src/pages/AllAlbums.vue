@@ -10,6 +10,7 @@
 import BigCard from '../components/BigCard.vue';
 import { commands, type Albums } from '../bindings';
 
+const playerStore = usePlayerStore();
 const albums = ref<Albums[]>([]);
 
 onBeforeMount(async () => {
@@ -21,6 +22,6 @@ onBeforeMount(async () => {
 });
 
 onMounted(() => {
-    setCurrentPage('/all_albums');
+    playerStore.currentPage = '/all_albums';
 })
 </script>

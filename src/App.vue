@@ -13,8 +13,10 @@ import { useRouter } from 'vue-router';
 import Player from './components/Player.vue';
 import SideBar from './components/SideBar.vue';
 import { commands } from './bindings';
+import { usePlayerStore } from './composables/playerStore';
 
 const router = useRouter();
+const playerStore = usePlayerStore();
 
 onBeforeMount(async () => {
   const result = await commands.getAllAlbums();
@@ -23,14 +25,15 @@ onBeforeMount(async () => {
   const allAlbums = result.data;
   if (allAlbums.length === 0) {
     localStorage.clear();
+    window.location.reload();
   }
 
-  const page = getCurrentPage();
-  router.push(page);
+  const page = playerStore.currentPage;
+  router.push({ path: page });
 
 
-  const track = getPlayerTrack();
-  const progress = getPlayerProgress();
+  const track = playerStore.currentTrack;
+  const progress = playerStore.playerProgress;
   if (track) {
     await commands.initializePlayer(track.id, progress);
   }

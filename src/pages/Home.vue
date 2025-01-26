@@ -6,8 +6,8 @@
             <Dropdown :title="'Filter by'" :options="['Albums', 'Artists', 'Tracks']" />
         </div>
         <div>
-            <h6 class="font-h6 text-text mb-4">Recently listened</h6>
-            <div class="flex flex-wrap gap-4">
+            <h6 class="font-h6 mb-4 text-text">Recently listened</h6>
+            <div v-if="recentlyPlayed.length > 0" class="flex flex-wrap gap-4">
                 <BigCard v-for="album of recentlyPlayed" :data="album" />
             </div>
         </div>
@@ -20,9 +20,10 @@ import PlaylistCard from '../components/PlaylistCard.vue';
 import Dropdown from '../components/Dropdown.vue';
 import BigCard from '../components/BigCard.vue';
 
-const recentlyPlayed = ref(getRecentlyPlayed());
+const playerStore = usePlayerStore();
+const recentlyPlayed = ref(playerStore.recentlyPlayed);
 
 onMounted(() => {
-    setCurrentPage('/');
+    playerStore.currentPage = "/";
 })
 </script>

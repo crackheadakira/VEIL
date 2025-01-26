@@ -62,6 +62,7 @@ import { useRoute } from 'vue-router';
 import BigCard from '../components/BigCard.vue';
 import ContextMenu from '../components/ContextMenu.vue';
 
+const playerStore = usePlayerStore();
 const trackList = ref<HTMLDivElement | null>(null);
 
 const route = useRoute();
@@ -87,10 +88,10 @@ function getAsArtists(tracks: TrackWithFeatures) {
 async function handlePlayButton(shuffle: boolean) {
     if (!data.value) return;
     const queue = data.value.tracks.map((track) => track.track);
-    setQueue(queue);
-    if (shuffle) shuffleQueue();
-    setQueueIndex(0);
-    await setPlayerTrack(getQueue()[0]);
+    playerStore.queue = queue;
+    if (shuffle) playerStore.updateShuffle();
+    playerStore.queueIndex = 0;
+    await playerStore.setPlayerTrack(playerStore.queue[0]);
 }
 
 async function handleAddToQueue(coords: { x: number, y: number }) {
@@ -98,7 +99,7 @@ async function handleAddToQueue(coords: { x: number, y: number }) {
     const offsetTop = trackList.value?.offsetTop || 0;
     const index = Math.floor((coords.y - offsetTop) / 76);
     const track = data.value.tracks[index];
-    addToPersonalQueue(track.track);
+    playerStore.personalQueue.push(track.track);
 }
 
 async function updateData() {
@@ -110,22 +111,24 @@ async function updateData() {
     data.value = current_album;
     res.albums.splice(res.albums.indexOf(current_album), 1);
     artist.value = res;
-    setCurrentPage(`/album/${artist_id.value}/${album_id.value}`);
 }
 
 async function handleNewTrack(track: Tracks, idx: number) {
-    await setPlayerTrack(track);
+    await playerStore.setPlayerTrack(track);
 
     if (!data.value) return;
-    setRecentlyPlayed(data.value.album);
+    playerStore.addToRecentlyPlayed(data.value.album);
 
     const queue = data.value.tracks.map((track) => track.track);
-    setQueue(queue);
-    setQueueIndex(idx);
+    playerStore.queue = queue;
+    playerStore.queueIndex = idx;
 }
 
 onBeforeMount(async () => {
     await updateData();
+})
 
+onMounted(() => {
+    playerStore.currentPage = `/album/${artist_id.value}/${album_id.value}`;
 })
 </script>

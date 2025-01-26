@@ -23,11 +23,12 @@
                     class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
                     @click=handleShuffle()></span>
                 <span class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
-                    @click="skipTrack(false)"></span>
+                    @click="playerStore.skipTrack(false)"></span>
                 <span @click="handlePlayAndPause"
                     :class="!paused ? 'i-fluent-pause-24-filled' : 'i-fluent-play-24-filled'"
                     class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"></span>
-                <span class="i-fluent-next-20-filled cursor-pointer hover:opacity-90" @click="skipTrack(true)"></span>
+                <span class="i-fluent-next-20-filled cursor-pointer hover:opacity-90"
+                    @click="playerStore.skipTrack(true)"></span>
                 <span @click=handleLoop
                     :class="(loop === 'queue' ? 'text-primary' : '') || (loop === 'track' ? 'text-primary opacity-75' : '')"
                     class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"></span>
@@ -55,18 +56,21 @@
 import { Event, listen } from '@tauri-apps/api/event';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { commands, MediaPayload } from '../bindings';
+import { usePlayerStore } from '../composables/playerStore';
+
+const playerStore = usePlayerStore();
 
 const progressBar = useTemplateRef<HTMLInputElement>("progressBar");
 const volumeBar = useTemplateRef<HTMLInputElement>("volumeBar");
-const shuffled = ref(isShuffled());
-const loop = ref(getLoop());
+const shuffled = ref(playerStore.isShuffled);
+const loop = ref(playerStore.loop);
 
 const paused = ref(true);
 const totalLength = ref('3:33');
 const currentProgress = ref('0:00');
 const beingHeld = ref(false);
 
-const music = ref(getPlayerTrack());
+const music = ref(playerStore.currentTrack);
 
 async function handleProgress() {
     if (!await commands.playerHasTrack()) return;
@@ -76,7 +80,7 @@ async function handleProgress() {
 
         if (beingHeld.value) return;
         progressBar.value!.value = progress.toString();
-        setPlayerProgress(progress);
+        playerStore.playerProgress = progress;
     }
 }
 
@@ -95,7 +99,7 @@ async function handleVolume() {
     let volume = volumeBar.value.valueAsNumber;
     if (volume <= -30) volume = -60;
     await commands.setVolume(volume);
-    setPlayerVolume(volume);
+    playerStore.playerVolume = volume;
 }
 
 async function handlePlayAndPause() {
@@ -121,17 +125,12 @@ async function handlePlayAndPause() {
 }
 
 function handleShuffle() {
-    shuffleQueue();
+    playerStore.isShuffled = !shuffled.value;
     shuffled.value = !shuffled.value;
 }
 
 function handleLoop() {
-    const currentLoop = getLoop();
-    if (currentLoop === 'queue') setLoop('track');
-    else if (currentLoop === 'track') setLoop('none');
-    else setLoop('queue');
-
-    loop.value = getLoop();
+    playerStore.loopQueue();
 }
 
 async function handleSongEnd() {
@@ -140,42 +139,42 @@ async function handleSongEnd() {
         await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
-    const loop = getLoop();
-
-    if (loop === 'track') {
+    if (playerStore.loop === 'track') {
         // replay the same track
-        await setPlayerTrack(music.value);
+        await playerStore.setPlayerTrack(music.value);
         await handlePlayAndPause();
         return;
     }
 
-    const queue = getQueue();
-    const index = getQueueIndex();
+    const queue = playerStore.queue;
+    const index = playerStore.queueIndex;
 
     if (queue.length <= 1 || queue.length === index + 1) {
-        if (loop === 'queue') {
-            setQueueIndex(0);
-            await setPlayerTrack(queue[0]);
+        if (playerStore.loop === 'queue') {
+            playerStore.queueIndex = 0;
+            await playerStore.setPlayerTrack(queue[0]);
         } else {
             paused.value = true;
         }
     } else {
-        skipTrack(true);
+        playerStore.skipTrack(true);
     }
 }
 
 async function initialLoad() {
     await commands.pauseTrack();
-    const progress = getPlayerProgress();
-    const volume = getPlayerVolume();
+    const progress = playerStore.playerProgress;
+    const volume = playerStore.playerVolume;
     const duration = await commands.getPlayerDuration();
 
     totalLength.value = makeReadableTime(duration);
     currentProgress.value = makeReadableTime(progress);
 
-    progressBar.value!.value = progress.toString();
-    progressBar.value!.max = duration.toString();
-    volumeBar.value!.value = volume.toString();
+    if (progressBar.value) {
+        progressBar.value!.value = progress.toString();
+        progressBar.value!.max = duration.toString();
+    }
+    if (volumeBar.value) volumeBar.value!.value = volume.toString();
 
     if (duration !== 0) await commands.seekTrack(progress, false);
     await commands.setVolume(volume);
@@ -200,10 +199,10 @@ const mediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
             await handlePlayAndPause();
             break;
         case 'Next' in payload:
-            skipTrack(true);
+            playerStore.skipTrack(true);
             break;
         case 'Previous' in payload:
-            skipTrack(false);
+            playerStore.skipTrack(false);
             break;
         case 'Seek' in payload:
             await commands.seekTrack(payload.Seek, true);
@@ -219,19 +218,19 @@ const mediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
     }
 })
 
-window.addEventListener('playerTrackChanged', async () => {
-    music.value = getPlayerTrack();
-    paused.value = true;
+playerStore.$onAction(({ name, args, after }) => {
+    if (name === "setPlayerTrack") {
+        music.value = args[0];
+        paused.value = true;
 
-    const duration = await commands.getPlayerDuration();
-    totalLength.value = makeReadableTime(duration);
-    progressBar.value!.max = duration.toString();
+        after(async () => {
+            const duration = await commands.getPlayerDuration();
+            totalLength.value = makeReadableTime(duration);
+            progressBar.value!.max = duration.toString();
 
-    await handlePlayAndPause();
-})
-
-window.addEventListener('loopChanged', () => {
-    loop.value = getLoop();
+            await handlePlayAndPause();
+        })
+    }
 })
 
 onMounted(async () => {

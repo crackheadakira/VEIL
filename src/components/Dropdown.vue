@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core';
+
 const props = defineProps<{
     title: string,
     options: string[],
@@ -37,12 +39,10 @@ function handleSelect(option: string) {
     handleShow();
 }
 
-onMounted(() => {
-    window.addEventListener('click', (e) => {
-        if (!(e.target as HTMLElement).closest('.relative')) {
-            showOptions.value = false;
-            document.getElementById('dropdown_icon')?.classList.remove('rotate-180');
-        }
-    });
-});
+useEventListener(window, 'click', (e) => {
+    if (!(e.target as HTMLElement).closest('.relative')) {
+        showOptions.value = false;
+        document.getElementById('dropdown_icon')?.classList.remove('rotate-180');
+    }
+})
 </script>

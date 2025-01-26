@@ -23,6 +23,8 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core';
+
 defineEmits(['add-to-queue']);
 
 const contextMenu = ref<HTMLDivElement | null>(null);
@@ -63,14 +65,6 @@ function handleOutsideClick(e: MouseEvent) {
     }
 }
 
-onMounted(() => {
-    window.addEventListener('contextmenu', handleContextEvent);
-    window.addEventListener('click', handleOutsideClick);
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener('contextmenu', handleContextEvent);
-    window.removeEventListener('click', handleOutsideClick);
-});
-
+useEventListener(window, 'contextmenu', handleContextEvent);
+useEventListener(window, 'click', handleOutsideClick);
 </script>
