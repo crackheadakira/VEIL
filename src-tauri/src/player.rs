@@ -17,7 +17,7 @@ pub enum PlayerError {
     FromFileError(#[from] FromFileError),
 }
 
-#[derive(Clone, Copy, Serialize, specta::Type, Default)]
+#[derive(Clone, Copy, Serialize, specta::Type, Default, Debug)]
 pub enum PlayerState {
     Playing,
     #[default]
@@ -76,6 +76,7 @@ impl Player {
                 .as_mut()
                 .unwrap()
                 .set_volume(self.volume, Tween::default());
+            self.state = PlayerState::Playing;
         }
 
         Ok(())

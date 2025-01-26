@@ -171,10 +171,10 @@ pub fn update_progress(app: AppHandle) {
                 progress: progress_as_position(progress),
             })
             .unwrap();
-    };
 
-    if progress >= (state_guard.player.duration - 0.2) as f64 {
-        app.emit("track-end", 0.0).unwrap();
+        if progress >= (state_guard.player.duration - 0.2) as f64 {
+            app.emit("track-end", 0.0).unwrap();
+        };
     };
 }
 

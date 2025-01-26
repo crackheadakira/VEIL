@@ -66,9 +66,9 @@ const shuffled = ref(playerStore.isShuffled);
 const loop = ref(playerStore.loop);
 
 const paused = ref(true);
-const totalLength = ref('3:33');
-const currentProgress = ref('0:00');
 const beingHeld = ref(false);
+const totalLength = computed(() => makeReadableTime(playerStore.currentTrack?.duration || 0));
+const currentProgress = computed(() => makeReadableTime(playerStore.playerProgress));
 
 const music = ref(playerStore.currentTrack);
 
@@ -76,7 +76,6 @@ async function handleProgress() {
     if (!await commands.playerHasTrack()) return;
     if (progressBar.value) {
         const progress = await commands.getPlayerProgress();
-        currentProgress.value = makeReadableTime(progress);
 
         if (beingHeld.value) return;
         progressBar.value!.value = progress.toString();
@@ -167,9 +166,6 @@ async function initialLoad() {
     const volume = playerStore.playerVolume;
     const duration = await commands.getPlayerDuration();
 
-    totalLength.value = makeReadableTime(duration);
-    currentProgress.value = makeReadableTime(progress);
-
     if (progressBar.value) {
         progressBar.value!.value = progress.toString();
         progressBar.value!.max = duration.toString();
@@ -180,15 +176,15 @@ async function initialLoad() {
     await commands.setVolume(volume);
 }
 
-const playerProgress = listen('player-progress', async (_) => {
+const listenPlayerProgress = listen('player-progress', async (_) => {
     await handleProgress();
 })
 
-const trackEnd = listen('track-end', async (_) => {
+const listenTrackEnd = listen('track-end', async (_) => {
     await handleSongEnd();
 })
 
-const mediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
+const listenMediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
     const payload = e.payload;
 
     switch (true) {
@@ -218,17 +214,25 @@ const mediaControl = listen('media-control', async (e: Event<MediaPayload>) => {
     }
 })
 
-playerStore.$onAction(({ name, args, after }) => {
+playerStore.$onAction(({ name, store, args, after }) => {
     if (name === "setPlayerTrack") {
         music.value = args[0];
         paused.value = true;
 
         after(async () => {
             const duration = await commands.getPlayerDuration();
-            totalLength.value = makeReadableTime(duration);
             progressBar.value!.max = duration.toString();
 
             await handlePlayAndPause();
+        })
+    } else if (name === "loopQueue") {
+        after(() => {
+            loop.value = store.loop;
+        })
+    } else if (name === "skipTrack") {
+        after(() => {
+            music.value = store.currentTrack;
+            paused.value = false;
         })
     }
 })
@@ -240,11 +244,8 @@ onMounted(async () => {
 onUnmounted(async () => {
     await commands.stopPlayer();
 
-    window.removeEventListener('playerTrackChanged', () => { });
-    window.removeEventListener('loopChanged', () => { });
-
-    (await playerProgress)();
-    (await trackEnd)();
-    (await mediaControl)();
+    (await listenPlayerProgress)();
+    (await listenTrackEnd)();
+    (await listenMediaControl)();
 })
 </script>

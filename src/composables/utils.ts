@@ -31,3 +31,8 @@ export async function placeholderIfEmpty(imagePath: string | undefined) {
     const imageExists = await exists(imagePath);
     return imageExists ? convertFileSrc(imagePath) : '/placeholder.png';
 }
+
+export function resetStore() {
+    localStorage.clear();
+    window.location.reload();
+}
