@@ -73,7 +73,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     .album_by_name(&metadata.album, &artist_id)?
                     .id
             } else {
-                write_cover(&metadata, &cover_path);
+                write_cover(&metadata, &cover_path)?;
                 state_guard.db.insert::<Albums>(Albums {
                     id: 0,
                     artists_id: artist_id,
@@ -201,16 +201,18 @@ fn cover_path(artist: &str, album: &str) -> String {
         + ".jpg"
 }
 
-fn write_cover(metadata: &Metadata, cover_path: &str) {
+fn write_cover(metadata: &Metadata, cover_path: &str) -> Result<(), FrontendError> {
     if !Path::new(&cover_path).exists() {
         let cover = if metadata.picture_data.is_empty() {
             &include_bytes!("../../../public/placeholder.png").to_vec()
         } else {
             &metadata.picture_data
         };
-        let mut file = File::create(cover_path).unwrap();
-        file.write_all(&cover).unwrap();
+        let mut file = File::create(cover_path)?;
+        file.write_all(&cover)?;
     }
+
+    Ok(())
 }
 
 fn get_album_path(music_folder: &str, full_path: &str) -> String {
