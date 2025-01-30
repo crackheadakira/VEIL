@@ -1,7 +1,7 @@
 use crate::{
     db::data_path,
     error::FrontendError,
-    models::{Albums, Artists, Features, Tracks},
+    models::{Albums, Artists, Tracks},
     SodapopState,
 };
 
@@ -49,21 +49,6 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                 })?
             };
 
-            let mut features_id = Vec::new();
-            for feature in &metadata.features {
-                let feature_exists = state_guard.db.exists::<Artists>("name", feature)?;
-                let feature_id = if feature_exists {
-                    state_guard.db.artist_by_name(feature)?.id
-                } else {
-                    state_guard.db.insert::<Artists>(Artists {
-                        id: 0,
-                        name: feature.clone(),
-                    })?
-                };
-
-                features_id.push(feature_id);
-            }
-
             let album_exists = state_guard.db.exists::<Albums>("name", &metadata.album)?;
             let cover_path = cover_path(&metadata.artist, &metadata.album);
 
@@ -90,12 +75,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
 
             let track_exists = state_guard.db.exists::<Tracks>("name", &metadata.name)?;
 
-            let track_id = if track_exists {
-                state_guard
-                    .db
-                    .track_by_album_id(&metadata.name, &album_id)?
-                    .id
-            } else {
+            if !track_exists {
                 state_guard.db.insert::<Tracks>(Tracks {
                     id: 0,
                     duration: metadata.duration.round() as u32,
@@ -106,16 +86,8 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     name: metadata.name.clone(),
                     path: metadata.file_path.clone(),
                     cover_path,
-                })?
-            };
-
-            for feature_id in features_id {
-                state_guard.db.insert::<Features>(Features {
-                    id: 0,
-                    track_id,
-                    feature_id,
                 })?;
-            }
+            };
         }
 
         // Remove tracks that are no longer in the music folder

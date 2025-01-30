@@ -86,8 +86,7 @@ watch(
 
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
-  const queue = data.value.tracks.map((track) => track.track);
-  playerStore.queue = queue;
+  playerStore.queue = data.value.tracks;
   if (shuffle) {
     playerStore.isShuffled = false;
     playerStore.updateShuffle();
@@ -116,8 +115,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
   if (!data.value) return;
   playerStore.addToRecentlyPlayed(data.value.album);
 
-  const queue = data.value.tracks.map((track) => track.track);
-  playerStore.queue = queue;
+  playerStore.queue = data.value.tracks;
   playerStore.queueIndex = idx;
 }
 

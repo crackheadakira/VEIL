@@ -23,14 +23,14 @@ onBeforeMount(async () => {
   if (result.status === "error")
     throw new Error(`[${result.error.type}] ${result.error.data}`);
 
-  const page = playerStore.currentPage;
-  router.push({ path: page });
-
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;
   if (track) {
     await commands.initializePlayer(track.id, progress);
   }
+
+  const page = playerStore.currentPage;
+  router.push({ path: page });
 
   setInterval(async () => {
     await commands.updateProgress();

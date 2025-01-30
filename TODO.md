@@ -5,7 +5,7 @@
 - [x] Database
   - [x] Database pool
   - [x] Lessening repetiton in db.rs
-  - [x] Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)
+  - [x] ~~Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)~~
 - [x] Migrate away from audiotags and use custom readers
 - [ ] ID3
   - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)

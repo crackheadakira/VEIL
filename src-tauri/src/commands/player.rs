@@ -25,7 +25,7 @@ pub fn play_track(
             .update_duration(&track_id, &track.albums_id, &(duration as u32))?;
     }
 
-    let _ = state_guard.player.play(track.clone());
+    let _ = state_guard.player.play(&track);
 
     state_guard.controls.set_metadata(MediaMetadata {
         title: Some(&track.name),

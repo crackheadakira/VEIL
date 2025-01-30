@@ -64,12 +64,12 @@ impl Player {
         self.volume = volume;
     }
 
-    pub fn play(&mut self, track: Tracks) -> Result<(), PlayerError> {
+    pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
         self.track = Some(track.id);
 
         if self.track.is_some() {
             let sound_data =
-                StreamingSoundData::from_file(track.path)?.start_position(self.progress);
+                StreamingSoundData::from_file(&track.path)?.start_position(self.progress);
             self.duration = sound_data.duration().as_secs_f32();
             self.sound_handle = Some(self.manager.play(sound_data)?);
             self.sound_handle

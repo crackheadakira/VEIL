@@ -82,11 +82,6 @@ impl Database {
             playlists_id INTEGER NOT NULL REFERENCES playlists(id),
             tracks_id   INTEGER NOT NULL REFERENCES tracks(id)
         );
-        CREATE TABLE IF NOT EXISTS features (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            track_id    INTEGER NOT NULL REFERENCES tracks(id),
-            feature_id  INTEGER NOT NULL REFERENCES artists(id)
-        );  
         COMMIT;
         ",
         )
@@ -104,7 +99,6 @@ impl Database {
             "albums" => "SELECT * FROM albums",
             "tracks" => "SELECT * FROM tracks",
             "playlists" => "SELECT * FROM playlists",
-            "features" => "SELECT * FROM features",
             _ => unreachable!("Invalid table name"),
         };
 
@@ -133,7 +127,6 @@ impl Database {
             "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING id",
             "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING id",
             "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3) RETURNING id",
-            "features" => "INSERT INTO features (track_id, feature_id) VALUES (?1, ?2) RETURNING id",
             _ => unreachable!("Invalid table name"),
         };
 
@@ -185,30 +178,6 @@ impl Database {
         let result = stmt.exists([field_data])?;
 
         Ok(result)
-    }
-
-    fn features_for_tracks(
-        &self,
-        tracks: Vec<Tracks>,
-    ) -> Result<Vec<TrackWithFeatures>, DatabaseError> {
-        let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT * FROM features WHERE track_id = ?1")?;
-
-        let mut tracks_with_features = Vec::new();
-        for track in tracks {
-            let features_ids = stmt
-                .query_map([track.id], Features::from_row)?
-                .collect::<Result<Vec<Features>, Error>>()?;
-
-            let features = features_ids
-                .iter()
-                .map(|feature| self.by_id::<Artists>(&feature.feature_id))
-                .collect::<Result<Vec<Artists>, DatabaseError>>()?;
-
-            tracks_with_features.push(TrackWithFeatures { track, features });
-        }
-
-        Ok(tracks_with_features)
     }
 
     pub fn update_duration(
@@ -285,12 +254,8 @@ impl Database {
             .collect::<Result<Vec<Tracks>, Error>>()?;
 
         let album = self.by_id::<Albums>(album_id)?;
-        let features = self.features_for_tracks(tracks)?;
 
-        Ok(AlbumWithTracks {
-            album,
-            tracks: features,
-        })
+        Ok(AlbumWithTracks { album, tracks })
     }
 
     pub fn update_album_type(
