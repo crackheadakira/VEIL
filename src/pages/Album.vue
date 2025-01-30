@@ -76,10 +76,10 @@ const data = ref<AlbumWithTracks | null>(null);
 
 watch(
   () => route.params.album_id,
-  (newId) => {
+  async (newId) => {
     (album_id.value = newId as string),
       (artist_id.value = route.params.artist_id as string);
-    updateData();
+    await updateData();
     window.scrollTo(0, 0);
   },
 );
