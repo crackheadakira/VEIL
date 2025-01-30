@@ -1,10 +1,10 @@
 <template>
   <div class="bg-background flex min-h-screen flex-col justify-between">
     <div class="flex items-stretch">
-      <SideBar class="fixed top-0 left-0 z-40 h-lvh self-start" />
+      <SideBar class="fixed top-0 left-0 z-10 h-lvh self-start" />
       <RouterView class="ml-72 overflow-scroll p-16" />
     </div>
-    <Player class="sticky bottom-0 z-50" />
+    <Player class="sticky bottom-0 z-20" />
   </div>
 </template>
 

@@ -94,7 +94,7 @@
         min="-30"
         max="1.2"
         value="1"
-        step="0.5"
+        step="0.1"
         class="bg-stroke-100 accent-placeholder h-1.5 w-full max-w-36 rounded-lg focus:ring-0"
       />
     </div>

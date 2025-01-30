@@ -4,7 +4,7 @@
     ref="trackList"
   >
     <div
-      class="ontextable hover:bg-background flex cursor-pointer items-center gap-8 p-3 px-4 duration-75 select-none"
+      class="contextable hover:bg-background flex rounded-md cursor-pointer items-center gap-8 p-3 px-4 duration-75 select-none"
       v-for="(track, idx) of data.tracks"
       @dblclick="$emit('new-track', track, idx)"
     >
@@ -15,7 +15,7 @@
           {{ track.artist }}
         </small>
       </div>
-      <p class="text-text">{{ makeReadableTime(track.duration) }}</p>
+      <small class="text-text">{{ makeReadableTime(track.duration) }}</small>
     </div>
   </div>
   <ContextMenu @add-to-queue="handleAddToQueue" />

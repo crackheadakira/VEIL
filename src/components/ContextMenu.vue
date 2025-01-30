@@ -5,7 +5,7 @@
     @mouseleave="handleMouseLeave()"
     @mouseenter="reEntered = true"
     :style="{ top: `${userCoords.y - 10}px`, left: `${userCoords.x - 50}px` }"
-    class="border-stroke-100 bg-card text-supporting absolute z-50 flex h-fit w-fit cursor-pointer flex-col rounded-md border p-2 select-none"
+    class="border-stroke-100 bg-card text-supporting absolute z-30 flex h-fit w-fit cursor-pointer flex-col rounded-md border p-2 select-none"
   >
     <small
       @click="($emit('add-to-queue', userCoords), (showDropdown = false))"
@@ -62,6 +62,7 @@ function handleMouseLeave(onlyPlaylists: boolean = false) {
 }
 
 function handleContextEvent(e: MouseEvent) {
+  console.log(e.target);
   if (e.target instanceof HTMLElement) {
     if (e.target.closest(".contextable")) {
       e.preventDefault();
