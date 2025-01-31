@@ -315,7 +315,7 @@ impl Database {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(playlist_id)?;
         let mut stmt = conn.prepare(
-            "SELECT t.id, t.album, t.albums_id, t.artist, t.name, t.path
+            "SELECT t.id, t.album, t.albums_id, t.artist, t.artists_id, t.name, t.duration, t.path, t.cover_path
             FROM playlist_tracks pt
             JOIN tracks t ON pt.tracks_id = t.id
             WHERE pt.playlists_id = ?1;",

@@ -34,10 +34,35 @@
         <span class="i-fluent-settings-16-filled h-8"></span>
         <small>Settings</small>
       </div>
+      <div v-if="allPlaylists" class="mb-2 flex w-full flex-col gap-4">
+        <small class="text-supporting">Playlists</small>
+        <hr class="border-stroke-100 border-t-2" />
+      </div>
+      <RouterLink
+        v-for="playlist of allPlaylists"
+        :key="playlist.id"
+        :to="`/playlist/${playlist.id}`"
+        class="text-supporting hover:text-text flex items-center gap-4 rounded-md duration-75"
+      >
+        <img :src="playlist.cover_path" class="aspect-square w-16 rounded-sm" />
+        <small>{{ playlist.name }}</small>
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { commands, Playlists } from "../bindings";
 import SearchBar from "../components/SearchBar.vue";
+import { RouterLink } from "vue-router";
+
+const allPlaylists = ref<Playlists[] | null>(null);
+
+onMounted(async () => {
+  const result = await commands.getAllPlaylists();
+  if (result.status === "error")
+    throw new Error(`[${result.error.type}] ${result.error.data}`);
+
+  allPlaylists.value = result.data;
+});
 </script>

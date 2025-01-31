@@ -69,6 +69,14 @@ async addToPlaylist(playlistId: number, trackId: number) : Promise<Result<null, 
     else return { status: "error", error: e  as any };
 }
 },
+async getPlaylistTracks(playlistId: number) : Promise<Result<PlaylistWithTracks, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_playlist_tracks", { playlistId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async playTrack(trackId: number) : Promise<Result<null, FrontendError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("play_track", { trackId }) };
@@ -140,6 +148,7 @@ export type Artists = { id: number; name: string }
 export type FrontendError = { type: "Io"; data: string } | { type: "Metadata"; data: string } | { type: "Database"; data: string } | { type: "Player"; data: string } | { type: "Souvlaki"; data: string }
 export type MediaPayload = { Play: boolean } | { Pause: boolean } | { Next: boolean } | { Previous: boolean } | { Volume: number } | { Seek: number } | { Position: number }
 export type PlayerState = "Playing" | "Paused"
+export type PlaylistWithTracks = { playlist: Playlists; tracks: Tracks[] }
 export type Playlists = { id: number; name: string; description: string; cover_path: string }
 export type Tracks = { id: number; duration: number; album: string; albums_id: number; artist: string; artists_id: number; name: string; path: string; cover_path: string }
 

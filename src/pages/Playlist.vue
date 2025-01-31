@@ -5,22 +5,20 @@
     >
       <img
         class="aspect-square w-64 rounded-md"
-        :src="convertFileSrc(data.album.cover_path)"
+        :src="data.playlist.cover_path"
       />
 
       <div class="flex flex-col gap-4">
         <div class="flex cursor-default flex-col gap-1 select-none">
-          <p class="text-supporting font-medium">{{ data.album.album_type }}</p>
-          <h4 class="text-text">{{ data.album.name }}</h4>
-          <p class="text-supporting">{{ data.album.artist }}</p>
+          <p class="text-supporting font-medium">Playlist</p>
+          <h4 class="text-text">{{ data.playlist.name }}</h4>
+          <p class="text-supporting" v-if="data.playlist.description != ''">
+            {{ data.playlist.description }}
+          </p>
           <small class="text-supporting">
-            {{ makeTime(data.album.duration) }},
-            {{ data.album.track_count }}
-            {{ data.album.track_count > 1 ? "songs" : "song" }}
+            {{ data.tracks.length }}
+            {{ data.tracks.length > 1 ? "songs" : "song" }}
           </small>
-          <small v-if="data.album.year" class="text-supporting">{{
-            data.album.year
-          }}</small>
         </div>
 
         <div class="flex gap-4 *:cursor-pointer">
@@ -43,43 +41,26 @@
     </div>
 
     <TrackList :data="data" @new-track="handleNewTrack" />
-
-    <div v-if="artist && artist.albums.length">
-      <h5 class="text-text mb-4">More from {{ artist.artist.name }}</h5>
-      <div class="flex flex-wrap gap-4">
-        <BigCard v-for="album of artist.albums" :data="album.album" />
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
-import {
-  ArtistWithAlbums,
-  commands,
-  AlbumWithTracks,
-  Tracks,
-} from "../bindings";
+import { commands, Tracks, PlaylistWithTracks } from "../bindings";
 import { useRoute } from "vue-router";
-import BigCard from "../components/BigCard.vue";
 import TrackList from "../components/TrackList.vue";
 
 const playerStore = usePlayerStore();
 
 const route = useRoute();
-const album_id = ref(route.params.album_id as string);
-const artist_id = ref(route.params.artist_id as string);
+const playlist_id = ref(route.params.playlist_id as string);
 
-const artist = ref<ArtistWithAlbums | null>(null);
-const data = ref<AlbumWithTracks | null>(null);
+const data = ref<PlaylistWithTracks | null>(null);
 
 watch(
-  () => route.params.album_id,
+  () => route.params.playlist_id,
   async (newId) => {
-    (album_id.value = newId as string),
-      (artist_id.value = route.params.artist_id as string);
-    await updateData();
+    (playlist_id.value = newId as string), await updateData();
     window.scrollTo(0, 0);
   },
 );
@@ -96,24 +77,17 @@ async function handlePlayButton(shuffle: boolean) {
 }
 
 async function updateData() {
-  const result = await commands.getArtistWithAlbums(+artist_id.value);
+  const result = await commands.getPlaylistTracks(parseInt(playlist_id.value));
   if (result.status === "error")
     throw new Error(`[${result.error.type}] ${result.error.data}`);
 
-  const res = result.data;
-  const current_album = res.albums.filter(
-    (album) => album.album.id === +album_id.value,
-  )[0];
-  data.value = current_album;
-  res.albums.splice(res.albums.indexOf(current_album), 1);
-  artist.value = res;
+  data.value = result.data;
 }
 
 async function handleNewTrack(track: Tracks, idx: number) {
   await playerStore.setPlayerTrack(track);
 
   if (!data.value) return;
-  playerStore.addToRecentlyPlayed(data.value.album);
 
   playerStore.queue = data.value.tracks;
   playerStore.queueIndex = idx;
@@ -121,6 +95,6 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
   await updateData();
-  playerStore.currentPage = `/album/${artist_id.value}/${album_id.value}`;
+  playerStore.currentPage = `/playlist/${playlist_id.value}`;
 });
 </script>

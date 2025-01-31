@@ -18,10 +18,10 @@
 
 ## Medium Priority
 
-- [ ] Playlist support
+- [x] Playlist support
   - [x] Database methods
   - [x] Context menu
-  - [ ] Playlist page
+  - [x] Playlist page
 - [ ] Add last.fm support
   - [ ] Allow adding custom key
   - [ ] Scrobble track > 30s

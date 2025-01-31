@@ -52,7 +52,7 @@ pub fn new_playlist(
         id: 0,
         name,
         description: String::from(""),
-        cover_path: String::from("../../../public/placeholder.png"),
+        cover_path: String::from("/placeholder.png"),
     })?;
 
     Ok(())
@@ -80,4 +80,16 @@ pub fn add_to_playlist(
         .insert_track_to_playlist(&playlist_id, &track_id)?;
 
     Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_playlist_tracks(
+    playlist_id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<PlaylistWithTracks, FrontendError> {
+    let state_guard = state.lock().unwrap();
+    let playlist = state_guard.db.get_playlist_with_tracks(&playlist_id)?;
+
+    Ok(playlist)
 }
