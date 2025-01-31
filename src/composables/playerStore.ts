@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { useStorage, StorageSerializers } from "@vueuse/core";
-import { Albums, commands, Tracks } from "../bindings";
+import { commands, Tracks } from "../bindings";
 
 export const usePlayerStore = defineStore("player", () => {
   const currentTrack = useStorage<Tracks>("currentTrack", null, undefined, {
@@ -59,7 +59,7 @@ export const usePlayerStore = defineStore("player", () => {
   }
 
   function shuffleQueue() {
-    // If already shuffled, reset the queue
+    // If already shuffled, sort the queue by id
     if (isShuffled.value) {
       queue.value = queue.value.sort((a, b) => a.id - b.id);
       isShuffled.value = false;

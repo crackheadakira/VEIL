@@ -24,12 +24,10 @@ export function makeTime(seconds: number) {
 }
 
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { exists } from "@tauri-apps/plugin-fs";
 
-export async function placeholderIfEmpty(imagePath: string | undefined) {
-  if (!imagePath) return "/placeholder.png";
-  const imageExists = await exists(imagePath);
-  return imageExists ? convertFileSrc(imagePath) : "/placeholder.png";
+export function placeholderIfEmpty(imagePath: string | undefined) {
+  if (!imagePath || imagePath == "/placeholder.png") return imagePath;
+  return convertFileSrc(imagePath);
 }
 
 export function resetStore() {

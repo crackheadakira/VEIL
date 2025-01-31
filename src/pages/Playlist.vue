@@ -5,11 +5,7 @@
     >
       <img
         class="aspect-square w-64 rounded-md"
-        :src="
-          data.playlist.cover_path == '/placeholder.png'
-            ? data.playlist.cover_path
-            : convertFileSrc(data.playlist.cover_path)
-        "
+        :src="placeholderIfEmpty(data.playlist.cover_path)"
       />
 
       <div class="flex flex-col gap-4">
@@ -33,6 +29,7 @@
             <span class="i-fluent-play-24-filled h-7"></span>
             <p>Play</p>
           </button>
+
           <button
             @click="handlePlayButton(true)"
             class="text aspect-button border-stroke-100 bg-background text-supporting flex h-12 items-center justify-center gap-2 rounded-md border duration-150 hover:opacity-80"
@@ -49,7 +46,6 @@
 </template>
 
 <script setup lang="ts">
-import { convertFileSrc } from "@tauri-apps/api/core";
 import { commands, Tracks, PlaylistWithTracks } from "../bindings";
 import { useRoute } from "vue-router";
 import TrackList from "../components/TrackList.vue";
