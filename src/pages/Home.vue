@@ -7,7 +7,7 @@
       >
         <small>Select music folder</small>
       </button>
-      <Dialog :title="'New Playlist'" />
+      <Dialog :title="'New Playlist'" @submitted="newPlaylist" />
     </div>
     <div class="flex gap-2">
       <PlaylistCard />
@@ -38,6 +38,12 @@ const recentlyPlayed = ref(playerStore.recentlyPlayed);
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
+  if (result.status === "error")
+    throw new Error(`[${result.error.type}] ${result.error.data}`);
+}
+
+async function newPlaylist(playlistName: string) {
+  const result = await commands.newPlaylist(playlistName);
   if (result.status === "error")
     throw new Error(`[${result.error.type}] ${result.error.data}`);
 }

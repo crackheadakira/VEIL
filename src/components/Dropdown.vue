@@ -10,14 +10,14 @@
       <small>{{ selectedValue }}</small>
     </div>
     <Transition
-      enter-from-class="-translate-y-[25%] opacity-0"
-      leave-to-class="-translate-y-[25%] opacity-0"
+      enter-from-class="-translate-y-[10%] opacity-0"
+      leave-to-class="-translate-y-[10%] opacity-0"
       enter-active-class="transition duration-150"
       leave-active-class="transition duration-150"
     >
       <div
         v-if="showOptions"
-        class="border-stroke-100 bg-background absolute top-[100%] -left-[1px] z-10 flex w-56 flex-col rounded-b-md border duration-150"
+        class="border-stroke-100 bg-background absolute top-1/1 -left-[1px] z-10 flex w-56 flex-col rounded-b-md border duration-150"
       >
         <small
           v-for="option in options"

@@ -35,15 +35,20 @@
             class="text-text placeholder-supporting border-stroke-100 w-full rounded-md border p-2 font-medium focus:outline-hidden"
             placeholder="Nektar's Top Hits"
           />
-          <div class="flex w-full justify-end gap-2 *:cursor-pointer">
+          <div class="flex w-full justify-end gap-2">
             <button
               @click="showDialog = false"
-              class="aspect-button border-stroke-100 bg-background text-supporting w-24 rounded-md border p-2 hover:opacity-80"
+              class="aspect-button border-stroke-100 bg-background text-supporting w-24 cursor-pointer rounded-md border p-2 hover:opacity-80"
             >
               <small>Cancel</small>
             </button>
 
             <button
+              :class="
+                playlistName.length === 0
+                  ? 'cursor-not-allowed opacity-80'
+                  : 'cursor-pointer'
+              "
               @click="handleSubmit"
               class="aspect-button border-stroke-100 bg-background text-supporting w-24 rounded-md border p-2 hover:opacity-80"
             >
@@ -57,22 +62,22 @@
 </template>
 
 <script setup lang="ts">
-import { commands } from "../bindings";
 const props = defineProps<{
   title: string;
   description?: string;
 }>();
 
+const emit = defineEmits<{
+  (e: "submitted", playlistName: string): void;
+}>();
+
 const showDialog = ref(false);
 const playlistName = ref("");
 
-async function handleSubmit() {
-  const result = await commands.newPlaylist(playlistName.value);
+function handleSubmit() {
+  if (playlistName.value.length === 0) return;
 
-  if (result.status === "error") {
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
-  }
-
+  emit("submitted", playlistName.value);
   showDialog.value = false;
 }
 </script>

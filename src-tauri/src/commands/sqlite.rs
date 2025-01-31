@@ -57,3 +57,27 @@ pub fn new_playlist(
 
     Ok(())
 }
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_all_playlists(
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<Vec<Playlists>, FrontendError> {
+    let state_guard = state.lock().unwrap();
+    Ok(state_guard.db.all::<Playlists>()?)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn add_to_playlist(
+    playlist_id: u32,
+    track_id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<(), FrontendError> {
+    let state_guard = state.lock().unwrap();
+    state_guard
+        .db
+        .insert_track_to_playlist(&playlist_id, &track_id)?;
+
+    Ok(())
+}

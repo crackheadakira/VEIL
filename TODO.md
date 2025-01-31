@@ -11,9 +11,8 @@
   - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
   - [ ] Add support for ID3v2.4
 - [x] Better error handling (backend)
-  - [x] Metadata
-    - [x] FLAC
-    - [x] ID3
+  - [x] FLAC
+  - [x] ID3
   - [x] Database
   - [x] Commands
 
@@ -21,7 +20,7 @@
 
 - [ ] Playlist support
   - [x] Database methods
-  - [ ] Context menu
+  - [x] Context menu
   - [ ] Playlist page
 - [ ] Add last.fm support
   - [ ] Allow adding custom key

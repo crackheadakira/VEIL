@@ -4,7 +4,7 @@
     ref="trackList"
   >
     <div
-      class="contextable hover:bg-background flex rounded-md cursor-pointer items-center gap-8 p-3 px-4 duration-75 select-none"
+      class="contextable hover:bg-background flex cursor-pointer items-center gap-8 rounded-md p-3 px-4 duration-75 select-none"
       v-for="(track, idx) of data.tracks"
       @dblclick="$emit('new-track', track, idx)"
     >
@@ -18,7 +18,10 @@
       <small class="text-text">{{ makeReadableTime(track.duration) }}</small>
     </div>
   </div>
-  <ContextMenu @add-to-queue="handleAddToQueue" />
+  <ContextMenu
+    :track-list="props.data.tracks"
+    @add-to-queue="handleAddToQueue"
+  />
 </template>
 
 <script setup lang="ts">
@@ -37,13 +40,8 @@ defineEmits<{
   (e: "new-track", track: Tracks, idx: number): void;
 }>();
 
-async function handleAddToQueue(coords: { x: number; y: number }) {
-  if (!props.data) return;
-  const trackHeight = trackList.value?.children[0].clientHeight || 76;
-  const offsetTop = trackList.value?.offsetTop || 0;
-  const index = Math.floor((coords.y - offsetTop) / trackHeight);
-  const track = props.data.tracks[index];
-
+async function handleAddToQueue(track: Tracks | null) {
+  if (!props.data || !track) return;
   playerStore.personalQueue.push(track);
 }
 </script>
