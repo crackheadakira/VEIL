@@ -318,7 +318,8 @@ impl Database {
             "SELECT t.id, t.album, t.albums_id, t.artist, t.artists_id, t.name, t.duration, t.path, t.cover_path
             FROM playlist_tracks pt
             JOIN tracks t ON pt.tracks_id = t.id
-            WHERE pt.playlists_id = ?1;",
+            WHERE pt.playlists_id = ?1; 
+            SORT BY t.id",
         )?;
 
         let tracks = stmt

@@ -61,7 +61,7 @@ export const usePlayerStore = defineStore("player", () => {
   function shuffleQueue() {
     // If already shuffled, sort the queue by id
     if (isShuffled.value) {
-      queue.value = queue.value.sort((a, b) => a.id - b.id);
+      queue.value.sort((a, b) => a.id - b.id);
       isShuffled.value = false;
 
       return;
@@ -70,6 +70,7 @@ export const usePlayerStore = defineStore("player", () => {
     const trackIndex = queue.value.findIndex(
       (track) => track.id === currentTrack.value?.id,
     );
+
     if (trackIndex === -1) return;
 
     queue.value.splice(trackIndex, 1);

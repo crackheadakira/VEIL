@@ -34,7 +34,10 @@
         <span class="i-fluent-settings-16-filled h-8"></span>
         <small>Settings</small>
       </div>
-      <div v-if="allPlaylists" class="mb-2 flex w-full flex-col gap-4">
+      <div
+        v-if="allPlaylists && allPlaylists.length > 0"
+        class="mb-2 flex w-full flex-col gap-4"
+      >
         <small class="text-supporting">Playlists</small>
         <hr class="border-stroke-100 border-t-2" />
       </div>

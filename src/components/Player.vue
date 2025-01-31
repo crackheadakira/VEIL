@@ -39,7 +39,7 @@
         <span
           :class="shuffled ? 'text-primary' : ''"
           class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
-          @click="playerStore.shuffleQueue"
+          @click="playerStore.shuffleQueue()"
         ></span>
         <span
           class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
@@ -57,7 +57,7 @@
           @click="playerStore.skipTrack(true)"
         ></span>
         <span
-          @click="playerStore.loopQueue"
+          @click="playerStore.loopQueue()"
           :class="
             (loop === 'queue' ? 'text-primary' : '') ||
             (loop === 'track' ? 'text-primary opacity-75' : '')

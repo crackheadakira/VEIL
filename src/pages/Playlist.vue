@@ -70,7 +70,7 @@ watch(
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
 
-  playerStore.queue = data.value.tracks;
+  playerStore.queue = [...data.value.tracks];
 
   if (shuffle) {
     playerStore.isShuffled = false; // To trigger the shuffle no matter current state
@@ -94,7 +94,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
   if (!data.value) return;
 
-  playerStore.queue = data.value.tracks;
+  playerStore.queue = [...data.value.tracks];
   playerStore.queueIndex = idx;
 }
 
