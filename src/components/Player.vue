@@ -126,6 +126,15 @@ const currentProgress = computed(() =>
 
 const music = ref(playerStore.currentTrack);
 
+/**
+ * If player has a track, update the progress bar. (Called every 100ms and when the user drags the progress bar)
+ *
+ * If the progress bar is being held, do not update the progress bar.
+ *
+ * Updates `$playerStore.playerProgress` with the current progress.
+ *
+ * Updates `$progressBar` with the current progress.
+ */
 async function handleProgress() {
   if (!(await commands.playerHasTrack())) return;
   if (progressBar.value) {
@@ -137,6 +146,13 @@ async function handleProgress() {
   }
 }
 
+/**
+ * If progress bar is being held, update the progress bar to the selected progress.
+ *
+ * Gets progress from `$progressBar`, calls {@linkcode commands.playerHasTrack}, {@linkcode commands.getPlayerState}, and {@linkcode commands.seekTrack}.
+ *
+ * If the player is playing it continues playing from the selected progress. Otherwise it just seeks to the selected progress.
+ */
 async function selectProgress() {
   if (!(await commands.playerHasTrack())) return;
   const progress = progressBar.value!.valueAsNumber;
@@ -147,6 +163,13 @@ async function selectProgress() {
   handleProgress();
 }
 
+/**
+ * Updates the volume of the player.
+ *
+ * Gets volume from `$volumeBar`, updates `$playerStore.playerVolume`, and calls {@linkcode commands.setVolume}.
+ *
+ * If the volume goes below `-30` it gets clamped to `-60`.
+ */
 async function handleVolume() {
   if (!volumeBar.value) return;
   let volume = volumeBar.value.valueAsNumber;
@@ -155,6 +178,23 @@ async function handleVolume() {
   playerStore.playerVolume = volume;
 }
 
+/**
+ * Handles the play and pause button.
+ *
+ * If player is paused and has a track, resume the track.
+ *
+ * If player is paused and does not have a track, play the current track.
+ *
+ * If player is playing, pause the track.
+ *
+ * Updates `$paused` with the current state, and calls {@linkcode commands.playTrack}.
+ *
+ * @example
+ * ```ts
+ * // Track is currently paused
+ * await handlePlayAndPause(); // Track is now playing
+ * await handlePlayAndPause(); // Track is now paused
+ */
 async function handlePlayAndPause() {
   const hasTrack = await commands.playerHasTrack();
 
@@ -178,6 +218,15 @@ async function handlePlayAndPause() {
   paused.value = !paused.value;
 }
 
+/**
+ * Handles the end of the song.
+ *
+ * If the player is in track loop, replay the same track.
+ *
+ * If the player is in queue loop, replay the queue.
+ *
+ * If the player is not in loop, pause the player.
+ */
 async function handleSongEnd() {
   if (!music.value) return;
   while (!(await commands.playerHasEnded())) {
@@ -206,6 +255,17 @@ async function handleSongEnd() {
   }
 }
 
+/**
+ * Initializes required values for the player.
+ *
+ * Pauses the player, gets the current progress, volume, and duration of the player.
+ *
+ * Updates `$progressBar` with the current progress.
+ *
+ * Updates `$volumeBar` with the current volume.
+ *
+ * If the duration is not 0, seeks the player to the current progress.
+ */
 async function initialLoad() {
   await commands.pauseTrack();
   const progress = playerStore.playerProgress;

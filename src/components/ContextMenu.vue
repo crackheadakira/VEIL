@@ -61,7 +61,13 @@ const reEntered = ref(false);
 const selectedTrack = ref<Tracks | null>(null);
 const playlists = ref<Playlists[] | null>(null);
 
-function handleMouseLeave(onlyPlaylists: boolean = false) {
+/**
+ * If the users mouse hovers away from the context menu, spawn a 200ms timeout to check if the user re-entered the context menu.
+ * If the user didn't re-enter the context menu, hide the context menu.
+ *
+ * @param {boolean} onlyPlaylists - Only hide the playlists dropdown. By default, hide the entire context menu.
+ */
+function handleMouseLeave(onlyPlaylists: boolean = false): void {
   reEntered.value = false;
   setTimeout(() => {
     if (reEntered.value) return;
@@ -70,6 +76,16 @@ function handleMouseLeave(onlyPlaylists: boolean = false) {
   }, 200);
 }
 
+/**
+ * Handles the context event. Checks if the user clicked on a contextable element and spawns the context menu
+ * and positions it at the users cursor.
+ *
+ * Prevents the default context menu from showing
+ *
+ * Sets `$selectedTrack` to the track that was clicked on.
+ *
+ * @param {MouseEvent} e - The mouse event.
+ */
 function handleContextEvent(e: MouseEvent) {
   if (e.target instanceof HTMLElement) {
     if (e.target.closest(".contextable")) {
@@ -89,6 +105,13 @@ function handleContextEvent(e: MouseEvent) {
   }
 }
 
+/**
+ * Handles the outside click event. If the user clicks of the context menu, hide the context menu.
+ *
+ * Checks if the class of the clicked element is `.absolute` and if it is, hide the context menu.
+ *
+ * @param {MouseEvent} e - The mouse event.
+ */
 function handleOutsideClick(e: MouseEvent) {
   if (!(e.target as HTMLElement).closest(".absolute")) {
     showDropdown.value = false;
@@ -96,7 +119,12 @@ function handleOutsideClick(e: MouseEvent) {
   }
 }
 
-async function addPlaylist(playlist: Playlists) {
+/**
+ * Adds the selected track to the selected playlist.
+ *
+ * @param playlist
+ */
+async function addPlaylist(playlist: Playlists): Promise<void> {
   if (!selectedTrack.value) return;
 
   const result = await commands.addToPlaylist(

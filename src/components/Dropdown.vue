@@ -44,12 +44,22 @@ defineEmits(["dropdownSelected"]);
 const showOptions = ref(false);
 const selectedValue = ref(props.title);
 
+/**
+ * Handle the dropdown show/hide
+ */
 function handleShow() {
   showOptions.value = !showOptions.value;
   document.getElementById("dropdown_icon")?.classList.toggle("rotate-180");
 }
 
-function handleSelect(option: string) {
+/**
+ * Handle the dropdown select.
+ *
+ * Calls {@linkcode handleShow} to hide the dropdown.
+ *
+ * @param {string} option - The selected option
+ */
+function handleSelect(option: string): void {
   selectedValue.value = option;
   handleShow();
 }

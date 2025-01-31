@@ -30,7 +30,7 @@
 ## Low Priority
 
 - [ ] Add documentation / comments
-  - [ ] Frontend
+  - [x] Frontend
   - [ ] Backend
 - [x] Implement souvlaki
   - [x] Get it working on backend side

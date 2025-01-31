@@ -84,6 +84,10 @@ watch(
   },
 );
 
+/**
+ * Handles the big play/shuffle button.
+ * @param {boolean} shuffle - Whether the button was play or shuffle
+ */
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
   playerStore.queue = [...data.value.tracks];
@@ -96,16 +100,22 @@ async function handlePlayButton(shuffle: boolean) {
 }
 
 async function updateData() {
-  const result = await commands.getArtistWithAlbums(+artist_id.value);
+  await commands.getAlbumWithTracks(parseInt(album_id.value));
+  const result = await commands.getArtistWithAlbums(parseInt(artist_id.value));
+
   if (result.status === "error")
     throw new Error(`[${result.error.type}] ${result.error.data}`);
 
   const res = result.data;
+
+  // Gets only the current album from artist
   const current_album = res.albums.filter(
-    (album) => album.album.id === +album_id.value,
+    (album) => album.album.id === parseInt(album_id.value),
   )[0];
   data.value = current_album;
-  res.albums.splice(res.albums.indexOf(current_album), 1);
+  res.albums.splice(res.albums.indexOf(current_album), 1); // Removes the current album from the list
+
+  // This is to list more albums from the same artist
   artist.value = res;
 }
 

@@ -30,7 +30,7 @@
             }}</small>
           </div>
           <input
-            v-model="playlistName"
+            v-model="inputValue"
             type="text"
             class="text-text placeholder-supporting border-stroke-100 w-full rounded-md border p-2 font-medium focus:outline-hidden"
             placeholder="Nektar's Top Hits"
@@ -45,7 +45,7 @@
 
             <button
               :class="
-                playlistName.length === 0
+                inputValue.length === 0
                   ? 'cursor-not-allowed opacity-80'
                   : 'cursor-pointer'
               "
@@ -68,16 +68,21 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "submitted", playlistName: string): void;
+  (e: "submitted", inputValue: string): void;
 }>();
 
 const showDialog = ref(false);
-const playlistName = ref("");
+const inputValue = ref("");
 
+/**
+ * Handle the submit button click event.
+ *
+ * Emits `submitted` event with value from `$inputValue`.
+ */
 function handleSubmit() {
-  if (playlistName.value.length === 0) return;
+  if (inputValue.value.length === 0) return;
 
-  emit("submitted", playlistName.value);
+  emit("submitted", inputValue.value);
   showDialog.value = false;
 }
 </script>
