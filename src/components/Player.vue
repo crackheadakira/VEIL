@@ -39,7 +39,7 @@
         <span
           :class="shuffled ? 'text-primary' : ''"
           class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
-          @click="handleShuffle()"
+          @click="playerStore.shuffleQueue"
         ></span>
         <span
           class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
@@ -57,7 +57,7 @@
           @click="playerStore.skipTrack(true)"
         ></span>
         <span
-          @click="handleLoop"
+          @click="playerStore.loopQueue"
           :class="
             (loop === 'queue' ? 'text-primary' : '') ||
             (loop === 'track' ? 'text-primary opacity-75' : '')
@@ -178,15 +178,6 @@ async function handlePlayAndPause() {
   paused.value = !paused.value;
 }
 
-function handleShuffle() {
-  playerStore.isShuffled = !shuffled.value;
-  shuffled.value = !shuffled.value;
-}
-
-function handleLoop() {
-  playerStore.loopQueue();
-}
-
 async function handleSongEnd() {
   if (!music.value) return;
   while (!(await commands.playerHasEnded())) {
@@ -291,6 +282,10 @@ playerStore.$onAction(({ name, store, args, after }) => {
     after(() => {
       music.value = store.currentTrack;
       paused.value = false;
+    });
+  } else if (name === "shuffleQueue") {
+    after(() => {
+      shuffled.value = store.isShuffled;
     });
   }
 });

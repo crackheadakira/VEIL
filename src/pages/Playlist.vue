@@ -5,7 +5,11 @@
     >
       <img
         class="aspect-square w-64 rounded-md"
-        :src="data.playlist.cover_path"
+        :src="
+          data.playlist.cover_path == '/placeholder.png'
+            ? data.playlist.cover_path
+            : convertFileSrc(data.playlist.cover_path)
+        "
       />
 
       <div class="flex flex-col gap-4">
@@ -60,18 +64,23 @@ const data = ref<PlaylistWithTracks | null>(null);
 watch(
   () => route.params.playlist_id,
   async (newId) => {
-    (playlist_id.value = newId as string), await updateData();
+    playlist_id.value = newId as string;
+    await updateData();
+
     window.scrollTo(0, 0);
   },
 );
 
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
+
   playerStore.queue = data.value.tracks;
+
   if (shuffle) {
-    playerStore.isShuffled = false;
-    playerStore.updateShuffle();
+    playerStore.isShuffled = false; // To trigger the shuffle no matter current state
+    playerStore.shuffleQueue();
   }
+
   playerStore.queueIndex = 0;
   await playerStore.setPlayerTrack(playerStore.queue[0]);
 }

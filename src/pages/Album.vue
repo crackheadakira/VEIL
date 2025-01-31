@@ -89,7 +89,7 @@ async function handlePlayButton(shuffle: boolean) {
   playerStore.queue = data.value.tracks;
   if (shuffle) {
     playerStore.isShuffled = false;
-    playerStore.updateShuffle();
+    playerStore.shuffleQueue();
   }
   playerStore.queueIndex = 0;
   await playerStore.setPlayerTrack(playerStore.queue[0]);
@@ -113,7 +113,6 @@ async function handleNewTrack(track: Tracks, idx: number) {
   await playerStore.setPlayerTrack(track);
 
   if (!data.value) return;
-  playerStore.addToRecentlyPlayed(data.value.album);
 
   playerStore.queue = data.value.tracks;
   playerStore.queueIndex = idx;

@@ -9,7 +9,6 @@ export const usePlayerStore = defineStore("player", () => {
   const queue = useStorage<Tracks[]>("queue", []);
   const queueIndex = useStorage("queueIndex", 0);
   const personalQueue = useStorage<Tracks[]>("personalQueue", []);
-  const recentlyPlayed = useStorage<Albums[]>("recentlyPlayed", []);
   const loop = useStorage<"none" | "track" | "queue">("loop", "none");
   const playerProgress = useStorage("playerProgress", 0);
   const currentPage = useStorage("currentPage", "/home");
@@ -28,16 +27,6 @@ export const usePlayerStore = defineStore("player", () => {
   async function setPlayerProgress(progress: number) {
     await commands.setPlayerProgress(progress);
     playerProgress.value = progress;
-  }
-
-  function addToRecentlyPlayed(album: Albums) {
-    const index = recentlyPlayed.value.findIndex((a) => a.id === album.id);
-
-    if (index !== -1) recentlyPlayed.value.splice(index, 1);
-
-    recentlyPlayed.value.unshift(album);
-
-    if (recentlyPlayed.value.length > 10) recentlyPlayed.value.pop();
   }
 
   async function skipTrack(forward: boolean) {
@@ -69,10 +58,13 @@ export const usePlayerStore = defineStore("player", () => {
     else loop.value = "none";
   }
 
-  function updateShuffle() {
+  function shuffleQueue() {
+    // If already shuffled, reset the queue
     if (isShuffled.value) {
       queue.value = queue.value.sort((a, b) => a.id - b.id);
-      return (isShuffled.value = false);
+      isShuffled.value = false;
+
+      return;
     }
 
     const trackIndex = queue.value.findIndex(
@@ -85,6 +77,7 @@ export const usePlayerStore = defineStore("player", () => {
     shuffledQueue.unshift(currentTrack.value);
 
     queue.value = shuffledQueue;
+    isShuffled.value = true;
   }
 
   return {
@@ -95,15 +88,13 @@ export const usePlayerStore = defineStore("player", () => {
     queue,
     queueIndex,
     personalQueue,
-    recentlyPlayed,
-    addToRecentlyPlayed,
     skipTrack,
     loop,
     loopQueue,
     currentPage,
     playerVolume,
     isShuffled,
-    updateShuffle,
+    shuffleQueue,
   };
 });
 

@@ -16,25 +16,17 @@
         :options="['Albums', 'Artists', 'Tracks']"
       />
     </div>
-    <div>
-      <h6 class="text-text mb-4">Recently listened</h6>
-      <div v-if="recentlyPlayed.length > 0" class="flex flex-wrap gap-4">
-        <BigCard v-for="album of recentlyPlayed" :data="album" />
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import PlaylistCard from "../components/PlaylistCard.vue";
 import Dropdown from "../components/Dropdown.vue";
-import BigCard from "../components/BigCard.vue";
 import Dialog from "../components/Dialog.vue";
 
 import { commands } from "../bindings";
 
 const playerStore = usePlayerStore();
-const recentlyPlayed = ref(playerStore.recentlyPlayed);
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
