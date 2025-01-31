@@ -92,6 +92,14 @@ impl Database {
         Self { pool }
     }
 
+    pub fn shutdown(&mut self) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
+        // write WAL to disk
+        conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
+
+        Ok(())
+    }
+
     pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {

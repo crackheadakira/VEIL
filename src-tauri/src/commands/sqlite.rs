@@ -40,3 +40,20 @@ pub fn get_artist_with_albums(
     let state_guard = state.lock().unwrap();
     Ok(state_guard.db.artist_with_albums(&id)?)
 }
+
+#[tauri::command]
+#[specta::specta]
+pub fn new_playlist(
+    name: String,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<(), FrontendError> {
+    let state_guard = state.lock().unwrap();
+    state_guard.db.insert::<Playlists>(Playlists {
+        id: 0,
+        name,
+        description: String::from(""),
+        cover_path: String::from("../../../public/placeholder.png"),
+    })?;
+
+    Ok(())
+}

@@ -45,6 +45,14 @@ async trackById(id: number) : Promise<Result<Tracks, FrontendError>> {
     else return { status: "error", error: e  as any };
 }
 },
+async newPlaylist(name: string) : Promise<Result<null, FrontendError>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("new_playlist", { name }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async playTrack(trackId: number) : Promise<Result<null, FrontendError>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("play_track", { trackId }) };

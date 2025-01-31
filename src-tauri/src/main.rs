@@ -10,7 +10,7 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use specta_typescript::Typescript;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Manager, RunEvent};
 use tauri_plugin_fs::FsExt;
 use tauri_specta::{collect_commands, Builder};
 
@@ -45,6 +45,7 @@ fn main() {
             commands::sqlite::get_artist_with_albums,
             commands::sqlite::get_all_albums,
             commands::sqlite::track_by_id,
+            commands::sqlite::new_playlist,
             commands::player::play_track,
             commands::player::pause_track,
             commands::player::resume_track,
@@ -169,6 +170,15 @@ fn main() {
 
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|_app, _event| match &_event {
+            RunEvent::ExitRequested { .. } => {
+                let state = _app.state::<Mutex<SodapopState>>();
+                let mut state_guard = state.lock().unwrap();
+
+                state_guard.db.shutdown().unwrap();
+            }
+            _ => (),
+        });
 }
