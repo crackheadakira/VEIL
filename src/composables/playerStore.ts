@@ -2,6 +2,20 @@ import { defineStore } from "pinia";
 import { useStorage, StorageSerializers } from "@vueuse/core";
 import { commands, Tracks } from "../bindings";
 
+/**
+ * The player store composable.
+ *
+ * Manages the player state, including the current track, queue, player progress, and loop settings.
+ *
+ * @example
+ * const playerStore = usePlayerStore();
+ *
+ * // Set the current track
+ * playerStore.setPlayerTrack(track);
+ *
+ * // Set the player progress
+ * playerStore.setPlayerProgress(50);
+ */
 export const usePlayerStore = defineStore("player", () => {
   const currentTrack = useStorage<Tracks>("currentTrack", null, undefined, {
     serializer: StorageSerializers.object,
@@ -15,7 +29,14 @@ export const usePlayerStore = defineStore("player", () => {
   const playerVolume = useStorage("playerVolume", 0.7);
   const isShuffled = useStorage("isShuffled", false);
 
-  async function setPlayerTrack(track: Tracks) {
+  /**
+   * Sets given track as the current track and plays it.
+   *
+   * Calls Rust backend (stopPlayer, playTrack), and updates store `currentTrack` & `playerProgress`.
+   *
+   * @param {Tracks} track - The track to play
+   */
+  async function setPlayerTrack(track: Tracks): Promise<void> {
     await commands.stopPlayer();
 
     currentTrack.value = track;
@@ -24,12 +45,41 @@ export const usePlayerStore = defineStore("player", () => {
     await commands.playTrack(track.id);
   }
 
-  async function setPlayerProgress(progress: number) {
+  /**
+   * Sets the player progress to the given value.
+   *
+   * Calls Rust backend, and updates store `playerProgress` value.
+   * @param {number} progress - The progress to set
+   */
+  async function setPlayerProgress(progress: number): Promise<void> {
     await commands.setPlayerProgress(progress);
     playerProgress.value = progress;
   }
 
-  async function skipTrack(forward: boolean) {
+  /**
+   * Skips the current track and plays the next/previous track in the queue.
+   *
+   * Calls {@linkcode setPlayerTrack} to play the track.
+   *
+   * If `forward` is true, plays the next track in the queue.
+   *
+   * If `forward` is false, plays the previous track in the queue.
+   *
+   * Reads the `loop` value to determine the behavior if the track is the last/first in the queue. If `loop` is set to "track", loop is set to "queue".
+   *
+   * @example
+   * // playerStore.queue = [track1, track2, track3]
+   * // playerStore.queueIndex = 1 // track2
+   * // playerStore.loop = "none"
+   * await playerStore.skipTrack(true) // Plays track3
+   *
+   * @example
+   * // playerStore.queue = [track1, track2, track3]
+   * // playerStore.queueIndex = 2 // track3
+   * // playerStore.loop = "none"
+   * await playerStore.skipTrack(true) // Plays track1
+   */
+  async function skipTrack(forward: boolean): Promise<void> {
     if (loop.value === "track") loop.value = "queue";
 
     if (personalQueue.value.length > 0) {
@@ -52,12 +102,31 @@ export const usePlayerStore = defineStore("player", () => {
     await setPlayerTrack(queue.value[desiredIndex]);
   }
 
-  function loopQueue() {
+  /**
+   * Toggles the loop value between "none", "track", and "queue".
+   * @example
+   * // playerStore.loop = "none"
+   * playerStore.loopQueue() // playerStore.loop = "queue"
+   * playerStore.loopQueue() // playerStore.loop = "track"
+   * playerStore.loopQueue() // playerStore.loop = "none"
+   */
+  function loopQueue(): void {
     if (loop.value === "none") loop.value = "queue";
     else if (loop.value === "queue") loop.value = "track";
     else loop.value = "none";
   }
 
+  /**
+   * Shuffles the queue using the Fisher-Yates algorithm if `isShuffled` is false, otherwise sorts the queue by track id.
+   *
+   * Updates the store `queue` and `isShuffled` value.
+   *
+   * @example
+   * // playerStore.queue = [track1, track2, track3]
+   * // playerStore.isShuffled = false
+   * playerStore.shuffleQueue() // playerStore.queue = [track3, track1, track2]
+   * playerStore.shuffleQueue() // playerStore.queue = [track1, track2, track3]
+   */
   function shuffleQueue() {
     // If already shuffled, sort the queue by id
     if (isShuffled.value) {
@@ -99,7 +168,17 @@ export const usePlayerStore = defineStore("player", () => {
   };
 });
 
-function fisherYatesShuffle<T>(array: T[]) {
+/**
+ * Shuffles an array using the Fisher-Yates algorithm.
+ *
+ * @param {T[]} array - The array to shuffle
+ * @returns {T[]} The shuffled array
+ *
+ * @example
+ * // Returns [3, 1, 2] or [2, 3, 1] or [1, 2, 3]
+ * fisherYatesShuffle([1, 2, 3])
+ */
+function fisherYatesShuffle<T>(array: T[]): T[] {
   const newArray = [];
 
   while (array.length) {

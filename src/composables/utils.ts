@@ -1,10 +1,36 @@
-export function makeReadableTime(seconds: number) {
+/**
+ * Returns a human-readable time string from seconds in the format `mm:ss`
+ * @param {number} seconds - Time in seconds
+ * @returns {string} Human-readable time string
+ *
+ * @example
+ * // Returns "1:05"
+ * makeReadableTime(65)
+ *
+ * @example
+ * // Returns "0:12"
+ * makeReadableTime(12)
+ */
+export function makeReadableTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
 
-export function makeTime(seconds: number) {
+/**
+ * Returns a human-readable time string from seconds in the format `x hours x mins x secs`
+ * @param {number} seconds - Time in seconds
+ * @returns {string} Human-readable time string
+ *
+ * @example
+ * // Returns "1 hour 0 min 12 sec"
+ * makeTime(3612)
+ *
+ * @example
+ * // Returns "0 min 12 sec"
+ * makeTime(12)
+ */
+export function makeTime(seconds: number): string {
   let time = "";
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -25,12 +51,25 @@ export function makeTime(seconds: number) {
 
 import { convertFileSrc } from "@tauri-apps/api/core";
 
-export function placeholderIfEmpty(imagePath: string | undefined) {
-  if (!imagePath || imagePath == "/placeholder.png") return imagePath;
-  return convertFileSrc(imagePath);
-}
+/**
+ * Returns the image path if it is not empty, otherwise returns the placeholder image path.
+ * @param {string} imagePath - The image path to check
+ * @returns {string} The image path run through `convertFileSrc()`, or the placeholder image path
+ *
+ * @example
+ * // Returns "asset://path/to/image.png"
+ * placeholderIfEmpty("/path/to/image.png")
+ *
+ * @example
+ * // Returns "/placeholder.png"
+ * placeholderIfEmpty("")
+ *
+ * @example
+ * // Returns "/placeholder.png"
+ * placeholderIfEmpty("/placeholder.png")
+ */
+export function placeholderIfEmpty(imagePath: string | undefined): string {
+  if (!imagePath || imagePath === "/placeholder.png") return "/placeholder.png";
 
-export function resetStore() {
-  localStorage.clear();
-  window.location.reload();
+  return convertFileSrc(imagePath);
 }
