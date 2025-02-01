@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed right-4 bottom-4 flex flex-col gap-2">
+  <div class="fixed right-4 bottom-4 z-30 flex flex-col gap-2">
     <TransitionGroup
       enter-from-class="opacity-0 scale-95"
       leave-to-class="opacity-0 scale-95"
