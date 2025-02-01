@@ -19,14 +19,14 @@ export default defineConfig(async () => ({
   ],
 
   clearScreen: false,
-  envPrefix: ["VITE_", "TAURI_ENV_*"],
   server: {
-    host: host || false,
-    port: 1420,
     strictPort: true,
+    host: host || false,
     watch: {
+      port: 5173,
       ignored: ["**/src-tauri/**"],
     },
+    envPrefix: ["VITE_", "TAURI_ENV_*"],
   },
 
   build: {

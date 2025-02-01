@@ -4,8 +4,8 @@
   "identifier": "com.sodapop.reimagined",
   "build": {
     "beforeDevCommand": "bun run dev",
-    "devUrl": "http://localhost:1420",
     "beforeBuildCommand": "bun run build",
+    "devUrl": "http://localhost:5173",
     "frontendDist": "../dist"
   },
   "app": {
@@ -13,7 +13,7 @@
       {
         "title": "Sodapop Reimagined",
         "label": "Sodapop-Reimagined",
-        "url": "http://localhost:1420",
+        "url": "http://localhost:5173",
         "width": 1280,
         "height": 720
       }
