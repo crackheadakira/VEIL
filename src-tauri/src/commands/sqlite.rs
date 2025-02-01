@@ -93,3 +93,18 @@ pub fn get_playlist_tracks(
 
     Ok(playlist)
 }
+
+#[tauri::command]
+#[specta::specta]
+pub fn remove_from_playlist(
+    playlist_id: u32,
+    track_id: u32,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<(), FrontendError> {
+    let state_guard = state.lock().unwrap();
+    state_guard
+        .db
+        .delete_track_from_playlist(&playlist_id, &track_id)?;
+
+    Ok(())
+}

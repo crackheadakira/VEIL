@@ -352,6 +352,26 @@ impl Database {
 
         Ok(())
     }
+
+    pub fn delete_track_from_playlist(
+        &self,
+        playlist_id: &u32,
+        track_id: &u32,
+    ) -> Result<(), DatabaseError> {
+        let conn = self.pool.get()?;
+
+        conn.execute(
+            "DELETE FROM playlist_tracks
+            WHERE ROWID IN (
+                SELECT MIN(ROWID) as row_id
+                FROM playlist_tracks
+                WHERE playlists_id = ?1 AND tracks_id = ?2
+            )",
+            [playlist_id, track_id],
+        )?;
+
+        Ok(())
+    }
 }
 
 fn get_db_path() -> String {

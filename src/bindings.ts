@@ -100,6 +100,23 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async removeFromPlaylist(
+    playlistId: number,
+    trackId: number,
+  ): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_from_playlist", {
+          playlistId,
+          trackId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
     try {
       return {

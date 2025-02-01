@@ -12,6 +12,12 @@
       class="hover:bg-stroke-100 hover:text-text rounded-md p-2 duration-150"
       >Add to Queue</small
     >
+    <small
+      v-if="'playlist' in props.data"
+      @click="handlePlaylistAction(props.data.playlist, 'remove')"
+      class="hover:bg-stroke-100 hover:text-text rounded-md p-2 duration-150"
+      >Remove from Playlist</small
+    >
     <div v-if="playlists" class="relative rounded-md">
       <div
         @mouseenter="showPlaylists = true"
@@ -27,7 +33,7 @@
         class="cardStyle absolute"
       >
         <div
-          @click="addPlaylist(playlist)"
+          @click="handlePlaylistAction(playlist, 'add')"
           v-for="playlist of playlists"
           class="hover:bg-stroke-100 hover:text-text flex items-center rounded-md p-2 duration-150"
         >
@@ -40,14 +46,22 @@
 
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
-import { commands, Playlists, Tracks } from "../bindings";
+import {
+  commands,
+  Playlists,
+  Tracks,
+  PlaylistWithTracks,
+  AlbumWithTracks,
+} from "../bindings";
+
+const playlistStore = usePlaylistStore();
 
 defineEmits<{
   (e: "add-to-queue", track: Tracks | null): void;
 }>();
 
 const props = defineProps<{
-  trackList: Tracks[];
+  data: AlbumWithTracks | PlaylistWithTracks;
 }>();
 
 const contextMenu = ref<HTMLDivElement | null>(null);
@@ -98,7 +112,7 @@ function handleContextEvent(e: MouseEvent) {
           e.target.closest(".contextable")?.parentElement?.children || [],
         )?.indexOf(e.target.closest(".contextable") as Element) ?? -1;
 
-      selectedTrack.value = props.trackList[index];
+      selectedTrack.value = props.data.tracks[index];
     } else {
       showDropdown.value = false;
     }
@@ -124,17 +138,17 @@ function handleOutsideClick(e: MouseEvent) {
  *
  * @param playlist
  */
-async function addPlaylist(playlist: Playlists): Promise<void> {
+async function handlePlaylistAction(
+  playlist: Playlists,
+  type: "add" | "remove",
+): Promise<void> {
   if (!selectedTrack.value) return;
 
-  const result = await commands.addToPlaylist(
-    playlist.id,
-    selectedTrack.value.id,
-  );
+  if (type === "add")
+    playlistStore.addToPlaylist(playlist.id, selectedTrack.value.id);
+  else playlistStore.removeFromPlaylist(playlist.id, selectedTrack.value.id);
 
   showDropdown.value = false;
-
-  if (result.status === "error") return handleBackendError(result.error);
 }
 
 useEventListener(window, "contextmenu", handleContextEvent);

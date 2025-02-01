@@ -31,10 +31,7 @@
       <small class="text-text">{{ makeReadableTime(track.duration) }}</small>
     </div>
   </div>
-  <ContextMenu
-    :track-list="props.data.tracks"
-    @add-to-queue="handleAddToQueue"
-  />
+  <ContextMenu :data="props.data" @add-to-queue="handleAddToQueue" />
 </template>
 
 <script setup lang="ts">

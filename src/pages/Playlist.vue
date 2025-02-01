@@ -49,6 +49,7 @@ import { useRoute } from "vue-router";
 import TrackList from "../components/TrackList.vue";
 
 const playerStore = usePlayerStore();
+const playlistStore = usePlaylistStore();
 
 const route = useRoute();
 const playlist_id = ref(route.params.playlist_id as string);
@@ -64,6 +65,22 @@ watch(
     window.scrollTo(0, 0);
   },
 );
+
+playlistStore.$onAction(({ name, store, args, after }) => {
+  if (name === "addToPlaylist") {
+    if (args[0] === parseInt(playlist_id.value)) {
+      after(async () => {
+        await updateData();
+      });
+    }
+  } else if (name === "removeFromPlaylist") {
+    if (args[0] === parseInt(playlist_id.value)) {
+      after(async () => {
+        await updateData();
+      });
+    }
+  }
+});
 
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;

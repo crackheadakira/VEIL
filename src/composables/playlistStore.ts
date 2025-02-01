@@ -19,9 +19,21 @@ export const usePlaylistStore = defineStore("playlist", () => {
     await fetchPlaylists();
   }
 
+  async function addToPlaylist(playlistId: number, trackId: number) {
+    const result = await commands.addToPlaylist(playlistId, trackId);
+    if (result.status === "error") return handleBackendError(result.error);
+  }
+
+  async function removeFromPlaylist(playlistId: number, trackId: number) {
+    const result = await commands.removeFromPlaylist(playlistId, trackId);
+    if (result.status === "error") return handleBackendError(result.error);
+  }
+
   return {
     playlists,
     createPlaylist,
     fetchPlaylists,
+    addToPlaylist,
+    removeFromPlaylist,
   };
 });
