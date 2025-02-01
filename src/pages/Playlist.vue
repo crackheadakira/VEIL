@@ -66,7 +66,7 @@ watch(
   },
 );
 
-playlistStore.$onAction(({ name, store, args, after }) => {
+playlistStore.$onAction(({ name, args, after }) => {
   if (name === "addToPlaylist") {
     if (args[0] === parseInt(playlist_id.value)) {
       after(async () => {
@@ -97,10 +97,10 @@ async function handlePlayButton(shuffle: boolean) {
 }
 
 async function updateData() {
-  const result = await commands.getPlaylistTracks(parseInt(playlist_id.value));
-  if (result.status === "error") return handleBackendError(result.error);
-
-  data.value = result.data;
+  const res_data = await playlistStore.getTracksFromPlaylist(
+    parseInt(playlist_id.value),
+  );
+  if (res_data) data.value = res_data;
 }
 
 async function handleNewTrack(track: Tracks, idx: number) {

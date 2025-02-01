@@ -1,10 +1,10 @@
 <template>
-  <div class="bg-background flex min-h-screen flex-col justify-between">
-    <div class="flex items-stretch">
-      <SideBar class="fixed top-0 left-0 z-10 h-lvh self-start" />
-      <RouterView class="ml-72 overflow-scroll p-16" />
-    </div>
-    <Player class="sticky bottom-0 z-20" />
+  <div
+    class="bg-background grid min-h-screen grid-cols-[18rem_1fr] grid-rows-[1fr_7rem]"
+  >
+    <SideBar class="row-span-1" />
+    <RouterView class="overflow-scroll p-16" />
+    <Player class="col-span sticky bottom-0 h-28" />
     <ToastManager ref="toastManager" />
   </div>
 </template>

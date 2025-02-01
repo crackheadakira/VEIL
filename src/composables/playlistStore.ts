@@ -29,11 +29,18 @@ export const usePlaylistStore = defineStore("playlist", () => {
     if (result.status === "error") return handleBackendError(result.error);
   }
 
+  async function getTracksFromPlaylist(playlistId: number) {
+    const result = await commands.getPlaylistTracks(playlistId);
+    if (result.status === "error") return handleBackendError(result.error);
+    return result.data;
+  }
+
   return {
     playlists,
     createPlaylist,
     fetchPlaylists,
     addToPlaylist,
     removeFromPlaylist,
+    getTracksFromPlaylist,
   };
 });
