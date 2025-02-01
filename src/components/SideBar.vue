@@ -55,16 +55,13 @@
 </template>
 
 <script setup lang="ts">
-import { commands, Playlists } from "../bindings";
 import SearchBar from "../components/SearchBar.vue";
 import { RouterLink } from "vue-router";
 
-const allPlaylists = ref<Playlists[] | null>(null);
+const playlistStore = usePlaylistStore();
+const allPlaylists = ref(playlistStore.playlists);
 
-onMounted(async () => {
-  const result = await commands.getAllPlaylists();
-  if (result.status === "error") return handleBackendError(result.error);
-
-  allPlaylists.value = result.data;
+watchEffect(() => {
+  allPlaylists.value = playlistStore.playlists;
 });
 </script>

@@ -7,7 +7,10 @@
       >
         <small>Select music folder</small>
       </button>
-      <Dialog :title="'New Playlist'" @submitted="newPlaylist" />
+      <Dialog
+        :title="'New Playlist'"
+        @submitted="playlistStore.createPlaylist"
+      />
       <button
         @click="showToast('success', 'This is a success toast')"
         class="border-stroke-100 bg-card cursor-pointer rounded-md border p-2"
@@ -40,20 +43,13 @@ import { toastBus } from "../composables/toastBus";
 import { commands } from "../bindings";
 
 const playerStore = usePlayerStore();
+const playlistStore = usePlaylistStore();
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
   if (result.status === "error") return handleBackendError(result.error);
   else {
     toastBus.addToast("success", "Music added successfully");
-  }
-}
-
-async function newPlaylist(playlistName: string) {
-  const result = await commands.newPlaylist(playlistName);
-  if (result.status === "error") return handleBackendError(result.error);
-  else {
-    toastBus.addToast("success", `Created playlist ${playlistName}`);
   }
 }
 

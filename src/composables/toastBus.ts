@@ -13,11 +13,11 @@ export const toastBus = reactive({
   /**
    * Add a toast to the toast container.
    *
-   * @param type - The type of the toast. Can be either "success" or "error".
+   * @param type - The type of the toast. Can be either "success", "error", or "warning".
    * @param description - The description of the toast.
    *
    * @example
    * toastBus.addToast("success", "The operation was successful.");
    */
-  addToast: (type: "success" | "error", description: string) => {},
+  addToast: (type: "success" | "error" | "warning", description: string) => {},
 });

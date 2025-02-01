@@ -20,6 +20,7 @@ import { usePlayerStore } from "./composables/playerStore";
 
 const router = useRouter();
 const playerStore = usePlayerStore();
+const playlistStore = usePlaylistStore();
 
 onBeforeMount(async () => {
   const result = await commands.getAllAlbums();
@@ -33,6 +34,8 @@ onBeforeMount(async () => {
   } else if (track) {
     await commands.initializePlayer(track.id, progress);
   }
+
+  await playlistStore.fetchPlaylists();
 
   const page = playerStore.currentPage;
   router.push({ path: page });
