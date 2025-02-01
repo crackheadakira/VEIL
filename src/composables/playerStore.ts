@@ -150,21 +150,34 @@ export const usePlayerStore = defineStore("player", () => {
     isShuffled.value = true;
   }
 
+  function $reset() {
+    currentTrack.value = null;
+    queue.value = [];
+    queueIndex.value = 0;
+    personalQueue.value = [];
+    loop.value = "none";
+    playerProgress.value = 0;
+    currentPage.value = "/";
+    playerVolume.value = 0.7;
+    isShuffled.value = false;
+  }
+
   return {
     currentTrack,
-    setPlayerTrack,
     playerProgress,
-    setPlayerProgress,
     queue,
     queueIndex,
     personalQueue,
-    skipTrack,
     loop,
-    loopQueue,
     currentPage,
     playerVolume,
     isShuffled,
+    setPlayerTrack,
+    setPlayerProgress,
+    skipTrack,
+    loopQueue,
     shuffleQueue,
+    $reset,
   };
 });
 

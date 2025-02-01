@@ -50,6 +50,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
             };
 
             let album_exists = state_guard.db.exists::<Albums>("name", &metadata.album)?;
+            let album_path = get_album_path(path.to_str().unwrap(), &metadata.file_path);
             let cover_path = cover_path(&metadata.artist, &metadata.album);
 
             let album_id = if album_exists {
@@ -58,7 +59,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     .album_by_name(&metadata.album, &artist_id)?
                     .id
             } else {
-                write_cover(&metadata, &cover_path)?;
+                write_cover(&metadata, &cover_path, &album_path)?;
                 state_guard.db.insert::<Albums>(Albums {
                     id: 0,
                     artists_id: artist_id,
@@ -69,7 +70,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     album_type: metadata.album_type,
                     track_count: 0,
                     duration: 0,
-                    path: get_album_path(path.to_str().unwrap(), &metadata.file_path),
+                    path: album_path,
                 })?
             };
 
@@ -173,9 +174,22 @@ fn cover_path(artist: &str, album: &str) -> String {
         + ".jpg"
 }
 
-fn write_cover(metadata: &Metadata, cover_path: &str) -> Result<(), FrontendError> {
+fn write_cover(
+    metadata: &Metadata,
+    cover_path: &str,
+    album_path: &str,
+) -> Result<(), FrontendError> {
     if !Path::new(&cover_path).exists() {
         let cover = if metadata.picture_data.is_empty() {
+            if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
+                fs::copy(album_path.to_string() + "/cover.jpg", cover_path)?;
+
+                return Ok(());
+            } else if Path::new(&(album_path.to_string() + "/cover.png")).exists() {
+                fs::copy(album_path.to_string() + "/cover.png", cover_path)?;
+                return Ok(());
+            }
+
             &include_bytes!("../../../public/placeholder.png").to_vec()
         } else {
             &metadata.picture_data

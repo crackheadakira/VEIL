@@ -80,9 +80,6 @@ impl TextFrame {
 
 #[derive(Debug)]
 pub struct AttachedPicture {
-    pub mime_type: String,
-    pub picture_type: u8,
-    pub description: String,
     pub picture_data: Vec<u8>,
 }
 
@@ -95,9 +92,6 @@ impl Default for AttachedPicture {
 impl AttachedPicture {
     fn new() -> Self {
         Self {
-            mime_type: String::from(""),
-            picture_type: 0,
-            description: String::from(""),
             picture_data: Vec::new(),
         }
     }
@@ -108,14 +102,11 @@ impl AttachedPicture {
         let mut i = 1; // skip text encoding
 
         let mime_type_end = data[i..].iter().position(|&x| x == 0).unwrap() + single_terminator;
-        ap.mime_type = String::from_utf8(data[i..i + mime_type_end].to_vec())?;
         i += mime_type_end;
 
-        ap.picture_type = data[i];
         i += 1;
 
         let description_end = data[i..].iter().position(|&x| x == 0).unwrap() + single_terminator;
-        ap.description = String::from_utf8(data[i..i + description_end].to_vec())?;
         i += description_end;
 
         ap.picture_data = data[i..].to_vec();

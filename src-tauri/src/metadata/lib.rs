@@ -113,7 +113,11 @@ impl Metadata {
     pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>, MetadataError> {
         let mut all_metadata = Vec::new();
         for path in file_paths {
-            all_metadata.push(Metadata::from_file(path)?);
+            let metadata = Metadata::from_file(path);
+            match metadata {
+                Ok(m) => all_metadata.push(m),
+                Err(_) => continue,
+            }
         }
         Ok(all_metadata)
     }
