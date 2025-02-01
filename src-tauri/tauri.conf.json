@@ -13,7 +13,7 @@
       {
         "title": "Sodapop Reimagined",
         "label": "Sodapop-Reimagined",
-        "url": "http://localhost:5173",
+        "url": "index.html",
         "width": 1280,
         "height": 720
       }
@@ -26,8 +26,7 @@
         ]
       },
       "csp": {
-        "img-src": "'self' asset: http://asset.localhost data:",
-        "media-src": "'self' asset: http://localhost:16780 data:"
+        "img-src": "'self' asset: http://asset.localhost data:"
       }
     }
   },
