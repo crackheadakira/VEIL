@@ -17,18 +17,13 @@ import ToastManager from "./components/ToastManager.vue";
 import { useRouter } from "vue-router";
 import { commands } from "./bindings";
 import { usePlayerStore } from "./composables/playerStore";
-import { toastBus } from "./composables/toastBus";
 
 const router = useRouter();
 const playerStore = usePlayerStore();
 
 onBeforeMount(async () => {
   const result = await commands.getAllAlbums();
-  if (result.status === "error")
-    return toastBus.addToast(
-      "error",
-      `[${result.error.type}] ${result.error.data}`,
-    );
+  if (result.status === "error") return handleBackendError(result.error);
 
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;

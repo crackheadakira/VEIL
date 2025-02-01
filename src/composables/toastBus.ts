@@ -6,6 +6,8 @@ import { reactive } from "vue";
  * A reactive object that can be used to add toasts to the toast container.
  *
  * ToastManager component listens to this object and adds toasts to the container.
+ *
+ * The function gets overriden in `ToastManager.vue`, so for the code go there.
  */
 export const toastBus = reactive({
   /**

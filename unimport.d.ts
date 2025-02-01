@@ -10,6 +10,7 @@ declare global {
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
   const h: typeof import('vue')['h']
+  const handleBackendError: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['handleBackendError']
   const inject: typeof import('vue')['inject']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
@@ -55,6 +56,7 @@ declare global {
   const useId: typeof import('vue')['useId']
   const useModel: typeof import('vue')['useModel']
   const usePlayerStore: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/playerStore')['usePlayerStore']
+  const usePlaylistStore: typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/playlistStore')['usePlaylistStore']
   const useSlots: typeof import('vue')['useSlots']
   const useTemplateRef: typeof import('vue')['useTemplateRef']
   const watch: typeof import('vue')['watch']
@@ -82,6 +84,7 @@ declare module 'vue' {
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly handleBackendError: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/utils')['handleBackendError']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -127,6 +130,7 @@ declare module 'vue' {
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly usePlayerStore: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/playerStore')['usePlayerStore']>
+    readonly usePlaylistStore: UnwrapRef<typeof import('/home/akira/Documents/coding/Sodapop Reimagined/src/composables/playlistStore')['usePlaylistStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>

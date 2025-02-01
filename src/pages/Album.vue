@@ -105,10 +105,7 @@ async function updateData() {
   const result = await commands.getArtistWithAlbums(parseInt(artist_id.value));
 
   if (result.status === "error")
-    return toastBus.addToast(
-      "error",
-      `[${result.error.type}] ${result.error.data}`,
-    );
+    if (result.status === "error") return handleBackendError(result.error);
 
   const res = result.data;
 

@@ -1,34 +1,34 @@
 <template>
   <div
     class="aspect-player border-stroke-100 bg-card text-text grid w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
-    v-if="music"
+    v-if="data"
   >
     <div class="flex w-full items-center gap-5">
       <img
         class="aspect-square w-20 rounded-md group-hover:opacity-90"
-        :src="convertFileSrc(music.cover_path)"
+        :src="convertFileSrc(data.cover_path)"
         alt="Album Cover"
       />
       <div class="flex flex-col gap-1 truncate">
         <RouterLink
           :to="{
             name: 'album',
-            params: { artist_id: music.artists_id, album_id: music.albums_id },
+            params: { artist_id: data.artists_id, album_id: data.albums_id },
           }"
         >
           <small
             class="text-text hover:text-placeholder cursor-pointer truncate"
           >
-            {{ music.name }}
+            {{ data.name }}
           </small>
         </RouterLink>
         <RouterLink
-          :to="{ name: 'artist', params: { artist_id: music.artists_id } }"
+          :to="{ name: 'artist', params: { artist_id: data.artists_id } }"
         >
           <small
             class="text-supporting cursor-pointer truncate font-normal hover:opacity-85"
           >
-            {{ music.artist }}
+            {{ data.artist }}
           </small>
         </RouterLink>
       </div>
@@ -107,7 +107,6 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { commands, MediaPayload } from "../bindings";
 import { usePlayerStore } from "../composables/playerStore";
 import { RouterLink } from "vue-router";
-import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 
@@ -125,7 +124,7 @@ const currentProgress = computed(() =>
   makeReadableTime(playerStore.playerProgress),
 );
 
-const music = ref(playerStore.currentTrack);
+const data = ref(playerStore.currentTrack);
 
 /**
  * If player has a track, update the progress bar. (Called every 100ms and when the user drags the progress bar)
@@ -199,13 +198,10 @@ async function handleVolume() {
 async function handlePlayAndPause() {
   const hasTrack = await commands.playerHasTrack();
 
-  if (!hasTrack && music.value) {
-    const result = await commands.playTrack(music.value.id);
-    if (result.status === "error")
-      return toastBus.addToast(
-        "error",
-        `[${result.error.type}] ${result.error.data}`,
-      );
+  if (!hasTrack && data.value) {
+    const result = await commands.playTrack(data.value.id);
+    if (result.status === "error") return handleBackendError(result.error);
+
     paused.value = false;
     return;
   } else if (!hasTrack) {
@@ -232,14 +228,14 @@ async function handlePlayAndPause() {
  * If the player is not in loop, pause the player.
  */
 async function handleSongEnd() {
-  if (!music.value) return;
+  if (!data.value) return;
   while (!(await commands.playerHasEnded())) {
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
 
   if (playerStore.loop === "track") {
     // replay the same track
-    await playerStore.setPlayerTrack(music.value);
+    await playerStore.setPlayerTrack(data.value);
     await handlePlayAndPause();
     return;
   }
@@ -327,12 +323,12 @@ const listenMediaControl = listen(
   },
 );
 
-playerStore.$onAction(({ name, store, args, after }) => {
+playerStore.$onAction(({ name, store, after }) => {
   if (name === "setPlayerTrack") {
-    music.value = args[0];
     paused.value = true;
 
     after(async () => {
+      data.value = store.currentTrack;
       const duration = await commands.getPlayerDuration();
       progressBar.value!.max = duration.toString();
 
@@ -344,7 +340,7 @@ playerStore.$onAction(({ name, store, args, after }) => {
     });
   } else if (name === "skipTrack") {
     after(() => {
-      music.value = store.currentTrack;
+      data.value = store.currentTrack;
       paused.value = false;
     });
   } else if (name === "shuffleQueue") {

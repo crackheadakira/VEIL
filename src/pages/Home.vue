@@ -43,18 +43,16 @@ const playerStore = usePlayerStore();
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
-  if (result.status === "error") {
-    toastBus.addToast("error", `[${result.error.type}] ${result.error.data}`);
-  } else {
+  if (result.status === "error") return handleBackendError(result.error);
+  else {
     toastBus.addToast("success", "Music added successfully");
   }
 }
 
 async function newPlaylist(playlistName: string) {
   const result = await commands.newPlaylist(playlistName);
-  if (result.status === "error") {
-    toastBus.addToast("error", `[${result.error.type}] ${result.error.data}`);
-  } else {
+  if (result.status === "error") return handleBackendError(result.error);
+  else {
     toastBus.addToast("success", `Created playlist ${playlistName}`);
   }
 }

@@ -50,6 +50,7 @@ export function makeTime(seconds: number): string {
 }
 
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { FrontendError } from "../bindings";
 
 /**
  * Returns the image path if it is not empty, otherwise returns the placeholder image path.
@@ -72,4 +73,17 @@ export function placeholderIfEmpty(imagePath: string | undefined): string {
   if (!imagePath || imagePath === "/placeholder.png") return "/placeholder.png";
 
   return convertFileSrc(imagePath);
+}
+
+/**
+ * Handles errors by displaying a toast with the error message
+ *
+ * @param result - The result of a backend function
+ *
+ * @example
+ * const result = await commands.newPlaylist("My Playlist");
+ * if(result.status === "error") handleBackendError(result.error);
+ */
+export function handleBackendError(error: FrontendError): void {
+  toastBus.addToast("error", `[${error.type}] ${error.data}`);
 }
