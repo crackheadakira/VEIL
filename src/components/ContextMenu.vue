@@ -5,7 +5,7 @@
     @mouseleave="handleMouseLeave()"
     @mouseenter="reEntered = true"
     :style="{ top: `${userCoords.y - 10}px`, left: `${userCoords.x - 50}px` }"
-    class="border-stroke-100 bg-card text-supporting absolute z-30 flex h-fit w-fit cursor-pointer flex-col rounded-md border p-2 select-none"
+    class="cardStyle text-supporting absolute z-30 flex h-fit w-fit cursor-pointer flex-col select-none"
   >
     <small
       @click="($emit('add-to-queue', selectedTrack), (showDropdown = false))"
@@ -24,7 +24,7 @@
         @mouseleave="handleMouseLeave(true)"
         v-if="showPlaylists"
         :style="{ top: 0, left: `${width - 4}px`, width: `${width}px` }"
-        class="border-stroke-100 bg-card absolute rounded-md border p-2"
+        class="cardStyle absolute"
       >
         <div
           @click="addPlaylist(playlist)"

@@ -1,8 +1,6 @@
 <template>
   <div class="text-text flex w-full flex-col gap-8" v-if="data">
-    <div
-      class="border-stroke-100 bg-card flex items-center gap-8 rounded-md border p-8"
-    >
+    <div class="cardStyle flex items-center gap-8 p-8">
       <img
         class="aspect-square w-64 rounded-md"
         :src="placeholderIfEmpty(data.playlist.cover_path)"

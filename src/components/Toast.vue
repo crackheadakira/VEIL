@@ -2,7 +2,7 @@
   <div
     v-if="showToast"
     :class="matchType(['text-green-500', 'text-red-500', 'text-yellow-500'])"
-    class="bg-card border-stroke-100 flex h-fit w-96 items-center gap-3 rounded-md border p-4"
+    class="cardStyle flex h-fit w-96 items-center gap-3 p-4"
   >
     <span
       class="shrink-0"

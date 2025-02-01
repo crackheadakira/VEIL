@@ -96,3 +96,13 @@ svg {
     font-weight: 500;
   }
 }
+
+@layer components {
+  .cardStyle {
+    background-color: var(--color-card);
+    border-color: var(--color-stroke-100);
+    border-width: 1px;
+    border-radius: var(--radius-md);
+    padding: calc(var(--spacing) * 2);
+  }
+}

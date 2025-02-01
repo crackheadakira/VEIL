@@ -1,10 +1,7 @@
 <template>
   <div class="bg-background text-text flex flex-col">
     <div>
-      <button
-        class="border-stroke-100 bg-card cursor-pointer rounded-md border p-2"
-        @click="openDialog"
-      >
+      <button class="cardStyle cursor-pointer" @click="openDialog">
         <small>Select music folder</small>
       </button>
       <Dialog
@@ -13,13 +10,13 @@
       />
       <button
         @click="showToast('success', 'This is a success toast')"
-        class="border-stroke-100 bg-card cursor-pointer rounded-md border p-2"
+        class="cardStyle cursor-pointer"
       >
         Show Success Toast
       </button>
       <button
         @click="showToast('error', 'This is an error toast')"
-        class="border-stroke-100 bg-card cursor-pointer rounded-md border p-2"
+        class="cardStyle cursor-pointer"
       >
         Show Error Toast
       </button>

@@ -1,7 +1,7 @@
 <template>
   <div class="text-text flex w-full flex-col gap-8" v-if="artist_data">
     <div
-      class="border-stroke-100 bg-card flex h-72 items-center justify-between overflow-hidden rounded-md border"
+      class="cardStyle flex h-72 items-center justify-between overflow-hidden"
     >
       <div class="flex h-full flex-col justify-end gap-4 p-8">
         <h4 class="text-text">{{ artist_data.artist.name }}</h4>

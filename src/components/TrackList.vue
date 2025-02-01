@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="border-stroke-100 bg-card flex flex-col rounded-md border p-4"
-    ref="trackList"
-  >
+  <div class="cardStyle flex flex-col p-4" ref="trackList">
     <div
       class="contextable hover:bg-background flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 duration-75 select-none"
       v-for="(track, idx) of data.tracks"

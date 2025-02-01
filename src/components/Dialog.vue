@@ -20,9 +20,7 @@
         v-if="showDialog"
         class="absolute inset-0 z-50 flex items-center justify-center"
       >
-        <div
-          class="bg-card border-stroke-100 relative flex h-fit w-96 flex-col gap-3 rounded-md border p-4"
-        >
+        <div class="cardStyle relative flex h-fit w-96 flex-col gap-3 p-4">
           <div>
             <p class="text-text">{{ props.title }}</p>
             <small v-if="props.description" class="mt-2">{{
@@ -32,13 +30,13 @@
           <input
             v-model="inputValue"
             type="text"
-            class="text-text placeholder-supporting border-stroke-100 w-full rounded-md border p-2 font-medium focus:outline-hidden"
+            class="text-text placeholder-supporting cardStyle w-full font-medium focus:outline-hidden"
             placeholder="Nektar's Top Hits"
           />
           <div class="flex w-full justify-end gap-2">
             <button
               @click="showDialog = false"
-              class="aspect-button border-stroke-100 bg-background text-supporting w-24 cursor-pointer rounded-md border p-2 hover:opacity-80"
+              class="aspect-button cardStyle text-supporting w-24 cursor-pointer hover:opacity-80"
             >
               <small>Cancel</small>
             </button>
@@ -50,7 +48,7 @@
                   : 'cursor-pointer'
               "
               @click="handleSubmit"
-              class="aspect-button border-stroke-100 bg-background text-supporting w-24 rounded-md border p-2 hover:opacity-80"
+              class="aspect-button cardStyle text-supporting w-24 hover:opacity-80"
             >
               <small>Submit</small>
             </button>
