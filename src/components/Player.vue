@@ -107,6 +107,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { commands, MediaPayload } from "../bindings";
 import { usePlayerStore } from "../composables/playerStore";
 import { RouterLink } from "vue-router";
+import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 
@@ -201,7 +202,10 @@ async function handlePlayAndPause() {
   if (!hasTrack && music.value) {
     const result = await commands.playTrack(music.value.id);
     if (result.status === "error")
-      throw new Error(`[${result.error.type}] ${result.error.data}`);
+      return toastBus.addToast(
+        "error",
+        `[${result.error.type}] ${result.error.data}`,
+      );
     paused.value = false;
     return;
   } else if (!hasTrack) {

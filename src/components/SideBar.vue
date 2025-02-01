@@ -58,13 +58,17 @@
 import { commands, Playlists } from "../bindings";
 import SearchBar from "../components/SearchBar.vue";
 import { RouterLink } from "vue-router";
+import { toastBus } from "../composables/toastBus";
 
 const allPlaylists = ref<Playlists[] | null>(null);
 
 onMounted(async () => {
   const result = await commands.getAllPlaylists();
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   allPlaylists.value = result.data;
 });

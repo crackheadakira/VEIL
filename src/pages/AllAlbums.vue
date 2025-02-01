@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import BigCard from "../components/BigCard.vue";
 import { commands, type Albums } from "../bindings";
+import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 const albums = ref<Albums[]>([]);
@@ -16,7 +17,10 @@ const albums = ref<Albums[]>([]);
 onBeforeMount(async () => {
   const result = await commands.getAllAlbums();
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   const response = result.data;
   albums.value = response;

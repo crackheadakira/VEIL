@@ -64,6 +64,7 @@ import {
 import { useRoute } from "vue-router";
 import BigCard from "../components/BigCard.vue";
 import TrackList from "../components/TrackList.vue";
+import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 
@@ -104,7 +105,10 @@ async function updateData() {
   const result = await commands.getArtistWithAlbums(parseInt(artist_id.value));
 
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   const res = result.data;
 

@@ -5,15 +5,19 @@
       <RouterView class="ml-72 overflow-scroll p-16" />
     </div>
     <Player class="sticky bottom-0 z-20" />
+    <ToastManager ref="toastManager" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-import Player from "./components/Player.vue";
 import SideBar from "./components/SideBar.vue";
+import Player from "./components/Player.vue";
+import ToastManager from "./components/ToastManager.vue";
+
+import { useRouter } from "vue-router";
 import { commands } from "./bindings";
 import { usePlayerStore } from "./composables/playerStore";
+import { toastBus } from "./composables/toastBus";
 
 const router = useRouter();
 const playerStore = usePlayerStore();
@@ -21,7 +25,10 @@ const playerStore = usePlayerStore();
 onBeforeMount(async () => {
   const result = await commands.getAllAlbums();
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;

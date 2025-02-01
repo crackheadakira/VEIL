@@ -41,6 +41,7 @@ import BigCard from "../components/BigCard.vue";
 import { useRoute } from "vue-router";
 import { ArtistWithAlbums, commands } from "../bindings";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 const route = useRoute();
@@ -53,7 +54,10 @@ async function updateData() {
     parseInt(artist_id.value),
   );
   if (response.status === "error")
-    throw new Error(`[${response.error.type}] ${response.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${response.error.type}] ${response.error.data}`,
+    );
   artist_data.value = response.data;
 }
 

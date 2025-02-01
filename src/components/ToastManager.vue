@@ -20,6 +20,7 @@
 </template>
 
 <script setup lang="ts">
+import { toastBus } from "../composables/toastBus";
 import Toast from "./Toast.vue";
 
 const toasts = ref<
@@ -37,5 +38,7 @@ function removeToast(id: number) {
   toasts.value = toasts.value.filter((toast) => toast.id !== id);
 }
 
-defineExpose({ addToast });
+onMounted(() => {
+  toastBus.addToast = addToast;
+});
 </script>

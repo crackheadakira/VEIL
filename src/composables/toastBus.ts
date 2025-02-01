@@ -1,0 +1,19 @@
+import { reactive } from "vue";
+
+/**
+ * A reactive object that can be used to add toasts to the toast container.
+ *
+ * ToastManager component listens to this object and adds toasts to the container.
+ */
+export const toastBus = reactive({
+  /**
+   * Add a toast to the toast container.
+   *
+   * @param type - The type of the toast. Can be either "success" or "error".
+   * @param description - The description of the toast.
+   *
+   * @example
+   * toastBus.addToast("success", "The operation was successful.");
+   */
+  addToast: (type: "success" | "error", description: string) => {},
+});

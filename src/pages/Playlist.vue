@@ -49,6 +49,7 @@
 import { commands, Tracks, PlaylistWithTracks } from "../bindings";
 import { useRoute } from "vue-router";
 import TrackList from "../components/TrackList.vue";
+import { toastBus } from "../composables/toastBus";
 
 const playerStore = usePlayerStore();
 
@@ -84,7 +85,10 @@ async function handlePlayButton(shuffle: boolean) {
 async function updateData() {
   const result = await commands.getPlaylistTracks(parseInt(playlist_id.value));
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   data.value = result.data;
 }

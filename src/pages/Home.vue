@@ -28,7 +28,6 @@
         :options="['Albums', 'Artists', 'Tracks']"
       />
     </div>
-    <ToastManager ref="toastManager" />
   </div>
 </template>
 
@@ -36,39 +35,32 @@
 import PlaylistCard from "../components/PlaylistCard.vue";
 import Dropdown from "../components/Dropdown.vue";
 import Dialog from "../components/Dialog.vue";
-import ToastManager from "../components/ToastManager.vue";
 
+import { toastBus } from "../composables/toastBus";
 import { commands } from "../bindings";
 
 const playerStore = usePlayerStore();
-const toastManager = useTemplateRef("toastManager");
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
   if (result.status === "error") {
-    toastManager.value?.addToast(
-      "error",
-      `[${result.error.type}] ${result.error.data}`,
-    );
+    toastBus.addToast("error", `[${result.error.type}] ${result.error.data}`);
   } else {
-    toastManager.value?.addToast("success", "Music added successfully");
+    toastBus.addToast("success", "Music added successfully");
   }
 }
 
 async function newPlaylist(playlistName: string) {
   const result = await commands.newPlaylist(playlistName);
   if (result.status === "error") {
-    toastManager.value?.addToast(
-      "error",
-      `[${result.error.type}] ${result.error.data}`,
-    );
+    toastBus.addToast("error", `[${result.error.type}] ${result.error.data}`);
   } else {
-    toastManager.value?.addToast("success", `Created playlist ${playlistName}`);
+    toastBus.addToast("success", `Created playlist ${playlistName}`);
   }
 }
 
 function showToast(type: "success" | "error", description: string) {
-  toastManager.value?.addToast(type, description);
+  toastBus.addToast(type, description);
 }
 
 onMounted(() => {

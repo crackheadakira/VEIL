@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
 import { commands, Playlists, Tracks } from "../bindings";
+import { toastBus } from "../composables/toastBus";
 
 defineEmits<{
   (e: "add-to-queue", track: Tracks | null): void;
@@ -135,7 +136,7 @@ async function addPlaylist(playlist: Playlists): Promise<void> {
   showDropdown.value = false;
 
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    toastBus.addToast("error", `[${result.error.type}] ${result.error.data}`);
 }
 
 useEventListener(window, "contextmenu", handleContextEvent);
@@ -144,7 +145,10 @@ useEventListener(window, "click", handleOutsideClick);
 onMounted(async () => {
   const result = await commands.getAllPlaylists();
   if (result.status === "error")
-    throw new Error(`[${result.error.type}] ${result.error.data}`);
+    return toastBus.addToast(
+      "error",
+      `[${result.error.type}] ${result.error.data}`,
+    );
 
   playlists.value = result.data;
 });
