@@ -85,4 +85,23 @@ function handleSubmit() {
   emit("submitted", inputValue.value);
   showDialog.value = false;
 }
+
+/**
+ * Handle the keydown event.
+ *
+ * If the `Escape` key is pressed, close the dialog.
+ */
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === "Escape") {
+    showDialog.value = false;
+  }
+}
+
+watch(showDialog, (value) => {
+  if (value) {
+    window.addEventListener("keydown", handleKeyDown);
+  } else {
+    window.removeEventListener("keydown", handleKeyDown);
+  }
+});
 </script>

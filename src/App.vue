@@ -25,7 +25,10 @@ onBeforeMount(async () => {
 
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;
-  if (track) {
+
+  if (result.data.length === 0 && track) {
+    playerStore.$reset();
+  } else if (track) {
     await commands.initializePlayer(track.id, progress);
   }
 
