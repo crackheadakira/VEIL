@@ -1,6 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
-import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import path from "path";
+import { defineConfig } from "vite";
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -17,6 +18,15 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
     envPrefix: ["VITE_", "TAURI_ENV_*"],
+  },
+
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "src"),
+      "@/components": path.resolve(__dirname, "src/components"),
+      "@/composables": path.resolve(__dirname, "src/composables"),
+      "@/pages": path.resolve(__dirname, "src/pages"),
+    },
   },
 
   build: {

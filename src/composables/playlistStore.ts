@@ -3,7 +3,7 @@ import {
   handleBackendError,
   type Playlists,
   toastBus,
-} from "@/composables";
+} from "@/composables/";
 import { defineStore } from "pinia";
 import { type Ref, ref } from "vue";
 

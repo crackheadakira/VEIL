@@ -50,8 +50,8 @@ import type {
   Playlists,
   PlaylistWithTracks,
   Tracks,
-} from "@/composables";
-import { commands, handleBackendError, usePlaylistStore } from "@/composables";
+} from "@/composables/";
+import { commands, handleBackendError, usePlaylistStore } from "@/composables/";
 import { useEventListener } from "@vueuse/core";
 import { computed, onMounted, ref } from "vue";
 

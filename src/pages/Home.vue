@@ -32,14 +32,14 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, Dropdown, PlaylistCard } from "@/components";
+import { Dialog, Dropdown, PlaylistCard } from "@/components/";
 import {
   commands,
   handleBackendError,
   toastBus,
   usePlayerStore,
   usePlaylistStore,
-} from "@/composables";
+} from "@/composables/";
 import { onMounted } from "vue";
 
 const playerStore = usePlayerStore();

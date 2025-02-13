@@ -25,7 +25,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Albums, AlbumWithTracks } from "@/composables";
+import type { Albums, AlbumWithTracks } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed } from "vue";
 

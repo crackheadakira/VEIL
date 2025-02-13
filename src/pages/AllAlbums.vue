@@ -7,13 +7,13 @@
 </template>
 
 <script setup lang="ts">
-import { BigCard } from "@/components";
+import { BigCard } from "@/components/";
 import {
   commands,
   handleBackendError,
   usePlayerStore,
   type Albums,
-} from "@/composables";
+} from "@/composables/";
 import { onBeforeMount, onMounted, ref } from "vue";
 
 const playerStore = usePlayerStore();

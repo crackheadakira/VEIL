@@ -36,13 +36,13 @@
 </template>
 
 <script setup lang="ts">
-import { BigCard } from "@/components";
+import { BigCard } from "@/components/";
 import {
   type ArtistWithAlbums,
   commands,
   handleBackendError,
   usePlayerStore,
-} from "@/composables";
+} from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";

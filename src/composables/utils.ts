@@ -1,4 +1,4 @@
-import { type FrontendError, toastBus } from "@/composables";
+import { type FrontendError, toastBus } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 
 /**

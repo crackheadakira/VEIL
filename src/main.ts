@@ -10,7 +10,7 @@ import {
   AllAlbumsView,
   ArtistView,
   PlaylistView,
-} from "@/pages";
+} from "@/pages/";
 
 const routes = [
   { path: "/album/:artist_id/:album_id", component: AlbumView, name: "album" },

@@ -108,7 +108,7 @@ import {
   handleBackendError,
   makeReadableTime,
   usePlayerStore,
-} from "@/composables";
+} from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Event, listen } from "@tauri-apps/api/event";
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from "vue";

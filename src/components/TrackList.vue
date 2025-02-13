@@ -35,16 +35,16 @@
 </template>
 
 <script setup lang="ts">
+import { ContextMenu } from "@/components/";
 import {
   type AlbumWithTracks,
   makeReadableTime,
   type PlaylistWithTracks,
   type Tracks,
   usePlayerStore,
-} from "@/composables";
+} from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { ref } from "vue";
-import ContextMenu from "../components/ContextMenu.vue";
 
 const playerStore = usePlayerStore();
 

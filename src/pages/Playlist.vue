@@ -44,14 +44,14 @@
 </template>
 
 <script setup lang="ts">
-import { TrackList } from "@/components";
+import { TrackList } from "@/components/";
 import {
   placeholderIfEmpty,
   usePlayerStore,
   usePlaylistStore,
   type PlaylistWithTracks,
   type Tracks,
-} from "@/composables";
+} from "@/composables/";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 

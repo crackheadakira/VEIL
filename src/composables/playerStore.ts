@@ -1,4 +1,4 @@
-import { commands, type Tracks } from "@/composables";
+import { commands, type Tracks } from "@/composables/";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 

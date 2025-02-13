@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { BigCard, TrackList } from "@/components";
+import { BigCard, TrackList } from "@/components/";
 import {
   type AlbumWithTracks,
   type ArtistWithAlbums,
@@ -61,7 +61,7 @@ import {
   makeTime,
   type Tracks,
   usePlayerStore,
-} from "@/composables";
+} from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";

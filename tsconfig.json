@@ -18,9 +18,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@/components": ["./src/components/index"],
-      "@/composables": ["./src/composables/index"],
-      "@/pages": ["./src/pages/index"],
+      "@/components/*": ["./src/components/index"],
+      "@/composables/*": ["./src/composables/index"],
+      "@/pages/*": ["./src/pages/index"],
     }
   },
   "include": [

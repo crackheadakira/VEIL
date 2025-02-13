@@ -20,8 +20,8 @@
 </template>
 
 <script setup lang="ts">
-import { Toast } from "@/components";
-import { toastBus } from "@/composables";
+import { Toast } from "@/components/";
+import { toastBus } from "@/composables/";
 import { onMounted, ref } from "vue";
 
 const toasts = ref<

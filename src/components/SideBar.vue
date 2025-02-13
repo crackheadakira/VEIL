@@ -55,8 +55,8 @@
 </template>
 
 <script setup lang="ts">
-import { SearchBar } from "@/components";
-import { usePlaylistStore } from "@/composables";
+import { SearchBar } from "@/components/";
+import { usePlaylistStore } from "@/composables/";
 import { ref, watchEffect } from "vue";
 import { RouterLink } from "vue-router";
 

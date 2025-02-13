@@ -10,13 +10,13 @@
 </template>
 
 <script setup lang="ts">
-import { Player, SideBar, ToastManager } from "@/components";
+import { Player, SideBar, ToastManager } from "@/components/";
 import {
   commands,
   handleBackendError,
   usePlayerStore,
   usePlaylistStore,
-} from "@/composables";
+} from "@/composables/";
 import { onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 
