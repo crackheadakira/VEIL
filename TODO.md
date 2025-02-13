@@ -39,4 +39,4 @@
   - [x] Control frontend actions
   - [ ] Desync when seeking
 - [ ] Lyric support
-- [ ] Discord RPC
+- [x] Discord RPC

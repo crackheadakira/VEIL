@@ -2,7 +2,9 @@ use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;
 use tauri::State;
 
-use crate::{error::FrontendError, models::Tracks, player::PlayerState, SodapopState};
+use crate::{
+    commands::discord, error::FrontendError, models::Tracks, player::PlayerState, SodapopState,
+};
 
 #[tauri::command]
 #[specta::specta]
@@ -40,6 +42,18 @@ pub fn play_track(
         progress: progress_as_position(progress),
     })?;
 
+    let payload = discord::PayloadData {
+        state: track.artist_name + " - " + &track.album_name,
+        details: track.name,
+        small_image: String::from("playing"),
+        small_text: String::from("Playing"),
+        show_timestamps: true,
+        duration: duration,
+        progress: progress,
+    };
+
+    state_guard.discord.make_activity(payload)?;
+
     Ok(())
 }
 
@@ -56,6 +70,16 @@ pub fn pause_track(state: State<'_, Mutex<SodapopState>>) {
             progress: progress_as_position(progress),
         })
         .unwrap();
+
+    let mut payload = state_guard.discord.payload.clone();
+    payload = discord::PayloadData {
+        small_image: String::from("paused"),
+        small_text: String::from("Paused"),
+        show_timestamps: false,
+        ..payload
+    };
+
+    state_guard.discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]
@@ -71,6 +95,16 @@ pub fn resume_track(state: State<'_, Mutex<SodapopState>>) {
             progress: progress_as_position(progress),
         })
         .unwrap();
+
+    let mut payload = state_guard.discord.payload.clone();
+    payload = discord::PayloadData {
+        small_image: String::from("playing"),
+        small_text: String::from("Playing"),
+        show_timestamps: true,
+        ..payload
+    };
+
+    state_guard.discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]
@@ -90,6 +124,22 @@ pub fn seek_track(position: f64, resume: bool, state: State<'_, Mutex<SodapopSta
         }
     };
     state_guard.controls.set_playback(playback).unwrap();
+
+    let text_display = if resume {
+        String::from("Playing")
+    } else {
+        String::from("Paused")
+    };
+
+    let mut payload = state_guard.discord.payload.clone();
+    payload = discord::PayloadData {
+        small_image: text_display.to_lowercase(),
+        small_text: text_display,
+        show_timestamps: true,
+        ..payload
+    };
+
+    state_guard.discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]

@@ -16,7 +16,7 @@ anyhow = "1.0.95"
 byteorder = "1.5.0"
 dirs = "6.0.0"
 dotenvy = "0.15.7"
-kira = "0.10.2"
+kira = "0.10.3"
 thiserror = "2.0.11"
 
 tokio = { version = "1.43.0", features = ["full"] }
@@ -26,16 +26,18 @@ r2d2_sqlite = "0.26.0"
 r2d2 = "0.8.10"
 
 serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.137"
+serde_json = "1.0.138"
 
 raw-window-handle = "0.6.2"
-tauri = { version = "2.2.4", features = ["protocol-asset"] }
+tauri = { version = "2.2.5", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2.2.0"
 tauri-plugin-fs = "2.2.0"
 
 specta = "2.0.0-rc.21"
 specta-typescript = "0.0.9"
 tauri-specta = { version = "2.0.0-rc.21", features = ["typescript", "derive"] }
+
+discord-rich-presence = "=0.2.5"
 
 [lib]
 name = "audio_metadata"
@@ -50,4 +52,4 @@ codegen-units = 1 # Allows LLVM to perform better optimization.
 lto = true        # Enables link-time-optimizations.
 opt-level = "s"   # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort"   # Higher performance by disabling panic handlers.
-strip = false     # Ensures debug symbols are removed. HAS TO BE FALSE DUE TO #8929
+strip = true      # Ensures debug symbols are removed. HAS TO BE FALSE DUE TO #8929

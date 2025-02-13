@@ -15,6 +15,7 @@ dependencies = [
  "anyhow",
  "byteorder",
  "dirs 6.0.0",
+ "discord-rich-presence",
  "dotenvy",
  "kira",
  "r2d2",
@@ -612,7 +613,7 @@ checksum = "d38f2da7a0a2c4ccf0065be06397cc26a81f4e528be095826eee9d4adbb8c60f"
 dependencies = [
  "byteorder",
  "fnv",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -1107,6 +1108,19 @@ dependencies = [
  "option-ext",
  "redox_users 0.5.0",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "discord-rich-presence"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a75db747ecd252c01bfecaf709b07fcb4c634adf0edb5fed47bc9c3052e7076b"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "serde_repr",
+ "uuid 0.8.2",
 ]
 
 [[package]]
@@ -2254,9 +2268,9 @@ dependencies = [
 
 [[package]]
 name = "kira"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6c094dc109f5735ce9586c9865c7059fe2e951a2a74ccda7350f756ee98cbc2"
+checksum = "15d97c4d549cb864dbd2eb22391231d785a25ec908268603b70abeba5845fd66"
 dependencies = [
  "atomic-arena",
  "cpal",
@@ -3393,7 +3407,7 @@ checksum = "ee025287c0188d75ae2563bcb91c9b0d1843cfc56e4bd3ab867597971b5cc256"
 dependencies = [
  "r2d2",
  "rusqlite",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -3770,7 +3784,7 @@ dependencies = [
  "serde",
  "serde_json",
  "url",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -3876,9 +3890,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
+checksum = "d434192e7da787e94a6ea7e9670b26a036d0ca41e0b7efb2676dd32bae872949"
 dependencies = [
  "itoa 1.0.11",
  "memchr",
@@ -4461,9 +4475,9 @@ checksum = "e1fc403891a21bcfb7c37834ba66a547a8f402146eba7265b5a6d88059c9ff2f"
 
 [[package]]
 name = "tauri"
-version = "2.2.4"
+version = "2.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f4d18381b412c306b98043489b16d3e52698a93d45b1f431a50cedf8d4a3ee8c"
+checksum = "58a998b6be84104ca05c7e9a21f2180ddec020c8b84ea59a8fc8530a2a19588d"
 dependencies = [
  "anyhow",
  "bytes",
@@ -4556,7 +4570,7 @@ dependencies = [
  "thiserror 2.0.11",
  "time",
  "url",
- "uuid",
+ "uuid 1.8.0",
  "walkdir",
 ]
 
@@ -4629,7 +4643,7 @@ dependencies = [
  "thiserror 2.0.11",
  "toml 0.8.19",
  "url",
- "uuid",
+ "uuid 1.8.0",
 ]
 
 [[package]]
@@ -4738,7 +4752,7 @@ dependencies = [
  "toml 0.8.19",
  "url",
  "urlpattern",
- "uuid",
+ "uuid 1.8.0",
  "walkdir",
 ]
 
@@ -5213,6 +5227,15 @@ name = "utf-8"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09cc8ee72d2a9becf2f2febe0205bbed8fc6615b7cb429ad062dc7b7ddd036a9"
+
+[[package]]
+name = "uuid"
+version = "0.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
+dependencies = [
+ "getrandom 0.2.15",
+]
 
 [[package]]
 name = "uuid"

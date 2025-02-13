@@ -209,7 +209,8 @@ export type FrontendError =
   | { type: "Metadata"; data: string }
   | { type: "Database"; data: string }
   | { type: "Player"; data: string }
-  | { type: "Souvlaki"; data: string };
+  | { type: "Souvlaki"; data: string }
+  | { type: "Standard"; data: string };
 export type MediaPayload =
   | { Play: boolean }
   | { Pause: boolean }

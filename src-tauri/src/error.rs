@@ -14,6 +14,8 @@ pub enum FrontendError {
     Player(String),
     #[error("souvlaki error: {0}")]
     Souvlaki(String),
+    #[error("standard error: {0}")]
+    Standard(String),
 }
 
 impl From<std::io::Error> for FrontendError {
@@ -43,5 +45,11 @@ impl From<player::PlayerError> for FrontendError {
 impl From<souvlaki::Error> for FrontendError {
     fn from(error: souvlaki::Error) -> Self {
         Self::Souvlaki(error.to_string())
+    }
+}
+
+impl From<Box<dyn std::error::Error>> for FrontendError {
+    fn from(error: Box<dyn std::error::Error>) -> Self {
+        Self::Standard(error.to_string())
     }
 }

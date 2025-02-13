@@ -1,7 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use commands::player::progress_as_position;
+use commands::{discord::DiscordState, player::progress_as_position};
+use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
 use specta::Type;
@@ -10,7 +11,9 @@ use std::fs::create_dir;
 use std::path::Path;
 use std::sync::Mutex;
 
+#[cfg(debug_assertions)]
 use specta_typescript::Typescript;
+
 use tauri::{Emitter, Manager, RunEvent};
 use tauri_plugin_fs::FsExt;
 use tauri_specta::{collect_commands, collect_events, Builder};
@@ -25,6 +28,7 @@ pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
     pub controls: MediaControls,
+    pub discord: DiscordState,
 }
 
 #[derive(Type, Serialize, Clone)]
@@ -111,10 +115,13 @@ fn main() {
                 player: player::Player::new(),
                 db: db::Database::new(),
                 controls: MediaControls::new(config)?,
+                discord: DiscordState::new("1339694314074275882")?,
             }));
 
             let state = app.state::<Mutex<SodapopState>>();
             let mut state_guard = state.lock().unwrap();
+
+            state_guard.discord.rpc.connect()?;
 
             let handle = app.handle().clone();
             state_guard
@@ -208,13 +215,13 @@ fn main() {
         })
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|_app, _event| match &_event {
-            RunEvent::ExitRequested { .. } => {
+        .run(|_app, _event| {
+            if let RunEvent::ExitRequested { .. } = _event {
                 let state = _app.state::<Mutex<SodapopState>>();
                 let mut state_guard = state.lock().unwrap();
 
+                state_guard.discord.rpc.close().unwrap();
                 state_guard.db.shutdown().unwrap();
             }
-            _ => (),
         });
 }
