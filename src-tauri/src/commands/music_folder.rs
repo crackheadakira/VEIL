@@ -183,11 +183,8 @@ fn write_cover(
         let cover = if metadata.picture_data.is_empty() {
             if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
                 fs::copy(album_path.to_string() + "/cover.jpg", cover_path)?;
-
-                return Ok(());
             } else if Path::new(&(album_path.to_string() + "/cover.png")).exists() {
                 fs::copy(album_path.to_string() + "/cover.png", cover_path)?;
-                return Ok(());
             }
 
             &include_bytes!("../../../public/placeholder.png").to_vec()

@@ -4,15 +4,25 @@ mod id3;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
+/// Metadata struct that holds information about an audio file
 pub struct Metadata {
+    /// Duration of the album in seconds
     pub duration: f32,
+    /// Album name
     pub album: String,
+    /// Artist name
     pub artist: String,
+    /// Track name
     pub name: String,
+    /// Path to the audio file
     pub file_path: String,
+    /// Album type (e.g. Album, Compilation, Single)
     pub album_type: String,
+    /// Year of publication
     pub year: u16,
+    /// Track number
     pub track_number: u16,
+    /// Picture data
     pub picture_data: Vec<u8>,
 }
 
@@ -94,6 +104,7 @@ impl Metadata {
         }
     }
 
+    /// Create a `Metadata` struct from a valid audio file
     pub fn from_file(path: &std::path::Path) -> Result<Metadata, MetadataError> {
         let ext = path.extension().unwrap().to_str().unwrap();
 
@@ -110,6 +121,7 @@ impl Metadata {
         }
     }
 
+    /// Create a vector of Metadata structs from a list of audio files
     pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>, MetadataError> {
         let mut all_metadata = Vec::new();
         for path in file_paths {
@@ -130,6 +142,7 @@ fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
         .to_string()
 }
 
+/// Read `n` bits from a byte slice starting at a given bit position
 pub fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
 where
     T: Default + Copy + std::ops::Shl<u32, Output = T> + std::ops::BitOr<Output = T> + From<u8>,
@@ -153,11 +166,15 @@ where
     value
 }
 
+/// Endian enum
 pub enum Endian {
+    /// Big endian
     Big,
+    /// Little endian
     Little,
 }
 
+/// Convert a slice of bytes to a u32 integer
 pub fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
     // We unwrap here because we know that the slice has 4 bytes
     // and we know that the conversion from slice to array will not fail
