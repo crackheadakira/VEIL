@@ -44,7 +44,7 @@ import {
   usePlayerStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const playerStore = usePlayerStore();
@@ -62,15 +62,6 @@ async function updateData() {
 
   artist_data.value = response.data;
 }
-
-watch(
-  () => route.params.artist_id,
-  async (newId) => {
-    artist_id.value = newId as string;
-    await updateData();
-    window.scrollTo(0, 0);
-  },
-);
 
 onBeforeMount(async () => {
   await updateData();

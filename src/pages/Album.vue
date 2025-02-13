@@ -63,7 +63,7 @@ import {
   usePlayerStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const playerStore = usePlayerStore();
@@ -74,16 +74,6 @@ const artist_id = ref(route.params.artist_id as string);
 
 const artist = ref<ArtistWithAlbums | null>(null);
 const data = ref<AlbumWithTracks | null>(null);
-
-watch(
-  () => route.params.album_id,
-  async (newId) => {
-    (album_id.value = newId as string),
-      (artist_id.value = route.params.artist_id as string);
-    await updateData();
-    window.scrollTo(0, 0);
-  },
-);
 
 /**
  * Handles the big play/shuffle button.

@@ -50,7 +50,7 @@ impl Database {
         );
         CREATE TABLE IF NOT EXISTS albums (
             id          INTEGER NOT NULL PRIMARY KEY,
-            artists_id  INTEGER NOT NULL REFERENCES artists(id),
+            artists_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
             artist      TEXT    NOT NULL,
             name        TEXT    NOT NULL,
             cover_path  TEXT    NOT NULL,
@@ -63,7 +63,7 @@ impl Database {
         CREATE TABLE IF NOT EXISTS tracks (
             id          INTEGER NOT NULL PRIMARY KEY,
             album       TEXT    NOT NULL,
-            albums_id   INTEGER NOT NULL REFERENCES albums(id),
+            albums_id   INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
             artist      TEXT    NOT NULL,
             artists_id  INTEGER NOT NULL REFERENCES artists(id),
             name        TEXT    NOT NULL,
@@ -79,8 +79,8 @@ impl Database {
         );
         CREATE TABLE IF NOT EXISTS playlist_tracks (
             id          INTEGER NOT NULL PRIMARY KEY,
-            playlists_id INTEGER NOT NULL REFERENCES playlists(id),
-            tracks_id   INTEGER NOT NULL REFERENCES tracks(id)
+            playlists_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+            tracks_id   INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
         );
         COMMIT;
         ",
