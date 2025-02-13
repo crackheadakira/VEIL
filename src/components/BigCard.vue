@@ -26,6 +26,7 @@
 
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { computed } from "vue";
 import type { Albums, AlbumWithTracks } from "../bindings";
 
 const album_data = computed(() => {

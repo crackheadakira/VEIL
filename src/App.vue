@@ -10,13 +10,18 @@
 </template>
 
 <script setup lang="ts">
+import { onBeforeMount } from "vue";
+
 import SideBar from "./components/SideBar.vue";
 import Player from "./components/Player.vue";
 import ToastManager from "./components/ToastManager.vue";
 
+import { usePlaylistStore } from "./composables/playlistStore";
+import { usePlayerStore } from "./composables/playerStore";
+import { handleBackendError } from "./composables/utils";
+
 import { useRouter } from "vue-router";
 import { commands } from "./bindings";
-import { usePlayerStore } from "./composables/playerStore";
 
 const router = useRouter();
 const playerStore = usePlayerStore();

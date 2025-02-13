@@ -53,13 +53,13 @@
 
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { useRoute } from "vue-router";
 import {
+  AlbumWithTracks,
   ArtistWithAlbums,
   commands,
-  AlbumWithTracks,
   Tracks,
 } from "../bindings";
-import { useRoute } from "vue-router";
 import BigCard from "../components/BigCard.vue";
 import TrackList from "../components/TrackList.vue";
 

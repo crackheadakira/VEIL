@@ -1,3 +1,7 @@
+import { convertFileSrc } from "@tauri-apps/api/core";
+import { FrontendError } from "../bindings";
+import { toastBus } from "./toastBus";
+
 /**
  * Returns a human-readable time string from seconds in the format `mm:ss`
  * @param {number} seconds - Time in seconds
@@ -48,9 +52,6 @@ export function makeTime(seconds: number): string {
 
   return time;
 }
-
-import { convertFileSrc } from "@tauri-apps/api/core";
-import { FrontendError } from "../bindings";
 
 /**
  * Returns the image path if it is not empty, otherwise returns the placeholder image path.
