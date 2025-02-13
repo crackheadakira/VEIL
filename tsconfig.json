@@ -16,14 +16,18 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/components": ["./src/components/index"],
+      "@/composables": ["./src/composables/index"],
+      "@/pages": ["./src/pages/index"],
+    }
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
-    "unimport.d.ts"
   ],
   "references": [
     {

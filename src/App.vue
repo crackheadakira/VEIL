@@ -12,12 +12,10 @@
 <script setup lang="ts">
 import { onBeforeMount } from "vue";
 
-import SideBar from "./components/SideBar.vue";
-import Player from "./components/Player.vue";
-import ToastManager from "./components/ToastManager.vue";
+import { Player, SideBar, ToastManager } from "@/components";
 
-import { usePlaylistStore } from "./composables/playlistStore";
 import { usePlayerStore } from "./composables/playerStore";
+import { usePlaylistStore } from "./composables/playlistStore";
 import { handleBackendError } from "./composables/utils";
 
 import { useRouter } from "vue-router";
