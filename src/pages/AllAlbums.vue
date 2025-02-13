@@ -7,8 +7,11 @@
 </template>
 
 <script setup lang="ts">
-import BigCard from "../components/BigCard.vue";
+import { onBeforeMount, onMounted, ref } from "vue";
 import { commands, type Albums } from "../bindings";
+import BigCard from "../components/BigCard.vue";
+import { usePlayerStore } from "../composables/playerStore";
+import { handleBackendError } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 const albums = ref<Albums[]>([]);

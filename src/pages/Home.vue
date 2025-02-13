@@ -38,6 +38,10 @@ import Dialog from "../components/Dialog.vue";
 
 import { toastBus } from "../composables/toastBus";
 import { commands } from "../bindings";
+import { onMounted } from "vue";
+import { usePlayerStore } from "../composables/playerStore";
+import { usePlaylistStore } from "../composables/playlistStore";
+import { handleBackendError } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();

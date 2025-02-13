@@ -53,15 +53,18 @@
 
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import {
-  AlbumWithTracks,
-  ArtistWithAlbums,
   commands,
-  Tracks,
+  type AlbumWithTracks,
+  type ArtistWithAlbums,
+  type Tracks,
 } from "../bindings";
 import BigCard from "../components/BigCard.vue";
 import TrackList from "../components/TrackList.vue";
+import { usePlayerStore } from "../composables/playerStore";
+import { handleBackendError, makeTime } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 
