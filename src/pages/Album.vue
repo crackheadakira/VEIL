@@ -10,7 +10,7 @@
         <div class="flex cursor-default flex-col gap-1 select-none">
           <p class="text-supporting font-medium">{{ data.album.album_type }}</p>
           <h4 class="text-text">{{ data.album.name }}</h4>
-          <p class="text-supporting">{{ data.album.artist }}</p>
+          <p class="text-supporting">{{ data.album.artist_name }}</p>
           <small class="text-supporting">
             {{ makeTime(data.album.duration) }},
             {{ data.album.track_count }}

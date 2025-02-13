@@ -13,7 +13,7 @@
         <RouterLink
           :to="{
             name: 'album',
-            params: { artist_id: data.artists_id, album_id: data.albums_id },
+            params: { artist_id: data.artist_id, album_id: data.album_id },
           }"
         >
           <small
@@ -23,12 +23,12 @@
           </small>
         </RouterLink>
         <RouterLink
-          :to="{ name: 'artist', params: { artist_id: data.artists_id } }"
+          :to="{ name: 'artist', params: { artist_id: data.artist_id } }"
         >
           <small
             class="text-supporting cursor-pointer truncate font-normal hover:opacity-85"
           >
-            {{ data.artist }}
+            {{ data.artist_name }}
           </small>
         </RouterLink>
       </div>

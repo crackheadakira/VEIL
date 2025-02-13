@@ -16,17 +16,19 @@
       <div class="gap grow">
         <small class="text-text mb-1">{{ track.name }}</small>
         <small class="text-supporting">
-          {{ track.artist }}
+          {{ track.artist_name }}
         </small>
       </div>
       <RouterLink
         v-if="'playlist' in data"
         :to="{
           name: 'album',
-          params: { album_id: track.albums_id, artist_id: track.artists_id },
+          params: { album_id: track.album_id, artist_id: track.artist_id },
         }"
       >
-        <small class="text-supporting hover:text-text">{{ track.album }}</small>
+        <small class="text-supporting hover:text-text">{{
+          track.album_name
+        }}</small>
       </RouterLink>
       <small class="text-text">{{ makeReadableTime(track.duration) }}</small>
     </div>

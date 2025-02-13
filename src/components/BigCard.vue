@@ -5,7 +5,7 @@
     <RouterLink
       :to="{
         name: 'album',
-        params: { artist_id: album_data.artists_id, album_id: album_data.id },
+        params: { artist_id: album_data.artist_id, album_id: album_data.id },
       }"
     >
       <img
@@ -18,7 +18,7 @@
     </RouterLink>
     <div class="text-supporting flex flex-col gap-1">
       <p class="text-text truncate">{{ album_data.name }}</p>
-      <small class="truncate">{{ album_data.artist }}</small>
+      <small class="truncate">{{ album_data.artist_name }}</small>
       <small>{{ album_data.album_type }}</small>
     </div>
   </div>

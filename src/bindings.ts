@@ -189,11 +189,11 @@ export type Albums = {
   artist_id: number;
   artist_name: string;
   name: string;
-  cover_path: string;
-  album_type: string;
-  duration: number;
-  track_count: number;
   year: number;
+  album_type: string;
+  track_count: number;
+  duration: number;
+  cover_path: string;
   path: string;
 };
 export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] };
