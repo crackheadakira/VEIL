@@ -179,6 +179,12 @@ export const commands = {
 
 /** user-defined events **/
 
+export const events = __makeEvents__<{
+  musicDataEvent: MusicDataEvent;
+}>({
+  musicDataEvent: "music-data-event",
+});
+
 /** user-defined constants **/
 
 /** user-defined types **/
@@ -212,6 +218,11 @@ export type MediaPayload =
   | { Volume: number }
   | { Seek: number }
   | { Position: number };
+export type MusicDataEvent = {
+  total: number;
+  current: number;
+  finished: boolean;
+};
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = { playlist: Playlists; tracks: Tracks[] };
 export type Playlists = {

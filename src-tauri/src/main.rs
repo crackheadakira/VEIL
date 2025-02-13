@@ -13,7 +13,7 @@ use std::sync::Mutex;
 use specta_typescript::Typescript;
 use tauri::{Emitter, Manager, RunEvent};
 use tauri_plugin_fs::FsExt;
-use tauri_specta::{collect_commands, Builder};
+use tauri_specta::{collect_commands, collect_events, Builder};
 
 mod commands;
 mod db;
@@ -65,6 +65,7 @@ fn main() {
             commands::player::set_player_progress,
             commands::player::player_has_ended,
         ])
+        .events(collect_events![commands::music_folder::MusicDataEvent])
         .typ::<MediaPayload>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds

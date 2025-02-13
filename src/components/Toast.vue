@@ -1,7 +1,14 @@
 <template>
   <div
     v-if="showToast"
-    :class="matchType(['text-green-500', 'text-red-500', 'text-yellow-500'])"
+    :class="
+      matchType([
+        'text-green-500',
+        'text-red-500',
+        'text-yellow-500',
+        'text-blue-500',
+      ])
+    "
     class="cardStyle flex h-fit w-96 items-center gap-3 p-4"
   >
     <span
@@ -11,6 +18,7 @@
           'i-fluent-checkmark-20-filled',
           'i-fluent-error-circle-20-filled',
           'i-fluent-warning-20-filled',
+          'i-fluent-info-20-filled',
         ])
       "
     ></span>
@@ -20,10 +28,11 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { ToastType } from "@/composables/";
 
 const props = defineProps<{
   id: number;
-  type: "success" | "error" | "warning";
+  type: ToastType;
   description: string;
   removeToast: (id: number) => void;
 }>();
@@ -41,7 +50,8 @@ function callToast() {
 function matchType(conditions: string[]) {
   if (props.type === "success") return conditions[0];
   else if (props.type === "error") return conditions[1];
-  else return conditions[2];
+  else if (props.type === "warning") return conditions[2];
+  else return conditions[3];
 }
 
 onMounted(() => {

@@ -21,18 +21,25 @@
 
 <script setup lang="ts">
 import { Toast } from "@/components/";
-import { toastBus } from "@/composables/";
+import { toastBus, ToastType } from "@/composables/";
 import { onMounted, ref } from "vue";
 
-const toasts = ref<
-  { id: number; type: "success" | "error" | "warning"; description: string }[]
->([]);
+const toasts = ref<{ id: number; type: ToastType; description: string }[]>([]);
 
-function addToast(type: "success" | "error" | "warning", description: string) {
+function addToast(type: ToastType, description: string) {
   const id = Date.now();
   toasts.value.push({ id, type, description });
 
   setTimeout(() => removeToast(id), 2100);
+}
+
+function persistentToast(id: number, type: ToastType, description: string) {
+  const idIdx = toasts.value.findIndex((toast) => toast.id === id);
+  if (idIdx !== -1) {
+    toasts.value[idIdx] = { id, type, description };
+  } else {
+    toasts.value.push({ id, type, description });
+  }
 }
 
 function removeToast(id: number) {
@@ -41,5 +48,7 @@ function removeToast(id: number) {
 
 onMounted(() => {
   toastBus.addToast = addToast;
+  toastBus.persistentToast = persistentToast;
+  toastBus.removeToast = removeToast;
 });
 </script>

@@ -6,6 +6,7 @@ use crate::{
 };
 
 use audio_metadata::Metadata;
+use tauri_specta::Event;
 
 use std::{
     fs::{self, File},
@@ -14,8 +15,15 @@ use std::{
     sync::Mutex,
 };
 
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tauri_plugin_dialog::DialogExt;
+
+#[derive(serde::Serialize, serde::Deserialize, specta::Type, tauri_specta::Event, Clone)]
+pub struct MusicDataEvent {
+    pub total: u32,
+    pub current: u32,
+    pub finished: bool,
+}
 
 #[tauri::command(async)] // summon on async thread du to `.blocking_pick_folder()``
 #[specta::specta]
@@ -35,7 +43,34 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
         all_paths.sort();
 
         let start = std::time::Instant::now();
-        let all_metadata = Metadata::from_files(&all_paths)?;
+        let mut all_metadata = Vec::new();
+        for (idx, path) in all_paths.clone().into_iter().enumerate() {
+            let metadata = Metadata::from_file(&path);
+            match metadata {
+                Ok(m) => {
+                    all_metadata.push(m);
+                    if idx % 50 == 0 {
+                        app.emit("indexing-progress", idx).unwrap();
+                        MusicDataEvent {
+                            total: all_paths.len() as u32,
+                            current: idx as u32,
+                            finished: false,
+                        }
+                        .emit(&app)
+                        .unwrap();
+                    }
+                }
+                Err(_) => continue,
+            }
+        }
+
+        MusicDataEvent {
+            total: all_paths.len() as u32,
+            current: all_paths.len() as u32,
+            finished: true,
+        }
+        .emit(&app)
+        .unwrap();
 
         for metadata in all_metadata {
             let artist_exists = state_guard.db.exists::<Artists>("name", &metadata.artist)?;

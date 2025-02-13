@@ -34,16 +34,19 @@
 <script setup lang="ts">
 import { Dialog, Dropdown, PlaylistCard } from "@/components/";
 import {
+  events,
   commands,
   handleBackendError,
   toastBus,
   usePlayerStore,
   usePlaylistStore,
 } from "@/composables/";
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
+
+const persistentToastId = ref<number | null>(null);
 
 async function openDialog() {
   const result = await commands.selectMusicFolder();
@@ -52,6 +55,49 @@ async function openDialog() {
     toastBus.addToast("success", "Music added successfully");
   }
 }
+
+events.musicDataEvent.once((data) => {
+  const id = Date.now();
+  persistentToastId.value = id;
+  const payload = data.payload;
+  // keep modfying the toast description until the data.finished is true
+  toastBus.persistentToast(
+    id,
+    "info",
+    `Importing songs (${payload.current} / ${payload.total})`,
+  );
+
+  if (payload.finished) {
+    setTimeout(() => toastBus.removeToast(id), 2100);
+  }
+});
+
+events.musicDataEvent.listen((data) => {
+  const payload = data.payload;
+
+  if (persistentToastId.value) {
+    toastBus.persistentToast(
+      persistentToastId.value,
+      "info",
+      `Importing songs (${payload.current} / ${payload.total})`,
+    );
+  } else {
+    const id = Date.now();
+    persistentToastId.value = id;
+    toastBus.persistentToast(
+      id,
+      "info",
+      `Importing songs (${payload.current} / ${payload.total})`,
+    );
+  }
+
+  if (payload.finished && persistentToastId.value) {
+    setTimeout(() => {
+      toastBus.removeToast(persistentToastId.value!);
+      persistentToastId.value = null;
+    }, 2100);
+  }
+});
 
 function showToast(type: "success" | "error", description: string) {
   toastBus.addToast(type, description);
