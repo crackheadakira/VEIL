@@ -1,8 +1,9 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use commands::player::progress_as_position;
 use serde::Serialize;
-use souvlaki::{MediaControlEvent, MediaControls};
+use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
 use specta::Type;
 
 use std::fs::create_dir;
@@ -60,7 +61,6 @@ fn main() {
             commands::player::get_player_progress,
             commands::player::get_player_duration,
             commands::player::stop_player,
-            commands::player::update_progress,
             commands::player::initialize_player,
             commands::player::set_player_progress,
             commands::player::player_has_ended,
@@ -164,6 +164,32 @@ fn main() {
                     _ => (),
                 })
                 .unwrap();
+
+            let app_handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(std::time::Duration::from_millis(50));
+                // get the player state
+                let state = app_handle.state::<Mutex<SodapopState>>();
+                let mut state_guard = state.lock().unwrap();
+
+                let progress = state_guard.player.progress;
+
+                if let player::PlayerState::Playing = state_guard.player.state {
+                    state_guard.player.update();
+                    app_handle.emit("player-progress", progress).unwrap();
+
+                    state_guard
+                        .controls
+                        .set_playback(MediaPlayback::Playing {
+                            progress: progress_as_position(progress),
+                        })
+                        .unwrap();
+
+                    if progress >= (state_guard.player.duration - 0.05) as f64 {
+                        app_handle.emit("track-end", 0.0).unwrap();
+                    };
+                }
+            });
 
             let data_path = db::data_path();
 

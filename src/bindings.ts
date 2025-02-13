@@ -155,9 +155,6 @@ export const commands = {
   async stopPlayer(): Promise<void> {
     await TAURI_INVOKE("stop_player");
   },
-  async updateProgress(): Promise<void> {
-    await TAURI_INVOKE("update_progress");
-  },
   async initializePlayer(
     trackId: number,
     progress: number,

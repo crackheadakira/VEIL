@@ -1,6 +1,6 @@
 use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::State;
 
 use crate::{error::FrontendError, models::Tracks, player::PlayerState, SodapopState};
 
@@ -156,30 +156,6 @@ pub fn stop_player(state: State<'_, Mutex<SodapopState>>) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn update_progress(app: AppHandle) {
-    let state = app.state::<Mutex<SodapopState>>();
-    let mut state_guard = state.lock().unwrap();
-    let progress = state_guard.player.progress;
-
-    if let PlayerState::Playing = state_guard.player.state {
-        state_guard.player.update();
-        app.emit("player-progress", progress).unwrap();
-
-        state_guard
-            .controls
-            .set_playback(MediaPlayback::Playing {
-                progress: progress_as_position(progress),
-            })
-            .unwrap();
-
-        if progress >= (state_guard.player.duration - 0.2) as f64 {
-            app.emit("track-end", 0.0).unwrap();
-        };
-    };
-}
-
-#[tauri::command]
-#[specta::specta]
 pub fn initialize_player(
     track_id: u32,
     progress: f64,
@@ -215,7 +191,7 @@ pub fn set_player_progress(progress: f64, state: State<'_, Mutex<SodapopState>>)
         .unwrap();
 }
 
-fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
+pub fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
     Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
         progress,
     )))

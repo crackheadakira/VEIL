@@ -39,9 +39,5 @@ onBeforeMount(async () => {
 
   const page = playerStore.currentPage;
   router.push({ path: page });
-
-  setInterval(async () => {
-    await commands.updateProgress();
-  }, 100);
 });
 </script>
