@@ -44,13 +44,16 @@
 </template>
 
 <script setup lang="ts">
+import { TrackList } from "@/components";
+import {
+  placeholderIfEmpty,
+  usePlayerStore,
+  usePlaylistStore,
+  type PlaylistWithTracks,
+  type Tracks,
+} from "@/composables";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { PlaylistWithTracks, Tracks } from "../bindings";
-import TrackList from "../components/TrackList.vue";
-import { usePlayerStore } from "../composables/playerStore";
-import { usePlaylistStore } from "../composables/playlistStore";
-import { placeholderIfEmpty } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();

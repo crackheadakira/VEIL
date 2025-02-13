@@ -102,13 +102,17 @@
 </template>
 
 <script setup lang="ts">
+import {
+  type MediaPayload,
+  commands,
+  handleBackendError,
+  makeReadableTime,
+  usePlayerStore,
+} from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Event, listen } from "@tauri-apps/api/event";
 import { computed, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
 import { RouterLink } from "vue-router";
-import { commands, MediaPayload } from "../bindings";
-import { usePlayerStore } from "../composables/playerStore";
-import { handleBackendError, makeReadableTime } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 

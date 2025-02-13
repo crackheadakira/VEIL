@@ -52,19 +52,19 @@
 </template>
 
 <script setup lang="ts">
+import { BigCard, TrackList } from "@/components";
+import {
+  type AlbumWithTracks,
+  type ArtistWithAlbums,
+  commands,
+  handleBackendError,
+  makeTime,
+  type Tracks,
+  usePlayerStore,
+} from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import {
-  commands,
-  type AlbumWithTracks,
-  type ArtistWithAlbums,
-  type Tracks,
-} from "../bindings";
-import BigCard from "../components/BigCard.vue";
-import TrackList from "../components/TrackList.vue";
-import { usePlayerStore } from "../composables/playerStore";
-import { handleBackendError, makeTime } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 

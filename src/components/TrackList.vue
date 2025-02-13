@@ -35,12 +35,16 @@
 </template>
 
 <script setup lang="ts">
+import {
+  type AlbumWithTracks,
+  makeReadableTime,
+  type PlaylistWithTracks,
+  type Tracks,
+  usePlayerStore,
+} from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { ref } from "vue";
-import type { AlbumWithTracks, PlaylistWithTracks, Tracks } from "../bindings";
 import ContextMenu from "../components/ContextMenu.vue";
-import { usePlayerStore } from "../composables/playerStore";
-import { makeReadableTime } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 

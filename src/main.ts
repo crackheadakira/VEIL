@@ -4,11 +4,13 @@ import { createPinia } from "pinia";
 import "./styles.css";
 import App from "./App.vue";
 
-import HomeView from "./pages/Home.vue";
-import AlbumView from "./pages/Album.vue";
-import AllAlbumsView from "./pages/AllAlbums.vue";
-import ArtistView from "./pages/Artist.vue";
-import PlaylistView from "./pages/Playlist.vue";
+import {
+  HomeView,
+  AlbumView,
+  AllAlbumsView,
+  ArtistView,
+  PlaylistView,
+} from "@/pages";
 
 const routes = [
   { path: "/album/:artist_id/:album_id", component: AlbumView, name: "album" },

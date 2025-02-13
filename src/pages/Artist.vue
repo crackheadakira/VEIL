@@ -36,14 +36,16 @@
 </template>
 
 <script setup lang="ts">
-import BigCard from "../components/BigCard.vue";
-
+import { BigCard } from "@/components";
+import {
+  type ArtistWithAlbums,
+  commands,
+  handleBackendError,
+  usePlayerStore,
+} from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { ArtistWithAlbums, commands } from "../bindings";
-import { usePlayerStore } from "../composables/playerStore";
-import { handleBackendError } from "../composables/utils";
 
 const playerStore = usePlayerStore();
 const route = useRoute();

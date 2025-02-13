@@ -1,9 +1,11 @@
+import {
+  commands,
+  handleBackendError,
+  type Playlists,
+  toastBus,
+} from "@/composables";
 import { defineStore } from "pinia";
 import { type Ref, ref } from "vue";
-
-import { commands, Playlists } from "../bindings";
-import { toastBus } from "./toastBus";
-import { handleBackendError } from "./utils";
 
 export const usePlaylistStore = defineStore("playlist", () => {
   const playlists: Ref<Playlists[]> = ref([]);

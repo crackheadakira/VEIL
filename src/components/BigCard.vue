@@ -25,9 +25,9 @@
 </template>
 
 <script setup lang="ts">
+import type { Albums, AlbumWithTracks } from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed } from "vue";
-import type { Albums, AlbumWithTracks } from "../bindings";
 
 const album_data = computed(() => {
   if ("tracks" in props.data) return props.data.album;

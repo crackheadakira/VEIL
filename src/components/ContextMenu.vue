@@ -45,17 +45,15 @@
 </template>
 
 <script setup lang="ts">
-import { useEventListener } from "@vueuse/core";
-import { computed, onMounted, ref } from "vue";
 import type {
   AlbumWithTracks,
   Playlists,
   PlaylistWithTracks,
   Tracks,
-} from "../bindings";
-import { commands } from "../bindings";
-import { usePlaylistStore } from "../composables/playlistStore";
-import { handleBackendError } from "../composables/utils";
+} from "@/composables";
+import { commands, handleBackendError, usePlaylistStore } from "@/composables";
+import { useEventListener } from "@vueuse/core";
+import { computed, onMounted, ref } from "vue";
 
 const playlistStore = usePlaylistStore();
 

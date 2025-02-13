@@ -20,9 +20,9 @@
 </template>
 
 <script setup lang="ts">
+import { Toast } from "@/components";
+import { toastBus } from "@/composables";
 import { onMounted, ref } from "vue";
-import { toastBus } from "../composables/toastBus";
-import Toast from "./Toast.vue";
 
 const toasts = ref<
   { id: number; type: "success" | "error" | "warning"; description: string }[]

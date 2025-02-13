@@ -1,6 +1,5 @@
+import { type FrontendError, toastBus } from "@/composables";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { FrontendError } from "../bindings";
-import { toastBus } from "./toastBus";
 
 /**
  * Returns a human-readable time string from seconds in the format `mm:ss`

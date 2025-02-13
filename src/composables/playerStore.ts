@@ -1,6 +1,6 @@
+import { commands, type Tracks } from "@/composables";
+import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { useStorage, StorageSerializers } from "@vueuse/core";
-import { commands, Tracks } from "../bindings";
 
 /**
  * The player store composable.
