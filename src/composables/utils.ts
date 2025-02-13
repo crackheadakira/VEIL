@@ -29,15 +29,12 @@ export function formatTime(format: "mm:ss", seconds: number): string;
  * makeTime(12)
  */
 export function formatTime(format: "hh:mm:ss", seconds: number): string;
-export function formatTime(
-  format: "mm:ss" | "hh:mm:ss",
-  seconds: number,
-): string {
+export function formatTime(format: string, seconds: number): string {
   if (format === "mm:ss") {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  } else {
+  } else if (format === "hh:mm:ss") {
     let time = "";
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -55,6 +52,8 @@ export function formatTime(
 
     return time;
   }
+
+  throw new Error("Invalid format");
 }
 
 /**
