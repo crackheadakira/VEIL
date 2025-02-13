@@ -22,15 +22,15 @@ pub fn play_track(
     if track.duration == 0 {
         state_guard
             .db
-            .update_duration(&track_id, &track.albums_id, &(duration as u32))?;
+            .update_duration(&track_id, &track.album_id, &(duration as u32))?;
     }
 
     let _ = state_guard.player.play(&track);
 
     state_guard.controls.set_metadata(MediaMetadata {
         title: Some(&track.name),
-        album: Some(&track.album),
-        artist: Some(&track.artist),
+        album: Some(&track.album_name),
+        artist: Some(&track.artist_name),
         cover_url: Some(&track.cover_path),
         duration: Some(std::time::Duration::from_secs(duration as u64)),
     })?;
@@ -166,8 +166,8 @@ pub fn initialize_player(
 
     state_guard.controls.set_metadata(MediaMetadata {
         title: Some(&track.name),
-        album: Some(&track.album),
-        artist: Some(&track.artist),
+        album: Some(&track.album_name),
+        artist: Some(&track.artist_name),
         cover_url: Some(&track.cover_path),
         duration: Some(std::time::Duration::from_secs(track.duration as u64)),
     })?;

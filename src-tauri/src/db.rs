@@ -50,26 +50,26 @@ impl Database {
         );
         CREATE TABLE IF NOT EXISTS albums (
             id          INTEGER NOT NULL PRIMARY KEY,
-            artists_id  INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-            artist      TEXT    NOT NULL,
+            artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+            artist_name TEXT    NOT NULL,
             name        TEXT    NOT NULL,
-            cover_path  TEXT    NOT NULL,
-            type        TEXT    NOT NULL,
-            duration    INTEGER NOT NULL,
-            track_count INTEGER NOT NULL,
             year        INTEGER NOT NULL,
+            type        TEXT    NOT NULL,
+            track_count INTEGER NOT NULL,
+            duration    INTEGER NOT NULL,
+            cover_path  TEXT    NOT NULL,
             path        TEXT    NOT NULL UNIQUE
         );
         CREATE TABLE IF NOT EXISTS tracks (
             id          INTEGER NOT NULL PRIMARY KEY,
-            album       TEXT    NOT NULL,
-            albums_id   INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
-            artist      TEXT    NOT NULL,
-            artists_id  INTEGER NOT NULL REFERENCES artists(id),
+            album_id    INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
+            artist_id   INTEGER NOT NULL REFERENCES artists(id),
+            album_name  TEXT    NOT NULL,
+            artist_name TEXT    NOT NULL,
             name        TEXT    NOT NULL,
             duration    INTEGER NOT NULL,
-            path        TEXT    NOT NULL UNIQUE,
-            cover_path  TEXT    NOT NULL
+            cover_path  TEXT    NOT NULL,
+            path        TEXT    NOT NULL UNIQUE
         ); 
         CREATE TABLE IF NOT EXISTS playlists (
             id          INTEGER NOT NULL PRIMARY KEY,
@@ -79,8 +79,8 @@ impl Database {
         );
         CREATE TABLE IF NOT EXISTS playlist_tracks (
             id          INTEGER NOT NULL PRIMARY KEY,
-            playlists_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
-            tracks_id   INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
+            playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+            track_id   INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
         );
         COMMIT;
         ",
@@ -132,8 +132,8 @@ impl Database {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => "INSERT INTO artists (name) VALUES (?1) RETURNING id",
-            "albums" => "INSERT INTO albums (artists_id, artist, name, cover_path, type, duration, track_count, year, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING id",
-            "tracks" => "INSERT INTO tracks (album, albums_id, artist, artists_id, name, duration, path, cover_path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING id",
+            "albums" => "INSERT INTO albums (artist_id, artist_name, name, year, type, track_count, duration, cover_path, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING id",
+            "tracks" => "INSERT INTO tracks (album_id, artist_id, album_name, artist_name, name, duration, cover_path, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING id",
             "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3) RETURNING id",
             _ => unreachable!("Invalid table name"),
         };
@@ -213,7 +213,7 @@ impl Database {
     ) -> Result<Tracks, DatabaseError> {
         let conn = self.pool.get()?;
         let mut stmt =
-            conn.prepare_cached("SELECT * FROM tracks WHERE (name, albums_id) = (?1, ?2)")?;
+            conn.prepare_cached("SELECT * FROM tracks WHERE (name, album_id) = (?1, ?2)")?;
         let result = stmt.query_row((track_name, album_id), Tracks::from_row)?;
 
         Ok(result)
@@ -227,7 +227,7 @@ impl Database {
     ) -> Result<Albums, DatabaseError> {
         let conn = self.pool.get()?;
         let mut stmt =
-            conn.prepare_cached("SELECT * FROM albums WHERE (name, artists_id) = (?1, ?2)")?;
+            conn.prepare_cached("SELECT * FROM albums WHERE (name, artist_id) = (?1, ?2)")?;
         let result = stmt.query_row((album_name, artist_id), Albums::from_row)?;
 
         Ok(result)
@@ -235,7 +235,7 @@ impl Database {
 
     pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT * FROM albums WHERE artists_id = ?1")?;
+        let mut stmt = conn.prepare("SELECT * FROM albums WHERE artist_id = ?1")?;
         let result = stmt
             .query_map([artist_id], Albums::from_row)?
             .collect::<Result<Vec<Albums>, Error>>()?;
@@ -246,7 +246,7 @@ impl Database {
     pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
         let conn = self.pool.get()?;
         let mut stmt =
-            conn.prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE albums_id = ?1")?;
+            conn.prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE album_id = ?1")?;
 
         let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
@@ -255,7 +255,7 @@ impl Database {
 
     pub fn album_with_tracks(&self, album_id: &u32) -> Result<AlbumWithTracks, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT * FROM tracks WHERE albums_id = ?1")?;
+        let mut stmt = conn.prepare("SELECT * FROM tracks WHERE album_id = ?1")?;
 
         let tracks = stmt
             .query_map([album_id], Tracks::from_row)?
@@ -315,10 +315,10 @@ impl Database {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(playlist_id)?;
         let mut stmt = conn.prepare(
-            "SELECT t.id, t.album, t.albums_id, t.artist, t.artists_id, t.name, t.duration, t.path, t.cover_path
+            "SELECT t.id, t.album_id, t.artist_id, t.album_name, t.artist_name, t.name, t.duration, t.cover_path, t.path
             FROM playlist_tracks pt
-            JOIN tracks t ON pt.tracks_id = t.id
-            WHERE pt.playlists_id = ?1; 
+            JOIN tracks t ON pt.track_id = t.id
+            WHERE pt.playlist_id = ?1; 
             SORT BY t.id",
         )?;
 
@@ -346,7 +346,7 @@ impl Database {
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
         conn.execute(
-            "INSERT INTO playlist_tracks (playlists_id, tracks_id) VALUES (?1, ?2)",
+            "INSERT INTO playlist_tracks (playlist_id, track_id) VALUES (?1, ?2)",
             [playlist_id, track_id],
         )?;
 
@@ -365,7 +365,7 @@ impl Database {
             WHERE ROWID IN (
                 SELECT MIN(ROWID) as row_id
                 FROM playlist_tracks
-                WHERE playlists_id = ?1 AND tracks_id = ?2
+                WHERE playlist_id = ?1 AND track_id = ?2
             )",
             [playlist_id, track_id],
         )?;

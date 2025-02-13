@@ -17,28 +17,28 @@ pub struct Artists {
 #[derive(Debug, Serialize, Type)]
 pub struct Albums {
     pub id: u32,
-    pub artists_id: u32,
-    pub artist: String,
+    pub artist_id: u32,
+    pub artist_name: String,
     pub name: String,
-    pub cover_path: String,
-    pub album_type: String,
-    pub duration: u32,
-    pub track_count: u32,
     pub year: u16,
+    pub album_type: String,
+    pub track_count: u32,
+    pub duration: u32,
+    pub cover_path: String,
     pub path: String,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct Tracks {
     pub id: u32,
-    pub duration: u32,
-    pub album: String,
-    pub albums_id: u32,
-    pub artist: String,
-    pub artists_id: u32,
+    pub album_id: u32,
+    pub artist_id: u32,
+    pub album_name: String,
+    pub artist_name: String,
     pub name: String,
-    pub path: String,
+    pub duration: u32,
     pub cover_path: String,
+    pub path: String,
 }
 
 #[derive(Debug, Serialize, Type)]
@@ -88,14 +88,14 @@ impl NeedForDatabase for Albums {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Albums {
             id: row.get(0)?,
-            artists_id: row.get(1)?,
-            artist: row.get(2)?,
+            artist_id: row.get(1)?,
+            artist_name: row.get(2)?,
             name: row.get(3)?,
-            cover_path: row.get(4)?,
+            year: row.get(4)?,
             album_type: row.get(5)?,
-            duration: row.get(6)?,
-            track_count: row.get(7)?,
-            year: row.get(8)?,
+            track_count: row.get(6)?,
+            duration: row.get(7)?,
+            cover_path: row.get(8)?,
             path: row.get(9)?,
         })
     }
@@ -106,14 +106,14 @@ impl NeedForDatabase for Albums {
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![
-            &self.artists_id,
-            &self.artist,
+            &self.artist_id,
+            &self.artist_name,
             &self.name,
-            &self.cover_path,
-            &self.album_type,
-            &self.duration,
-            &self.track_count,
             &self.year,
+            &self.album_type,
+            &self.track_count,
+            &self.duration,
+            &self.cover_path,
             &self.path,
         ]
     }
@@ -123,14 +123,14 @@ impl NeedForDatabase for Tracks {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Tracks {
             id: row.get(0)?,
-            album: row.get(1)?,
-            albums_id: row.get(2)?,
-            artist: row.get(3)?,
-            artists_id: row.get(4)?,
+            album_id: row.get(1)?,
+            artist_id: row.get(2)?,
+            album_name: row.get(3)?,
+            artist_name: row.get(4)?,
             name: row.get(5)?,
             duration: row.get(6)?,
-            path: row.get(7)?,
-            cover_path: row.get(8)?,
+            cover_path: row.get(7)?,
+            path: row.get(8)?,
         })
     }
 
@@ -140,14 +140,14 @@ impl NeedForDatabase for Tracks {
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![
-            &self.album,
-            &self.albums_id,
-            &self.artist,
-            &self.artists_id,
+            &self.album_id,
+            &self.artist_id,
+            &self.album_name,
+            &self.artist_name,
             &self.name,
             &self.duration,
-            &self.path,
             &self.cover_path,
+            &self.path,
         ]
     }
 }

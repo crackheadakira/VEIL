@@ -186,8 +186,8 @@ export const commands = {
 export type AlbumWithTracks = { album: Albums; tracks: Tracks[] };
 export type Albums = {
   id: number;
-  artists_id: number;
-  artist: string;
+  artist_id: number;
+  artist_name: string;
   name: string;
   cover_path: string;
   album_type: string;
@@ -222,14 +222,14 @@ export type Playlists = {
 };
 export type Tracks = {
   id: number;
-  duration: number;
-  album: string;
-  albums_id: number;
-  artist: string;
-  artists_id: number;
+  album_id: number;
+  artist_id: number;
+  album_name: string;
+  artist_name: string;
   name: string;
-  path: string;
+  duration: number;
   cover_path: string;
+  path: string;
 };
 
 /** tauri-specta globals **/

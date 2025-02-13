@@ -62,8 +62,8 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                 write_cover(&metadata, &cover_path, &album_path)?;
                 state_guard.db.insert::<Albums>(Albums {
                     id: 0,
-                    artists_id: artist_id,
-                    artist: metadata.artist.clone(),
+                    artist_id,
+                    artist_name: metadata.artist.clone(),
                     name: metadata.album.clone(),
                     cover_path: cover_path.clone(),
                     year: metadata.year,
@@ -80,10 +80,10 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                 state_guard.db.insert::<Tracks>(Tracks {
                     id: 0,
                     duration: metadata.duration.round() as u32,
-                    album: metadata.album.clone(),
-                    albums_id: album_id,
-                    artist: metadata.artist.clone(),
-                    artists_id: artist_id,
+                    album_name: metadata.album.clone(),
+                    album_id,
+                    artist_name: metadata.artist.clone(),
+                    artist_id,
                     name: metadata.name.clone(),
                     path: metadata.file_path.clone(),
                     cover_path,
@@ -98,25 +98,23 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
             if !all_paths.contains(&PathBuf::from(&track.path)) {
                 state_guard.db.delete::<Tracks>(track.id)?;
 
-                let album_tracks = state_guard
-                    .db
-                    .count::<Tracks>(track.albums_id, "albums_id")?;
+                let album_tracks = state_guard.db.count::<Tracks>(track.album_id, "album_id")?;
                 if album_tracks == 0 {
-                    state_guard.db.delete::<Albums>(track.albums_id)?;
+                    state_guard.db.delete::<Albums>(track.album_id)?;
 
                     let artist_albums = state_guard
                         .db
-                        .count::<Albums>(track.artists_id, "artists_id")?;
+                        .count::<Albums>(track.artist_id, "artist_id")?;
                     if artist_albums == 0 {
-                        state_guard.db.delete::<Artists>(track.artists_id)?;
+                        state_guard.db.delete::<Artists>(track.artist_id)?;
                     }
                 }
             } else {
-                let duration = &state_guard.db.get_album_duration(&track.albums_id)?;
+                let duration = &state_guard.db.get_album_duration(&track.album_id)?;
                 let album_type = get_album_type(duration.1, duration.0);
                 state_guard
                     .db
-                    .update_album_type(&track.albums_id, &album_type, duration)?;
+                    .update_album_type(&track.album_id, &album_type, duration)?;
             }
         }
 
