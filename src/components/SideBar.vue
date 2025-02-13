@@ -55,8 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import SearchBar from "../components/SearchBar.vue";
+import { ref, watchEffect } from "vue";
 import { RouterLink } from "vue-router";
+import SearchBar from "../components/SearchBar.vue";
+import { usePlaylistStore } from "../composables/playlistStore";
 
 const playlistStore = usePlaylistStore();
 const allPlaylists = ref(playlistStore.playlists);

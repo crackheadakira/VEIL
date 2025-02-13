@@ -20,14 +20,15 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from "vue";
 import { toastBus } from "../composables/toastBus";
 import Toast from "./Toast.vue";
 
 const toasts = ref<
-  { id: number; type: "success" | "error"; description: string }[]
+  { id: number; type: "success" | "error" | "warning"; description: string }[]
 >([]);
 
-function addToast(type: "success" | "error", description: string) {
+function addToast(type: "success" | "error" | "warning", description: string) {
   const id = Date.now();
   toasts.value.push({ id, type, description });
 

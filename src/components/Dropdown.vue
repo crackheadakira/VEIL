@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import { useEventListener } from "@vueuse/core";
+import { ref } from "vue";
 
 const props = defineProps<{
   title: string;

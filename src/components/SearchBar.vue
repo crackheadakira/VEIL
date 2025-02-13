@@ -16,6 +16,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+
 defineEmits(["search"]);
 const searchQuery = ref("");
 </script>
