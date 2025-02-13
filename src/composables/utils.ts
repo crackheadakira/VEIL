@@ -14,12 +14,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
  * // Returns "0:12"
  * makeReadableTime(12)
  */
-export function makeReadableTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
-
+export function formatTime(format: "mm:ss", seconds: number): string;
 /**
  * Returns a human-readable time string from seconds in the format `x hours x mins x secs`
  * @param {number} seconds - Time in seconds
@@ -33,23 +28,33 @@ export function makeReadableTime(seconds: number): string {
  * // Returns "0 min 12 sec"
  * makeTime(12)
  */
-export function makeTime(seconds: number): string {
-  let time = "";
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
+export function formatTime(format: "hh:mm:ss", seconds: number): string;
+export function formatTime(
+  format: "mm:ss" | "hh:mm:ss",
+  seconds: number,
+): string {
+  if (format === "mm:ss") {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  } else {
+    let time = "";
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = Math.floor(seconds % 60);
 
-  if (hours > 0) {
-    time += `${hours} hour${hours > 1 ? "s" : ""} `;
+    if (hours > 0) {
+      time += `${hours} hour${hours > 1 ? "s" : ""} `;
+    }
+
+    if (minutes > 0) {
+      time += `${minutes} min `;
+    }
+
+    time += `${remainingSeconds} sec`;
+
+    return time;
   }
-
-  if (minutes > 0) {
-    time += `${minutes} min `;
-  }
-
-  time += `${remainingSeconds} sec`;
-
-  return time;
 }
 
 /**

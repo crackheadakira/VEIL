@@ -12,7 +12,7 @@
           <h4 class="text-text">{{ data.album.name }}</h4>
           <p class="text-supporting">{{ data.album.artist_name }}</p>
           <small class="text-supporting">
-            {{ makeTime(data.album.duration) }},
+            {{ formatTime("hh:mm:ss", data.album.duration) }},
             {{ data.album.track_count }}
             {{ data.album.track_count > 1 ? "songs" : "song" }}
           </small>
@@ -58,7 +58,7 @@ import {
   type ArtistWithAlbums,
   commands,
   handleBackendError,
-  makeTime,
+  formatTime,
   type Tracks,
   usePlayerStore,
 } from "@/composables/";

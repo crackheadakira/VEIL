@@ -106,7 +106,7 @@ import {
   type MediaPayload,
   commands,
   handleBackendError,
-  makeReadableTime,
+  formatTime,
   usePlayerStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -124,10 +124,10 @@ const loop = ref(playerStore.loop);
 const paused = ref(true);
 const beingHeld = ref(false);
 const totalLength = computed(() =>
-  makeReadableTime(playerStore.currentTrack?.duration || 0),
+  formatTime("mm:ss", playerStore.currentTrack?.duration || 0),
 );
 const currentProgress = computed(() =>
-  makeReadableTime(playerStore.playerProgress),
+  formatTime("mm:ss", playerStore.playerProgress),
 );
 
 const data = ref(playerStore.currentTrack);

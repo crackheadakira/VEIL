@@ -30,7 +30,7 @@
           track.album_name
         }}</small>
       </RouterLink>
-      <small class="text-text">{{ makeReadableTime(track.duration) }}</small>
+      <small class="text-text">{{ formatTime("mm:ss", track.duration) }}</small>
     </div>
   </div>
   <ContextMenu :data="props.data" @add-to-queue="handleAddToQueue" />
@@ -40,7 +40,7 @@
 import { ContextMenu } from "@/components/";
 import {
   type AlbumWithTracks,
-  makeReadableTime,
+  formatTime,
   type PlaylistWithTracks,
   type Tracks,
   usePlayerStore,
