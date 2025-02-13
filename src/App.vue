@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-background grid min-h-screen grid-cols-[18rem_1fr] grid-rows-[1fr_7rem]"
+    class="bg-background grid h-screen grid-cols-[18rem_1fr] grid-rows-[1fr_7rem]"
   >
     <SideBar class="row-span-1" />
     <RouterView class="overflow-scroll p-16" />
