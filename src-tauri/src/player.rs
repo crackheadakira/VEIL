@@ -82,6 +82,7 @@ impl Player {
         Ok(())
     }
 
+    /// Initialize the player with a track and a progress
     pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<(), PlayerError> {
         let sound_data: StreamingSoundData<FromFileError> =
             StreamingSoundData::from_file(track.path)?;
@@ -91,6 +92,7 @@ impl Player {
         Ok(())
     }
 
+    /// Check if the track has ended
     pub fn has_ended(&self) -> bool {
         if let Some(ref sound_handle) = self.sound_handle {
             sound_handle.state() == PlaybackState::Stopped
@@ -114,6 +116,7 @@ impl Player {
         }
     }
 
+    /// Seek to a specific position in the track and resume playing if the player is paused and resume is true
     pub fn seek(&mut self, position: f64, resume: bool) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             match self.state {
@@ -141,10 +144,12 @@ impl Player {
         }
     }
 
+    /// Set the progress of the player
     pub fn set_progress(&mut self, progress: f64) {
         self.progress = progress;
     }
 
+    /// Update the progress of the player if the player is playing
     pub fn update(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             if let PlayerState::Playing = self.state {
