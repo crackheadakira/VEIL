@@ -91,10 +91,10 @@
         @input="handleVolume()"
         type="range"
         ref="volumeBar"
-        min="-30"
-        max="1.2"
-        value="1"
-        step="0.1"
+        min="0"
+        max="1"
+        value="0.5"
+        step="0.01"
         class="bg-stroke-100 accent-placeholder h-1.5 w-full max-w-36 rounded-lg focus:ring-0"
       />
     </div>
@@ -173,13 +173,10 @@ async function selectProgress() {
  * Updates the volume of the player.
  *
  * Gets volume from `$volumeBar`, updates `$playerStore.playerVolume`, and calls {@linkcode commands.setVolume}.
- *
- * If the volume goes below `-30` it gets clamped to `-60`.
  */
 async function handleVolume() {
   if (!volumeBar.value) return;
   let volume = volumeBar.value.valueAsNumber;
-  if (volume <= -30) volume = -60;
   await commands.setVolume(volume);
   playerStore.playerVolume = volume;
 }
@@ -318,8 +315,7 @@ const listenMediaControl = listen(
         await commands.seekTrack(payload.Seek, true);
         break;
       case "Volume" in payload:
-        // currently 0.0 to 1.0, but needs to be converted -30 to 1.2
-        const convertedVolume = payload.Volume * 31.2 - 30;
+        const convertedVolume = payload.Volume;
         await commands.setVolume(convertedVolume);
         break;
       case "Position" in payload:

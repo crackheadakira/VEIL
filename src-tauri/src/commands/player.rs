@@ -149,12 +149,7 @@ pub fn set_volume(volume: f32, state: State<'_, Mutex<SodapopState>>) {
 
     state_guard.player.set_volume(volume);
 
-    // Convert volume to a 0.0 - 1.0 scale (from -30 to 1.2)
-    let converted_volume = (volume + 30.0) / 31.2;
-    state_guard
-        .controls
-        .set_volume(converted_volume as f64)
-        .unwrap();
+    state_guard.controls.set_volume(volume as f64).unwrap();
 }
 
 #[tauri::command]

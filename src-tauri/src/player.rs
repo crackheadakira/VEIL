@@ -52,16 +52,20 @@ impl Player {
             track: None,
             progress: 0.0,
             duration: 0.0,
-            volume: -6.0,
+            volume: -6.0, // externally 0.0 - 1.0
             state: PlayerState::Paused,
         }
     }
 
+    /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
     pub fn set_volume(&mut self, volume: f32) {
+        let converted_volume = -60.0 + volume * (61.0);
+
         if let Some(ref mut sound_handle) = self.sound_handle {
-            sound_handle.set_volume(volume, self.tween);
+            sound_handle.set_volume(converted_volume, self.tween);
         }
-        self.volume = volume;
+
+        self.volume = converted_volume;
     }
 
     pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
