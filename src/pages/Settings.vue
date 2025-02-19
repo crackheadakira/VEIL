@@ -22,9 +22,10 @@
         input-value="System"
       />
     </div>
-    <div @click="openDialog" class="text-supporting">
+    <div class="text-supporting">
       <p class="pb-4">Music Directory</p>
       <IconButton
+        @click="openDialog"
         icon="i-fluent-folder-24-filled"
         :placeholder="currentDirectory"
       />
