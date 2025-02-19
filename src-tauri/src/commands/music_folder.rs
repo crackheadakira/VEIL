@@ -94,7 +94,23 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     .album_by_name(&metadata.album, &artist_id)?
                     .id
             } else {
-                write_cover(&metadata, &cover_path, &album_path)?;
+                // write cover if doesn't exist
+                if !Path::new(&cover_path).exists() {
+                    let cover = if metadata.picture_data.is_empty() {
+                        if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
+                            fs::copy(album_path.to_string() + "/cover.jpg", &cover_path)?;
+                        } else if Path::new(&(album_path.to_string() + "/cover.png")).exists() {
+                            fs::copy(album_path.to_string() + "/cover.png", &cover_path)?;
+                        }
+
+                        &include_bytes!("../../../public/placeholder.png").to_vec()
+                    } else {
+                        &metadata.picture_data
+                    };
+                    let mut file = File::create(&cover_path)?;
+                    file.write_all(cover)?;
+                }
+
                 state_guard.db.insert::<Albums>(Albums {
                     id: 0,
                     artist_id,
@@ -180,11 +196,13 @@ fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
     tracks
 }
 
-// Singles are less than 3 tracks and 30 minutes,
-// EPs are up to 6 tracks and 30 minutes,
-// LPs/Albums are more than 6 tracks and 30 minutes.
+/// Singles are less than 3 tracks and 30 minutes,
+/// EPs are up to 6 tracks and 30 minutes,
+/// LPs/Albums are more than 6 tracks and 30 minutes.
 pub fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
-    if tracks < 3 && duration < 1800 {
+    if duration <= 0 || tracks <= 0 {
+        AlbumType::Unknown
+    } else if tracks < 3 && duration < 1800 {
         AlbumType::Single
     } else if tracks <= 6 && duration < 1800 {
         AlbumType::EP
@@ -205,30 +223,6 @@ fn cover_path(artist: &str, album: &str) -> String {
         + " - "
         + &sanitize_string(album)
         + ".jpg"
-}
-
-fn write_cover(
-    metadata: &Metadata,
-    cover_path: &str,
-    album_path: &str,
-) -> Result<(), FrontendError> {
-    if !Path::new(&cover_path).exists() {
-        let cover = if metadata.picture_data.is_empty() {
-            if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
-                fs::copy(album_path.to_string() + "/cover.jpg", cover_path)?;
-            } else if Path::new(&(album_path.to_string() + "/cover.png")).exists() {
-                fs::copy(album_path.to_string() + "/cover.png", cover_path)?;
-            }
-
-            &include_bytes!("../../../public/placeholder.png").to_vec()
-        } else {
-            &metadata.picture_data
-        };
-        let mut file = File::create(cover_path)?;
-        file.write_all(cover)?;
-    }
-
-    Ok(())
 }
 
 fn get_album_path(music_folder: &str, full_path: &str) -> String {

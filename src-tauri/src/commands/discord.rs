@@ -8,6 +8,17 @@ pub struct DiscordState {
     pub payload: PayloadData,
 }
 
+#[derive(Clone, PartialEq)]
+pub struct PayloadData {
+    pub state: String,
+    pub details: String,
+    pub small_image: String,
+    pub small_text: String,
+    pub show_timestamps: bool,
+    pub progress: f64,
+    pub duration: f32,
+}
+
 impl DiscordState {
     pub fn new(client_id: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let rpc = DiscordIpcClient::new(client_id)?;
@@ -61,17 +72,6 @@ impl DiscordState {
         self.payload = data;
         Ok(())
     }
-}
-
-#[derive(Clone, PartialEq)]
-pub struct PayloadData {
-    pub state: String,
-    pub details: String,
-    pub small_image: String,
-    pub small_text: String,
-    pub show_timestamps: bool,
-    pub progress: f64,
-    pub duration: f32,
 }
 
 fn make_timestamp() -> (Timestamps, i64) {
