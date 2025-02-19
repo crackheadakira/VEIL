@@ -3,7 +3,7 @@
     class="border-stroke-100 bg-background text-supporting flex h-fit w-56 flex-col gap-2 rounded-md border select-none"
   >
     <button class="cursor-pointer" @click="showDialog = true">
-      Open Dialog
+      <slot></slot>
     </button>
 
     <div
@@ -31,7 +31,7 @@
             v-model="inputValue"
             type="text"
             class="text-text placeholder-supporting cardStyle w-full font-medium focus:outline-hidden"
-            placeholder="Nektar's Top Hits"
+            :placeholder="placeholder"
           />
           <div class="flex w-full justify-end gap-2">
             <button
@@ -65,6 +65,7 @@ import { ref, watch } from "vue";
 const props = defineProps<{
   title: string;
   description?: string;
+  placeholder?: string;
 }>();
 
 const emit = defineEmits<{

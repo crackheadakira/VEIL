@@ -6,8 +6,10 @@
       </button>
       <Dialog
         :title="'New Playlist'"
+        placeholder="Nektar's Top Hits"
         @submitted="playlistStore.createPlaylist"
-      />
+        >Open Dialog</Dialog
+      >
       <button
         @click="showToast('success', 'This is a success toast')"
         class="cardStyle cursor-pointer"

@@ -10,6 +10,7 @@ pub struct SodapopConfig {
     pub theme: ThemeMode,
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
+    pub discord_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize, Type, Clone)]
@@ -24,6 +25,7 @@ pub struct SodapopConfigEvent {
     pub theme: Option<ThemeMode>,
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
+    pub discord_enabled: Option<bool>,
 }
 
 impl SodapopConfig {
@@ -36,6 +38,7 @@ impl SodapopConfig {
                 theme: ThemeMode::Dark,
                 music_dir: None,
                 last_fm_key: None,
+                discord_enabled: false,
             })
         }
     }
@@ -52,6 +55,10 @@ impl SodapopConfig {
 
         if let Some(l) = new_config.last_fm_key {
             self.last_fm_key = Some(l);
+        }
+
+        if let Some(d) = new_config.discord_enabled {
+            self.discord_enabled = d;
         }
 
         self.write_config()?;
