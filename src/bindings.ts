@@ -181,8 +181,10 @@ export const commands = {
 
 export const events = __makeEvents__<{
   musicDataEvent: MusicDataEvent;
+  sodapopConfigEvent: SodapopConfigEvent;
 }>({
   musicDataEvent: "music-data-event",
+  sodapopConfigEvent: "sodapop-config-event",
 });
 
 /** user-defined constants **/
@@ -308,6 +310,12 @@ export type Playlists = {
    */
   cover_path: string;
 };
+export type SodapopConfigEvent = {
+  theme: ThemeMode | null;
+  music_dir: string | null;
+  last_fm_key: string | null;
+};
+export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {
   /**
    * ID of track in database

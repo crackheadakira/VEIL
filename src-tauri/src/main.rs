@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use commands::{discord::DiscordState, player::progress_as_position};
+use config::{SodapopConfig, SodapopConfigEvent};
 use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
@@ -15,9 +16,10 @@ use std::sync::Mutex;
 use specta_typescript::Typescript;
 
 use tauri::{Emitter, Manager, RunEvent};
-use tauri_specta::{collect_commands, collect_events, Builder};
+use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
 mod commands;
+mod config;
 mod db;
 mod error;
 mod models;
@@ -28,6 +30,7 @@ pub struct SodapopState {
     pub db: db::Database,
     pub controls: MediaControls,
     pub discord: DiscordState,
+    pub config: SodapopConfig,
 }
 
 #[derive(Type, Serialize, Clone)]
@@ -71,7 +74,10 @@ fn main() {
             commands::player::set_player_progress,
             commands::player::player_has_ended,
         ])
-        .events(collect_events![commands::music_folder::MusicDataEvent])
+        .events(collect_events![
+            commands::music_folder::MusicDataEvent,
+            SodapopConfigEvent
+        ])
         .typ::<MediaPayload>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
@@ -117,6 +123,7 @@ fn main() {
                 db: db::Database::new(),
                 controls: MediaControls::new(config)?,
                 discord: DiscordState::new("1339694314074275882")?,
+                config: SodapopConfig::new()?,
             }));
 
             let state = app.state::<Mutex<SodapopState>>();
@@ -201,6 +208,13 @@ fn main() {
             });
 
             let data_path = db::data_path();
+
+            let app_handle = app.handle().clone();
+            SodapopConfigEvent::listen(app, move |event| {
+                let state = app_handle.state::<Mutex<SodapopState>>();
+                let mut state_guard = state.lock().unwrap();
+                state_guard.config.update_config(event.payload).unwrap();
+            });
 
             let covers = data_path.clone() + "/covers";
             if !Path::new(&covers).exists() {
