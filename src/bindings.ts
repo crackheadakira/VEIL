@@ -4,7 +4,7 @@
 /** user-defined commands **/
 
 export const commands = {
-  async selectMusicFolder(): Promise<Result<null, FrontendError>> {
+  async selectMusicFolder(): Promise<Result<string, FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("select_music_folder") };
     } catch (e) {

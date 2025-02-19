@@ -25,9 +25,9 @@ pub struct MusicDataEvent {
     pub finished: bool,
 }
 
-#[tauri::command(async)] // summon on async thread du to `.blocking_pick_folder()``
+#[tauri::command(async)] // spawn on async thread due to `.blocking_pick_folder()``
 #[specta::specta]
-pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
+pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendError> {
     let folder_path = app
         .dialog()
         .file()
@@ -170,9 +170,10 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
         }
 
         println!("Finished indexing: {:?}", start.elapsed());
+        Ok(String::from(path.to_str().unwrap()))
+    } else {
+        Ok(String::from(""))
     }
-
-    Ok(())
 }
 
 fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {

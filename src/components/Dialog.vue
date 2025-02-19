@@ -1,10 +1,8 @@
 <template>
-  <div
-    class="border-stroke-100 bg-background text-supporting flex h-fit w-56 flex-col gap-2 rounded-md border select-none"
-  >
-    <button class="cursor-pointer" @click="showDialog = true">
+  <div>
+    <div class="h-fit w-fit" @click="showDialog = true">
       <slot></slot>
-    </button>
+    </div>
 
     <div
       v-if="showDialog"
