@@ -20,7 +20,7 @@ impl DiscordState {
                 small_text: String::from("Paused"),
                 show_timestamps: false,
                 progress: 0.0,
-                duration: 0.0,
+                duration: -1.0,
             },
         })
     }
@@ -47,7 +47,7 @@ impl DiscordState {
                     .small_text(&data.small_text),
             );
 
-        if data.show_timestamps && data.duration != 0.0 {
+        if data.show_timestamps && data.duration != -1.0 {
             let (timestamp, start) = make_timestamp();
             activity = activity.timestamps(
                 timestamp

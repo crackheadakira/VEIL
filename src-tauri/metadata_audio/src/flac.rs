@@ -77,7 +77,7 @@ impl Default for StreamInfo {
 impl StreamInfo {
     pub fn new() -> StreamInfo {
         StreamInfo {
-            duration: 0.0,
+            duration: -1.0,
             sample_rate: 0,
             total_samples: 0,
         }
