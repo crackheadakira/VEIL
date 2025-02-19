@@ -1,4 +1,3 @@
-use byteorder::{ReadBytesExt, BE};
 use std::{
     collections::HashMap,
     fs::File,
@@ -38,13 +37,18 @@ pub enum Block {
 
 impl Block {
     pub fn read_from(reader: &mut dyn Read) -> Result<(bool, Block), MetadataError> {
-        let byte = reader.read_u8()?;
+        let mut byte = 0u8;
+        reader.read_exact(std::slice::from_mut(&mut byte))?;
+
         let is_last = (byte & 0x80) != 0;
         let block_type = BlockType::from_u8(byte & 0x7F);
-        let length = reader.read_uint::<BE>(3)?;
+
+        let mut len_bytes = [0u8; 3];
+        reader.read_exact(&mut len_bytes)?;
+        let length = u32::from_be_bytes([0, len_bytes[0], len_bytes[1], len_bytes[2]]);
 
         let mut data = Vec::new();
-        reader.take(length).read_to_end(&mut data)?;
+        reader.take(length.into()).read_to_end(&mut data)?;
 
         let block = match block_type {
             BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),

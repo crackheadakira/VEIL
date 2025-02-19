@@ -13,7 +13,6 @@ name = "Sodapop-Reimagined"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "byteorder",
  "dirs 6.0.0",
  "discord-rich-presence",
  "dotenvy",
@@ -2480,7 +2479,6 @@ dependencies = [
 name = "metadata_audio"
 version = "0.0.0"
 dependencies = [
- "byteorder",
  "thiserror 2.0.11",
 ]
 
