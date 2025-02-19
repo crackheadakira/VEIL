@@ -1,14 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the sodapop-reimagined window",
+  "description": "Capability for the Sodapop-Reimagined window",
   "windows": ["Sodapop-Reimagined"],
   "permissions": [
-    "core:default",
-    {
-      "identifier": "fs:scope",
-      "allow": ["$LOCALDATA/Sodapop-Reimagined/*"]
-    },
-    "fs:allow-exists"
+    "core:default"
   ]
 }

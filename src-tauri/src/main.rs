@@ -15,7 +15,6 @@ use std::sync::Mutex;
 use specta_typescript::Typescript;
 
 use tauri::{Emitter, Manager, RunEvent};
-use tauri_plugin_fs::FsExt;
 use tauri_specta::{collect_commands, collect_events, Builder};
 
 mod commands;
@@ -37,9 +36,12 @@ pub enum MediaPayload {
     Pause(bool),
     Next(bool),
     Previous(bool),
-    Volume(f64),   // Volume as f64 (0.0 - 1.0)
-    Seek(f64),     // Duration as f64 (e.g., in seconds)
-    Position(f64), // Position in seconds
+    /// Volume as f64 (0.0 - 1.0)
+    Volume(f64),
+    /// Duration as f64 (e.g., in seconds)
+    Seek(f64),
+    /// Position in seconds
+    Position(f64),
 }
 
 fn main() {
@@ -83,7 +85,6 @@ fn main() {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
@@ -204,11 +205,6 @@ fn main() {
             let covers = data_path.clone() + "/covers";
             if !Path::new(&covers).exists() {
                 create_dir(covers).expect("Error creating covers directory")
-            }
-
-            let scope = app.fs_scope();
-            if let Err(e) = scope.allow_directory(data_path, true) {
-                eprintln!("Error allowing directory: {}", e);
             }
 
             Ok(())

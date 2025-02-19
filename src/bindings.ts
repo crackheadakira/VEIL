@@ -216,8 +216,17 @@ export type MediaPayload =
   | { Pause: boolean }
   | { Next: boolean }
   | { Previous: boolean }
+  /**
+   * Volume as f64 (0.0 - 1.0)
+   */
   | { Volume: number }
+  /**
+   * Duration as f64 (e.g., in seconds)
+   */
   | { Seek: number }
+  /**
+   * Position in seconds
+   */
   | { Position: number };
 export type MusicDataEvent = {
   total: number;
