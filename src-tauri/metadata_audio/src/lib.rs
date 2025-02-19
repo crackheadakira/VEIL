@@ -135,6 +135,9 @@ impl Metadata {
     }
 }
 
+// Helper functions
+
+/// Get value at key from hashmap, if key doesn't exist return `Unknown`
 fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
     fields
         .get(key)
@@ -143,7 +146,7 @@ fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
 }
 
 /// Read `n` bits from a byte slice starting at a given bit position
-pub fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
+fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
 where
     T: Default + Copy + std::ops::Shl<u32, Output = T> + std::ops::BitOr<Output = T> + From<u8>,
 {
@@ -167,7 +170,7 @@ where
 }
 
 /// Endian enum
-pub enum Endian {
+enum Endian {
     /// Big endian
     Big,
     /// Little endian
@@ -175,7 +178,7 @@ pub enum Endian {
 }
 
 /// Convert a slice of bytes to a u32 integer
-pub fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
+fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
     // We unwrap here because we know that the slice has 4 bytes
     // and we know that the conversion from slice to array will not fail
     let slice: [u8; 4] = (&bytes[*offset..*offset + 4]).try_into().unwrap();
