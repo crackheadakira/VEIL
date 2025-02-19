@@ -6,6 +6,7 @@
       :id="inputId"
       :value="inputValue"
       :checked="modelValue === inputValue"
+      :key="inputId"
       @change="$emit('update:modelValue', inputValue)"
     />
     <label :for="inputId">{{ inputValue }}</label>

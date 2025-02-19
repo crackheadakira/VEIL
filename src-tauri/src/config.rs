@@ -32,7 +32,8 @@ impl SodapopConfig {
     pub fn new() -> Result<Self, serde_json::Error> {
         let path = config_path();
         if Path::new(&path).exists() {
-            Ok(serde_json::from_str(&path)?)
+            let json_reader = fs::File::open(path).expect("error opening config.json reader");
+            Ok(serde_json::from_reader(json_reader)?)
         } else {
             Ok(Self {
                 theme: ThemeMode::Dark,

@@ -1,10 +1,10 @@
 <template>
   <div class="bg-background flex h-screen flex-col">
-    <div class="flex h-full">
-      <SideBar class="shrink-0" />
+    <div class="flex h-full shrink grow-0 overflow-y-scroll">
+      <SideBar />
       <RouterView class="overflow-scroll p-16" :key="currentRoute.fullPath" />
     </div>
-    <Player class="sticky bottom-0 h-28" />
+    <Player class="h-28 grow" />
     <ToastManager ref="toastManager" />
   </div>
 </template>

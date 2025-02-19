@@ -4,13 +4,23 @@
     <div class="text-supporting flex flex-col gap-4">
       <p>Theme</p>
       <RadioButton
-        @vue:updated="updateConfig(1, theme)"
+        @update:model-value="updateConfig(1)"
         v-model="theme"
         input-id="dark"
         input-value="Dark"
       />
-      <RadioButton v-model="theme" input-id="light" input-value="Light" />
-      <RadioButton v-model="theme" input-id="system" input-value="System" />
+      <RadioButton
+        @update:model-value="updateConfig(1)"
+        v-model="theme"
+        input-id="light"
+        input-value="Light"
+      />
+      <RadioButton
+        @update:model-value="updateConfig(1)"
+        v-model="theme"
+        input-id="system"
+        input-value="System"
+      />
     </div>
     <div @click="openDialog" class="text-supporting">
       <p class="pb-4">Music Directory</p>
@@ -28,6 +38,20 @@
         <IconButton icon="i-fluent-key-24-filled" :placeholder="lastFM" />
       </Dialog>
     </div>
+    <div class="text-supporting">
+      <p class="pb-4">Discord Rich Presence</p>
+      <div class="flex gap-3">
+        <input
+          @change="updateConfig(4)"
+          class="h-4 w-4"
+          type="checkbox"
+          v-model="discordRPC"
+          id="discordRpc"
+          name="discordRpc"
+        />
+        <label for="discordRpc">Enable Discord RPC</label>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -41,7 +65,7 @@ import {
   SodapopConfigEvent,
 } from "@/composables/";
 import { RadioButton, IconButton, Dialog } from "@/components/";
-import { ref } from "vue";
+import { nextTick, ref } from "vue";
 
 const configStore = useConfigStore();
 
@@ -50,8 +74,9 @@ const currentDirectory = ref(
   configStore.config?.music_dir || "No Folder Selected",
 );
 const lastFM = ref(configStore.config?.last_fm_key || "No Key Set");
+const discordRPC = ref(configStore.config.discord_enabled);
 
-function updateConfig(setting: number, value: any) {
+function updateConfig(setting: number) {
   const updatedConfig: SodapopConfigEvent = {
     theme: null,
     music_dir: null,
@@ -61,21 +86,22 @@ function updateConfig(setting: number, value: any) {
 
   switch (setting) {
     case 1:
-      updatedConfig.theme = value;
-      configStore.config.theme = value;
-      console.log(configStore.config.theme);
+      nextTick(() => {
+        updatedConfig.theme = theme.value;
+        configStore.config.theme = theme.value;
+      });
       break;
     case 2:
-      updatedConfig.music_dir = value;
-      configStore.config.music_dir = value;
+      updatedConfig.music_dir = currentDirectory.value;
+      configStore.config.music_dir = currentDirectory.value;
       break;
     case 3:
-      updatedConfig.last_fm_key = value;
-      configStore.config.last_fm_key = value;
+      updatedConfig.last_fm_key = lastFM.value;
+      configStore.config.last_fm_key = lastFM.value;
       break;
     case 4:
-      updatedConfig.discord_enabled = value;
-      configStore.config.discord_enabled = value;
+      updatedConfig.discord_enabled = discordRPC.value;
+      configStore.config.discord_enabled = discordRPC.value;
       break;
   }
 
@@ -87,8 +113,8 @@ async function openDialog() {
   if (result.status === "error") return handleBackendError(result.error);
   else if (result.data !== "") {
     toastBus.addToast("success", "Music added successfully");
-    updateConfig(2, result.data);
     currentDirectory.value = result.data;
+    updateConfig(2);
   }
 }
 

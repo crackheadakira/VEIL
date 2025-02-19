@@ -124,14 +124,17 @@ fn main() {
                 player: player::Player::new(),
                 db: db::Database::new(),
                 controls: MediaControls::new(config)?,
+                config: SodapopConfig::new().expect("error making config"),
                 discord: DiscordState::new("1339694314074275882")?,
-                config: SodapopConfig::new()?,
             }));
 
             let state = app.state::<Mutex<SodapopState>>();
             let mut state_guard = state.lock().unwrap();
 
-            state_guard.discord.rpc.connect()?;
+            if state_guard.config.discord_enabled {
+                state_guard.discord.rpc.connect()?;
+                state_guard.discord.enabled = true;
+            }
 
             let handle = app.handle().clone();
             state_guard
@@ -215,6 +218,17 @@ fn main() {
             SodapopConfigEvent::listen(app, move |event| {
                 let state = app_handle.state::<Mutex<SodapopState>>();
                 let mut state_guard = state.lock().unwrap();
+                if let Some(d) = event.payload.discord_enabled {
+                    if d {
+                        state_guard.discord.rpc.connect().unwrap();
+                        state_guard.discord.enabled = true;
+                        let curr_payload = state_guard.discord.payload.clone();
+                        state_guard.discord.make_activity(curr_payload).unwrap();
+                    } else {
+                        state_guard.discord.rpc.close().unwrap();
+                        state_guard.discord.enabled = false;
+                    }
+                }
                 state_guard.config.update_config(event.payload).unwrap();
             });
 

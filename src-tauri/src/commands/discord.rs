@@ -6,6 +6,7 @@ use discord_rich_presence::{
 pub struct DiscordState {
     pub rpc: DiscordIpcClient,
     pub payload: PayloadData,
+    pub enabled: bool,
 }
 
 #[derive(Clone, PartialEq)]
@@ -23,6 +24,7 @@ impl DiscordState {
     pub fn new(client_id: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let rpc = DiscordIpcClient::new(client_id)?;
         Ok(Self {
+            enabled: false,
             rpc,
             payload: PayloadData {
                 state: String::from("Browsing"),
@@ -42,7 +44,8 @@ impl DiscordState {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let data = new_payload;
 
-        if data == self.payload {
+        if data == self.payload || !self.enabled {
+            self.payload = data;
             return Ok(()); // No need to update the activity
         }
 
@@ -68,8 +71,6 @@ impl DiscordState {
         };
 
         self.rpc.set_activity(activity)?;
-
-        self.payload = data;
         Ok(())
     }
 }
