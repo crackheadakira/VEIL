@@ -1,7 +1,7 @@
 use crate::{
     db::data_path,
     error::FrontendError,
-    models::{Albums, Artists, Tracks},
+    models::{AlbumType, Albums, Artists, Tracks},
     SodapopState,
 };
 
@@ -102,7 +102,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                     name: metadata.album.clone(),
                     cover_path: cover_path.clone(),
                     year: metadata.year,
-                    album_type: metadata.album_type,
+                    album_type: metadata.album_type.into(),
                     track_count: 0,
                     duration: 0,
                     path: album_path,
@@ -149,7 +149,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<(), FrontendError> {
                 let album_type = get_album_type(duration.1, duration.0);
                 state_guard
                     .db
-                    .update_album_type(&track.album_id, &album_type, duration)?;
+                    .update_album_type(&track.album_id, album_type, duration)?;
             }
         }
 
@@ -183,13 +183,13 @@ fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
 // Singles are less than 3 tracks and 30 minutes,
 // EPs are up to 6 tracks and 30 minutes,
 // LPs/Albums are more than 6 tracks and 30 minutes.
-pub fn get_album_type(tracks: u32, duration: u32) -> String {
+pub fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
     if tracks < 3 && duration < 1800 {
-        String::from("Single")
+        AlbumType::Single
     } else if tracks <= 6 && duration < 1800 {
-        String::from("EP")
+        AlbumType::EP
     } else {
-        String::from("Album")
+        AlbumType::Album
     }
 }
 

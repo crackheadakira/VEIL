@@ -24,6 +24,7 @@ impl Default for Database {
 }
 
 impl Database {
+    /// Instanties a connection with the database, creates a new one if it doesn't exist
     pub fn new() -> Self {
         let data_path = data_path();
         if !Path::new(&data_path).exists() {
@@ -92,14 +93,15 @@ impl Database {
         Self { pool }
     }
 
+    /// Writes WAL data to database
     pub fn shutdown(&mut self) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        // write WAL to disk
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
 
         Ok(())
     }
 
+    /// Get all values from table for `T`
     pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
@@ -118,6 +120,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Get value from `T` table where id is same
     pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
@@ -128,6 +131,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Insert value to `T` table
     pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<u32, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
@@ -145,6 +149,7 @@ impl Database {
         Ok(id)
     }
 
+    /// Delete value from `T` table where id is same
     pub fn delete<T: NeedForDatabase>(&self, id: u32) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
@@ -154,6 +159,7 @@ impl Database {
         Ok(())
     }
 
+    /// Counts how many values `T` table has
     pub fn count<T: NeedForDatabase>(
         &self,
         id: u32,
@@ -171,6 +177,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Checks if value exists in `T` table
     pub fn exists<T: NeedForDatabase>(
         &self,
         field_to_view: &str,
@@ -188,6 +195,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Update track duration
     pub fn update_duration(
         &self,
         track_id: &u32,
@@ -200,26 +208,12 @@ impl Database {
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
         let new_album_type = get_album_type(track_count, new_duration);
-        self.update_album_type(album_id, &new_album_type, &(new_duration, track_count))?;
+        self.update_album_type(album_id, new_album_type, &(new_duration, track_count))?;
 
         Ok(())
     }
 
-    // TRACK
-    pub fn track_by_album_id(
-        &self,
-        track_name: &str,
-        album_id: &u32,
-    ) -> Result<Tracks, DatabaseError> {
-        let conn = self.pool.get()?;
-        let mut stmt =
-            conn.prepare_cached("SELECT * FROM tracks WHERE (name, album_id) = (?1, ?2)")?;
-        let result = stmt.query_row((track_name, album_id), Tracks::from_row)?;
-
-        Ok(result)
-    }
-
-    // ALBUM
+    /// Get album from database where `album_name` matches
     pub fn album_by_name(
         &self,
         album_name: &str,
@@ -233,6 +227,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Get all albums from artist where `artist_id` matches
     pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare("SELECT * FROM albums WHERE artist_id = ?1")?;
@@ -243,6 +238,7 @@ impl Database {
         Ok(result)
     }
 
+    /// Get duration of all tracks of given album
     pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
         let conn = self.pool.get()?;
         let mut stmt =
@@ -269,7 +265,7 @@ impl Database {
     pub fn update_album_type(
         &self,
         album_id: &u32,
-        album_type: &str,
+        album_type: AlbumType,
         duration_count: &(u32, u32),
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;

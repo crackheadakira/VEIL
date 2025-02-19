@@ -105,6 +105,7 @@ impl Player {
         }
     }
 
+    /// Pause track if has sound_handle
     pub fn pause(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.pause(self.tween);
@@ -113,6 +114,7 @@ impl Player {
         }
     }
 
+    /// Resume track if has sound_handle
     pub fn resume(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.resume(self.tween);
@@ -139,13 +141,14 @@ impl Player {
         }
     }
 
+    /// Stop track if has sound_handle
     pub fn stop(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(self.tween);
-            self.state = PlayerState::Paused;
-            self.progress = 0.0;
-            self.track = None;
         }
+        self.state = PlayerState::Paused;
+        self.progress = 0.0;
+        self.track = None;
     }
 
     /// Set the progress of the player

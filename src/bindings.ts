@@ -189,21 +189,70 @@ export const events = __makeEvents__<{
 
 /** user-defined types **/
 
-export type AlbumWithTracks = { album: Albums; tracks: Tracks[] };
+export type AlbumType = "Unknown" | "Single" | "EP" | "Album";
+export type AlbumWithTracks = {
+  album: Albums;
+  /**
+   * All tracks belonging to album
+   */
+  tracks: Tracks[];
+};
 export type Albums = {
+  /**
+   * ID of album in database
+   */
   id: number;
+  /**
+   * ID of artist in database
+   */
   artist_id: number;
+  /**
+   * Name of artist
+   */
   artist_name: string;
+  /**
+   * Name of album
+   */
   name: string;
+  /**
+   * Year album was published
+   */
   year: number;
-  album_type: string;
+  album_type: AlbumType;
+  /**
+   * Amount of tracks in album
+   */
   track_count: number;
+  /**
+   * Album duration
+   */
   duration: number;
+  /**
+   * Path to album cover in Sodapop local app data
+   */
   cover_path: string;
+  /**
+   * Path to album folder from where it was imported
+   */
   path: string;
 };
-export type ArtistWithAlbums = { artist: Artists; albums: AlbumWithTracks[] };
-export type Artists = { id: number; name: string };
+export type ArtistWithAlbums = {
+  artist: Artists;
+  /**
+   * All albums belonging to artist
+   */
+  albums: AlbumWithTracks[];
+};
+export type Artists = {
+  /**
+   * ID of artist in database
+   */
+  id: number;
+  /**
+   * Name of artist
+   */
+  name: string;
+};
 export type FrontendError =
   | { type: "Io"; data: string }
   | { type: "Metadata"; data: string }
@@ -234,22 +283,67 @@ export type MusicDataEvent = {
   finished: boolean;
 };
 export type PlayerState = "Playing" | "Paused";
-export type PlaylistWithTracks = { playlist: Playlists; tracks: Tracks[] };
+export type PlaylistWithTracks = {
+  playlist: Playlists;
+  /**
+   * All tracks belonging to playlist
+   */
+  tracks: Tracks[];
+};
 export type Playlists = {
+  /**
+   * ID of playlist in database
+   */
   id: number;
+  /**
+   * Playlist name
+   */
   name: string;
+  /**
+   * Playlist description
+   */
   description: string;
+  /**
+   * Path to playlist cover in Sodapop local app data
+   */
   cover_path: string;
 };
 export type Tracks = {
+  /**
+   * ID of track in database
+   */
   id: number;
+  /**
+   * ID of album in database
+   */
   album_id: number;
+  /**
+   * ID of artist in database
+   */
   artist_id: number;
+  /**
+   * Album name
+   */
   album_name: string;
+  /**
+   * Artist name
+   */
   artist_name: string;
+  /**
+   * Track name
+   */
   name: string;
+  /**
+   * Track duration
+   */
   duration: number;
+  /**
+   * Path to album cover in Sodapop local app data
+   */
   cover_path: string;
+  /**
+   * Path to track file
+   */
   path: string;
 };
 

@@ -16,7 +16,7 @@ pub struct Metadata {
     pub name: String,
     /// Path to the audio file
     pub file_path: String,
-    /// Album type (e.g. Album, Compilation, Single)
+    /// Album type
     pub album_type: String,
     /// Year of publication
     pub year: u16,
@@ -75,7 +75,7 @@ impl Metadata {
             artist: get_field_value(&vc.fields, "ALBUMARTIST"),
             name: get_field_value(&vc.fields, "TITLE"),
             file_path: file.file_path,
-            album_type: get_field_value(&vc.fields, "ALBUMTYPE"),
+            album_type: String::from("Unknown"),
             year: get_field_value(&vc.fields, "YEAR").parse().unwrap_or(0),
             track_number: get_field_value(&vc.fields, "TRACKNUMBER")
                 .parse()
@@ -91,7 +91,7 @@ impl Metadata {
             artist: get_field_value(&file.text_frames, "TPE1"),
             name: get_field_value(&file.text_frames, "TIT2"),
             file_path: file.file_path,
-            album_type: "Unknown".to_string(),
+            album_type: String::from("Unknown"),
             year: get_field_value(&file.text_frames, "TYER")
                 .parse()
                 .unwrap_or(0),

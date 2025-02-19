@@ -1,69 +1,145 @@
-use rusqlite::Result;
+use rusqlite::{types::FromSql, Result, ToSql};
 use serde::Serialize;
 use specta::Type;
 
+#[derive(Debug, Serialize, Type)]
+pub enum AlbumType {
+    Unknown,
+    Single,
+    EP,
+    Album,
+}
+
+impl From<String> for AlbumType {
+    fn from(value: String) -> Self {
+        match value.as_str() {
+            "Single" => AlbumType::Single,
+            "EP" => AlbumType::EP,
+            "Album" => AlbumType::Album,
+            _ => AlbumType::Unknown,
+        }
+    }
+}
+
+impl FromSql for AlbumType {
+    fn column_result(value: rusqlite::types::ValueRef<'_>) -> rusqlite::types::FromSqlResult<Self> {
+        match value {
+            rusqlite::types::ValueRef::Text(text) => match text {
+                b"Single" => Ok(AlbumType::Single),
+                b"EP" => Ok(AlbumType::EP),
+                b"Album" => Ok(AlbumType::Album),
+                _ => Ok(AlbumType::Unknown),
+            },
+            _ => Err(rusqlite::types::FromSqlError::InvalidType),
+        }
+    }
+}
+
+impl ToSql for AlbumType {
+    fn to_sql(&self) -> Result<rusqlite::types::ToSqlOutput<'_>> {
+        let text = match self {
+            AlbumType::Unknown => "Unknown",
+            AlbumType::Single => "Single",
+            AlbumType::EP => "EP",
+            AlbumType::Album => "Album",
+        };
+
+        Ok(text.into())
+    }
+}
+
 pub trait NeedForDatabase: Sized {
+    /// Turn rusqlite row into given struct
     fn from_row(row: &rusqlite::Row) -> Result<Self>;
+    /// Name of struct in database
     fn table_name() -> &'static str;
+    /// Struct to parameters to insert into database
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct Artists {
+    /// ID of artist in database
     pub id: u32,
+    /// Name of artist
     pub name: String,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct Albums {
+    /// ID of album in database
     pub id: u32,
+    /// ID of artist in database
     pub artist_id: u32,
+    /// Name of artist
     pub artist_name: String,
+    /// Name of album
     pub name: String,
+    /// Year album was published
     pub year: u16,
-    pub album_type: String,
+    pub album_type: AlbumType,
+    /// Amount of tracks in album
     pub track_count: u32,
+    /// Album duration
     pub duration: u32,
+    /// Path to album cover in Sodapop local app data
     pub cover_path: String,
+    /// Path to album folder from where it was imported
     pub path: String,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct Tracks {
+    /// ID of track in database
     pub id: u32,
+    /// ID of album in database
     pub album_id: u32,
+    /// ID of artist in database
     pub artist_id: u32,
+    /// Album name
     pub album_name: String,
+    /// Artist name
     pub artist_name: String,
+    /// Track name
     pub name: String,
+    /// Track duration
     pub duration: u32,
+    /// Path to album cover in Sodapop local app data
     pub cover_path: String,
+    /// Path to track file
     pub path: String,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct Playlists {
+    /// ID of playlist in database
     pub id: u32,
+    /// Playlist name
     pub name: String,
+    /// Playlist description
     pub description: String,
+    /// Path to playlist cover in Sodapop local app data
     pub cover_path: String,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct PlaylistWithTracks {
     pub playlist: Playlists,
+    /// All tracks belonging to playlist
     pub tracks: Vec<Tracks>,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct AlbumWithTracks {
     pub album: Albums,
+    /// All tracks belonging to album
     pub tracks: Vec<Tracks>,
 }
 
 #[derive(Debug, Serialize, Type)]
 pub struct ArtistWithAlbums {
     pub artist: Artists,
+    /// All albums belonging to artist
     pub albums: Vec<AlbumWithTracks>,
 }
 
