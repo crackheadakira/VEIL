@@ -28,12 +28,13 @@
         <span class="i-fluent-music-note-2-16-filled h-8"></span>
         <small>Albums</small>
       </RouterLink>
-      <div
+      <RouterLink
         class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
+        to="/settings"
       >
         <span class="i-fluent-settings-16-filled h-8"></span>
         <small>Settings</small>
-      </div>
+      </RouterLink>
       <div
         v-if="allPlaylists && allPlaylists.length > 0"
         class="mb-2 flex w-full flex-col gap-4"
