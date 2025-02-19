@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { Player, SideBar, ToastManager } from "@/components/";
 import {
+  useConfigStore,
   commands,
   handleBackendError,
   usePlayerStore,
@@ -21,11 +22,14 @@ import { onBeforeMount } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
 onBeforeMount(async () => {
+  await configStore.initialize();
+
   const result = await commands.getAllAlbums();
   if (result.status === "error") return handleBackendError(result.error);
 

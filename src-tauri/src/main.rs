@@ -73,12 +73,14 @@ fn main() {
             commands::player::initialize_player,
             commands::player::set_player_progress,
             commands::player::player_has_ended,
+            commands::config::get_config,
         ])
         .events(collect_events![
             commands::music_folder::MusicDataEvent,
             SodapopConfigEvent
         ])
-        .typ::<MediaPayload>();
+        .typ::<MediaPayload>()
+        .typ::<SodapopConfig>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     builder

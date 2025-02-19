@@ -5,21 +5,21 @@ use specta::Type;
 
 use crate::db::data_path;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Type, Clone)]
 pub struct SodapopConfig {
     pub theme: ThemeMode,
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Type)]
+#[derive(Serialize, Deserialize, Type, Clone)]
 pub enum ThemeMode {
     Dark,
     Light,
     System,
 }
 
-#[derive(Serialize, Deserialize, Type, tauri_specta::Event)]
+#[derive(Serialize, Deserialize, Type, tauri_specta::Event, Clone)]
 pub struct SodapopConfigEvent {
     pub theme: Option<ThemeMode>,
     pub music_dir: Option<String>,

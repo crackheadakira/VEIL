@@ -175,6 +175,9 @@ export const commands = {
   async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
   },
+  async getConfig(): Promise<SodapopConfig> {
+    return await TAURI_INVOKE("get_config");
+  },
 };
 
 /** user-defined events **/
@@ -309,6 +312,11 @@ export type Playlists = {
    * Path to playlist cover in Sodapop local app data
    */
   cover_path: string;
+};
+export type SodapopConfig = {
+  theme: ThemeMode;
+  music_dir: string | null;
+  last_fm_key: string | null;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
