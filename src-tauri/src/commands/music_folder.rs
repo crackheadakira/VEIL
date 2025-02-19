@@ -5,7 +5,7 @@ use crate::{
     SodapopState,
 };
 
-use audio_metadata::Metadata;
+use metadata_audio::Metadata;
 use tauri_specta::Event;
 
 use std::{

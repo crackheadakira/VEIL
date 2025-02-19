@@ -24,8 +24,8 @@ impl From<std::io::Error> for FrontendError {
     }
 }
 
-impl From<audio_metadata::MetadataError> for FrontendError {
-    fn from(error: audio_metadata::MetadataError) -> Self {
+impl From<metadata_audio::MetadataError> for FrontendError {
+    fn from(error: metadata_audio::MetadataError) -> Self {
         Self::Metadata(error.to_string())
     }
 }

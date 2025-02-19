@@ -48,8 +48,8 @@ pub fn play_track(
         small_image: String::from("playing"),
         small_text: String::from("Playing"),
         show_timestamps: true,
-        duration: duration,
-        progress: progress,
+        duration,
+        progress,
     };
 
     state_guard.discord.make_activity(payload)?;

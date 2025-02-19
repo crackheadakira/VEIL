@@ -18,6 +18,7 @@ dependencies = [
  "discord-rich-presence",
  "dotenvy",
  "kira",
+ "metadata_audio",
  "r2d2",
  "r2d2_sqlite",
  "raw-window-handle",
@@ -2473,6 +2474,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "488016bfae457b036d996092f6cb448677611ce4449e970ceaf42695203f218a"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "metadata_audio"
+version = "0.0.0"
+dependencies = [
+ "byteorder",
+ "thiserror 2.0.11",
 ]
 
 [[package]]
