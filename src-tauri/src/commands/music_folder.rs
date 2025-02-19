@@ -200,7 +200,7 @@ fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
 /// EPs are up to 6 tracks and 30 minutes,
 /// LPs/Albums are more than 6 tracks and 30 minutes.
 pub fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
-    if duration <= 0 || tracks <= 0 {
+    if duration == 0 || tracks == 0 {
         AlbumType::Unknown
     } else if tracks < 3 && duration < 1800 {
         AlbumType::Single
