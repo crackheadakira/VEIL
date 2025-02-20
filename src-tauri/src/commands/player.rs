@@ -1,4 +1,4 @@
-use crate::{commands::discord, error::FrontendError, player::PlayerState, SodapopState};
+use crate::{discord, error::FrontendError, player::PlayerState, SodapopState};
 use db::models::Tracks;
 use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;

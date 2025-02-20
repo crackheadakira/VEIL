@@ -1,6 +1,6 @@
 [package]
 name = "db"
-version = "0.1.0"
+version = "0.0.0"
 edition = "2021"
 
 [dependencies]
@@ -10,7 +10,7 @@ r2d2_sqlite = "0.26.0"
 rusqlite = { version = "0.33.0", features = ["bundled"] }
 thiserror = "2.0.11"
 
-serde = { version = "1.0.217", features = ["derive"], optional = true }
+serde = { version = "1.0.218", features = ["derive"], optional = true }
 specta = { version = "2.0.0-rc.21", optional = true }
 
 [features]

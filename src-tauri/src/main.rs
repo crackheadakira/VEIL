@@ -1,24 +1,23 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use commands::{discord::DiscordState, player::progress_as_position};
+use commands::player::progress_as_position;
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
 use specta::Type;
-
 use std::sync::Mutex;
 use std::{fs::create_dir, path::PathBuf};
+use tauri::{Emitter, Manager, RunEvent};
+use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
 
-use tauri::{Emitter, Manager, RunEvent};
-use tauri_specta::{collect_commands, collect_events, Builder, Event};
-
 mod commands;
 mod config;
+mod discord;
 mod error;
 mod player;
 
@@ -26,7 +25,7 @@ pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
     pub controls: MediaControls,
-    pub discord: DiscordState,
+    pub discord: discord::DiscordState,
     pub config: SodapopConfig,
 }
 
@@ -128,7 +127,7 @@ fn main() {
                 db: db::Database::new(path.clone()),
                 controls: MediaControls::new(config)?,
                 config: SodapopConfig::new().expect("error making config"),
-                discord: DiscordState::new("1339694314074275882")?,
+                discord: discord::DiscordState::new("1339694314074275882")?,
             }));
 
             let state = app.state::<Mutex<SodapopState>>();
