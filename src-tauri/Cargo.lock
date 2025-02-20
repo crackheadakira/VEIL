@@ -13,6 +13,7 @@ name = "Sodapop-Reimagined"
 version = "0.0.0"
 dependencies = [
  "anyhow",
+ "db",
  "dirs 6.0.0",
  "discord-rich-presence",
  "dotenvy",
@@ -1022,6 +1023,18 @@ name = "dasp_sample"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c87e182de0887fd5361989c677c4e8f5000cd9491d6d563161a8f3a5519fc7f"
+
+[[package]]
+name = "db"
+version = "0.1.0"
+dependencies = [
+ "r2d2",
+ "r2d2_sqlite",
+ "rusqlite",
+ "serde",
+ "specta",
+ "thiserror 2.0.11",
+]
 
 [[package]]
 name = "deranged"

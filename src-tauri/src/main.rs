@@ -8,9 +8,8 @@ use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
 use specta::Type;
 
-use std::fs::create_dir;
-use std::path::Path;
 use std::sync::Mutex;
+use std::{fs::create_dir, path::PathBuf};
 
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
@@ -20,9 +19,7 @@ use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
 mod commands;
 mod config;
-mod db;
 mod error;
-mod models;
 mod player;
 
 pub struct SodapopState {
@@ -114,6 +111,12 @@ fn main() {
                 }
             };
 
+            let path = data_path();
+
+            if !path.exists() {
+                create_dir(&path).expect("Error creating main data directory")
+            }
+
             let config = souvlaki::PlatformConfig {
                 dbus_name: "com.sodapop.reimagined.dbus",
                 display_name: "Sodapop Reimagined",
@@ -122,7 +125,7 @@ fn main() {
 
             app.manage(Mutex::new(SodapopState {
                 player: player::Player::new(),
-                db: db::Database::new(),
+                db: db::Database::new(path.clone()),
                 controls: MediaControls::new(config)?,
                 config: SodapopConfig::new().expect("error making config"),
                 discord: DiscordState::new("1339694314074275882")?,
@@ -212,8 +215,6 @@ fn main() {
                 }
             });
 
-            let data_path = db::data_path();
-
             let app_handle = app.handle().clone();
             SodapopConfigEvent::listen(app, move |event| {
                 let state = app_handle.state::<Mutex<SodapopState>>();
@@ -232,8 +233,8 @@ fn main() {
                 state_guard.config.update_config(event.payload).unwrap();
             });
 
-            let covers = data_path.clone() + "/covers";
-            if !Path::new(&covers).exists() {
+            let covers = path.join("covers");
+            if !covers.exists() {
                 create_dir(covers).expect("Error creating covers directory")
             }
 
@@ -246,8 +247,16 @@ fn main() {
                 let state = _app.state::<Mutex<SodapopState>>();
                 let mut state_guard = state.lock().unwrap();
 
-                state_guard.discord.rpc.close().unwrap();
+                if state_guard.config.discord_enabled {
+                    state_guard.discord.rpc.close().unwrap();
+                };
+
                 state_guard.db.shutdown().unwrap();
             }
         });
+}
+
+pub fn data_path() -> PathBuf {
+    let home_dir = dirs::data_local_dir().unwrap();
+    home_dir.join("Sodapop-Reimagined")
 }

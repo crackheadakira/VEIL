@@ -1,8 +1,7 @@
+use crate::{error::FrontendError, SodapopState};
+use db::models::*;
 use std::sync::Mutex;
-
 use tauri::State;
-
-use crate::{error::FrontendError, models::*, SodapopState};
 
 #[tauri::command]
 #[specta::specta]

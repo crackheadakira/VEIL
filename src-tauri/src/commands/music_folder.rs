@@ -1,10 +1,6 @@
-use crate::{
-    db::data_path,
-    error::FrontendError,
-    models::{AlbumType, Albums, Artists, Tracks},
-    SodapopState,
-};
+use crate::{data_path, error::FrontendError, SodapopState};
 
+use db::models::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
 use tauri_specta::Event;
 
@@ -218,12 +214,8 @@ fn sanitize_string(string: &str) -> String {
 
 fn cover_path(artist: &str, album: &str) -> String {
     // have to sanitize the artist and album names to avoid issues with file paths
-    data_path().to_string()
-        + "/covers/"
-        + &sanitize_string(artist)
-        + " - "
-        + &sanitize_string(album)
-        + ".jpg"
+    let p = data_path().to_str().unwrap().to_owned();
+    p + "/covers/" + &sanitize_string(artist) + " - " + &sanitize_string(album) + ".jpg"
 }
 
 fn get_album_path(music_folder: &str, full_path: &str) -> String {

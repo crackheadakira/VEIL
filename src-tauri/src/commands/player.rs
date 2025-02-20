@@ -1,10 +1,8 @@
+use crate::{commands::discord, error::FrontendError, player::PlayerState, SodapopState};
+use db::models::Tracks;
 use souvlaki::{MediaMetadata, MediaPlayback};
 use std::sync::Mutex;
 use tauri::State;
-
-use crate::{
-    commands::discord, error::FrontendError, models::Tracks, player::PlayerState, SodapopState,
-};
 
 #[tauri::command]
 #[specta::specta]

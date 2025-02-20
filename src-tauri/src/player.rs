@@ -7,7 +7,7 @@ use kira::{
 };
 use serde::Serialize;
 
-use crate::models::Tracks;
+use db::models::Tracks;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PlayerError {

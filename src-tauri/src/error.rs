@@ -1,4 +1,4 @@
-use crate::{db, player};
+use crate::player;
 use specta::Type;
 
 #[derive(thiserror::Error, Debug, serde::Serialize, Type)]

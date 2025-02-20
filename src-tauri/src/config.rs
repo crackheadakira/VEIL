@@ -1,9 +1,9 @@
-use std::{fs, path::Path};
+use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::db::data_path;
+use crate::data_path;
 
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct SodapopConfig {
@@ -31,7 +31,7 @@ pub struct SodapopConfigEvent {
 impl SodapopConfig {
     pub fn new() -> Result<Self, serde_json::Error> {
         let path = config_path();
-        if Path::new(&path).exists() {
+        if path.exists() {
             let json_reader = fs::File::open(path).expect("error opening config.json reader");
             Ok(serde_json::from_reader(json_reader)?)
         } else {
@@ -73,6 +73,6 @@ impl SodapopConfig {
     }
 }
 
-fn config_path() -> String {
-    data_path() + "/config.json"
+fn config_path() -> PathBuf {
+    data_path().join("config.json")
 }

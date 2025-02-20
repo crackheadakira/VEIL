@@ -1,13 +1,31 @@
 use rusqlite::{types::FromSql, Result, ToSql};
+
+#[cfg(feature = "serialization")]
 use serde::Serialize;
+#[cfg(feature = "serialization")]
 use specta::Type;
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub enum AlbumType {
     Unknown,
     Single,
     EP,
     Album,
+}
+
+impl AlbumType {
+    pub fn get(tracks: u32, duration: u32) -> Self {
+        if duration == 0 || tracks == 0 {
+            Self::Unknown
+        } else if tracks < 3 && duration < 1800 {
+            Self::Single
+        } else if tracks <= 6 && duration < 1800 {
+            Self::EP
+        } else {
+            Self::Album
+        }
+    }
 }
 
 impl From<String> for AlbumType {
@@ -57,7 +75,8 @@ pub trait NeedForDatabase: Sized {
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct Artists {
     /// ID of artist in database
     pub id: u32,
@@ -65,7 +84,8 @@ pub struct Artists {
     pub name: String,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct Albums {
     /// ID of album in database
     pub id: u32,
@@ -88,7 +108,8 @@ pub struct Albums {
     pub path: String,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct Tracks {
     /// ID of track in database
     pub id: u32,
@@ -110,7 +131,8 @@ pub struct Tracks {
     pub path: String,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct Playlists {
     /// ID of playlist in database
     pub id: u32,
@@ -122,21 +144,24 @@ pub struct Playlists {
     pub cover_path: String,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct PlaylistWithTracks {
     pub playlist: Playlists,
     /// All tracks belonging to playlist
     pub tracks: Vec<Tracks>,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct AlbumWithTracks {
     pub album: Albums,
     /// All tracks belonging to album
     pub tracks: Vec<Tracks>,
 }
 
-#[derive(Debug, Serialize, Type)]
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct ArtistWithAlbums {
     pub artist: Artists,
     /// All albums belonging to artist

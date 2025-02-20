@@ -1,6 +1,8 @@
-use std::{fs::create_dir, path::Path};
+pub mod models;
 
-use crate::{commands::music_folder::get_album_type, models::*};
+use std::{fs::create_dir, path::PathBuf};
+
+use models::*;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Error;
@@ -17,21 +19,14 @@ pub struct Database {
     pub pool: Pool<SqliteConnectionManager>,
 }
 
-impl Default for Database {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl Database {
     /// Instanties a connection with the database, creates a new one if it doesn't exist
-    pub fn new() -> Self {
-        let data_path = data_path();
-        if !Path::new(&data_path).exists() {
-            create_dir(&data_path).expect("Error creating data directory");
+    pub fn new(path: PathBuf) -> Self {
+        if !path.exists() {
+            create_dir(&path).expect("Error creating data directory");
         }
 
-        let manager = SqliteConnectionManager::file(get_db_path());
+        let manager = SqliteConnectionManager::file(path.join("db.sqlite"));
         let pool = Pool::new(manager).unwrap();
         let conn = pool.get().unwrap();
 
@@ -51,8 +46,8 @@ impl Database {
         );
         CREATE TABLE IF NOT EXISTS albums (
             id          INTEGER NOT NULL PRIMARY KEY,
-            -- artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-            -- artist_name TEXT    NOT NULL,
+            artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
+            artist_name TEXT    NOT NULL,
             name        TEXT    NOT NULL,
             year        INTEGER NOT NULL,
             type        TEXT    NOT NULL,
@@ -83,11 +78,11 @@ impl Database {
             playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
             track_id    INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
         );
-        CREATE TABLE IF NOT EXISTS album_artists (
+        /*CREATE TABLE IF NOT EXISTS album_artists (
             album_id    INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
             artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
             PRIMARY KEY (album_id, artist_id)
-        )
+        );*/
         COMMIT;
         ",
         )
@@ -212,7 +207,7 @@ impl Database {
         stmt.execute((duration, track_id))?;
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
-        let new_album_type = get_album_type(track_count, new_duration);
+        let new_album_type = AlbumType::get(track_count, new_duration);
         self.update_album_type(album_id, new_album_type, &(new_duration, track_count))?;
 
         Ok(())
@@ -373,13 +368,4 @@ impl Database {
 
         Ok(())
     }
-}
-
-fn get_db_path() -> String {
-    data_path() + "/db.sqlite"
-}
-
-pub fn data_path() -> String {
-    let home_dir = dirs::data_local_dir().unwrap();
-    home_dir.to_str().unwrap().to_string() + "/Sodapop-Reimagined"
 }
