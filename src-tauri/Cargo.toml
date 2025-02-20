@@ -9,17 +9,12 @@ edition = "2021"
 tauri-build = { version = "2.0.5", features = [] }
 
 [dependencies]
-anyhow = "1.0.95"
 dirs = "6.0.0"
 discord-rich-presence = "0.2.5"
 dotenvy = "0.15.7"
 kira = "0.10.4"
-r2d2 = "0.8.10"
-r2d2_sqlite = "0.26.0"
-raw-window-handle = "0.6.2"
-rusqlite = { version = "0.33.0", features = ["bundled"] }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = "1.0.138"
+serde = { version = "1.0.218", features = ["derive"] }
+serde_json = "1.0.139"
 specta = "2.0.0-rc.21"
 specta-typescript = "0.0.9"
 souvlaki = { version = "0.8.0", default-features = false, features = [
@@ -33,6 +28,9 @@ tokio = { version = "1.43.0", features = ["full"] }
 
 metadata_audio = { path = "./metadata_audio" }
 db = { path = "./db", features = ["serialization"] }
+
+[target.'cfg(windows)'.dependencies]
+raw-window-handle = "0.6.2"
 
 [profile.dev]
 incremental = true
