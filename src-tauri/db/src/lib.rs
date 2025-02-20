@@ -1,11 +1,41 @@
 pub mod models;
 
-use std::{fs::create_dir, path::PathBuf};
-
 use models::*;
+use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::Error;
+use std::{
+    collections::HashMap,
+    fs::{self, create_dir},
+    path::PathBuf,
+};
+
+static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
+    let mut queries = HashMap::new();
+
+    let query_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("queries");
+    if query_dir.exists() && query_dir.is_dir() {
+        for entry in fs::read_dir(query_dir).expect("Failed to read queries directory") {
+            if let Ok(entry) = entry {
+                let path = entry.path();
+                if path.extension().map(|e| e == "sql").unwrap_or(false) {
+                    if let Ok(content) = fs::read_to_string(&path) {
+                        let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
+                        queries.insert(file_name, content);
+                    }
+                }
+            }
+        }
+    }
+    queries
+});
+
+fn get_query(name: &str) -> &str {
+    QUERIES
+        .get(name)
+        .unwrap_or_else(|| panic!("Query '{}' not found", name))
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum DatabaseError {
@@ -16,7 +46,7 @@ pub enum DatabaseError {
 }
 
 pub struct Database {
-    pub pool: Pool<SqliteConnectionManager>,
+    pool: Pool<SqliteConnectionManager>,
 }
 
 impl Database {
@@ -37,56 +67,8 @@ impl Database {
         )
         .expect("Error setting PRAGMA");
 
-        conn.execute_batch(
-            "
-        BEGIN;
-        CREATE TABLE IF NOT EXISTS artists (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            name        TEXT    NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS albums (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-            artist_name TEXT    NOT NULL,
-            name        TEXT    NOT NULL,
-            year        INTEGER NOT NULL,
-            type        TEXT    NOT NULL,
-            track_count INTEGER NOT NULL,
-            duration    INTEGER NOT NULL,
-            cover_path  TEXT    NOT NULL,
-            path        TEXT    NOT NULL UNIQUE
-        );
-        CREATE TABLE IF NOT EXISTS tracks (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            album_id    INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
-            artist_id   INTEGER NOT NULL REFERENCES artists(id),
-            album_name  TEXT    NOT NULL,
-            artist_name TEXT    NOT NULL,
-            name        TEXT    NOT NULL,
-            duration    INTEGER NOT NULL,
-            cover_path  TEXT    NOT NULL,
-            path        TEXT    NOT NULL UNIQUE
-        ); 
-        CREATE TABLE IF NOT EXISTS playlists (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            name        TEXT    NOT NULL,
-            description TEXT    NOT NULL,
-            cover_path  TEXT    NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS playlist_tracks (
-            id          INTEGER NOT NULL PRIMARY KEY,
-            playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
-            track_id    INTEGER NOT NULL REFERENCES tracks(id) ON DELETE CASCADE
-        );
-        /*CREATE TABLE IF NOT EXISTS album_artists (
-            album_id    INTEGER NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
-            artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-            PRIMARY KEY (album_id, artist_id)
-        );*/
-        COMMIT;
-        ",
-        )
-        .expect("Error creating tables");
+        conn.execute_batch(get_query("schema"))
+            .expect("Error creating tables");
 
         drop(conn);
 
@@ -105,10 +87,10 @@ impl Database {
     pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => "SELECT * FROM tracks",
-            "albums" => "SELECT * FROM albums",
-            "tracks" => "SELECT * FROM tracks",
-            "playlists" => "SELECT * FROM playlists",
+            "artists" => get_query("artists_all"),
+            "albums" => get_query("albums_all"),
+            "tracks" => get_query("tracks_all"),
+            "playlists" => get_query("playlists_all"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -135,10 +117,10 @@ impl Database {
     pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<u32, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => "INSERT INTO artists (name) VALUES (?1) RETURNING id",
-            "albums" => "INSERT INTO albums (artist_id, artist_name, name, year, type, track_count, duration, cover_path, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9) RETURNING id",
-            "tracks" => "INSERT INTO tracks (album_id, artist_id, album_name, artist_name, name, duration, cover_path, path) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8) RETURNING id",
-            "playlists" => "INSERT INTO playlists (name, description, cover_path) VALUES (?1, ?2, ?3) RETURNING id",
+            "artists" => get_query("artists_insert"),
+            "albums" => get_query("albums_insert"),
+            "tracks" => get_query("tracks_insert"),
+            "playlists" => get_query("playlists_insert"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -203,7 +185,7 @@ impl Database {
         duration: &u32,
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("UPDATE tracks SET duration = ?1 WHERE id = ?2")?;
+        let mut stmt = conn.prepare(get_query("tracks_update_duration"))?;
         stmt.execute((duration, track_id))?;
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
@@ -241,8 +223,7 @@ impl Database {
     /// Get duration of all tracks of given album
     pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt =
-            conn.prepare("SELECT SUM(duration), COUNT(*) FROM tracks WHERE album_id = ?1")?;
+        let mut stmt = conn.prepare(get_query("albums_duration"))?;
 
         let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
@@ -269,10 +250,10 @@ impl Database {
         duration_count: &(u32, u32),
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(
-            "UPDATE albums SET type = ?1, duration = ?2, track_count = ?3 WHERE ID = ?4",
+        conn.execute(
+            get_query("albums_update_type"),
+            (album_type, duration_count.0, duration_count.1, album_id),
         )?;
-        stmt.execute((album_type, duration_count.0, duration_count.1, album_id))?;
 
         Ok(())
     }
@@ -310,13 +291,7 @@ impl Database {
     ) -> Result<PlaylistWithTracks, DatabaseError> {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(playlist_id)?;
-        let mut stmt = conn.prepare(
-            "SELECT t.id, t.album_id, t.artist_id, t.album_name, t.artist_name, t.name, t.duration, t.cover_path, t.path
-            FROM playlist_tracks pt
-            JOIN tracks t ON pt.track_id = t.id
-            WHERE pt.playlist_id = ?1; 
-            SORT BY t.id",
-        )?;
+        let mut stmt = conn.prepare(get_query("playlists_tracks"))?;
 
         let tracks = stmt
             .query_map([playlist_id], Tracks::from_row)?
@@ -327,10 +302,10 @@ impl Database {
 
     pub fn update_playlist(&self, playlist: &Playlists) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(
-            "UPDATE playlists SET name = ?1, description = ?2, cover_path = ?3 WHERE id = ?4",
+        conn.execute(
+            get_query("playlists_update"),
+            playlist.to_params().as_slice(),
         )?;
-        stmt.execute(playlist.to_params().as_slice())?;
 
         Ok(())
     }
@@ -341,10 +316,7 @@ impl Database {
         track_id: &u32,
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        conn.execute(
-            "INSERT INTO playlist_tracks (playlist_id, track_id) VALUES (?1, ?2)",
-            [playlist_id, track_id],
-        )?;
+        conn.execute(get_query("playlists_insert_track"), [playlist_id, track_id])?;
 
         Ok(())
     }
@@ -356,15 +328,7 @@ impl Database {
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
 
-        conn.execute(
-            "DELETE FROM playlist_tracks
-            WHERE ROWID IN (
-                SELECT MIN(ROWID) as row_id
-                FROM playlist_tracks
-                WHERE playlist_id = ?1 AND track_id = ?2
-            )",
-            [playlist_id, track_id],
-        )?;
+        conn.execute(get_query("playlists_delete_track"), [playlist_id, track_id])?;
 
         Ok(())
     }

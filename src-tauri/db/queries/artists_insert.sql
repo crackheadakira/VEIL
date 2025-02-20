@@ -1,0 +1,2 @@
+INSERT INTO artists (name)
+VALUES (?1) RETURNING id
