@@ -45,5 +45,6 @@ function showToast(type: "success" | "error", description: string) {
 
 onMounted(() => {
   playerStore.currentPage = "/";
+  playerStore.pageName = "Home";
 });
 </script>

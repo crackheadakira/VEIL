@@ -29,5 +29,6 @@ onBeforeMount(async () => {
 
 onMounted(() => {
   playerStore.currentPage = "/all_albums";
+  playerStore.pageName = "All Albums";
 });
 </script>

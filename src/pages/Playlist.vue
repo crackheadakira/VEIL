@@ -122,5 +122,6 @@ async function handleNewTrack(track: Tracks, idx: number) {
 onBeforeMount(async () => {
   await updateData();
   playerStore.currentPage = `/playlist/${playlist_id.value}`;
+  playerStore.pageName = data.value?.playlist.name || "Playlist";
 });
 </script>

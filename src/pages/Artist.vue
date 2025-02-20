@@ -66,5 +66,6 @@ async function updateData() {
 onBeforeMount(async () => {
   await updateData();
   playerStore.currentPage = `/artist/${artist_id.value}`;
+  playerStore.pageName = artist_data.value?.artist.name || "Artist";
 });
 </script>

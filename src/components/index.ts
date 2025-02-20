@@ -11,3 +11,4 @@ export { default as ToastManager } from "./ToastManager.vue";
 export { default as TrackList } from "./TrackList.vue";
 export { default as RadioButton } from "./RadioButton.vue";
 export { default as IconButton } from "./IconButton.vue";
+export { default as TitleBar } from "./TitleBar.vue";

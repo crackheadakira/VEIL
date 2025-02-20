@@ -64,11 +64,13 @@ import {
   commands,
   events,
   SodapopConfigEvent,
+  usePlayerStore,
 } from "@/composables/";
 import { RadioButton, IconButton, Dialog } from "@/components/";
-import { nextTick, ref } from "vue";
+import { nextTick, onBeforeMount, ref } from "vue";
 
 const configStore = useConfigStore();
+const playerStore = usePlayerStore();
 
 const theme = ref(configStore.config.theme);
 const currentDirectory = ref(
@@ -162,5 +164,10 @@ events.musicDataEvent.listen((data) => {
       persistentToastId.value = null;
     }, 2100);
   }
+});
+
+onBeforeMount(async () => {
+  playerStore.currentPage = "/settings";
+  playerStore.pageName = "Settings";
 });
 </script>

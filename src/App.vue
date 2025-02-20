@@ -1,5 +1,6 @@
 <template>
   <div class="bg-background flex h-screen flex-col">
+    <TitleBar class="shrink-0" />
     <div class="flex h-full shrink grow-0 overflow-y-scroll">
       <SideBar />
       <RouterView class="overflow-scroll p-16" :key="currentRoute.fullPath" />
@@ -10,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { Player, SideBar, ToastManager } from "@/components/";
+import { Player, SideBar, ToastManager, TitleBar } from "@/components/";
 import {
   useConfigStore,
   commands,
@@ -45,6 +46,6 @@ onBeforeMount(async () => {
   await playlistStore.fetchPlaylists();
 
   const page = playerStore.currentPage;
-  router.push({ path: page });
+  router.push(page);
 });
 </script>

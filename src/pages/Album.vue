@@ -122,5 +122,6 @@ async function handleNewTrack(track: Tracks, idx: number) {
 onBeforeMount(async () => {
   await updateData();
   playerStore.currentPage = `/album/${artist_id.value}/${album_id.value}`;
+  playerStore.pageName = data.value?.album.name || "Album";
 });
 </script>
