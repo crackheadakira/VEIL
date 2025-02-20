@@ -6,18 +6,18 @@ use std::collections::HashMap;
 #[derive(Debug, Clone)]
 /// Metadata struct that holds information about an audio file
 pub struct Metadata {
-    /// Duration of the album in seconds
-    pub duration: f32,
-    /// Album name
-    pub album: String,
     /// Artist name
     pub artist: String,
+    /// Album name
+    pub album: String,
     /// Track name
     pub name: String,
     /// Path to the audio file
     pub file_path: String,
     /// Album type
     pub album_type: String,
+    /// Duration of the album in seconds
+    pub duration: f32,
     /// Year of publication
     pub year: u16,
     /// Track number
