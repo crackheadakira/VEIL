@@ -44,29 +44,37 @@ impl DiscordState {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let data = new_payload;
 
-        if data == self.payload || !self.enabled {
-            self.payload = data;
+        if data == self.payload {
             return Ok(()); // No need to update the activity
         }
 
+        self.payload = data;
+
+        if !self.enabled {
+            return Ok(());
+        }
+
         let mut activity = activity::Activity::new()
-            .state(&data.state)
-            .details(&data.details)
+            .state(&self.payload.state)
+            .details(&self.payload.details)
             .activity_type(activity::ActivityType::Listening)
             .assets(
                 Assets::new()
                     .large_image("sodapop")
                     .large_text("Sodapop Reimagined")
-                    .small_image(&data.small_image)
-                    .small_text(&data.small_text),
+                    .small_image(&self.payload.small_image)
+                    .small_text(&self.payload.small_text),
             );
 
-        if data.show_timestamps && data.duration != -1.0 {
+        if self.payload.show_timestamps && self.payload.duration != -1.0 {
             let (timestamp, start) = make_timestamp();
             activity = activity.timestamps(
                 timestamp
-                    .start(start - data.progress as i64 * 1000)
-                    .end(start + (data.duration as f64 - data.progress) as i64 * 1000),
+                    .start(start - self.payload.progress as i64 * 1000)
+                    .end(
+                        start
+                            + (self.payload.duration as f64 - self.payload.progress) as i64 * 1000,
+                    ),
             )
         };
 

@@ -3,6 +3,7 @@
 
 use commands::player::progress_as_position;
 use config::{SodapopConfig, SodapopConfigEvent};
+use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
@@ -222,7 +223,10 @@ fn main() {
                     if d {
                         state_guard.discord.rpc.connect().unwrap();
                         state_guard.discord.enabled = true;
-                        let curr_payload = state_guard.discord.payload.clone();
+                        let curr_payload = PayloadData {
+                            progress: state_guard.player.progress,
+                            ..state_guard.discord.payload.clone()
+                        };
                         state_guard.discord.make_activity(curr_payload).unwrap();
                     } else {
                         state_guard.discord.rpc.close().unwrap();

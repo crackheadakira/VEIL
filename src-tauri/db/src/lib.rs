@@ -121,7 +121,7 @@ impl Database {
             "playlists" => get_query("playlists_id"),
             _ => unreachable!("Invalid table name"),
         };
-        let mut stmt = conn.prepare_cached(&stmt_to_call)?;
+        let mut stmt = conn.prepare_cached(stmt_to_call)?;
 
         let result = stmt.query_row([id], T::from_row)?;
 
