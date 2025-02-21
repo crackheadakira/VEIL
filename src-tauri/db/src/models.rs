@@ -73,6 +73,8 @@ pub trait NeedForDatabase: Sized {
     fn table_name() -> &'static str;
     /// Struct to parameters to insert into database
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
+    /// Return an Option<u32> of artist_id
+    fn get_artist_id(&self) -> Option<u32>;
 }
 
 #[derive(Debug)]
@@ -97,6 +99,7 @@ pub struct Albums {
     pub name: String,
     /// Year album was published
     pub year: u16,
+    /// Album type
     pub album_type: AlbumType,
     /// Amount of tracks in album
     pub track_count: u32,
@@ -183,14 +186,18 @@ impl NeedForDatabase for Artists {
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![&self.name]
     }
+
+    fn get_artist_id(&self) -> Option<u32> {
+        Some(self.id)
+    }
 }
 
 impl NeedForDatabase for Albums {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Albums {
-            id: row.get(0)?,
-            artist_id: row.get(1)?,
-            artist_name: row.get(2)?,
+            artist_id: row.get(0)?,
+            artist_name: row.get(1)?,
+            id: row.get(2)?,
             name: row.get(3)?,
             year: row.get(4)?,
             album_type: row.get(5)?,
@@ -208,7 +215,6 @@ impl NeedForDatabase for Albums {
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![
             &self.artist_id,
-            &self.artist_name,
             &self.name,
             &self.year,
             &self.album_type,
@@ -217,6 +223,10 @@ impl NeedForDatabase for Albums {
             &self.cover_path,
             &self.path,
         ]
+    }
+
+    fn get_artist_id(&self) -> Option<u32> {
+        Some(self.artist_id)
     }
 }
 
@@ -251,6 +261,10 @@ impl NeedForDatabase for Tracks {
             &self.path,
         ]
     }
+
+    fn get_artist_id(&self) -> Option<u32> {
+        Some(self.artist_id)
+    }
 }
 
 impl NeedForDatabase for Playlists {
@@ -269,5 +283,9 @@ impl NeedForDatabase for Playlists {
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![&self.name, &self.description, &self.cover_path]
+    }
+
+    fn get_artist_id(&self) -> Option<u32> {
+        None
     }
 }

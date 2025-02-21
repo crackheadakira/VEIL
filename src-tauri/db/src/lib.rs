@@ -4,22 +4,25 @@ use models::*;
 use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::Error;
+use rusqlite::{Error, OptionalExtension};
 use std::{
     collections::HashMap,
     fs::{self, create_dir},
     path::PathBuf,
 };
 
-static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
-    let mut queries = HashMap::new();
-
-    let query_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("queries");
+fn read_sql_files_recursive(query_dir: &PathBuf, queries: &mut HashMap<String, String>) {
     if query_dir.exists() && query_dir.is_dir() {
-        for entry in fs::read_dir(query_dir).expect("Failed to read queries directory") {
+        // Loop through the current directory
+        for entry in fs::read_dir(query_dir).expect("Failed to read directory") {
             if let Ok(entry) = entry {
                 let path = entry.path();
-                if path.extension().map(|e| e == "sql").unwrap_or(false) {
+
+                if path.is_dir() {
+                    // If it's a directory, recurse into it
+                    read_sql_files_recursive(&path, queries);
+                } else if path.extension().map(|e| e == "sql").unwrap_or(false) {
+                    // If it's an .sql file, read it
                     if let Ok(content) = fs::read_to_string(&path) {
                         let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
                         queries.insert(file_name, content);
@@ -28,6 +31,14 @@ static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
             }
         }
     }
+}
+
+static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
+    let mut queries = HashMap::new();
+
+    let query_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("queries");
+    read_sql_files_recursive(&query_dir, &mut queries);
+
     queries
 });
 
@@ -50,7 +61,7 @@ pub struct Database {
 }
 
 impl Database {
-    /// Instanties a connection with the database, creates a new one if it doesn't exist
+    /// Instanties a connection with the database, creates a new sqlite file if it doesn't exist
     pub fn new(path: PathBuf) -> Self {
         if !path.exists() {
             create_dir(&path).expect("Error creating data directory");
@@ -105,7 +116,13 @@ impl Database {
     /// Get value from `T` table where id is same
     pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
-        let stmt_to_call = format!("SELECT * FROM {} WHERE id = ?1", T::table_name());
+        let stmt_to_call = match T::table_name() {
+            "artists" => get_query("artists_id"),
+            "albums" => get_query("albums_id"),
+            "tracks" => get_query("tracks_id"),
+            "playlists" => get_query("playlists_id"),
+            _ => unreachable!("Invalid table name"),
+        };
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
 
         let result = stmt.query_row([id], T::from_row)?;
@@ -127,6 +144,15 @@ impl Database {
         let mut stmt = conn.prepare_cached(stmt_to_call)?;
         let params = data_to_pass.to_params();
         let id = stmt.query_row(params.as_slice(), |row| row.get(0))?;
+
+        if T::table_name() == "albums" {
+            if let Some(artist_id) = data_to_pass.get_artist_id() {
+                // Insert into album_artists table
+                let album_artists_insert = get_query("album_artists_insert");
+                let mut stmt_album_artists = conn.prepare_cached(album_artists_insert)?;
+                stmt_album_artists.execute((id, artist_id))?;
+            }
+        }
 
         Ok(id)
     }
@@ -202,9 +228,8 @@ impl Database {
         artist_id: &u32,
     ) -> Result<Albums, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt =
-            conn.prepare_cached("SELECT * FROM albums WHERE (name, artist_id) = (?1, ?2)")?;
-        let result = stmt.query_row((album_name, artist_id), Albums::from_row)?;
+        let mut stmt = conn.prepare_cached(get_query("album_name"))?;
+        let result = stmt.query_row((artist_id, album_name), Albums::from_row)?;
 
         Ok(result)
     }
@@ -212,7 +237,7 @@ impl Database {
     /// Get all albums from artist where `artist_id` matches
     pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT * FROM albums WHERE artist_id = ?1")?;
+        let mut stmt = conn.prepare(get_query("albums_artist_id"))?;
         let result = stmt
             .query_map([artist_id], Albums::from_row)?
             .collect::<Result<Vec<Albums>, Error>>()?;
@@ -331,5 +356,20 @@ impl Database {
         conn.execute(get_query("playlists_delete_track"), [playlist_id, track_id])?;
 
         Ok(())
+    }
+
+    pub fn album_exists(
+        &self,
+        album_name: &str,
+        album_year: u16,
+    ) -> Result<Option<Albums>, DatabaseError> {
+        let conn = self.pool.get()?;
+
+        let mut stmt = conn.prepare(get_query("artist_album"))?;
+        let result = stmt
+            .query_row((album_name, album_year), Albums::from_row)
+            .optional()?;
+
+        Ok(result)
     }
 }

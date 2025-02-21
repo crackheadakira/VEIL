@@ -223,6 +223,9 @@ export type Albums = {
    * Year album was published
    */
   year: number;
+  /**
+   * Album type
+   */
   album_type: AlbumType;
   /**
    * Amount of tracks in album

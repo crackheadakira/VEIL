@@ -1,0 +1,1 @@
+SELECT * FROM artists WHERE id = ?1

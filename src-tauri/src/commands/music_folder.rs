@@ -80,17 +80,15 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                 })?
             };
 
-            let album_exists = state_guard.db.exists::<Albums>("name", &metadata.album)?;
             let album_path = get_album_path(path.to_str().unwrap(), &metadata.file_path);
             let cover_path = cover_path(&metadata.artist, &metadata.album);
 
-            let album_id = if album_exists {
-                state_guard
-                    .db
-                    .album_by_name(&metadata.album, &artist_id)?
-                    .id
+            let (album_id, cover_path) = if let Some(a) = state_guard
+                .db
+                .album_exists(&metadata.album, metadata.year)?
+            {
+                (a.id, a.cover_path)
             } else {
-                // write cover if doesn't exist
                 if !Path::new(&cover_path).exists() {
                     let cover = if metadata.picture_data.is_empty() {
                         if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
@@ -107,7 +105,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     file.write_all(cover)?;
                 }
 
-                state_guard.db.insert::<Albums>(Albums {
+                let a_id = state_guard.db.insert::<Albums>(Albums {
                     id: 0,
                     artist_id,
                     artist_name: metadata.artist.clone(),
@@ -118,7 +116,9 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     track_count: 0,
                     duration: 0,
                     path: album_path,
-                })?
+                })?;
+
+                (a_id, cover_path)
             };
 
             let track_exists = state_guard.db.exists::<Tracks>("name", &metadata.name)?;
