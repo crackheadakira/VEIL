@@ -39,7 +39,7 @@ pub enum MediaPayload {
     Previous(bool),
     /// Volume as f64 (0.0 - 1.0)
     Volume(f64),
-    /// Duration as f64 (e.g., in seconds)
+    /// Duration as f64
     Seek(f64),
     /// Position in seconds
     Position(f64),

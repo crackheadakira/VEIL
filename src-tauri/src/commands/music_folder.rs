@@ -38,35 +38,14 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
         let mut all_paths = recursive_dir(&path);
         all_paths.sort();
 
-        let start = std::time::Instant::now();
         let mut all_metadata = Vec::new();
         for path in all_paths.clone() {
             let metadata = Metadata::from_file(&path);
             match metadata {
-                Ok(m) => {
-                    all_metadata.push(m);
-                    /*if idx % 50 == 0 {
-                        app.emit("indexing-progress", idx).unwrap();
-                        MusicDataEvent {
-                            total: all_paths.len() as u32,
-                            current: idx as u32,
-                            finished: false,
-                        }
-                        .emit(&app)
-                        .unwrap();
-                    }*/
-                }
+                Ok(m) => all_metadata.push(m),
                 Err(_) => continue,
             }
         }
-
-        /*MusicDataEvent {
-            total: all_paths.len() as u32,
-            current: all_paths.len() as u32,
-            finished: true,
-        }
-        .emit(&app)
-        .unwrap();*/
 
         for (idx, metadata) in all_metadata.iter().enumerate() {
             let artist_exists = state_guard.db.exists::<Artists>("name", &metadata.artist)?;
@@ -97,6 +76,9 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                         file.write_all(&metadata.picture_data)?;
                     } else {
                         let ap = Path::new(&album_path);
+                        // If there is no picture data, check if there exists
+                        // either cover.jpg or cover.png, and then copy that
+                        // over. If not, just point cover_path to placeholder.png
                         if ap.join("cover.jpg").exists() {
                             fs::copy(ap.join("cover.jpg"), &p)?;
                         } else if ap.join("cover.png").exists() {
@@ -182,8 +164,6 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     .update_album_type(&track.album_id, album_type, duration)?;
             }
         }
-
-        println!("Finished indexing: {:?}", start.elapsed());
 
         MusicDataEvent {
             total: all_metadata.len() as u32,
