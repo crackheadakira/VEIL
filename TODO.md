@@ -27,7 +27,7 @@
   - [ ] Scrobble track > 30s
   - [ ] Get metadata for missing files
 - [ ] Artist page
-- [ ] Settings page
+- [x] Settings page
 
 ## Low Priority
 

@@ -1,43 +1,41 @@
 pub mod models;
 
+use include_dir::{include_dir, Dir};
 use models::*;
 use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, OptionalExtension};
-use std::{
-    collections::HashMap,
-    fs::{self, create_dir},
-    path::PathBuf,
-};
+use std::{collections::HashMap, fs::create_dir, path::PathBuf};
 
-fn read_sql_files_recursive(query_dir: &PathBuf, queries: &mut HashMap<String, String>) {
-    if query_dir.exists() && query_dir.is_dir() {
-        // Loop through the current directory
-        for entry in fs::read_dir(query_dir).expect("Failed to read directory") {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-
-                if path.is_dir() {
-                    // If it's a directory, recurse into it
-                    read_sql_files_recursive(&path, queries);
-                } else if path.extension().map(|e| e == "sql").unwrap_or(false) {
-                    // If it's an .sql file, read it
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        let file_name = path.file_stem().unwrap().to_str().unwrap().to_string();
-                        queries.insert(file_name, content);
-                    }
-                }
+fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
+    for file in dir.files() {
+        if file.path().extension().map(|e| e == "sql").unwrap_or(false) {
+            if let Some(content) = file.contents_utf8() {
+                let file_name = file
+                    .path()
+                    .file_stem()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_string();
+                queries.insert(file_name, content.to_string());
             }
         }
     }
+
+    // Recursively check for subdirectories
+    for subdir in dir.dirs() {
+        collect_sql_files(subdir, queries);
+    }
 }
+
+static QUERY_DIR: Dir = include_dir!("queries");
 
 static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let mut queries = HashMap::new();
 
-    let query_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("queries");
-    read_sql_files_recursive(&query_dir, &mut queries);
+    collect_sql_files(&QUERY_DIR, &mut queries);
 
     queries
 });
