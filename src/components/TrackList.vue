@@ -10,7 +10,7 @@
         <img
           v-if="'playlist' in data"
           :src="convertFileSrc(track.cover_path)"
-          class="aspect-square w-10 rounded-md"
+          class="aspect-square w-10 min-w-10 rounded-md"
         />
       </div>
       <div class="gap grow">
@@ -20,13 +20,14 @@
         </small>
       </div>
       <RouterLink
+        class="truncate"
         v-if="'playlist' in data"
         :to="{
           name: 'album',
           params: { album_id: track.album_id, artist_id: track.artist_id },
         }"
       >
-        <small class="text-supporting hover:text-text">{{
+        <small class="text-supporting hover:text-text truncate">{{
           track.album_name
         }}</small>
       </RouterLink>

@@ -71,12 +71,12 @@
         <input
           @mousedown="beingHeld = true"
           @mouseup="selectProgress()"
+          v-model="playerProgress"
           type="range"
           ref="progressBar"
           name="progress"
           min="0"
-          value="0"
-          max="100"
+          :max="progressMax"
           class="bg-stroke-100 accent-placeholder h-1.5 w-full rounded-lg"
         />
         <label for="progress" class="w-10">{{ totalLength }}</label>
@@ -121,8 +121,11 @@ const volumeBar = useTemplateRef<HTMLInputElement>("volumeBar");
 const shuffled = ref(playerStore.isShuffled);
 const loop = ref(playerStore.loop);
 
+const playerProgress = computed(() => playerStore.playerProgress);
+const progressMax = computed(() => playerStore.currentTrack.duration);
 const paused = ref(true);
 const beingHeld = ref(false);
+
 const totalLength = computed(() =>
   formatTime("mm:ss", playerStore.currentTrack?.duration || 0),
 );
@@ -147,7 +150,6 @@ async function handleProgress() {
     const progress = await commands.getPlayerProgress();
 
     if (beingHeld.value) return;
-    progressBar.value!.value = progress.toString();
     playerStore.playerProgress = progress;
   }
 }
@@ -275,11 +277,7 @@ async function initialLoad() {
   const volume = playerStore.playerVolume;
   const duration = await commands.getPlayerDuration();
 
-  if (progressBar.value) {
-    progressBar.value!.value = progress.toString();
-    progressBar.value!.max = duration.toString();
-  }
-  if (volumeBar.value) volumeBar.value!.value = volume.toString();
+  if (volumeBar.value) volumeBar.value.value = volume.toString();
 
   if (duration !== 0) await commands.seekTrack(progress, false);
   await commands.setVolume(volume);
@@ -331,8 +329,6 @@ playerStore.$onAction(({ name, store, after }) => {
 
     after(async () => {
       data.value = store.currentTrack;
-      const duration = await commands.getPlayerDuration();
-      progressBar.value!.max = duration.toString();
 
       await handlePlayAndPause();
     });

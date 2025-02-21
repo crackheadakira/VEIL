@@ -40,12 +40,12 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
 
         let start = std::time::Instant::now();
         let mut all_metadata = Vec::new();
-        for (idx, path) in all_paths.clone().into_iter().enumerate() {
+        for path in all_paths.clone() {
             let metadata = Metadata::from_file(&path);
             match metadata {
                 Ok(m) => {
                     all_metadata.push(m);
-                    if idx % 50 == 0 {
+                    /*if idx % 50 == 0 {
                         app.emit("indexing-progress", idx).unwrap();
                         MusicDataEvent {
                             total: all_paths.len() as u32,
@@ -54,21 +54,21 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                         }
                         .emit(&app)
                         .unwrap();
-                    }
+                    }*/
                 }
                 Err(_) => continue,
             }
         }
 
-        MusicDataEvent {
+        /*MusicDataEvent {
             total: all_paths.len() as u32,
             current: all_paths.len() as u32,
             finished: true,
         }
         .emit(&app)
-        .unwrap();
+        .unwrap();*/
 
-        for metadata in all_metadata {
+        for (idx, metadata) in all_metadata.iter().enumerate() {
             let artist_exists = state_guard.db.exists::<Artists>("name", &metadata.artist)?;
 
             let artist_id = if artist_exists {
@@ -120,7 +120,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     name: metadata.album.clone(),
                     cover_path: cover_path.clone(),
                     year: metadata.year,
-                    album_type: metadata.album_type.into(),
+                    album_type: metadata.album_type.clone().into(),
                     track_count: 0,
                     duration: 0,
                     path: album_path,
@@ -144,6 +144,17 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     cover_path,
                 })?;
             };
+
+            if idx % 50 == 0 {
+                app.emit("indexing-progress", idx).unwrap();
+                MusicDataEvent {
+                    total: all_metadata.len() as u32,
+                    current: idx as u32,
+                    finished: false,
+                }
+                .emit(&app)
+                .unwrap();
+            }
         }
 
         // Remove tracks that are no longer in the music folder
@@ -174,6 +185,15 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
         }
 
         println!("Finished indexing: {:?}", start.elapsed());
+
+        MusicDataEvent {
+            total: all_metadata.len() as u32,
+            current: all_metadata.len() as u32,
+            finished: true,
+        }
+        .emit(&app)
+        .unwrap();
+
         Ok(String::from(path.to_str().unwrap()))
     } else {
         Ok(String::from(""))
