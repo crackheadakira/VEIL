@@ -89,27 +89,26 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
             {
                 (a.id, a.cover_path)
             } else {
-                if !Path::new(&cover_path).exists() {
-                    let mut copied = false;
+                let mut p = cover_path;
 
-                    let cover = if metadata.picture_data.is_empty() {
+                if !Path::new(&p).exists() {
+                    if !metadata.picture_data.is_empty() {
+                        let mut file = File::create(&p)?;
+                        file.write_all(&metadata.picture_data)?;
+                    } else {
                         let ap = Path::new(&album_path);
                         if ap.join("cover.jpg").exists() {
-                            fs::copy(ap.join("cover.jpg"), &cover_path)?;
-                            copied = true;
+                            fs::copy(ap.join("cover.jpg"), &p)?;
                         } else if ap.join("cover.png").exists() {
-                            fs::copy(ap.join("cover.png"), &cover_path)?;
-                            copied = true;
+                            fs::copy(ap.join("cover.png"), &p)?;
+                        } else {
+                            p = data_path()
+                                .join("covers")
+                                .join("placeholder.png")
+                                .to_str()
+                                .unwrap()
+                                .to_string();
                         }
-
-                        &include_bytes!("../../../public/placeholder.png").to_vec()
-                    } else {
-                        &metadata.picture_data
-                    };
-
-                    if !copied {
-                        let mut file = File::create(&cover_path)?;
-                        file.write_all(cover)?;
                     }
                 }
 
@@ -118,7 +117,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     artist_id,
                     artist_name: metadata.artist.clone(),
                     name: metadata.album.clone(),
-                    cover_path: cover_path.clone(),
+                    cover_path: p.clone(),
                     year: metadata.year,
                     album_type: metadata.album_type.clone().into(),
                     track_count: 0,
@@ -126,7 +125,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     path: album_path,
                 })?;
 
-                (a_id, cover_path)
+                (a_id, p)
             };
 
             let track_exists = state_guard.db.exists::<Tracks>("name", &metadata.name)?;

@@ -8,8 +8,9 @@ use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
 use specta::Type;
+use std::io::Write;
 use std::sync::Mutex;
-use std::{fs::create_dir, path::PathBuf};
+use std::{fs::create_dir, fs::File, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent};
 use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
@@ -238,7 +239,10 @@ fn main() {
 
             let covers = path.join("covers");
             if !covers.exists() {
-                create_dir(covers).expect("Error creating covers directory")
+                create_dir(&covers).expect("Error creating covers directory");
+                let pc = include_bytes!("../../public/placeholder.png");
+                let mut file = File::create(covers.join("placeholder.png"))?;
+                file.write_all(pc)?;
             }
 
             Ok(())
