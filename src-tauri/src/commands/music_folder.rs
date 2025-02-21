@@ -90,19 +90,27 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                 (a.id, a.cover_path)
             } else {
                 if !Path::new(&cover_path).exists() {
+                    let mut copied = false;
+
                     let cover = if metadata.picture_data.is_empty() {
-                        if Path::new(&(album_path.to_string() + "/cover.jpg")).exists() {
-                            fs::copy(album_path.to_string() + "/cover.jpg", &cover_path)?;
-                        } else if Path::new(&(album_path.to_string() + "/cover.png")).exists() {
-                            fs::copy(album_path.to_string() + "/cover.png", &cover_path)?;
+                        let ap = Path::new(&album_path);
+                        if ap.join("cover.jpg").exists() {
+                            fs::copy(ap.join("cover.jpg"), &cover_path)?;
+                            copied = true;
+                        } else if ap.join("cover.png").exists() {
+                            fs::copy(ap.join("cover.png"), &cover_path)?;
+                            copied = true;
                         }
 
                         &include_bytes!("../../../public/placeholder.png").to_vec()
                     } else {
                         &metadata.picture_data
                     };
-                    let mut file = File::create(&cover_path)?;
-                    file.write_all(cover)?;
+
+                    if !copied {
+                        let mut file = File::create(&cover_path)?;
+                        file.write_all(cover)?;
+                    }
                 }
 
                 let a_id = state_guard.db.insert::<Albums>(Albums {
