@@ -21,7 +21,7 @@
         </div>
       </div>
       <img
-        class="aspect-square w-2/3 min-w-fit rounded-md object-cover [mask-image:linear-gradient(90deg,rgba(17,17,17,0),rgba(17,17,17,0.4))]"
+        class="aspect-square w-2/3 rounded-md object-cover [mask-image:linear-gradient(90deg,rgba(17,17,17,0),rgba(17,17,17,0.4))]"
         :src="convertFileSrc(artist_data.albums[0].album.cover_path)"
       />
     </div>
@@ -49,7 +49,7 @@ import { useRoute } from "vue-router";
 
 const playerStore = usePlayerStore();
 const route = useRoute();
-const artist_id = ref(route.params.artist_id as string);
+const artist_id = ref(route.params.id as string);
 const artist_data = ref<ArtistWithAlbums | null>(null);
 
 async function updateData() {

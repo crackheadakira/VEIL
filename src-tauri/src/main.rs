@@ -58,6 +58,7 @@ fn main() {
             commands::sqlite::add_to_playlist,
             commands::sqlite::get_playlist_tracks,
             commands::sqlite::remove_from_playlist,
+            commands::sqlite::search_db,
             commands::player::play_track,
             commands::player::pause_track,
             commands::player::resume_track,

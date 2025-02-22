@@ -29,7 +29,7 @@
         v-if="'playlist' in data"
         :to="{
           name: 'album',
-          params: { album_id: track.album_id, artist_id: track.artist_id },
+          params: { id: track.album_id },
         }"
       >
         <small class="text-supporting hover:text-text truncate">{{

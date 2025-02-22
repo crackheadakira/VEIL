@@ -91,3 +91,13 @@ export function placeholderIfEmpty(imagePath: string | undefined): string {
 export function handleBackendError(error: FrontendError): void {
   toastBus.addToast("error", `[${error.type}] ${error.data}`);
 }
+
+/**
+ * Returns a string with all first letters in a sentence capitalized.
+ * @param str - The string you want to capitalize
+ * @example
+ * readableCapitalization("hello, world") // returns "Hello, World" 
+ */
+export function readableCapitalization(str: string): string {
+  return str.split(" ").map((v) => v.charAt(0).toUpperCase() + v.slice(1)).join(" ");
+}

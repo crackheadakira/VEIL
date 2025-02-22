@@ -59,7 +59,7 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 
 const route = useRoute();
-const playlist_id = ref(route.params.playlist_id as string);
+const playlist_id = ref(route.params.id as string);
 
 const data = ref<PlaylistWithTracks | null>(null);
 

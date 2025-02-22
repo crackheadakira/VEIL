@@ -42,6 +42,16 @@ pub fn get_artist_with_albums(
 
 #[tauri::command]
 #[specta::specta]
+pub fn search_db(
+    search_str: &str,
+    state: State<'_, Mutex<SodapopState>>,
+) -> Result<Vec<Search>, FrontendError> {
+    let state_guard = state.lock().unwrap();
+    Ok(state_guard.db.search(search_str)?)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn new_playlist(
     name: String,
     state: State<'_, Mutex<SodapopState>>,

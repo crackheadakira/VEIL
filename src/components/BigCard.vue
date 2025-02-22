@@ -5,7 +5,7 @@
     <RouterLink
       :to="{
         name: 'album',
-        params: { artist_id: album_data.artist_id, album_id: album_data.id },
+        params: { id: album_data.id },
       }"
     >
       <img

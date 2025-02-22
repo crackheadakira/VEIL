@@ -2,16 +2,23 @@
   <div class="bg-background flex h-screen flex-col">
     <TitleBar class="shrink-0" />
     <div class="flex h-full shrink grow-0 overflow-y-scroll">
-      <SideBar />
+      <SideBar class="min-w-72" />
       <RouterView class="overflow-scroll p-16" :key="currentRoute.fullPath" />
     </div>
     <Player class="h-28 grow" />
     <ToastManager ref="toastManager" />
+    <DialogSearch />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Player, SideBar, ToastManager, TitleBar } from "@/components/";
+import {
+  Player,
+  SideBar,
+  ToastManager,
+  TitleBar,
+  DialogSearch,
+} from "@/components/";
 import {
   useConfigStore,
   commands,

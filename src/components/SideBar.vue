@@ -2,7 +2,6 @@
   <div
     class="border-stroke-100 bg-card text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
   >
-    <SearchBar />
     <div class="flex w-full flex-col gap-2 font-medium *:select-none">
       <div class="flex w-full flex-col gap-4">
         <small class="text-supporting">General</small>
@@ -56,7 +55,6 @@
 </template>
 
 <script setup lang="ts">
-import { SearchBar } from "@/components/";
 import { usePlaylistStore } from "@/composables/";
 import { ref, watchEffect } from "vue";
 import { RouterLink } from "vue-router";

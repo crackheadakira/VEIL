@@ -41,21 +41,13 @@
     </div>
 
     <TrackList :data="data" @new-track="handleNewTrack" />
-
-    <div v-if="artist && artist.albums.length">
-      <h5 class="text-text mb-4">More from {{ artist.artist.name }}</h5>
-      <div class="flex flex-wrap gap-4">
-        <BigCard v-for="album of artist.albums" :data="album.album" />
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BigCard, TrackList } from "@/components/";
+import { TrackList } from "@/components/";
 import {
   type AlbumWithTracks,
-  type ArtistWithAlbums,
   commands,
   handleBackendError,
   formatTime,
@@ -69,10 +61,8 @@ import { useRoute } from "vue-router";
 const playerStore = usePlayerStore();
 
 const route = useRoute();
-const album_id = ref(route.params.album_id as string);
-const artist_id = ref(route.params.artist_id as string);
+const album_id = ref(route.params.id as string);
 
-const artist = ref<ArtistWithAlbums | null>(null);
 const data = ref<AlbumWithTracks | null>(null);
 
 /**
@@ -91,23 +81,12 @@ async function handlePlayButton(shuffle: boolean) {
 }
 
 async function updateData() {
-  await commands.getAlbumWithTracks(parseInt(album_id.value));
-  const result = await commands.getArtistWithAlbums(parseInt(artist_id.value));
+  const result = await commands.getAlbumWithTracks(parseInt(album_id.value));
 
   if (result.status === "error")
     if (result.status === "error") return handleBackendError(result.error);
 
-  const res = result.data;
-
-  // Gets only the current album from artist
-  const current_album = res.albums.filter(
-    (album) => album.album.id === parseInt(album_id.value),
-  )[0];
-  data.value = current_album;
-  res.albums.splice(res.albums.indexOf(current_album), 1); // Removes the current album from the list
-
-  // This is to list more albums from the same artist
-  artist.value = res;
+  data.value = result.data;
 }
 
 async function handleNewTrack(track: Tracks, idx: number) {
@@ -121,7 +100,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
   await updateData();
-  playerStore.currentPage = `/album/${artist_id.value}/${album_id.value}`;
+  playerStore.currentPage = `/album/${album_id.value}`;
   playerStore.pageName = data.value?.album.name || "Album";
 });
 </script>

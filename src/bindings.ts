@@ -117,6 +117,17 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async searchDb(searchStr: string): Promise<Result<Search[], FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("search_db", { searchStr }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
     try {
       return {
@@ -315,6 +326,20 @@ export type Playlists = {
    * Path to playlist cover in Sodapop local app data
    */
   cover_path: string;
+};
+export type Search = {
+  /**
+   * ID of the search item
+   */
+  search_id: number;
+  /**
+   * Name of the search item
+   */
+  title: string;
+  /**
+   * Type of the search item
+   */
+  search_type: string;
 };
 export type SodapopConfig = {
   theme: ThemeMode;
