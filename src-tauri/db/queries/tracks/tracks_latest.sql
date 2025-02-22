@@ -1,0 +1,3 @@
+SELECT * FROM tracks
+ORDER BY rowid DESC
+LIMIT 1

@@ -1,1 +1,2 @@
-SELECT * FROM tracks WHERE id = ?1
+SELECT * FROM tracks
+WHERE id = ?1

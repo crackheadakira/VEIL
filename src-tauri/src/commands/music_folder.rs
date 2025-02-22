@@ -56,7 +56,9 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                 state_guard.db.insert::<Artists>(Artists {
                     id: 0,
                     name: metadata.artist.clone(),
-                })?
+                })?;
+
+                state_guard.db.latest::<Artists>()?.id
             };
 
             let album_path = get_album_path(path.to_str().unwrap(), &metadata.file_path);
@@ -94,7 +96,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     }
                 }
 
-                let a_id = state_guard.db.insert::<Albums>(Albums {
+                state_guard.db.insert::<Albums>(Albums {
                     id: 0,
                     artist_id,
                     artist_name: metadata.artist.clone(),
@@ -106,6 +108,8 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     duration: 0,
                     path: album_path,
                 })?;
+
+                let a_id = state_guard.db.latest::<Albums>()?.id;
 
                 (a_id, p)
             };

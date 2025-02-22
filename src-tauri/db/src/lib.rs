@@ -129,8 +129,9 @@ impl Database {
     }
 
     /// Insert value to `T` table
-    pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<u32, DatabaseError> {
-        let conn = self.pool.get()?;
+    pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<(), DatabaseError> {
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
         let stmt_to_call = match T::table_name() {
             "artists" => get_query("artists_insert"),
             "albums" => get_query("albums_insert"),
@@ -139,20 +140,22 @@ impl Database {
             _ => unreachable!("Invalid table name"),
         };
 
-        let mut stmt = conn.prepare_cached(stmt_to_call)?;
-        let params = data_to_pass.to_params();
-        let id = stmt.query_row(params.as_slice(), |row| row.get(0))?;
+        let album_id = {
+            let mut stmt = tx.prepare_cached(stmt_to_call)?;
+            let params = data_to_pass.to_params();
+            stmt.execute(rusqlite::params_from_iter(params))?;
+
+            tx.last_insert_rowid()
+        };
 
         if T::table_name() == "albums" {
-            if let Some(artist_id) = data_to_pass.get_artist_id() {
-                // Insert into album_artists table
-                let album_artists_insert = get_query("album_artists_insert");
-                let mut stmt_album_artists = conn.prepare_cached(album_artists_insert)?;
-                stmt_album_artists.execute((id, artist_id))?;
-            }
+            let mut stmt = tx.prepare_cached(get_query("album_artists_insert"))?;
+            stmt.execute((album_id, data_to_pass.get_artist_id()))?;
         }
 
-        Ok(id)
+        tx.commit()?;
+
+        Ok(())
     }
 
     /// Delete value from `T` table where id is same
@@ -163,6 +166,23 @@ impl Database {
         stmt.execute([id])?;
 
         Ok(())
+    }
+
+    /// Return latest record from `T` table
+    pub fn latest<T: NeedForDatabase>(&self) -> Result<T, DatabaseError> {
+        let conn = self.pool.get()?;
+        let stmt_to_call = match T::table_name() {
+            "artists" => get_query("artists_latest"),
+            "albums" => get_query("albums_latest"),
+            "tracks" => get_query("tracks_latest"),
+            "playlists" => get_query("playlists_latest"),
+            _ => unreachable!("Invalid table name"),
+        };
+
+        let mut stmt = conn.prepare_cached(stmt_to_call)?;
+        let result = stmt.query_row([], T::from_row)?;
+
+        Ok(result)
     }
 
     /// Counts how many values `T` table has

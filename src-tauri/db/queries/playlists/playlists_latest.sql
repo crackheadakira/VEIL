@@ -1,0 +1,3 @@
+SELECT * FROM playlists
+ORDER BY rowid DESC
+LIMIT 1

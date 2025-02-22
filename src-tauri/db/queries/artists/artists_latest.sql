@@ -1,0 +1,3 @@
+SELECT * FROM artists
+ORDER BY rowid DESC
+LIMIT 1
