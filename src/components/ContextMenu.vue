@@ -18,7 +18,7 @@
       class="hover:bg-stroke-100 hover:text-text rounded-md p-2 duration-150"
       >Remove from Playlist</small
     >
-    <div v-if="playlists" class="relative rounded-md">
+    <div v-if="playlists && playlists.length" class="relative rounded-md">
       <div
         @mouseenter="showPlaylists = true"
         class="hover:bg-stroke-100 hover:text-text flex items-center rounded-md p-2 duration-150"

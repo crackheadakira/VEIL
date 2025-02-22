@@ -278,7 +278,7 @@ export type MediaPayload =
    */
   | { Volume: number }
   /**
-   * Duration as f64 (e.g., in seconds)
+   * Duration as f64
    */
   | { Seek: number }
   /**
