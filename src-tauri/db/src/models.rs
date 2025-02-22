@@ -149,6 +149,17 @@ pub struct Playlists {
 
 #[derive(Debug)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Search {
+    /// ID of the search item
+    pub search_id: u32,
+    /// Name of the search item
+    pub title: String,
+    /// Type of the search item
+    pub search_type: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub struct PlaylistWithTracks {
     pub playlist: Playlists,
     /// All tracks belonging to playlist
@@ -283,6 +294,28 @@ impl NeedForDatabase for Playlists {
 
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
         vec![&self.name, &self.description, &self.cover_path]
+    }
+
+    fn get_artist_id(&self) -> Option<u32> {
+        None
+    }
+}
+
+impl NeedForDatabase for Search {
+    fn from_row(row: &rusqlite::Row) -> Result<Self> {
+        Ok(Search {
+            title: row.get(0)?,
+            search_type: row.get(1)?,
+            search_id: row.get(2)?,
+        })
+    }
+
+    fn table_name() -> &'static str {
+        "search"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.title, &self.search_type, &self.search_id]
     }
 
     fn get_artist_id(&self) -> Option<u32> {

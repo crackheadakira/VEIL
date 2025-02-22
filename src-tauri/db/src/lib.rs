@@ -221,6 +221,17 @@ impl Database {
         Ok(result)
     }
 
+    /// Returns 5 queries that match the `search_str` best
+    pub fn search(&self, search_str: &str) -> Result<Vec<Search>, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare_cached(get_query("search_find"))?;
+        let result = stmt
+            .query_map([search_str], Search::from_row)?
+            .collect::<Result<Vec<Search>, Error>>()?;
+
+        Ok(result)
+    }
+
     /// Update track duration
     pub fn update_duration(
         &self,

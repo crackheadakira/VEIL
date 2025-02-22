@@ -46,3 +46,51 @@ CREATE TABLE IF NOT EXISTS album_artists (
     artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
     PRIMARY KEY (album_id, artist_id)
 );
+
+-- Add support for searching
+
+CREATE VIRTUAL TABLE IF NOT EXISTS search
+USING FTS5(title, type, type_id);
+
+-- Insert Triggers
+
+CREATE TRIGGER IF NOT EXISTS albums_insert_search
+AFTER INSERT ON albums
+BEGIN
+    INSERT INTO search (title, type, type_id)
+    VALUES (NEW.name, 'album', NEW.id);
+END;
+
+CREATE TRIGGER IF NOT EXISTS artists_insert_search
+AFTER INSERT ON artists
+BEGIN
+    INSERT INTO search (title, type, type_id)
+    VALUES (NEW.name, 'artist', NEW.id);
+END;
+
+CREATE TRIGGER IF NOT EXISTS playlists_insert_search
+AFTER INSERT ON playlists
+BEGIN
+    INSERT INTO search (title, type, type_id)
+    VALUES (NEW.name, 'playlist', NEW.id);
+END;
+
+-- Delete Triggers
+
+CREATE TRIGGER IF NOT EXISTS albums_delete_search
+AFTER DELETE ON albums
+BEGIN
+    DELETE FROM search WHERE type = 'album' AND type_id = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS artists_delete_search
+AFTER DELETE ON artists
+BEGIN
+    DELETE FROM search WHERE type = 'artist' AND type_id = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS playlists_delete_search
+AFTER DELETE ON playlists
+BEGIN
+    DELETE FROM search WHERE type = 'playlist' AND type_id = OLD.id;
+END;

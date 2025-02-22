@@ -1,0 +1,5 @@
+SELECT *
+FROM search
+WHERE search MATCH ?1
+ORDER BY rank
+LIMIT 5;
