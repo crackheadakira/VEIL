@@ -5,22 +5,26 @@
       v-for="(track, idx) of data.tracks"
       @dblclick="$emit('new-track', track, idx)"
     >
-      <div class="flex items-center">
-        <small class="text-supporting w-9">{{ idx + 1 }}</small>
+      <div class="flex shrink-0 items-center gap-4">
+        <small
+          :style="{ width: idxWidth * 10 + 'px' }"
+          class="text-supporting text-right"
+          >{{ idx + 1 }}</small
+        >
         <img
           v-if="'playlist' in data"
           :src="convertFileSrc(track.cover_path)"
-          class="aspect-square w-10 min-w-10 rounded-md"
+          class="aspect-square w-10 rounded-md"
         />
       </div>
-      <div class="gap grow">
+      <div class="grow basis-0 truncate *:truncate">
         <small class="text-text mb-1">{{ track.name }}</small>
         <small class="text-supporting">
           {{ track.artist_name }}
         </small>
       </div>
       <RouterLink
-        class="truncate"
+        class="grow basis-0 truncate"
         v-if="'playlist' in data"
         :to="{
           name: 'album',
@@ -31,7 +35,9 @@
           track.album_name
         }}</small>
       </RouterLink>
-      <small class="text-text">{{ formatTime("mm:ss", track.duration) }}</small>
+      <small class="text-text text-right">{{
+        formatTime("mm:ss", track.duration)
+      }}</small>
     </div>
   </div>
   <ContextMenu :data="props.data" @add-to-queue="handleAddToQueue" />
@@ -47,11 +53,11 @@ import {
   usePlayerStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 const playerStore = usePlayerStore();
-
 const trackList = ref<HTMLDivElement | null>(null);
+const idxWidth = computed(() => props.data.tracks.length.toString().length); // number of digits
 
 const props = defineProps<{
   data: AlbumWithTracks | PlaylistWithTracks;
