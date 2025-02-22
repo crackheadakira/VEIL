@@ -12,8 +12,6 @@ pub enum FrontendError {
     Database(String),
     #[error("player error: {0}")]
     Player(String),
-    #[error("souvlaki error: {0}")]
-    Souvlaki(String),
     #[error("standard error: {0}")]
     Standard(String),
 }
@@ -39,12 +37,6 @@ impl From<db::DatabaseError> for FrontendError {
 impl From<player::PlayerError> for FrontendError {
     fn from(error: player::PlayerError) -> Self {
         Self::Player(error.to_string())
-    }
-}
-
-impl From<souvlaki::Error> for FrontendError {
-    fn from(error: souvlaki::Error) -> Self {
-        Self::Souvlaki(error.to_string())
     }
 }
 

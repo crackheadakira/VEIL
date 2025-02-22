@@ -86,12 +86,11 @@
         class="i-fluent-speaker-24-filled hover:text-placeholder cursor-pointer"
       ></span>
       <input
-        @input="handleVolume()"
+        @update:model-value="handleVolume"
+        v-model="volumeModel"
         type="range"
-        ref="volumeBar"
         min="0"
         max="1"
-        value="0.5"
         step="0.01"
         class="bg-stroke-100 accent-placeholder h-1.5 w-full max-w-36 rounded-lg focus:ring-0"
       />
@@ -109,18 +108,26 @@ import {
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { Event, listen } from "@tauri-apps/api/event";
-import { computed, onMounted, onUnmounted, ref, useTemplateRef } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  useTemplateRef,
+} from "vue";
 import { RouterLink } from "vue-router";
 
 const playerStore = usePlayerStore();
 
 const progressBar = useTemplateRef<HTMLInputElement>("progressBar");
-const volumeBar = useTemplateRef<HTMLInputElement>("volumeBar");
 const shuffled = ref(playerStore.isShuffled);
 const loop = ref(playerStore.loop);
 
 const playerProgress = computed(() => playerStore.playerProgress);
 const progressMax = computed(() => playerStore.currentTrack.duration);
+const volumeModel = ref(playerStore.playerVolume);
+
 const paused = ref(true);
 const beingHeld = ref(false);
 
@@ -172,13 +179,13 @@ async function selectProgress() {
 /**
  * Updates the volume of the player.
  *
- * Gets volume from `$volumeBar`, updates `$playerStore.playerVolume`, and calls {@linkcode commands.setVolume}.
+ * Updates `$playerStore.playerVolume` with current `volume`, and calls {@linkcode commands.setVolume}.
  */
 async function handleVolume() {
-  if (!volumeBar.value) return;
-  let volume = volumeBar.value.valueAsNumber;
-  await commands.setVolume(volume);
-  playerStore.playerVolume = volume;
+  nextTick(async () => {
+    await commands.setVolume(+volumeModel.value);
+    playerStore.playerVolume = volumeModel.value;
+  });
 }
 
 /**
@@ -275,7 +282,7 @@ async function initialLoad() {
   const volume = playerStore.playerVolume;
   const duration = await commands.getPlayerDuration();
 
-  if (volumeBar.value) volumeBar.value.value = volume.toString();
+  volumeModel.value = volume;
 
   if (duration !== 0) await commands.seekTrack(progress, false);
   await commands.setVolume(volume);

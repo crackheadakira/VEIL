@@ -1,12 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use commands::player::progress_as_position;
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
-use souvlaki::{MediaControlEvent, MediaControls, MediaPlayback};
+use souvlaki::MediaControlEvent;
 use specta::Type;
 use std::io::Write;
 use std::sync::Mutex;
@@ -26,7 +25,6 @@ mod player;
 pub struct SodapopState {
     pub player: player::Player,
     pub db: db::Database,
-    pub controls: MediaControls,
     pub discord: discord::DiscordState,
     pub config: SodapopConfig,
 }
@@ -126,9 +124,8 @@ fn main() {
             };
 
             app.manage(Mutex::new(SodapopState {
-                player: player::Player::new(),
+                player: player::Player::new(config),
                 db: db::Database::new(path.clone()),
-                controls: MediaControls::new(config)?,
                 config: SodapopConfig::new().expect("error making config"),
                 discord: discord::DiscordState::new("1339694314074275882")?,
             }));
@@ -143,6 +140,7 @@ fn main() {
 
             let handle = app.handle().clone();
             state_guard
+                .player
                 .controls
                 .attach(move |event| match event {
                     MediaControlEvent::Play => {
@@ -203,13 +201,6 @@ fn main() {
                 if let player::PlayerState::Playing = state_guard.player.state {
                     state_guard.player.update();
                     app_handle.emit("player-progress", progress).unwrap();
-
-                    state_guard
-                        .controls
-                        .set_playback(MediaPlayback::Playing {
-                            progress: progress_as_position(progress),
-                        })
-                        .unwrap();
 
                     if progress >= (state_guard.player.duration - 0.05) as f64 {
                         app_handle.emit("track-end", 0.0).unwrap();

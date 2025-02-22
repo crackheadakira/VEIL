@@ -8,6 +8,7 @@ use kira::{
 use serde::Serialize;
 
 use db::models::Tracks;
+use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PlayerError {
@@ -15,6 +16,8 @@ pub enum PlayerError {
     KiraError(#[from] kira::PlaySoundError<FromFileError>),
     #[error(transparent)]
     FromFileError(#[from] FromFileError),
+    #[error(transparent)]
+    SouvlakiError(#[from] souvlaki::Error),
 }
 
 #[derive(Clone, Copy, Serialize, specta::Type, Default, Debug)]
@@ -25,35 +28,31 @@ pub enum PlayerState {
 }
 
 pub struct Player {
-    manager: AudioManager<DefaultBackend>,
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    manager: AudioManager<DefaultBackend>,
     tween: Tween,
     pub track: Option<u32>,
     pub progress: f64,
     pub duration: f32,
     pub volume: f32,
     pub state: PlayerState,
-}
-
-impl Default for Player {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub controls: MediaControls,
 }
 
 impl Player {
-    pub fn new() -> Self {
+    pub fn new(c: souvlaki::PlatformConfig) -> Self {
         let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
 
         Player {
-            manager,
             sound_handle: None,
+            manager,
             tween: Tween::default(),
             track: None,
             progress: 0.0,
             duration: 0.0,
             volume: -6.0, // externally 0.0 - 1.0
             state: PlayerState::Paused,
+            controls: MediaControls::new(c).unwrap(),
         }
     }
 
@@ -63,6 +62,7 @@ impl Player {
 
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.set_volume(converted_volume, self.tween);
+            self.controls.set_volume(volume as f64).unwrap();
         }
 
         self.volume = converted_volume;
@@ -72,15 +72,16 @@ impl Player {
         self.track = Some(track.id);
 
         if self.track.is_some() {
-            let sound_data =
-                StreamingSoundData::from_file(&track.path)?.start_position(self.progress);
+            let sound_data = self.load_sound(track)?.start_position(self.progress);
             self.duration = sound_data.duration().as_secs_f32();
-            self.sound_handle = Some(self.manager.play(sound_data)?);
-            self.sound_handle
-                .as_mut()
-                .unwrap()
-                .set_volume(self.volume, Tween::default());
+
+            let mut sh = self.manager.play(sound_data)?;
+            sh.set_volume(self.volume, Tween::default());
+
+            self.sound_handle = Some(sh);
             self.state = PlayerState::Playing;
+
+            self.set_playback(true).unwrap();
         }
 
         Ok(())
@@ -88,12 +89,30 @@ impl Player {
 
     /// Initialize the player with a track and a progress
     pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<(), PlayerError> {
-        let sound_data: StreamingSoundData<FromFileError> =
-            StreamingSoundData::from_file(track.path)?;
-        self.duration = sound_data.duration().as_secs_f32();
+        self.load_sound(&track)?;
         self.progress = progress;
 
+        self.set_playback(false).unwrap();
+
         Ok(())
+    }
+
+    fn load_sound(
+        &mut self,
+        track: &Tracks,
+    ) -> Result<StreamingSoundData<FromFileError>, PlayerError> {
+        let sound_data = StreamingSoundData::from_file(&track.path)?;
+        self.duration = sound_data.duration().as_secs_f32();
+
+        self.controls.set_metadata(MediaMetadata {
+            title: Some(&track.name),
+            album: Some(&track.album_name),
+            artist: Some(&track.artist_name),
+            cover_url: Some(&track.cover_path),
+            duration: Some(std::time::Duration::from_secs(self.duration as u64)),
+        })?;
+
+        Ok(sound_data)
     }
 
     /// Check if the track has ended
@@ -111,6 +130,8 @@ impl Player {
             sound_handle.pause(self.tween);
             self.state = PlayerState::Paused;
             self.progress = sound_handle.position();
+
+            self.set_playback(false).unwrap();
         }
     }
 
@@ -119,6 +140,7 @@ impl Player {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.resume(self.tween);
             self.state = PlayerState::Playing;
+            self.set_playback(true).unwrap();
         }
     }
 
@@ -129,13 +151,17 @@ impl Player {
                 PlayerState::Playing => {
                     sound_handle.seek_to(position);
                     self.progress = position;
+                    self.set_playback(true).unwrap();
                 }
                 _ => {
                     sound_handle.seek_to(position);
                     self.progress = position;
+
                     if resume {
                         self.resume()
-                    };
+                    } else {
+                        self.set_playback(false).unwrap()
+                    }
                 }
             }
         }
@@ -149,6 +175,8 @@ impl Player {
         self.state = PlayerState::Paused;
         self.progress = 0.0;
         self.track = None;
+
+        self.controls.set_playback(MediaPlayback::Stopped).unwrap();
     }
 
     /// Set the progress of the player
@@ -161,7 +189,27 @@ impl Player {
         if let Some(ref mut sound_handle) = self.sound_handle {
             if let PlayerState::Playing = self.state {
                 self.progress = sound_handle.position();
+
+                self.set_playback(true).unwrap();
             }
         }
     }
+
+    fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {
+        let progress = progress_as_position(self.progress);
+        let playback = match play {
+            true => MediaPlayback::Playing { progress },
+            false => MediaPlayback::Paused { progress },
+        };
+
+        self.controls.set_playback(playback)?;
+
+        Ok(())
+    }
+}
+
+fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
+    Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
+        progress,
+    )))
 }
