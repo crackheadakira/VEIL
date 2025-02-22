@@ -6,8 +6,9 @@
       @dblclick="$emit('new-track', track, idx)"
     >
       <div class="flex shrink-0 items-center gap-4">
+        <!-- (10 / 16) rem === 10px if rem = 16px -->
         <small
-          :style="{ width: idxWidth * 10 + 'px' }"
+          :style="{ width: idxWidth * (10 / 16) + 'rem' }"
           class="text-supporting text-right"
           >{{ idx + 1 }}</small
         >
