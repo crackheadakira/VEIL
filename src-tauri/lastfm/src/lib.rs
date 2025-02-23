@@ -1,3 +1,5 @@
+//! Easy-to-use Last.FM API wrapper
+
 mod api;
 mod models;
 mod traits;
@@ -8,16 +10,21 @@ use reqwest::Method;
 use serde::Deserialize;
 use std::collections::HashMap;
 
+/// A helper type for all parameters to have same type without any accidental change
 type LastFMParams = HashMap<String, String>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LastFMError {
+    /// [`LastFMBuilder`] is missing an API key
     #[error("missing API key")]
     MissingAPIKey,
+    /// [`LastFMBuilder`] is missing an API secret
     #[error("missing API secret")]
     MissingAPISecret,
+    /// [`LastFM`] is missing the user's session key
     #[error("missing session key")]
     MissingAuthentication,
+    /// Passed an invalid HTTP method to [`LastFM::send_request`]
     #[error("invalid HTTP method")]
     InvalidHTTPMethod,
     #[error(transparent)]
@@ -49,6 +56,7 @@ impl LastFM {
         }
     }
 
+    /// Sends the HTTP Request to Last.FM
     fn http_request(
         &self,
         method: Method,
@@ -66,6 +74,8 @@ impl LastFM {
         Ok(json)
     }
 
+    /// Wraps around [`LastFM::http_request`] and inserts all the required
+    /// parameters into `params`
     fn send_request<T: for<'a> Deserialize<'a>>(
         &self,
         method: Method,
@@ -93,6 +103,9 @@ impl LastFM {
         Ok(response)
     }
 
+    /// Create the MD5 hash of all `params` (except format).
+    ///
+    /// This is needed by Last.FM to sign your API requests
     fn sign_api(&self, params: &mut LastFMParams) -> String {
         let mut sorted_keys = params.keys().cloned().collect::<Vec<String>>();
         sorted_keys.sort();
@@ -121,16 +134,19 @@ pub struct LastFMBuilder {
 }
 
 impl LastFMBuilder {
+    /// Add `api_key` to builder
     pub fn api_key(mut self, api_key: &str) -> Self {
         self.api_key = Some(api_key.to_string());
         self
     }
 
+    /// Add `api_secret` to builder
     pub fn api_secret(mut self, api_secret: &str) -> Self {
         self.api_secret = Some(api_secret.to_string());
         self
     }
 
+    /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
     pub fn build(self) -> Result<LastFM, LastFMError> {
         Ok(LastFM {
             api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,

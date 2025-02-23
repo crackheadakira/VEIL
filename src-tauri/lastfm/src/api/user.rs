@@ -15,6 +15,7 @@ impl<'a> User<'a> {
         Self { last_fm }
     }
 
+    /// Returns a new user info token handler
     pub fn info(&self, username: Option<String>) -> GetUserInfo<'_> {
         GetUserInfo::new(self.last_fm, username)
     }

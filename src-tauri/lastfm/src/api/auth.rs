@@ -8,17 +8,16 @@ pub struct Auth<'a> {
 }
 
 impl<'a> Auth<'a> {
-    /// Creates a new Auth object
     pub fn new(last_fm: &'a LastFM) -> Self {
         Self { last_fm }
     }
 
-    /// Returns a new Auth token object
+    /// Returns a new auth token handler
     pub fn token(&mut self) -> AuthGetToken<'_> {
         AuthGetToken::new(self.last_fm)
     }
 
-    /// Returns a new Auth session object
+    /// Returns a new auth session handler
     pub fn session(&mut self, token: String) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }

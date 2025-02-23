@@ -1,5 +1,6 @@
 use crate::{config::SodapopConfigEvent, error::FrontendError, SodapopState};
 use lastfm::{Auth, LastFMData};
+
 use std::sync::Mutex;
 use tauri::State;
 

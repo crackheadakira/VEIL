@@ -9,12 +9,16 @@ pub trait User {
 }
 
 pub trait LastFMData {
+    /// Get `api_key` from [`LastFM`]
     fn api_key(&self) -> String;
+    /// Get `api_secret` from [`LastFM`]
     fn api_secret(&self) -> String;
 }
 
 pub trait LastFMAuthentication {
+    /// Add `session_key` to [`LastFM`]
     fn add_session_key(&mut self, session_key: String) -> ();
+    /// Get `session_key` from [`LastFM`]
     fn session_key(&self) -> Option<String>;
 }
 

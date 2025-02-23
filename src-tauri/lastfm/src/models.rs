@@ -10,6 +10,7 @@ pub enum APIMethod {
 }
 
 impl APIMethod {
+    /// If the method needs an API signature
     pub fn need_sig(&self) -> bool {
         match self {
             Self::AuthGetSession | Self::AuthGetToken => true,
@@ -17,6 +18,7 @@ impl APIMethod {
         }
     }
 
+    /// Get the method as a method string to pass to last.fm
     pub fn as_query(&self) -> String {
         let result = match self {
             Self::ArtistGetInfo => "artist.getInfo",
@@ -32,7 +34,9 @@ impl APIMethod {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
+    /// The size of the image (i.e "small", "medium", "large")
     size: String,
+    /// The URL of the image
     #[serde(alias = "#text")]
     text: String,
 }
@@ -40,7 +44,9 @@ pub struct Image {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct APIError {
+    /// The error code
     pub error: i64,
+    /// The error message
     pub message: String,
 }
 
