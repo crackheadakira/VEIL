@@ -76,7 +76,7 @@ async function getResults() {
   const calledAt = Date.now();
   lastInput.value = Date.now();
 
-  await new Promise((r) => setTimeout(r, 500));
+  await new Promise((r) => setTimeout(r, 250));
 
   if (calledAt != lastInput.value) return;
 

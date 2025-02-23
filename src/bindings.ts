@@ -365,12 +365,14 @@ export type SodapopConfig = {
   music_dir: string | null;
   last_fm_key: string | null;
   discord_enabled: boolean;
+  last_fm_enabled: boolean;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
   music_dir: string | null;
   last_fm_key: string | null;
   discord_enabled: boolean | null;
+  last_fm_enabled: boolean | null;
 };
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {

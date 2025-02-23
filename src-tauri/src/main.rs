@@ -4,7 +4,7 @@
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
-use lastfm::{LastFMAuthentication, User};
+use lastfm::LastFMAuthentication;
 use serde::Serialize;
 use souvlaki::MediaControlEvent;
 use specta::Type;
@@ -94,6 +94,7 @@ fn main() {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())
         .setup(move |app| {
@@ -144,13 +145,6 @@ fn main() {
 
             if let Some(sk) = state_guard.config.last_fm_key.clone() {
                 state_guard.lastfm.add_session_key(sk.to_string());
-
-                println!("added session key");
-                let res = state_guard.lastfm.user().info(None).send();
-                match res {
-                    Ok(_) => (),
-                    Err(e) => eprintln!("{}", e),
-                }
             }
 
             if state_guard.config.discord_enabled {

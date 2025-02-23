@@ -1,5 +1,6 @@
 import { type FrontendError, toastBus } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { Ref } from "vue";
 
 /**
  * Returns a human-readable time string from seconds in the format `mm:ss`
@@ -101,3 +102,14 @@ export function handleBackendError(error: FrontendError): void {
 export function readableCapitalization(str: string): string {
   return str.split(" ").map((v) => v.charAt(0).toUpperCase() + v.slice(1)).join(" ");
 }
+
+export type DialogPage = {
+  title: string;
+  description: string;
+  buttons: {
+    name: string;
+    condition: Ref<boolean> | boolean;
+    close?: boolean;
+    click: () => void;
+  }[];
+};

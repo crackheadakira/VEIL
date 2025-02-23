@@ -11,9 +11,10 @@ pub struct SodapopConfig {
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
     pub discord_enabled: bool,
+    pub last_fm_enabled: bool,
 }
 
-#[derive(Serialize, Deserialize, Type, Clone)]
+#[derive(Serialize, Deserialize, Type, Clone, Copy)]
 pub enum ThemeMode {
     Dark,
     Light,
@@ -26,6 +27,7 @@ pub struct SodapopConfigEvent {
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
     pub discord_enabled: Option<bool>,
+    pub last_fm_enabled: Option<bool>,
 }
 
 impl SodapopConfig {
@@ -40,27 +42,18 @@ impl SodapopConfig {
                 music_dir: None,
                 last_fm_key: None,
                 discord_enabled: false,
+                last_fm_enabled: false,
             })
         }
     }
 
     /// Update config field values
     pub fn update_config(&mut self, new_config: SodapopConfigEvent) -> Result<(), std::io::Error> {
-        if let Some(t) = new_config.theme {
-            self.theme = t;
-        }
-
-        if let Some(m) = new_config.music_dir {
-            self.music_dir = Some(m);
-        }
-
-        if let Some(l) = new_config.last_fm_key {
-            self.last_fm_key = Some(l);
-        }
-
-        if let Some(d) = new_config.discord_enabled {
-            self.discord_enabled = d;
-        }
+        self.theme = new_config.theme.unwrap_or(self.theme);
+        self.music_dir = new_config.music_dir.or(self.music_dir.take());
+        self.last_fm_key = new_config.last_fm_key.or(self.last_fm_key.take());
+        self.discord_enabled = new_config.discord_enabled.unwrap_or(self.discord_enabled);
+        self.last_fm_enabled = new_config.last_fm_enabled.unwrap_or(self.last_fm_enabled);
 
         self.write_config()?;
 

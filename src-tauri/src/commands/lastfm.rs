@@ -33,6 +33,7 @@ pub fn get_session(
         music_dir: None,
         last_fm_key: Some(a.session.key),
         discord_enabled: None,
+        last_fm_enabled: None,
     })?;
 
     Ok(())

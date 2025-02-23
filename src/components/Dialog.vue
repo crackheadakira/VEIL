@@ -3,11 +3,6 @@
     <div class="h-fit w-fit" @click="showDialog = true">
       <slot></slot>
     </div>
-
-    <div
-      v-if="showDialog"
-      class="bg-background/50 absolute top-0 left-0 z-40 h-screen w-screen"
-    ></div>
     <Transition
       enter-from-class="opacity-0 scale-95"
       leave-to-class="opacity-0 scale-95"
@@ -15,8 +10,9 @@
       leave-active-class="transition-all duration-150"
     >
       <div
+        id="dialog"
         v-if="showDialog"
-        class="absolute inset-0 z-50 flex items-center justify-center"
+        class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
       >
         <div class="cardStyle relative flex h-fit w-96 flex-col gap-3 p-4">
           <div>

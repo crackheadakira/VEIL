@@ -4,19 +4,19 @@
     <div class="text-supporting flex flex-col gap-4">
       <p>Theme</p>
       <RadioButton
-        @update:model-value="updateConfig(1)"
+        @update:model-value="updateConfig(1, theme)"
         v-model="theme"
         input-id="dark"
         input-value="Dark"
       />
       <RadioButton
-        @update:model-value="updateConfig(1)"
+        @update:model-value="updateConfig(1, theme)"
         v-model="theme"
         input-id="light"
         input-value="Light"
       />
       <RadioButton
-        @update:model-value="updateConfig(1)"
+        @update:model-value="updateConfig(1, theme)"
         v-model="theme"
         input-id="system"
         input-value="System"
@@ -30,20 +30,11 @@
         :placeholder="currentDirectory"
       />
     </div>
-    <div class="text-supporting">
-      <p class="pb-4">Last.FM API Key</p>
-      <Dialog
-        title="Last.FM API Key"
-        description="Enter your Last.FM API key to track your scrobbles"
-      >
-        <IconButton icon="i-fluent-key-24-filled" :placeholder="lastFM" />
-      </Dialog>
-    </div>
-    <div class="text-supporting">
-      <p class="pb-4">Discord Rich Presence</p>
+    <div class="text-supporting flex flex-col gap-4">
+      <p>Online Features</p>
       <div class="flex gap-3">
         <input
-          @change="updateConfig(4)"
+          @change="updateConfig(4, discordRPC)"
           class="h-4 w-4"
           type="checkbox"
           v-model="discordRPC"
@@ -51,6 +42,23 @@
           name="discordRpc"
         />
         <label for="discordRpc">Enable Discord RPC</label>
+      </div>
+      <div class="flex gap-3">
+        <input
+          @change="updateConfig(5, lastFM)"
+          class="h-4 w-4"
+          type="checkbox"
+          v-model="lastFM"
+          id="lastFM"
+          name="lastFM"
+        />
+        <label for="lastFM">Enable Last.FM</label>
+      </div>
+      <div v-if="lastFM">
+        <small class="pb-2">Last.FM Session Key</small>
+        <DialogGuide @close="pageIdx = 0" :current-page="pages[pageIdx]">
+          <IconButton icon="i-fluent-key-24-filled" :placeholder="lastFMKey" />
+        </DialogGuide>
       </div>
     </div>
   </div>
@@ -65,9 +73,11 @@ import {
   events,
   SodapopConfigEvent,
   usePlayerStore,
+  DialogPage,
 } from "@/composables/";
-import { RadioButton, IconButton, Dialog } from "@/components/";
-import { nextTick, onBeforeMount, ref } from "vue";
+import { RadioButton, IconButton, DialogGuide } from "@/components/";
+import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";
+import { openUrl } from "@tauri-apps/plugin-opener";
 
 const configStore = useConfigStore();
 const playerStore = usePlayerStore();
@@ -76,39 +86,108 @@ const theme = ref(configStore.config.theme);
 const currentDirectory = ref(
   configStore.config?.music_dir || "No Folder Selected",
 );
-const lastFM = ref(configStore.config?.last_fm_key || "No Key Set");
+const lastFMKey = ref(configStore.config?.last_fm_key || "No Key Set");
 const discordRPC = ref(configStore.config.discord_enabled);
+const lastFM = ref(configStore.config.last_fm_enabled);
 
-function updateConfig(setting: number) {
-  const updatedConfig: SodapopConfigEvent = {
+const lastFMURL = ref<[string, string] | null>(null);
+
+const pageIdx = ref(0);
+const pages: ComputedRef<DialogPage[]> = computed(() => [
+  {
+    title: "Last.FM",
+    description: "Manage your Last.FM session",
+    buttons: [
+      {
+        name: "revoke",
+        condition: configStore.config.last_fm_key?.length !== 0,
+        close: true,
+        click: async () => {
+          updateConfig(3, "");
+          updateConfig(5, false);
+
+          lastFM.value = false;
+          lastFMKey.value = "No Key Set";
+        },
+      },
+      {
+        name: "start",
+        condition: configStore.config.last_fm_key?.length === 0,
+        click: getToken,
+      },
+    ],
+  },
+  {
+    title: "Authorization",
+    description: "Once you've authorized on Last.FM, press continue.",
+    buttons: [
+      {
+        name: "continue",
+        condition: true,
+        close: true,
+        click: registerSession,
+      },
+    ],
+  },
+]);
+
+function updateConfig(setting: number, value: any) {
+  const updatedConfig = {
     theme: null,
     music_dir: null,
     last_fm_key: null,
     discord_enabled: null,
-  };
+    last_fm_enabled: null,
+  } satisfies SodapopConfigEvent;
 
   switch (setting) {
     case 1:
       nextTick(() => {
-        updatedConfig.theme = theme.value;
-        configStore.config.theme = theme.value;
+        updatedConfig.theme = value;
+        configStore.config.theme = value;
       });
       break;
     case 2:
-      updatedConfig.music_dir = currentDirectory.value;
-      configStore.config.music_dir = currentDirectory.value;
+      updatedConfig.music_dir = value;
+      configStore.config.music_dir = value;
       break;
     case 3:
-      updatedConfig.last_fm_key = lastFM.value;
-      configStore.config.last_fm_key = lastFM.value;
+      updatedConfig.last_fm_key = value;
+      configStore.config.last_fm_key = value;
       break;
     case 4:
-      updatedConfig.discord_enabled = discordRPC.value;
-      configStore.config.discord_enabled = discordRPC.value;
+      updatedConfig.discord_enabled = value;
+      configStore.config.discord_enabled = value;
+      break;
+    case 5:
+      updatedConfig.last_fm_enabled = value;
+      configStore.config.last_fm_enabled = value;
       break;
   }
 
   events.sodapopConfigEvent.emit(updatedConfig);
+}
+
+async function getToken() {
+  const result = await commands.getToken();
+  if (result.status === "error") return handleBackendError(result.error);
+
+  lastFMURL.value = result.data;
+  await openUrl(result.data[0]);
+  pageIdx.value = 1;
+}
+
+async function registerSession() {
+  if (!lastFMURL.value) return;
+  const result = await commands.getSession(lastFMURL.value[1]);
+  if (result.status === "error") return handleBackendError(result.error);
+
+  toastBus.addToast("success", "Successfully registered Last.FM session!");
+  await configStore.initialize();
+
+  nextTick(() => {
+    lastFMKey.value = configStore.config.last_fm_key!;
+  });
 }
 
 async function openDialog() {
@@ -117,7 +196,7 @@ async function openDialog() {
   else if (result.data !== "") {
     toastBus.addToast("success", "Music added successfully");
     currentDirectory.value = result.data;
-    updateConfig(2);
+    updateConfig(2, result.data);
   }
 }
 
