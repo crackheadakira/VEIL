@@ -13,11 +13,33 @@ impl<'a> Auth<'a> {
     }
 
     /// Returns a new auth token handler
+    ///
+    /// # Example
+    /// Assumes you have already built [`LastFM`] and are
+    /// holding it under the variable `last_fm`
+    /// ```
+    /// use lastfm::Auth;
+    ///
+    /// // Request a token from Last.FM that can be later
+    /// // passed onto the session.
+    /// let res = last_fm.auth().token().send()?;
+    /// ```
     pub fn token(&mut self) -> AuthGetToken<'_> {
         AuthGetToken::new(self.last_fm)
     }
 
     /// Returns a new auth session handler
+    ///
+    /// # Example
+    /// Assumes you have already built [`LastFM`] and are
+    /// holding it under the variable `last_fm`
+    /// ```
+    /// use lastfm::Auth;
+    ///
+    /// // User has already authorized the token
+    /// let res = last_fm.auth().session(token).send()?;
+    ///
+    /// ```
     pub fn session(&mut self, token: String) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }
