@@ -133,7 +133,7 @@ fn main() {
                 lastfm: lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
                     .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
-                    .build(),
+                    .build()?,
                 config: SodapopConfig::new().expect("error making config"),
                 discord: discord::DiscordState::new("1339694314074275882")?,
             }));

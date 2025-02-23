@@ -12,6 +12,10 @@ type LastFMParams = HashMap<String, String>;
 pub enum LastFMError {
     #[error("missing auth token")]
     MissingAuthentication,
+    #[error("missing api key")]
+    MissingAPIKey,
+    #[error("missing api secret")]
+    MissingAPISecret,
     #[error(transparent)]
     APIError(#[from] APIError),
     #[error(transparent)]
@@ -130,13 +134,13 @@ impl LastFMBuilder {
         self
     }
 
-    pub fn build(self) -> LastFM {
-        LastFM {
-            api_key: self.api_key.expect("need to have api key"),
-            api_secret: self.api_secret.expect("need to have api secret"),
+    pub fn build(self) -> Result<LastFM, LastFMError> {
+        Ok(LastFM {
+            api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
+            api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
             session_key: None,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
             client: reqwest::blocking::Client::new(),
-        }
+        })
     }
 }

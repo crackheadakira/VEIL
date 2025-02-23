@@ -41,10 +41,10 @@ impl<'a> GetUserInfo<'a> {
             params.insert(String::from("user"), u);
         } else {
             let session_key = self.last_fm.session_key.clone();
-            if session_key.is_none() {
-                return Err(LastFMError::MissingAuthentication);
-            };
-            params.insert(String::from("sk"), session_key.unwrap());
+            params.insert(
+                String::from("sk"),
+                session_key.ok_or(LastFMError::MissingAuthentication)?,
+            );
         };
 
         params.insert(String::from("api_key"), self.last_fm.api_key.clone());
