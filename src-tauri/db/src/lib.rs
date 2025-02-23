@@ -30,7 +30,7 @@ fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
     }
 }
 
-static QUERY_DIR: Dir = include_dir!("queries");
+static QUERY_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/queries");
 
 static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let mut queries = HashMap::new();

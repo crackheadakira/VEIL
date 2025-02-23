@@ -9,7 +9,7 @@ r2d2 = "0.8.10"
 r2d2_sqlite = "0.26.0"
 rusqlite = { version = "0.33.0", features = ["bundled"] }
 thiserror = "2.0.11"
-include_dir = "0.6"
+include_dir = "0.7.4"
 
 serde = { version = "1.0.218", features = ["derive"], optional = true }
 specta = { version = "2.0.0-rc.21", optional = true }

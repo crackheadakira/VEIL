@@ -189,6 +189,25 @@ export const commands = {
   async getConfig(): Promise<SodapopConfig> {
     return await TAURI_INVOKE("get_config");
   },
+  async getToken(): Promise<Result<[string, string], FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_token") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getSession(token: string): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_session", { token }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -277,7 +296,8 @@ export type FrontendError =
   | { type: "Metadata"; data: string }
   | { type: "Database"; data: string }
   | { type: "Player"; data: string }
-  | { type: "Standard"; data: string };
+  | { type: "Standard"; data: string }
+  | { type: "LastFMError"; data: string };
 export type MediaPayload =
   | { Play: boolean }
   | { Pause: boolean }

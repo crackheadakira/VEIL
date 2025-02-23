@@ -13,11 +13,11 @@ use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
 #[derive(Debug, thiserror::Error)]
 pub enum PlayerError {
     #[error(transparent)]
-    KiraError(#[from] kira::PlaySoundError<FromFileError>),
+    Kira(#[from] kira::PlaySoundError<FromFileError>),
     #[error(transparent)]
-    FromFileError(#[from] FromFileError),
+    FromFile(#[from] FromFileError),
     #[error(transparent)]
-    SouvlakiError(#[from] souvlaki::Error),
+    Souvlaki(#[from] souvlaki::Error),
 }
 
 #[derive(Clone, Copy, Serialize, specta::Type, Default, Debug)]

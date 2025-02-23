@@ -27,6 +27,7 @@ pub struct SodapopState {
     pub db: db::Database,
     pub discord: discord::DiscordState,
     pub config: SodapopConfig,
+    pub lastfm: lastfm::LastFM,
 }
 
 #[derive(Type, Serialize, Clone)]
@@ -71,6 +72,8 @@ fn main() {
             commands::player::set_player_progress,
             commands::player::player_has_ended,
             commands::config::get_config,
+            commands::lastfm::get_token,
+            commands::lastfm::get_session,
         ])
         .events(collect_events![
             commands::music_folder::MusicDataEvent,
@@ -126,6 +129,10 @@ fn main() {
             app.manage(Mutex::new(SodapopState {
                 player: player::Player::new(config),
                 db: db::Database::new(path.clone()),
+                lastfm: lastfm::LastFM::builder()
+                    .api_key("abc01a1c2188ad44508b12229563de11")
+                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
+                    .build(),
                 config: SodapopConfig::new().expect("error making config"),
                 discord: discord::DiscordState::new("1339694314074275882")?,
             }));

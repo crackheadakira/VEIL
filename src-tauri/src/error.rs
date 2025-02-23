@@ -14,6 +14,8 @@ pub enum FrontendError {
     Player(String),
     #[error("standard error: {0}")]
     Standard(String),
+    #[error("lastfm error: {0}")]
+    LastFMError(String),
 }
 
 impl From<std::io::Error> for FrontendError {
@@ -37,6 +39,12 @@ impl From<db::DatabaseError> for FrontendError {
 impl From<player::PlayerError> for FrontendError {
     fn from(error: player::PlayerError) -> Self {
         Self::Player(error.to_string())
+    }
+}
+
+impl From<lastfm::LastFMError> for FrontendError {
+    fn from(error: lastfm::LastFMError) -> Self {
+        Self::LastFMError(error.to_string())
     }
 }
 
