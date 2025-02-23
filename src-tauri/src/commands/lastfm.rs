@@ -1,5 +1,5 @@
 use crate::{config::SodapopConfigEvent, error::FrontendError, SodapopState};
-use lastfm::traits::Auth;
+use lastfm::{Auth, LastFMData};
 use std::sync::Mutex;
 use tauri::State;
 
@@ -11,7 +11,7 @@ pub fn get_token(state: State<'_, Mutex<SodapopState>>) -> Result<(String, Strin
 
     let mut url = String::new();
     url.push_str("http://www.last.fm/api/auth/?api_key=");
-    url.push_str(state_guard.lastfm.api_key());
+    url.push_str(&state_guard.lastfm.api_key());
     url.push_str("&token=");
     url.push_str(&a.token);
 

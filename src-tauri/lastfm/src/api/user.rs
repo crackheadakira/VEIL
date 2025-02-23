@@ -1,7 +1,8 @@
 use crate::{
     models::{APIMethod, Image},
-    LastFM, LastFMError,
+    LastFM, LastFMError, LastFMParams,
 };
+use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -14,8 +15,8 @@ impl<'a> User<'a> {
         Self { last_fm }
     }
 
-    pub fn info(&self, user: Option<String>) -> GetUserInfo<'_> {
-        GetUserInfo::new(self.last_fm, user)
+    pub fn info(&self, username: Option<String>) -> GetUserInfo<'_> {
+        GetUserInfo::new(self.last_fm, username)
     }
 }
 
@@ -34,7 +35,7 @@ impl<'a> GetUserInfo<'a> {
         }
     }
 
-    fn params(&self) -> Result<HashMap<String, String>, LastFMError> {
+    fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
         if let Some(u) = self.user.clone() {
@@ -52,16 +53,18 @@ impl<'a> GetUserInfo<'a> {
         Ok(params)
     }
 
-    pub fn send(self) -> Result<UserInfoResponse, LastFMError> {
+    pub fn send(self) -> Result<UserInfo, LastFMError> {
         let mut params = self.params()?;
-        let response = self.last_fm.send_request(true, self.method, &mut params)?;
+        let response: UserInfoResponse =
+            self.last_fm
+                .send_request(Method::GET, self.method, &mut params)?;
 
-        Ok(response)
+        Ok(response.user)
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct UserInfoResponse {
+#[derive(Serialize, Deserialize)]
+struct UserInfoResponse {
     pub user: UserInfo,
 }
 

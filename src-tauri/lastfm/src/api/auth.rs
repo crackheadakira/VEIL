@@ -1,4 +1,5 @@
-use crate::{models::APIMethod, LastFM, LastFMError};
+use crate::{models::APIMethod, LastFM, LastFMError, LastFMParams};
+use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -30,7 +31,7 @@ pub struct AuthGetSession<'a> {
 }
 
 impl<'a> AuthGetSession<'a> {
-    pub fn new(last_fm: &'a LastFM, token: String) -> Self {
+    fn new(last_fm: &'a LastFM, token: String) -> Self {
         Self {
             last_fm,
             token,
@@ -38,7 +39,7 @@ impl<'a> AuthGetSession<'a> {
         }
     }
 
-    fn params(&self) -> HashMap<String, String> {
+    fn params(&self) -> LastFMParams {
         let mut params = HashMap::new();
 
         params.insert("api_key".to_string(), self.last_fm.api_key.clone());
@@ -51,7 +52,7 @@ impl<'a> AuthGetSession<'a> {
         let mut session_params = self.params();
         let response = self
             .last_fm
-            .send_request(true, self.method, &mut session_params)?;
+            .send_request(Method::GET, self.method, &mut session_params)?;
 
         Ok(response)
     }
@@ -83,7 +84,7 @@ impl<'a> AuthGetToken<'a> {
         }
     }
 
-    fn params(&self) -> HashMap<String, String> {
+    fn params(&self) -> LastFMParams {
         let mut params = HashMap::new();
 
         params.insert(String::from("api_key"), self.last_fm.api_key.clone());
@@ -95,7 +96,7 @@ impl<'a> AuthGetToken<'a> {
         let mut token_params = self.params();
         let response = self
             .last_fm
-            .send_request(true, self.method, &mut token_params)?;
+            .send_request(Method::GET, self.method, &mut token_params)?;
 
         Ok(response)
     }

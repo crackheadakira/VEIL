@@ -1,8 +1,10 @@
-pub mod api;
-pub mod models;
-pub mod traits;
+mod api;
+mod models;
+mod traits;
+pub use crate::traits::*;
 
-use models::*;
+use models::{APIError, APIMethod};
+use reqwest::Method;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -10,12 +12,14 @@ type LastFMParams = HashMap<String, String>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LastFMError {
-    #[error("missing auth token")]
-    MissingAuthentication,
-    #[error("missing api key")]
+    #[error("missing API key")]
     MissingAPIKey,
-    #[error("missing api secret")]
+    #[error("missing API secret")]
     MissingAPISecret,
+    #[error("missing session key")]
+    MissingAuthentication,
+    #[error("invalid HTTP method")]
+    InvalidHTTPMethod,
     #[error(transparent)]
     APIError(#[from] APIError),
     #[error(transparent)]
@@ -47,23 +51,24 @@ impl LastFM {
 
     fn http_request(
         &self,
-        get: bool,
+        method: Method,
         params: &mut LastFMParams,
     ) -> Result<serde_json::Value, LastFMError> {
         let url = &self.base_url;
 
-        let response = match get {
-            true => self.client.get(url).query(&params).send()?,
-            false => self.client.post(url).query(&params).send()?,
+        let response = match method {
+            Method::GET => self.client.get(url).query(&params).send()?,
+            Method::POST => self.client.post(url).query(&params).send()?,
+            _ => return Err(LastFMError::InvalidHTTPMethod),
         };
 
         let json = response.json()?;
         Ok(json)
     }
 
-    pub fn send_request<T: for<'a> Deserialize<'a>>(
+    fn send_request<T: for<'a> Deserialize<'a>>(
         &self,
-        get: bool,
+        method: Method,
         api_method: APIMethod,
         params: &mut LastFMParams,
     ) -> Result<T, LastFMError> {
@@ -77,7 +82,7 @@ impl LastFM {
 
         params.insert(String::from("format"), String::from("json"));
 
-        let res = self.http_request(get, params)?;
+        let res = self.http_request(method, params)?;
 
         if res.get("error").is_some() {
             let error: APIError = serde_json::from_value(res)?;
@@ -107,14 +112,6 @@ impl LastFM {
 
         // converts it to a hexadecimal string
         format!("{:x}", digest)
-    }
-
-    pub fn api_key(&self) -> &str {
-        &self.api_key
-    }
-
-    pub fn add_session_key(&mut self, session_key: String) -> () {
-        self.session_key = Some(session_key);
     }
 }
 

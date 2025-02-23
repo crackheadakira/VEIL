@@ -4,7 +4,7 @@
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
-use lastfm::traits::User;
+use lastfm::{LastFMAuthentication, User};
 use serde::Serialize;
 use souvlaki::MediaControlEvent;
 use specta::Type;
@@ -133,7 +133,8 @@ fn main() {
                 lastfm: lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
                     .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
-                    .build()?,
+                    .build()
+                    .expect("error making last.fm api"),
                 config: SodapopConfig::new().expect("error making config"),
                 discord: discord::DiscordState::new("1339694314074275882")?,
             }));
@@ -144,6 +145,7 @@ fn main() {
             if let Some(sk) = state_guard.config.last_fm_key.clone() {
                 state_guard.lastfm.add_session_key(sk.to_string());
 
+                println!("added session key");
                 let res = state_guard.lastfm.user().info(None).send();
                 match res {
                     Ok(_) => (),

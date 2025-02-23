@@ -40,7 +40,7 @@ static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
     queries
 });
 
-fn get_query(name: &str) -> &str {
+fn query(name: &str) -> &str {
     QUERIES
         .get(name)
         .unwrap_or_else(|| panic!("Query '{}' not found", name))
@@ -76,7 +76,7 @@ impl Database {
         )
         .expect("Error setting PRAGMA");
 
-        conn.execute_batch(get_query("schema"))
+        conn.execute_batch(query("schema"))
             .expect("Error creating tables");
 
         drop(conn);
@@ -96,10 +96,10 @@ impl Database {
     pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => get_query("artists_all"),
-            "albums" => get_query("albums_all"),
-            "tracks" => get_query("tracks_all"),
-            "playlists" => get_query("playlists_all"),
+            "artists" => query("artists_all"),
+            "albums" => query("albums_all"),
+            "tracks" => query("tracks_all"),
+            "playlists" => query("playlists_all"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -115,10 +115,10 @@ impl Database {
     pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => get_query("artists_id"),
-            "albums" => get_query("albums_id"),
-            "tracks" => get_query("tracks_id"),
-            "playlists" => get_query("playlists_id"),
+            "artists" => query("artists_id"),
+            "albums" => query("albums_id"),
+            "tracks" => query("tracks_id"),
+            "playlists" => query("playlists_id"),
             _ => unreachable!("Invalid table name"),
         };
         let mut stmt = conn.prepare_cached(stmt_to_call)?;
@@ -133,10 +133,10 @@ impl Database {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => get_query("artists_insert"),
-            "albums" => get_query("albums_insert"),
-            "tracks" => get_query("tracks_insert"),
-            "playlists" => get_query("playlists_insert"),
+            "artists" => query("artists_insert"),
+            "albums" => query("albums_insert"),
+            "tracks" => query("tracks_insert"),
+            "playlists" => query("playlists_insert"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -149,7 +149,7 @@ impl Database {
         };
 
         if T::table_name() == "albums" {
-            let mut stmt = tx.prepare_cached(get_query("album_artists_insert"))?;
+            let mut stmt = tx.prepare_cached(query("album_artists_insert"))?;
             stmt.execute((album_id, data_to_pass.get_artist_id()))?;
         }
 
@@ -172,10 +172,10 @@ impl Database {
     pub fn latest<T: NeedForDatabase>(&self) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
-            "artists" => get_query("artists_latest"),
-            "albums" => get_query("albums_latest"),
-            "tracks" => get_query("tracks_latest"),
-            "playlists" => get_query("playlists_latest"),
+            "artists" => query("artists_latest"),
+            "albums" => query("albums_latest"),
+            "tracks" => query("tracks_latest"),
+            "playlists" => query("playlists_latest"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -224,7 +224,7 @@ impl Database {
     /// Returns 5 queries that match the `search_str` best
     pub fn search(&self, search_str: &str) -> Result<Vec<Search>, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare_cached(get_query("search_find"))?;
+        let mut stmt = conn.prepare_cached(query("search_find"))?;
         let result = stmt
             .query_map([search_str], Search::from_row)?
             .collect::<Result<Vec<Search>, Error>>()?;
@@ -240,7 +240,7 @@ impl Database {
         duration: &u32,
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(get_query("tracks_update_duration"))?;
+        let mut stmt = conn.prepare(query("tracks_update_duration"))?;
         stmt.execute((duration, track_id))?;
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
@@ -257,7 +257,7 @@ impl Database {
         artist_id: &u32,
     ) -> Result<Albums, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare_cached(get_query("album_name"))?;
+        let mut stmt = conn.prepare_cached(query("album_name"))?;
         let result = stmt.query_row((artist_id, album_name), Albums::from_row)?;
 
         Ok(result)
@@ -266,7 +266,7 @@ impl Database {
     /// Get all albums from artist where `artist_id` matches
     pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(get_query("albums_artist_id"))?;
+        let mut stmt = conn.prepare(query("albums_artist_id"))?;
         let result = stmt
             .query_map([artist_id], Albums::from_row)?
             .collect::<Result<Vec<Albums>, Error>>()?;
@@ -277,7 +277,7 @@ impl Database {
     /// Get duration of all tracks of given album
     pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(get_query("albums_duration"))?;
+        let mut stmt = conn.prepare(query("albums_duration"))?;
 
         let result = stmt.query_row([album_id], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
@@ -305,7 +305,7 @@ impl Database {
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
         conn.execute(
-            get_query("albums_update_type"),
+            query("albums_update_type"),
             (album_type, duration_count.0, duration_count.1, album_id),
         )?;
 
@@ -345,7 +345,7 @@ impl Database {
     ) -> Result<PlaylistWithTracks, DatabaseError> {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(playlist_id)?;
-        let mut stmt = conn.prepare(get_query("playlists_tracks"))?;
+        let mut stmt = conn.prepare(query("playlists_tracks"))?;
 
         let tracks = stmt
             .query_map([playlist_id], Tracks::from_row)?
@@ -356,10 +356,7 @@ impl Database {
 
     pub fn update_playlist(&self, playlist: &Playlists) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        conn.execute(
-            get_query("playlists_update"),
-            playlist.to_params().as_slice(),
-        )?;
+        conn.execute(query("playlists_update"), playlist.to_params().as_slice())?;
 
         Ok(())
     }
@@ -370,7 +367,7 @@ impl Database {
         track_id: &u32,
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
-        conn.execute(get_query("playlists_insert_track"), [playlist_id, track_id])?;
+        conn.execute(query("playlists_insert_track"), [playlist_id, track_id])?;
 
         Ok(())
     }
@@ -382,7 +379,7 @@ impl Database {
     ) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
 
-        conn.execute(get_query("playlists_delete_track"), [playlist_id, track_id])?;
+        conn.execute(query("playlists_delete_track"), [playlist_id, track_id])?;
 
         Ok(())
     }
@@ -394,7 +391,7 @@ impl Database {
     ) -> Result<Option<Albums>, DatabaseError> {
         let conn = self.pool.get()?;
 
-        let mut stmt = conn.prepare(get_query("artist_album"))?;
+        let mut stmt = conn.prepare(query("artist_album"))?;
         let result = stmt
             .query_row((album_name, album_year), Albums::from_row)
             .optional()?;
