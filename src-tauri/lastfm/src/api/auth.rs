@@ -1,23 +1,24 @@
-use std::collections::HashMap;
-
-use serde::{Deserialize, Serialize};
-
 use crate::{models::APIMethod, LastFM, LastFMError};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 pub struct Auth<'a> {
     last_fm: &'a LastFM,
 }
 
 impl<'a> Auth<'a> {
+    /// Creates a new Auth object
     pub fn new(last_fm: &'a LastFM) -> Self {
         Self { last_fm }
     }
 
-    pub fn get_token(&mut self) -> AuthGetToken<'_> {
+    /// Returns a new Auth token object
+    pub fn token(&mut self) -> AuthGetToken<'_> {
         AuthGetToken::new(self.last_fm)
     }
 
-    pub fn get_session(&mut self, token: String) -> AuthGetSession<'_> {
+    /// Returns a new Auth session object
+    pub fn session(&mut self, token: String) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }
 }

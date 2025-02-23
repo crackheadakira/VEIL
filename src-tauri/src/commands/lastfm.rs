@@ -7,7 +7,7 @@ use tauri::State;
 #[specta::specta]
 pub fn get_token(state: State<'_, Mutex<SodapopState>>) -> Result<(String, String), FrontendError> {
     let state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
-    let a = state_guard.lastfm.auth().get_token().send()?;
+    let a = state_guard.lastfm.auth().token().send()?;
 
     let mut url = String::new();
     url.push_str("http://www.last.fm/api/auth/?api_key=");
@@ -25,7 +25,7 @@ pub fn get_session(
     state: State<'_, Mutex<SodapopState>>,
 ) -> Result<(), FrontendError> {
     let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
-    let a = state_guard.lastfm.auth().get_session(token).send()?;
+    let a = state_guard.lastfm.auth().session(token).send()?;
 
     state_guard.config.update_config(SodapopConfigEvent {
         theme: None,

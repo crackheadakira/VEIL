@@ -4,6 +4,7 @@
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
+use lastfm::traits::User;
 use serde::Serialize;
 use souvlaki::MediaControlEvent;
 use specta::Type;
@@ -139,6 +140,16 @@ fn main() {
 
             let state = app.state::<Mutex<SodapopState>>();
             let mut state_guard = state.lock().unwrap();
+
+            if let Some(sk) = state_guard.config.last_fm_key.clone() {
+                state_guard.lastfm.add_session_key(sk.to_string());
+
+                let res = state_guard.lastfm.user().info(None).send();
+                match res {
+                    Ok(_) => (),
+                    Err(e) => eprintln!("{}", e),
+                }
+            }
 
             if state_guard.config.discord_enabled {
                 state_guard.discord.rpc.connect()?;

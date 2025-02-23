@@ -10,7 +10,9 @@ type LastFMParams = HashMap<String, String>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LastFMError {
-    #[error("API Error: {0}")]
+    #[error("missing auth token")]
+    MissingAuthentication,
+    #[error(transparent)]
     APIError(#[from] APIError),
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
@@ -64,14 +66,6 @@ impl LastFM {
         params.insert(String::from("method"), api_method.as_query());
         params.insert(String::from("api_key"), self.api_key.clone());
 
-        if api_method.need_auth() {
-            let session_key = self.session_key.clone();
-            params.insert(
-                String::from("sk"),
-                session_key.expect("authentication needed"),
-            );
-        }
-
         if api_method.need_sig() {
             let signature = self.sign_api(params);
             params.insert(String::from("api_sig"), signature);
@@ -113,6 +107,10 @@ impl LastFM {
 
     pub fn api_key(&self) -> &str {
         &self.api_key
+    }
+
+    pub fn add_session_key(&mut self, session_key: String) -> () {
+        self.session_key = Some(session_key);
     }
 }
 
