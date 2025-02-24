@@ -74,7 +74,6 @@ fn main() {
             commands::player::initialize_player,
             commands::player::set_player_progress,
             commands::player::player_has_ended,
-            commands::config::get_config,
             commands::lastfm::get_token,
             commands::lastfm::get_session,
         ])
@@ -96,6 +95,7 @@ fn main() {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(builder.invoke_handler())
@@ -273,5 +273,5 @@ fn main() {
 
 pub fn data_path() -> PathBuf {
     let home_dir = dirs::data_local_dir().unwrap();
-    home_dir.join("Sodapop-Reimagined")
+    home_dir.join("com.sodapop.reimagined")
 }

@@ -16,6 +16,8 @@ pub enum FrontendError {
     Standard(String),
     #[error("lastfm error: {0}")]
     LastFMError(String),
+    #[error("serde json: {0}")]
+    SerdeJson(String),
 }
 
 impl From<std::io::Error> for FrontendError {
@@ -51,5 +53,11 @@ impl From<lastfm::LastFMError> for FrontendError {
 impl From<Box<dyn std::error::Error>> for FrontendError {
     fn from(error: Box<dyn std::error::Error>) -> Self {
         Self::Standard(error.to_string())
+    }
+}
+
+impl From<serde_json::Error> for FrontendError {
+    fn from(error: serde_json::Error) -> Self {
+        Self::SerdeJson(error.to_string())
     }
 }

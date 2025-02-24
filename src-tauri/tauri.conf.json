@@ -23,7 +23,7 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$LOCALDATA/Sodapop-Reimagined/**"
+          "$LOCALDATA/com.sodapop.reimagined/**"
         ]
       },
       "csp": {

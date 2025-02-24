@@ -186,9 +186,6 @@ export const commands = {
   async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
   },
-  async getConfig(): Promise<SodapopConfig> {
-    return await TAURI_INVOKE("get_config");
-  },
   async getToken(): Promise<Result<[string, string], FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_token") };
@@ -297,7 +294,8 @@ export type FrontendError =
   | { type: "Database"; data: string }
   | { type: "Player"; data: string }
   | { type: "Standard"; data: string }
-  | { type: "LastFMError"; data: string };
+  | { type: "LastFMError"; data: string }
+  | { type: "SerdeJson"; data: string };
 export type MediaPayload =
   | { Play: boolean }
   | { Pause: boolean }
@@ -363,9 +361,9 @@ export type Search = {
 export type SodapopConfig = {
   theme: ThemeMode;
   music_dir: string | null;
-  last_fm_key: string | null;
   discord_enabled: boolean;
   last_fm_enabled: boolean;
+  last_fm_key: string | null;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;

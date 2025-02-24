@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::data_path;
+use crate::{data_path, error::FrontendError};
 
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct SodapopConfig {
@@ -31,24 +31,26 @@ pub struct SodapopConfigEvent {
 }
 
 impl SodapopConfig {
-    pub fn new() -> Result<Self, serde_json::Error> {
+    pub fn new() -> Result<Self, FrontendError> {
         let path = config_path();
         if path.exists() {
             let json_reader = fs::File::open(path).expect("error opening config.json reader");
             Ok(serde_json::from_reader(json_reader)?)
         } else {
-            Ok(Self {
+            let config = Self {
                 theme: ThemeMode::Dark,
                 music_dir: None,
                 last_fm_key: None,
                 discord_enabled: false,
                 last_fm_enabled: false,
-            })
+            };
+            config.write_config()?;
+            Ok(config)
         }
     }
 
     /// Update config field values
-    pub fn update_config(&mut self, new_config: SodapopConfigEvent) -> Result<(), std::io::Error> {
+    pub fn update_config(&mut self, new_config: SodapopConfigEvent) -> Result<(), FrontendError> {
         self.theme = new_config.theme.unwrap_or(self.theme);
         self.music_dir = new_config.music_dir.or(self.music_dir.take());
         self.last_fm_key = new_config.last_fm_key.or(self.last_fm_key.take());
@@ -60,7 +62,7 @@ impl SodapopConfig {
         Ok(())
     }
 
-    pub fn write_config(&self) -> Result<(), std::io::Error> {
+    pub fn write_config(&self) -> Result<(), FrontendError> {
         fs::write(config_path(), serde_json::to_string(&self)?)?;
         Ok(())
     }
