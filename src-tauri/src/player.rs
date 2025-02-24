@@ -1,4 +1,5 @@
 use kira::{
+    clock::{ClockHandle, ClockSpeed},
     sound::{
         streaming::{StreamingSoundData, StreamingSoundHandle},
         FromFileError, PlaybackState,
@@ -31,6 +32,8 @@ pub struct Player {
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
     manager: AudioManager<DefaultBackend>,
     tween: Tween,
+    clock: ClockHandle,
+    scrobble_condition: f32,
     pub track: Option<u32>,
     pub progress: f64,
     pub duration: f32,
@@ -41,11 +44,18 @@ pub struct Player {
 
 impl Player {
     pub fn new(c: souvlaki::PlatformConfig) -> Self {
-        let manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+        let mut manager =
+            AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+        // 2 ticks per second
+        let clock = manager
+            .add_clock(ClockSpeed::TicksPerMinute(120.0))
+            .unwrap();
 
         Player {
             sound_handle: None,
             manager,
+            clock,
+            scrobble_condition: -1.0,
             tween: Tween::default(),
             track: None,
             progress: 0.0,
@@ -81,6 +91,15 @@ impl Player {
             self.sound_handle = Some(sh);
             self.state = PlayerState::Playing;
 
+            // if duration is greater than 4 mins, set to 4 min,
+            // otherwise half of the duration.
+            if self.duration > 240.0 {
+                self.scrobble_condition = 240.0;
+            } else if self.duration > 30.0 {
+                self.scrobble_condition = self.duration / 2.0;
+            };
+
+            self.clock.start();
             self.set_playback(true).unwrap();
         }
 
@@ -131,6 +150,7 @@ impl Player {
             self.state = PlayerState::Paused;
             self.progress = sound_handle.position();
 
+            self.clock.pause();
             self.set_playback(false).unwrap();
         }
     }
@@ -140,6 +160,8 @@ impl Player {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.resume(self.tween);
             self.state = PlayerState::Playing;
+
+            self.clock.start();
             self.set_playback(true).unwrap();
         }
     }
@@ -176,6 +198,7 @@ impl Player {
         self.progress = 0.0;
         self.track = None;
 
+        self.clock.stop();
         self.controls.set_playback(MediaPlayback::Stopped).unwrap();
     }
 
