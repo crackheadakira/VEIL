@@ -15,13 +15,6 @@ pub trait LastFMData {
     fn api_secret(&self) -> String;
 }
 
-pub trait LastFMAuthentication {
-    /// Add `session_key` to [`LastFM`]
-    fn add_session_key(&mut self, session_key: String) -> ();
-    /// Get `session_key` from [`LastFM`]
-    fn session_key(&self) -> Option<String>;
-}
-
 impl Auth for LastFM {
     fn auth(&self) -> api::auth::Auth {
         api::auth::Auth::new(self)
@@ -31,16 +24,6 @@ impl Auth for LastFM {
 impl User for LastFM {
     fn user(&self) -> api::user::User {
         api::user::User::new(self)
-    }
-}
-
-impl LastFMAuthentication for LastFM {
-    fn add_session_key(&mut self, session_key: String) -> () {
-        self.session_key = Some(session_key);
-    }
-
-    fn session_key(&self) -> Option<String> {
-        self.session_key.clone()
     }
 }
 

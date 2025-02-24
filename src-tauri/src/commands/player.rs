@@ -4,24 +4,23 @@ use db::models::Tracks;
 #[tauri::command]
 #[specta::specta]
 pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError> {
-    let mut state_guard = state.lock().unwrap();
-
-    if state_guard.player.track.is_some() {
-        state_guard.player.stop();
+    let mut player = state.player.lock().unwrap();
+    if player.track.is_some() {
+        player.stop();
     };
 
-    let track = state_guard.db.by_id::<Tracks>(&track_id)?;
-    let duration = state_guard.player.duration;
+    let track = state.db.by_id::<Tracks>(&track_id)?;
+    let duration = player.duration;
 
     if track.duration == 0 {
-        state_guard
+        state
             .db
             .update_duration(&track_id, &track.album_id, &(duration as u32))?;
     }
 
-    let _ = state_guard.player.play(&track);
+    let _ = player.play(&track);
 
-    let progress = state_guard.player.progress;
+    let progress = player.progress;
 
     let payload = discord::PayloadData {
         state: track.artist_name + " - " + &track.album_name,
@@ -33,7 +32,8 @@ pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError>
         progress,
     };
 
-    state_guard.discord.make_activity(payload)?;
+    let mut discord = state.discord.lock().unwrap();
+    discord.make_activity(payload)?;
 
     Ok(())
 }
@@ -41,10 +41,11 @@ pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError>
 #[tauri::command]
 #[specta::specta]
 pub fn pause_track(state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
-    state_guard.player.pause();
+    let mut player = state.player.lock().unwrap();
+    let mut discord = state.discord.lock().unwrap();
+    player.pause();
 
-    let mut payload = state_guard.discord.payload.clone();
+    let mut payload = discord.payload.clone();
     payload = discord::PayloadData {
         small_image: String::from("paused"),
         small_text: String::from("Paused"),
@@ -52,16 +53,18 @@ pub fn pause_track(state: StateMutex) {
         ..payload
     };
 
-    state_guard.discord.make_activity(payload).unwrap();
+    discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn resume_track(state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
-    state_guard.player.resume();
+    let mut player = state.player.lock().unwrap();
+    let mut discord = state.discord.lock().unwrap();
 
-    let mut payload = state_guard.discord.payload.clone();
+    player.resume();
+
+    let mut payload = discord.payload.clone();
     payload = discord::PayloadData {
         small_image: String::from("playing"),
         small_text: String::from("Playing"),
@@ -69,14 +72,15 @@ pub fn resume_track(state: StateMutex) {
         ..payload
     };
 
-    state_guard.discord.make_activity(payload).unwrap();
+    discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
-    state_guard.player.seek(position, resume);
+    let mut player = state.player.lock().unwrap();
+    let mut discord = state.discord.lock().unwrap();
+    player.seek(position, resume);
 
     let text_display = if resume {
         String::from("Playing")
@@ -84,7 +88,7 @@ pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
         String::from("Paused")
     };
 
-    let mut payload = state_guard.discord.payload.clone();
+    let mut payload = discord.payload.clone();
     payload = discord::PayloadData {
         small_image: text_display.to_lowercase(),
         small_text: text_display,
@@ -92,57 +96,57 @@ pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
         ..payload
     };
 
-    state_guard.discord.make_activity(payload).unwrap();
+    discord.make_activity(payload).unwrap();
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn set_volume(volume: f32, state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
+    let mut player = state.player.lock().unwrap();
 
-    state_guard.player.set_volume(volume);
+    player.set_volume(volume);
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_state(state: StateMutex) -> PlayerState {
-    let state_guard = state.lock().unwrap();
-    state_guard.player.state
+    let player = state.player.lock().unwrap();
+    player.state
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_progress(state: StateMutex) -> f64 {
-    let state_guard = state.lock().unwrap();
-    state_guard.player.progress
+    let player = state.player.lock().unwrap();
+    player.progress
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn player_has_ended(state: StateMutex) -> bool {
-    let state_guard = state.lock().unwrap();
-    state_guard.player.has_ended()
+    let player = state.player.lock().unwrap();
+    player.has_ended()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn player_has_track(state: StateMutex) -> bool {
-    let state_guard = state.lock().unwrap();
-    state_guard.player.track.is_some()
+    let player = state.player.lock().unwrap();
+    player.track.is_some()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_duration(state: StateMutex) -> f32 {
-    let state_guard = state.lock().unwrap();
-    state_guard.player.duration
+    let player = state.player.lock().unwrap();
+    player.duration
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn stop_player(state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
-    state_guard.player.stop();
+    let mut player = state.player.lock().unwrap();
+    player.stop();
 }
 
 #[tauri::command]
@@ -152,9 +156,9 @@ pub fn initialize_player(
     progress: f64,
     state: StateMutex,
 ) -> Result<(), FrontendError> {
-    let mut state_guard = state.lock().unwrap();
-    let track = state_guard.db.by_id::<Tracks>(&track_id)?;
-    state_guard.player.initialize_player(track, progress)?;
+    let mut player = state.player.lock().unwrap();
+    let track = state.db.by_id::<Tracks>(&track_id)?;
+    player.initialize_player(track, progress)?;
 
     Ok(())
 }
@@ -162,6 +166,6 @@ pub fn initialize_player(
 #[tauri::command]
 #[specta::specta]
 pub fn set_player_progress(progress: f64, state: StateMutex) {
-    let mut state_guard = state.lock().unwrap();
-    state_guard.player.set_progress(progress);
+    let mut player = state.player.lock().unwrap();
+    player.set_progress(progress);
 }

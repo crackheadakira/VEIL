@@ -35,6 +35,7 @@ pub enum LastFMError {
     JsonError(#[from] serde_json::Error),
 }
 
+#[derive(Clone)]
 pub struct LastFM {
     /// The Last.FM API Key
     api_key: String,
@@ -45,7 +46,7 @@ pub struct LastFM {
     /// The URL to send API requests to
     base_url: String,
     /// The HTTP request client
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
 }
 
 impl LastFM {
@@ -53,11 +54,12 @@ impl LastFM {
         LastFMBuilder {
             api_key: None,
             api_secret: None,
+            session_key: None,
         }
     }
 
     /// Sends the HTTP Request to Last.FM
-    fn http_request(
+    async fn http_request(
         &self,
         method: Method,
         params: &mut LastFMParams,
@@ -65,18 +67,18 @@ impl LastFM {
         let url = &self.base_url;
 
         let response = match method {
-            Method::GET => self.client.get(url).query(&params).send()?,
-            Method::POST => self.client.post(url).query(&params).send()?,
+            Method::GET => self.client.get(url).query(&params).send().await?,
+            Method::POST => self.client.post(url).query(&params).send().await?,
             _ => return Err(LastFMError::InvalidHTTPMethod),
         };
 
-        let json = response.json()?;
+        let json = response.json().await?;
         Ok(json)
     }
 
     /// Wraps around [`LastFM::http_request`] and inserts all the required
     /// parameters into `params`
-    fn send_request<T: for<'a> Deserialize<'a>>(
+    async fn send_request<T: for<'a> Deserialize<'a>>(
         &self,
         method: Method,
         api_method: APIMethod,
@@ -92,7 +94,7 @@ impl LastFM {
 
         params.insert(String::from("format"), String::from("json"));
 
-        let res = self.http_request(method, params)?;
+        let res = self.http_request(method, params).await?;
 
         if res.get("error").is_some() {
             let error: APIError = serde_json::from_value(res)?;
@@ -126,11 +128,16 @@ impl LastFM {
         // converts it to a hexadecimal string
         format!("{:x}", digest)
     }
+
+    pub fn session_key(&self) -> Option<String> {
+        self.session_key.clone()
+    }
 }
 
 pub struct LastFMBuilder {
     api_key: Option<String>,
     api_secret: Option<String>,
+    session_key: Option<String>,
 }
 
 impl LastFMBuilder {
@@ -146,14 +153,20 @@ impl LastFMBuilder {
         self
     }
 
+    /// Add `session_key` to builder
+    pub fn session_key(&mut self, session_key: String) -> () {
+        self.session_key = Some(session_key);
+    }
+
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
     pub fn build(self) -> Result<LastFM, LastFMError> {
+        let secret = self.api_secret.clone();
         Ok(LastFM {
             api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
             api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
-            session_key: None,
+            session_key: secret,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
-            client: reqwest::blocking::Client::new(),
+            client: reqwest::Client::new(),
         })
     }
 }

@@ -4,12 +4,11 @@
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
-use lastfm::LastFMAuthentication;
 use serde::Serialize;
 use souvlaki::MediaControlEvent;
 use specta::Type;
 use std::io::Write;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, RwLock};
 use std::{fs::create_dir, fs::File, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{collect_commands, collect_events, Builder, Event};
@@ -24,14 +23,14 @@ mod error;
 mod player;
 
 pub struct SodapopState {
-    pub player: player::Player,
-    pub db: db::Database,
-    pub discord: discord::DiscordState,
-    pub config: SodapopConfig,
-    pub lastfm: lastfm::LastFM,
+    pub player: Mutex<player::Player>,
+    pub db: Arc<db::Database>,
+    pub discord: Mutex<discord::DiscordState>,
+    pub config: Arc<RwLock<SodapopConfig>>,
+    pub lastfm: Arc<lastfm::LastFM>,
 }
 
-pub type StateMutex<'a> = State<'a, Mutex<SodapopState>>;
+pub type StateMutex<'a> = State<'a, SodapopState>;
 
 #[derive(Type, Serialize, Clone)]
 pub enum MediaPayload {
@@ -130,33 +129,37 @@ fn main() {
                 hwnd,
             };
 
-            app.manage(Mutex::new(SodapopState {
-                player: player::Player::new(config),
-                db: db::Database::new(path.clone()),
-                lastfm: lastfm::LastFM::builder()
+            {
+                let sodapop_config = SodapopConfig::new().expect("error making config");
+                let mut lastfm_builder = lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
-                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
-                    .build()
-                    .expect("error making last.fm api"),
-                config: SodapopConfig::new().expect("error making config"),
-                discord: discord::DiscordState::new("1339694314074275882")?,
-            }));
+                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c");
 
-            let state = app.state::<Mutex<SodapopState>>();
-            let mut state_guard = state.lock().unwrap();
+                if let Some(sk) = sodapop_config.last_fm_key.clone() {
+                    lastfm_builder.session_key(sk);
+                }
 
-            if let Some(sk) = state_guard.config.last_fm_key.clone() {
-                state_guard.lastfm.add_session_key(sk.to_string());
+                app.manage(SodapopState {
+                    player: Mutex::new(player::Player::new(config)),
+                    db: Arc::new(db::Database::new(path.clone())),
+                    lastfm: Arc::new(lastfm_builder.build().expect("error making last.fm api")),
+                    config: Arc::new(RwLock::new(sodapop_config)),
+                    discord: Mutex::new(discord::DiscordState::new("1339694314074275882")?),
+                });
             }
 
-            if state_guard.config.discord_enabled {
-                state_guard.discord.rpc.connect()?;
-                state_guard.discord.enabled = true;
+            let state = app.state::<SodapopState>();
+
+            let config = state.config.read().unwrap();
+            if config.discord_enabled {
+                let mut discord = state.discord.lock().unwrap();
+                discord.rpc.connect()?;
+                discord.enabled = true;
             }
 
             let handle = app.handle().clone();
-            state_guard
-                .player
+            let mut player = state.player.lock().unwrap();
+            player
                 .controls
                 .attach(move |event| match event {
                     MediaControlEvent::Play => {
@@ -209,16 +212,16 @@ fn main() {
             std::thread::spawn(move || loop {
                 std::thread::sleep(std::time::Duration::from_millis(50));
                 // get the player state
-                let state = app_handle.state::<Mutex<SodapopState>>();
-                let mut state_guard = state.lock().unwrap();
+                let state = app_handle.state::<SodapopState>();
+                let mut player = state.player.lock().unwrap();
 
-                let progress = state_guard.player.progress;
+                let progress = player.progress;
 
-                if let player::PlayerState::Playing = state_guard.player.state {
-                    state_guard.player.update();
+                if let player::PlayerState::Playing = player.state {
+                    player.update();
                     app_handle.emit("player-progress", progress).unwrap();
 
-                    if progress >= (state_guard.player.duration - 0.05) as f64 {
+                    if progress >= (player.duration - 0.05) as f64 {
                         app_handle.emit("track-end", 0.0).unwrap();
                     };
                 }
@@ -226,23 +229,26 @@ fn main() {
 
             let app_handle = app.handle().clone();
             SodapopConfigEvent::listen(app, move |event| {
-                let state = app_handle.state::<Mutex<SodapopState>>();
-                let mut state_guard = state.lock().unwrap();
+                let state = app_handle.state::<SodapopState>();
                 if let Some(d) = event.payload.discord_enabled {
+                    let mut discord = state.discord.lock().unwrap();
+                    let player = state.player.lock().unwrap();
+
                     if d {
-                        state_guard.discord.rpc.connect().unwrap();
-                        state_guard.discord.enabled = true;
+                        discord.rpc.connect().unwrap();
+                        discord.enabled = true;
                         let curr_payload = PayloadData {
-                            progress: state_guard.player.progress,
-                            ..state_guard.discord.payload.clone()
+                            progress: player.progress,
+                            ..discord.payload.clone()
                         };
-                        state_guard.discord.make_activity(curr_payload).unwrap();
+                        discord.make_activity(curr_payload).unwrap();
                     } else {
-                        state_guard.discord.rpc.close().unwrap();
-                        state_guard.discord.enabled = false;
+                        discord.rpc.close().unwrap();
+                        discord.enabled = false;
                     }
                 }
-                state_guard.config.update_config(event.payload).unwrap();
+                let mut config = state.config.write().unwrap();
+                config.update_config(event.payload).unwrap();
             });
 
             let covers = path.join("covers");
@@ -259,14 +265,15 @@ fn main() {
         .expect("error while running tauri application")
         .run(|_app, _event| {
             if let RunEvent::ExitRequested { .. } = _event {
-                let state = _app.state::<Mutex<SodapopState>>();
-                let mut state_guard = state.lock().unwrap();
+                let state = _app.state::<SodapopState>();
+                let config = state.config.read().unwrap();
+                let mut discord = state.discord.lock().unwrap();
 
-                if state_guard.config.discord_enabled {
-                    state_guard.discord.rpc.close().unwrap();
+                if config.discord_enabled {
+                    discord.rpc.close().unwrap();
                 };
 
-                state_guard.db.shutdown().unwrap();
+                state.db.shutdown().unwrap();
             }
         });
 }
