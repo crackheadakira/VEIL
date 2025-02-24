@@ -85,7 +85,7 @@ impl Database {
     }
 
     /// Writes WAL data to database
-    pub fn shutdown(&mut self) -> Result<(), DatabaseError> {
+    pub fn shutdown(&self) -> Result<(), DatabaseError> {
         let conn = self.pool.get()?;
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
 

@@ -10,7 +10,7 @@ use specta::Type;
 use std::io::Write;
 use std::sync::{Arc, Mutex, RwLock};
 use std::{fs::create_dir, fs::File, path::PathBuf};
-use tauri::{Emitter, Manager, State};
+use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
 #[cfg(debug_assertions)]
@@ -262,19 +262,20 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while running tauri application");
-    /*.run(|_app, _event| {
-        if let RunEvent::ExitRequested { .. } = _event {
-            let state = _app.state::<SodapopState>();
-            let config = state.config.read().unwrap();
+        .expect("error while running tauri application")
+        .run(|_app, _event| {
+            if let RunEvent::ExitRequested { .. } = _event {
+                let state = _app.state::<SodapopState>();
+                let config = state.config.read().unwrap();
+                let mut discord = state.discord.lock().unwrap();
 
-            if config.discord_enabled {
-                state.discord.rpc.close().unwrap();
-            };
+                if config.discord_enabled {
+                    discord.rpc.close().unwrap();
+                };
 
-            state_guard.db.shutdown().unwrap();
-        }
-    });*/
+                state.db.shutdown().unwrap();
+            }
+        });
 }
 
 pub fn data_path() -> PathBuf {
