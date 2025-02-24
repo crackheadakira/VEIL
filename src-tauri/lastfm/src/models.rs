@@ -3,7 +3,6 @@ use std::fmt;
 use serde::{Deserialize, Serialize};
 
 pub enum APIMethod {
-    ArtistGetInfo,
     AuthGetSession,
     AuthGetToken,
     UserGetInfo,
@@ -12,16 +11,12 @@ pub enum APIMethod {
 impl APIMethod {
     /// If the method needs an API signature
     pub fn need_sig(&self) -> bool {
-        match self {
-            Self::AuthGetSession | Self::AuthGetToken => true,
-            _ => false,
-        }
+        matches![self, Self::AuthGetSession | Self::AuthGetToken]
     }
 
     /// Get the method as a method string to pass to last.fm
     pub fn as_query(&self) -> String {
         let result = match self {
-            Self::ArtistGetInfo => "artist.getInfo",
             Self::AuthGetSession => "auth.getSession",
             Self::AuthGetToken => "auth.getToken",
             Self::UserGetInfo => "user.GetInfo",

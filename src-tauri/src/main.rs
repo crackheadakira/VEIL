@@ -11,7 +11,7 @@ use specta::Type;
 use std::io::Write;
 use std::sync::Mutex;
 use std::{fs::create_dir, fs::File, path::PathBuf};
-use tauri::{Emitter, Manager, RunEvent};
+use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{collect_commands, collect_events, Builder, Event};
 
 #[cfg(debug_assertions)]
@@ -30,6 +30,8 @@ pub struct SodapopState {
     pub config: SodapopConfig,
     pub lastfm: lastfm::LastFM,
 }
+
+pub type StateMutex<'a> = State<'a, Mutex<SodapopState>>;
 
 #[derive(Type, Serialize, Clone)]
 pub enum MediaPayload {

@@ -9,9 +9,9 @@ use crate::data_path;
 pub struct SodapopConfig {
     pub theme: ThemeMode,
     pub music_dir: Option<String>,
-    pub last_fm_key: Option<String>,
     pub discord_enabled: bool,
     pub last_fm_enabled: bool,
+    pub last_fm_key: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Type, Clone, Copy)]
@@ -60,7 +60,7 @@ impl SodapopConfig {
         Ok(())
     }
 
-    fn write_config(&self) -> Result<(), std::io::Error> {
+    pub fn write_config(&self) -> Result<(), std::io::Error> {
         fs::write(config_path(), serde_json::to_string(&self)?)?;
         Ok(())
     }

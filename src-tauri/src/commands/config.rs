@@ -1,12 +1,8 @@
-use std::sync::Mutex;
-
-use tauri::State;
-
-use crate::{config::SodapopConfig, SodapopState};
+use crate::{config::SodapopConfig, StateMutex};
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_config(state: State<'_, Mutex<SodapopState>>) -> SodapopConfig {
+pub fn get_config(state: StateMutex) -> SodapopConfig {
     let state_guard = state.lock().unwrap();
     state_guard.config.clone()
 }

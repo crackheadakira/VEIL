@@ -1,13 +1,10 @@
-use crate::{config::SodapopConfigEvent, error::FrontendError, SodapopState};
+use crate::{error::FrontendError, StateMutex};
 use lastfm::{Auth, LastFMData};
-
-use std::sync::Mutex;
-use tauri::State;
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_token(state: State<'_, Mutex<SodapopState>>) -> Result<(String, String), FrontendError> {
-    let state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+pub fn get_token(state: StateMutex) -> Result<(String, String), FrontendError> {
+    let state_guard = state.lock().unwrap();
     let a = state_guard.lastfm.auth().token().send()?;
 
     let mut url = String::new();
@@ -21,20 +18,12 @@ pub fn get_token(state: State<'_, Mutex<SodapopState>>) -> Result<(String, Strin
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_session(
-    token: String,
-    state: State<'_, Mutex<SodapopState>>,
-) -> Result<(), FrontendError> {
-    let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+pub fn get_session(token: String, state: StateMutex) -> Result<(), FrontendError> {
+    let mut state_guard = state.lock().unwrap();
     let a = state_guard.lastfm.auth().session(token).send()?;
 
-    state_guard.config.update_config(SodapopConfigEvent {
-        theme: None,
-        music_dir: None,
-        last_fm_key: Some(a.session.key),
-        discord_enabled: None,
-        last_fm_enabled: None,
-    })?;
+    state_guard.config.last_fm_key = Some(a.session.key);
+    state_guard.config.write_config()?;
 
     Ok(())
 }

@@ -1,14 +1,9 @@
-use crate::{discord, error::FrontendError, player::PlayerState, SodapopState};
+use crate::{discord, error::FrontendError, player::PlayerState, StateMutex};
 use db::models::Tracks;
-use std::sync::Mutex;
-use tauri::State;
 
 #[tauri::command]
 #[specta::specta]
-pub fn play_track(
-    track_id: u32,
-    state: State<'_, Mutex<SodapopState>>,
-) -> Result<(), FrontendError> {
+pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError> {
     let mut state_guard = state.lock().unwrap();
 
     if state_guard.player.track.is_some() {
@@ -45,7 +40,7 @@ pub fn play_track(
 
 #[tauri::command]
 #[specta::specta]
-pub fn pause_track(state: State<'_, Mutex<SodapopState>>) {
+pub fn pause_track(state: StateMutex) {
     let mut state_guard = state.lock().unwrap();
     state_guard.player.pause();
 
@@ -62,7 +57,7 @@ pub fn pause_track(state: State<'_, Mutex<SodapopState>>) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn resume_track(state: State<'_, Mutex<SodapopState>>) {
+pub fn resume_track(state: StateMutex) {
     let mut state_guard = state.lock().unwrap();
     state_guard.player.resume();
 
@@ -79,7 +74,7 @@ pub fn resume_track(state: State<'_, Mutex<SodapopState>>) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn seek_track(position: f64, resume: bool, state: State<'_, Mutex<SodapopState>>) {
+pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
     let mut state_guard = state.lock().unwrap();
     state_guard.player.seek(position, resume);
 
@@ -102,7 +97,7 @@ pub fn seek_track(position: f64, resume: bool, state: State<'_, Mutex<SodapopSta
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_volume(volume: f32, state: State<'_, Mutex<SodapopState>>) {
+pub fn set_volume(volume: f32, state: StateMutex) {
     let mut state_guard = state.lock().unwrap();
 
     state_guard.player.set_volume(volume);
@@ -110,42 +105,42 @@ pub fn set_volume(volume: f32, state: State<'_, Mutex<SodapopState>>) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_state(state: State<'_, Mutex<SodapopState>>) -> PlayerState {
+pub fn get_player_state(state: StateMutex) -> PlayerState {
     let state_guard = state.lock().unwrap();
     state_guard.player.state
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_progress(state: State<'_, Mutex<SodapopState>>) -> f64 {
-    let state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+pub fn get_player_progress(state: StateMutex) -> f64 {
+    let state_guard = state.lock().unwrap();
     state_guard.player.progress
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn player_has_ended(state: State<'_, Mutex<SodapopState>>) -> bool {
-    let state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+pub fn player_has_ended(state: StateMutex) -> bool {
+    let state_guard = state.lock().unwrap();
     state_guard.player.has_ended()
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn player_has_track(state: State<'_, Mutex<SodapopState>>) -> bool {
+pub fn player_has_track(state: StateMutex) -> bool {
     let state_guard = state.lock().unwrap();
     state_guard.player.track.is_some()
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_duration(state: State<'_, Mutex<SodapopState>>) -> f32 {
+pub fn get_player_duration(state: StateMutex) -> f32 {
     let state_guard = state.lock().unwrap();
     state_guard.player.duration
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn stop_player(state: State<'_, Mutex<SodapopState>>) {
+pub fn stop_player(state: StateMutex) {
     let mut state_guard = state.lock().unwrap();
     state_guard.player.stop();
 }
@@ -155,9 +150,9 @@ pub fn stop_player(state: State<'_, Mutex<SodapopState>>) {
 pub fn initialize_player(
     track_id: u32,
     progress: f64,
-    state: State<'_, Mutex<SodapopState>>,
+    state: StateMutex,
 ) -> Result<(), FrontendError> {
-    let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+    let mut state_guard = state.lock().unwrap();
     let track = state_guard.db.by_id::<Tracks>(&track_id)?;
     state_guard.player.initialize_player(track, progress)?;
 
@@ -166,7 +161,7 @@ pub fn initialize_player(
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_player_progress(progress: f64, state: State<'_, Mutex<SodapopState>>) {
-    let mut state_guard: std::sync::MutexGuard<'_, SodapopState> = state.lock().unwrap();
+pub fn set_player_progress(progress: f64, state: StateMutex) {
+    let mut state_guard = state.lock().unwrap();
     state_guard.player.set_progress(progress);
 }
