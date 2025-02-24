@@ -1,9 +1,9 @@
-use crate::{error::FrontendError, StateMutex};
+use crate::{error::FrontendError, TauriState};
 use lastfm::{Auth, LastFMData};
 
 #[tauri::command]
 #[specta::specta]
-pub async fn get_token(state: StateMutex<'_>) -> Result<(String, String), FrontendError> {
+pub async fn get_token(state: TauriState<'_>) -> Result<(String, String), FrontendError> {
     let a = state.lastfm.auth().token().send().await?;
 
     let mut url = String::new();
@@ -17,7 +17,7 @@ pub async fn get_token(state: StateMutex<'_>) -> Result<(String, String), Fronte
 
 #[tauri::command]
 #[specta::specta]
-pub async fn get_session(state: StateMutex<'_>, token: String) -> Result<(), FrontendError> {
+pub async fn get_session(state: TauriState<'_>, token: String) -> Result<(), FrontendError> {
     let a = state.lastfm.auth().session(token).send().await?;
 
     let mut config = state.config.write().unwrap();

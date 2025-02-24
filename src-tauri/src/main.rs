@@ -30,7 +30,7 @@ pub struct SodapopState {
     pub lastfm: Arc<lastfm::LastFM>,
 }
 
-pub type StateMutex<'a> = State<'a, SodapopState>;
+pub type TauriState<'a> = State<'a, SodapopState>;
 
 #[derive(Type, Serialize, Clone)]
 pub enum MediaPayload {

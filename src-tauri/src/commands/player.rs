@@ -1,9 +1,9 @@
-use crate::{discord, error::FrontendError, player::PlayerState, StateMutex};
+use crate::{discord, error::FrontendError, player::PlayerState, TauriState};
 use db::models::Tracks;
 
 #[tauri::command]
 #[specta::specta]
-pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError> {
+pub fn play_track(track_id: u32, state: TauriState) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
     if player.track.is_some() {
         player.stop();
@@ -40,7 +40,7 @@ pub fn play_track(track_id: u32, state: StateMutex) -> Result<(), FrontendError>
 
 #[tauri::command]
 #[specta::specta]
-pub fn pause_track(state: StateMutex) {
+pub fn pause_track(state: TauriState) {
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
     player.pause();
@@ -58,7 +58,7 @@ pub fn pause_track(state: StateMutex) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn resume_track(state: StateMutex) {
+pub fn resume_track(state: TauriState) {
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
 
@@ -77,7 +77,7 @@ pub fn resume_track(state: StateMutex) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
+pub fn seek_track(position: f64, resume: bool, state: TauriState) {
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
     player.seek(position, resume);
@@ -101,7 +101,7 @@ pub fn seek_track(position: f64, resume: bool, state: StateMutex) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_volume(volume: f32, state: StateMutex) {
+pub fn set_volume(volume: f32, state: TauriState) {
     let mut player = state.player.lock().unwrap();
 
     player.set_volume(volume);
@@ -109,42 +109,42 @@ pub fn set_volume(volume: f32, state: StateMutex) {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_state(state: StateMutex) -> PlayerState {
+pub fn get_player_state(state: TauriState) -> PlayerState {
     let player = state.player.lock().unwrap();
     player.state
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_progress(state: StateMutex) -> f64 {
+pub fn get_player_progress(state: TauriState) -> f64 {
     let player = state.player.lock().unwrap();
     player.progress
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn player_has_ended(state: StateMutex) -> bool {
+pub fn player_has_ended(state: TauriState) -> bool {
     let player = state.player.lock().unwrap();
     player.has_ended()
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn player_has_track(state: StateMutex) -> bool {
+pub fn player_has_track(state: TauriState) -> bool {
     let player = state.player.lock().unwrap();
     player.track.is_some()
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_duration(state: StateMutex) -> f32 {
+pub fn get_player_duration(state: TauriState) -> f32 {
     let player = state.player.lock().unwrap();
     player.duration
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn stop_player(state: StateMutex) {
+pub fn stop_player(state: TauriState) {
     let mut player = state.player.lock().unwrap();
     player.stop();
 }
@@ -154,7 +154,7 @@ pub fn stop_player(state: StateMutex) {
 pub fn initialize_player(
     track_id: u32,
     progress: f64,
-    state: StateMutex,
+    state: TauriState,
 ) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
     let track = state.db.by_id::<Tracks>(&track_id)?;
@@ -165,7 +165,7 @@ pub fn initialize_player(
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_player_progress(progress: f64, state: StateMutex) {
+pub fn set_player_progress(progress: f64, state: TauriState) {
     let mut player = state.player.lock().unwrap();
     player.set_progress(progress);
 }
