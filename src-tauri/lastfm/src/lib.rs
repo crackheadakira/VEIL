@@ -54,6 +54,7 @@ impl LastFM {
         LastFMBuilder {
             api_key: None,
             api_secret: None,
+            session_key: None,
         }
     }
 
@@ -127,11 +128,16 @@ impl LastFM {
         // converts it to a hexadecimal string
         format!("{:x}", digest)
     }
+
+    pub fn session_key(&self) -> Option<String> {
+        self.session_key.clone()
+    }
 }
 
 pub struct LastFMBuilder {
     api_key: Option<String>,
     api_secret: Option<String>,
+    session_key: Option<String>,
 }
 
 impl LastFMBuilder {
@@ -147,12 +153,18 @@ impl LastFMBuilder {
         self
     }
 
+    /// Add `session_key` to builder
+    pub fn session_key(&mut self, session_key: String) -> () {
+        self.session_key = Some(session_key);
+    }
+
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
     pub fn build(self) -> Result<LastFM, LastFMError> {
+        let secret = self.api_secret.clone();
         Ok(LastFM {
             api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
             api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
-            session_key: None,
+            session_key: secret,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
             client: reqwest::Client::new(),
         })
