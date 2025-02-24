@@ -1,6 +1,6 @@
 {
   "productName": "Sodapop Reimagined",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "identifier": "com.sodapop.reimagined",
   "build": {
     "beforeDevCommand": "bun run dev",
