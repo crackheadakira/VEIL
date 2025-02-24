@@ -54,11 +54,12 @@ impl<'a> GetUserInfo<'a> {
         Ok(params)
     }
 
-    pub fn send(self) -> Result<UserInfo, LastFMError> {
+    pub async fn send(self) -> Result<UserInfo, LastFMError> {
         let mut params = self.params()?;
-        let response: UserInfoResponse =
-            self.last_fm
-                .send_request(Method::GET, self.method, &mut params)?;
+        let response: UserInfoResponse = self
+            .last_fm
+            .send_request(Method::GET, self.method, &mut params)
+            .await?;
 
         Ok(response.user)
     }

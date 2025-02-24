@@ -3,9 +3,9 @@ use lastfm::{Auth, LastFMData};
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_token(state: StateMutex) -> Result<(String, String), FrontendError> {
+pub async fn get_token(state: StateMutex<'_>) -> Result<(String, String), FrontendError> {
     let state_guard = state.lock().unwrap();
-    let a = state_guard.lastfm.auth().token().send()?;
+    let a = state_guard.lastfm.auth().token().send().await?;
 
     let mut url = String::new();
     url.push_str("http://www.last.fm/api/auth/?api_key=");
@@ -18,9 +18,9 @@ pub fn get_token(state: StateMutex) -> Result<(String, String), FrontendError> {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_session(token: String, state: StateMutex) -> Result<(), FrontendError> {
+pub async fn get_session(state: StateMutex<'_>, token: String) -> Result<(), FrontendError> {
     let mut state_guard = state.lock().unwrap();
-    let a = state_guard.lastfm.auth().session(token).send()?;
+    let a = state_guard.lastfm.auth().session(token).send().await?;
 
     state_guard.config.last_fm_key = Some(a.session.key);
     state_guard.config.write_config()?;

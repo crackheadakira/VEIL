@@ -69,11 +69,12 @@ impl<'a> AuthGetSession<'a> {
         params
     }
 
-    pub fn send(self) -> Result<AuthGetSessionResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetSessionResponse, LastFMError> {
         let mut session_params = self.params();
         let response = self
             .last_fm
-            .send_request(Method::GET, self.method, &mut session_params)?;
+            .send_request(Method::GET, self.method, &mut session_params)
+            .await?;
 
         Ok(response)
     }
@@ -113,11 +114,12 @@ impl<'a> AuthGetToken<'a> {
         params
     }
 
-    pub fn send(self) -> Result<AuthGetTokenResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetTokenResponse, LastFMError> {
         let mut token_params = self.params();
         let response = self
             .last_fm
-            .send_request(Method::GET, self.method, &mut token_params)?;
+            .send_request(Method::GET, self.method, &mut token_params)
+            .await?;
 
         Ok(response)
     }

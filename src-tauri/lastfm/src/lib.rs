@@ -35,6 +35,7 @@ pub enum LastFMError {
     JsonError(#[from] serde_json::Error),
 }
 
+#[derive(Clone)]
 pub struct LastFM {
     /// The Last.FM API Key
     api_key: String,
@@ -45,7 +46,7 @@ pub struct LastFM {
     /// The URL to send API requests to
     base_url: String,
     /// The HTTP request client
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
 }
 
 impl LastFM {
@@ -57,7 +58,7 @@ impl LastFM {
     }
 
     /// Sends the HTTP Request to Last.FM
-    fn http_request(
+    async fn http_request(
         &self,
         method: Method,
         params: &mut LastFMParams,
@@ -65,18 +66,18 @@ impl LastFM {
         let url = &self.base_url;
 
         let response = match method {
-            Method::GET => self.client.get(url).query(&params).send()?,
-            Method::POST => self.client.post(url).query(&params).send()?,
+            Method::GET => self.client.get(url).query(&params).send().await?,
+            Method::POST => self.client.post(url).query(&params).send().await?,
             _ => return Err(LastFMError::InvalidHTTPMethod),
         };
 
-        let json = response.json()?;
+        let json = response.json().await?;
         Ok(json)
     }
 
     /// Wraps around [`LastFM::http_request`] and inserts all the required
     /// parameters into `params`
-    fn send_request<T: for<'a> Deserialize<'a>>(
+    async fn send_request<T: for<'a> Deserialize<'a>>(
         &self,
         method: Method,
         api_method: APIMethod,
@@ -92,7 +93,7 @@ impl LastFM {
 
         params.insert(String::from("format"), String::from("json"));
 
-        let res = self.http_request(method, params)?;
+        let res = self.http_request(method, params).await?;
 
         if res.get("error").is_some() {
             let error: APIError = serde_json::from_value(res)?;
@@ -153,7 +154,7 @@ impl LastFMBuilder {
             api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
             session_key: None,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
-            client: reqwest::blocking::Client::new(),
+            client: reqwest::Client::new(),
         })
     }
 }
