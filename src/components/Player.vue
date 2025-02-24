@@ -209,10 +209,10 @@ async function handlePlayAndPause() {
   const hasTrack = await commands.playerHasTrack();
 
   if (!hasTrack && data.value) {
+    paused.value = false;
     const result = await commands.playTrack(data.value.id);
     if (result.status === "error") return handleBackendError(result.error);
 
-    paused.value = false;
     return;
   } else if (!hasTrack) {
     paused.value = true;

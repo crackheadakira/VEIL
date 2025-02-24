@@ -8,6 +8,10 @@ pub trait User {
     fn user(&self) -> api::user::User;
 }
 
+pub trait Track {
+    fn track(&self) -> api::track::Track;
+}
+
 pub trait LastFMData {
     /// Get `api_key` from [`LastFM`]
     fn api_key(&self) -> String;
@@ -24,6 +28,12 @@ impl Auth for LastFM {
 impl User for LastFM {
     fn user(&self) -> api::user::User {
         api::user::User::new(self)
+    }
+}
+
+impl Track for LastFM {
+    fn track(&self) -> api::track::Track {
+        api::track::Track::new(self)
     }
 }
 

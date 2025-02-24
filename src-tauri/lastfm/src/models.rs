@@ -6,12 +6,20 @@ pub enum APIMethod {
     AuthGetSession,
     AuthGetToken,
     UserGetInfo,
+    TrackUpdateNowPlaying,
+    TrackScrobble,
 }
 
 impl APIMethod {
     /// If the method needs an API signature
     pub fn need_sig(&self) -> bool {
-        matches![self, Self::AuthGetSession | Self::AuthGetToken]
+        matches![
+            self,
+            Self::AuthGetSession
+                | Self::AuthGetToken
+                | Self::TrackScrobble
+                | Self::TrackUpdateNowPlaying
+        ]
     }
 
     /// Get the method as a method string to pass to last.fm
@@ -19,7 +27,9 @@ impl APIMethod {
         let result = match self {
             Self::AuthGetSession => "auth.getSession",
             Self::AuthGetToken => "auth.getToken",
-            Self::UserGetInfo => "user.GetInfo",
+            Self::UserGetInfo => "user.getInfo",
+            Self::TrackUpdateNowPlaying => "track.updateNowPlaying",
+            Self::TrackScrobble => "track.scrobble",
         };
 
         String::from(result)

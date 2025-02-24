@@ -1,39 +1,51 @@
 use crate::{discord, error::FrontendError, player::PlayerState, TauriState};
 use db::models::Tracks;
+use lastfm::Track;
 
 #[tauri::command]
 #[specta::specta]
-pub fn play_track(track_id: u32, state: TauriState) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
-    if player.track.is_some() {
-        player.stop();
-    };
-
+pub async fn play_track(track_id: u32, state: TauriState<'_>) -> Result<(), FrontendError> {
     let track = state.db.by_id::<Tracks>(&track_id)?;
-    let duration = player.duration;
 
-    if track.duration == 0 {
-        state
-            .db
-            .update_duration(&track_id, &track.album_id, &(duration as u32))?;
+    // temporary scope to drop player before await
+    {
+        let mut player = state.player.lock().unwrap();
+
+        if player.track.is_some() {
+            player.stop();
+        };
+
+        let duration = player.duration;
+
+        if track.duration == 0 {
+            state
+                .db
+                .update_duration(&track_id, &track.album_id, &(duration as u32))?;
+        }
+
+        let _ = player.play(&track);
+
+        let progress = player.progress;
+        let payload = discord::PayloadData {
+            state: track.artist_name.clone() + " - " + &track.album_name,
+            details: track.name.clone(),
+            small_image: String::from("playing"),
+            small_text: String::from("Playing"),
+            show_timestamps: true,
+            duration,
+            progress,
+        };
+
+        let mut discord = state.discord.lock().unwrap();
+        discord.make_activity(payload)?;
     }
 
-    let _ = player.play(&track);
-
-    let progress = player.progress;
-
-    let payload = discord::PayloadData {
-        state: track.artist_name + " - " + &track.album_name,
-        details: track.name,
-        small_image: String::from("playing"),
-        small_text: String::from("Playing"),
-        show_timestamps: true,
-        duration,
-        progress,
-    };
-
-    let mut discord = state.discord.lock().unwrap();
-    discord.make_activity(payload)?;
+    state
+        .lastfm
+        .track()
+        .update_now_playing(track.artist_name, track.name)
+        .send()
+        .await?;
 
     Ok(())
 }

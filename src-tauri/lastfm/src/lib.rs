@@ -68,7 +68,14 @@ impl LastFM {
 
         let response = match method {
             Method::GET => self.client.get(url).query(&params).send().await?,
-            Method::POST => self.client.post(url).query(&params).send().await?,
+            Method::POST => {
+                self.client
+                    .post(url)
+                    .header("Content-Type", "application/x-www-form-urlencoded")
+                    .form(&params)
+                    .send()
+                    .await?
+            }
             _ => return Err(LastFMError::InvalidHTTPMethod),
         };
 
@@ -160,11 +167,10 @@ impl LastFMBuilder {
 
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
     pub fn build(self) -> Result<LastFM, LastFMError> {
-        let secret = self.api_secret.clone();
         Ok(LastFM {
             api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
             api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
-            session_key: secret,
+            session_key: self.session_key,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
             client: reqwest::Client::new(),
         })

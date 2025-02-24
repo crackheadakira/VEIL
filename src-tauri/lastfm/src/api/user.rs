@@ -28,7 +28,7 @@ pub struct GetUserInfo<'a> {
 }
 
 impl<'a> GetUserInfo<'a> {
-    pub fn new(last_fm: &'a LastFM, user: Option<String>) -> Self {
+    fn new(last_fm: &'a LastFM, user: Option<String>) -> Self {
         Self {
             last_fm,
             user,
@@ -60,7 +60,6 @@ impl<'a> GetUserInfo<'a> {
             .last_fm
             .send_request(Method::GET, self.method, &mut params)
             .await?;
-
         Ok(response.user)
     }
 }
