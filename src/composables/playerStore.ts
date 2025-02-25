@@ -33,7 +33,7 @@ export const usePlayerStore = defineStore("player", () => {
   /**
    * Sets given track as the current track and plays it.
    *
-   * Calls Rust backend (stopPlayer, playTrack), and updates store `currentTrack` & `playerProgress`.
+   * Calls Rust backend (setPlayerProgress, playTrack), and updates store `currentTrack` & `playerProgress`.
    *
    * @param {Tracks} track - The track to play
    */

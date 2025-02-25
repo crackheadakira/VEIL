@@ -10,29 +10,13 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
     let mut player = state.player.lock().unwrap();
 
     // if player has track that's been playing, scrobble condition will pass
-    if player.track.is_some() && player.scrobble() {
+    if player.track.is_some() && player.scrobble() && !player.scrobbled {
         let player_track_id = player.track.unwrap();
         let track = state.db.by_id::<Tracks>(&player_track_id)?;
-        let track_timestamp = player.timestamp.clone();
+        let track_timestamp = player.timestamp;
         let handle = handle.clone();
-        tokio::spawn(async move {
-            let state = handle.state::<SodapopState>();
-            let lastfm = state.lastfm.lock().await;
-            let res = lastfm
-                .track()
-                .scrobble(vec![TrackData {
-                    artist: track.artist_name,
-                    name: track.name,
-                    timestamp: Some(track_timestamp),
-                }])
-                .send()
-                .await;
-
-            if let Err(LastFMError::RequestWhenDisabled) = res {
-            } else if let Err(e) = res {
-                eprintln!("LastFM error from player: {:?}", e);
-            }
-        });
+        player.scrobbled = true;
+        scrobble_helper(handle, track, track_timestamp);
     }
 
     let track = state.db.by_id::<Tracks>(&track_id)?;
@@ -92,10 +76,21 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
 
 #[tauri::command]
 #[specta::specta]
-pub fn pause_track(state: TauriState) {
+pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
+    let state = handle.state::<SodapopState>();
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
     player.pause();
+
+    // if player has track that's been playing, scrobble condition will pass
+    if player.track.is_some() && player.scrobble() && !player.scrobbled {
+        let player_track_id = player.track.unwrap();
+        let track = state.db.by_id::<Tracks>(&player_track_id)?;
+        let track_timestamp = player.timestamp;
+        let handle = handle.clone();
+        player.scrobbled = true;
+        scrobble_helper(handle, track, track_timestamp);
+    }
 
     let mut payload = discord.payload.clone();
     payload = discord::PayloadData {
@@ -106,6 +101,7 @@ pub fn pause_track(state: TauriState) {
     };
 
     discord.make_activity(payload).unwrap();
+    Ok(())
 }
 
 #[tauri::command]
@@ -220,4 +216,25 @@ pub fn initialize_player(
 pub fn set_player_progress(progress: f64, state: TauriState) {
     let mut player = state.player.lock().unwrap();
     player.set_progress(progress);
+}
+
+fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
+    tokio::spawn(async move {
+        let state = handle.state::<SodapopState>();
+        let lastfm = state.lastfm.lock().await;
+        let res = lastfm
+            .track()
+            .scrobble(vec![TrackData {
+                artist: track.artist_name,
+                name: track.name,
+                timestamp: Some(track_timestamp),
+            }])
+            .send()
+            .await;
+
+        if let Err(LastFMError::RequestWhenDisabled) = res {
+        } else if let Err(e) = res {
+            eprintln!("LastFM error from player: {:?}", e);
+        }
+    });
 }

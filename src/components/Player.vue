@@ -222,7 +222,8 @@ async function handlePlayAndPause() {
   if (paused.value === true) {
     await commands.resumeTrack();
   } else {
-    await commands.pauseTrack();
+    const result = await commands.pauseTrack();
+    if (result.status === "error") return handleBackendError(result.error);
   }
 
   paused.value = !paused.value;
@@ -258,7 +259,7 @@ async function handleSongEnd() {
       playerStore.queueIndex = 0;
       await playerStore.setPlayerTrack(queue[0]);
     } else {
-      paused.value = true;
+      await handlePlayAndPause();
     }
   } else {
     playerStore.skipTrack(true);

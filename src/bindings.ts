@@ -139,8 +139,13 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async pauseTrack(): Promise<void> {
-    await TAURI_INVOKE("pause_track");
+  async pauseTrack(): Promise<Result<null, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("pause_track") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
   },
   async resumeTrack(): Promise<void> {
     await TAURI_INVOKE("resume_track");
