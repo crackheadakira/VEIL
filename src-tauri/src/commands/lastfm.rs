@@ -1,5 +1,5 @@
 use crate::{error::FrontendError, TauriState};
-use lastfm::{Auth, LastFMData};
+use lastfm::LastFMData;
 
 #[tauri::command]
 #[specta::specta]

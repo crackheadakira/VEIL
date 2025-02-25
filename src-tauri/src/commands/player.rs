@@ -1,6 +1,6 @@
 use crate::{discord, error::FrontendError, player::PlayerState, SodapopState, TauriState};
 use db::models::Tracks;
-use lastfm::{LastFMError, Track};
+use lastfm::LastFMError;
 use tauri::{AppHandle, Manager};
 
 #[tauri::command]

@@ -2,9 +2,8 @@
 
 mod api;
 mod models;
-mod traits;
-pub use crate::traits::*;
 
+use api::*;
 use models::{APIError, APIMethod};
 use reqwest::Method;
 use serde::Deserialize;
@@ -154,6 +153,35 @@ impl LastFM {
 
     pub fn enable(&mut self, value: bool) {
         self.enabled = value;
+    }
+
+    pub fn auth(&self) -> auth::Auth {
+        auth::Auth::new(self)
+    }
+
+    pub fn user(&self) -> user::User {
+        user::User::new(self)
+    }
+
+    pub fn track(&self) -> track::Track {
+        track::Track::new(self)
+    }
+}
+
+pub trait LastFMData {
+    /// Get `api_key` from [`LastFM`]
+    fn api_key(&self) -> String;
+    /// Get `api_secret` from [`LastFM`]
+    fn api_secret(&self) -> String;
+}
+
+impl LastFMData for LastFM {
+    fn api_key(&self) -> String {
+        String::from(&self.api_key)
+    }
+
+    fn api_secret(&self) -> String {
+        String::from(&self.api_secret)
     }
 }
 
