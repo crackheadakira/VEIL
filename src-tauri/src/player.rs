@@ -205,13 +205,12 @@ impl Player {
         self.progress = progress;
     }
 
-    /// Update the progress of the player if the player is playing
-    pub fn update(&mut self) {
-        if let Some(ref mut sound_handle) = self.sound_handle {
-            if let PlayerState::Playing = self.state {
-                self.progress = sound_handle.position();
-                self.set_playback(true).unwrap();
-            }
+    /// Gets player progress from `sound_handle`
+    pub fn get_progress(&self) -> f64 {
+        if let Some(ref sound_handle) = self.sound_handle {
+            sound_handle.position()
+        } else {
+            -1.0
         }
     }
 
@@ -233,7 +232,7 @@ impl Player {
     }
 
     fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {
-        let progress = progress_as_position(self.progress);
+        let progress: Option<souvlaki::MediaPosition> = progress_as_position(self.progress);
         let playback = match play {
             true => MediaPlayback::Playing { progress },
             false => MediaPlayback::Paused { progress },

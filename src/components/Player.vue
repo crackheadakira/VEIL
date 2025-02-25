@@ -149,10 +149,10 @@ const data = ref(playerStore.currentTrack);
  *
  * Updates `$progressBar` with the current progress.
  */
-async function handleProgress() {
+async function handleProgress(p?: number) {
   if (!(await commands.playerHasTrack())) return;
   if (progressBar.value) {
-    const progress = await commands.getPlayerProgress();
+    const progress = p ? p : await commands.getPlayerProgress();
 
     if (beingHeld.value) return;
     playerStore.playerProgress = progress;
@@ -288,8 +288,9 @@ async function initialLoad() {
   await commands.setVolume(volume);
 }
 
-const listenPlayerProgress = listen("player-progress", async (_) => {
-  await handleProgress();
+const listenPlayerProgress = listen("player-progress", async (e) => {
+  const progress = e.payload as number;
+  await handleProgress(progress);
 });
 
 const listenTrackEnd = listen("track-end", async (_) => {

@@ -219,12 +219,10 @@ fn main() {
                 std::thread::sleep(std::time::Duration::from_millis(50));
                 // get the player state
                 let state = app_handle.state::<SodapopState>();
-                let mut player = state.player.lock().unwrap();
-
-                let progress = player.progress;
+                let player = state.player.lock().unwrap();
 
                 if let player::PlayerState::Playing = player.state {
-                    player.update();
+                    let progress = player.get_progress();
                     app_handle.emit("player-progress", progress).unwrap();
 
                     if progress >= (player.duration - 0.05) as f64 {
