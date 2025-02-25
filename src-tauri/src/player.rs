@@ -33,7 +33,7 @@ pub struct Player {
     manager: AudioManager<DefaultBackend>,
     tween: Tween,
     clock: ClockHandle,
-    scrobble_condition: f32,
+    scrobble_condition: f64,
     pub track: Option<u32>,
     pub progress: f64,
     pub duration: f32,
@@ -46,10 +46,9 @@ impl Player {
     pub fn new(c: souvlaki::PlatformConfig) -> Self {
         let mut manager =
             AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
-        // 2 ticks per second
-        let clock = manager
-            .add_clock(ClockSpeed::TicksPerMinute(120.0))
-            .unwrap();
+
+        // 1 tick per second
+        let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0)).unwrap();
 
         Player {
             sound_handle: None,
@@ -96,7 +95,7 @@ impl Player {
             if self.duration > 240.0 {
                 self.scrobble_condition = 240.0;
             } else if self.duration > 30.0 {
-                self.scrobble_condition = self.duration / 2.0;
+                self.scrobble_condition = (self.duration as f64) / 2.0;
             };
 
             self.clock.start();
@@ -216,6 +215,13 @@ impl Player {
                 self.set_playback(true).unwrap();
             }
         }
+    }
+
+    /// Whether or not the clock progress has passsed `scrobble_condition`
+    pub fn scrobble(&self) -> bool {
+        let clock_time = self.clock.time();
+        let ticks = clock_time.ticks;
+        ticks as f64 >= self.scrobble_condition
     }
 
     fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {

@@ -61,7 +61,7 @@ impl<'a> UpdateNowPlaying<'a> {
             Ok(_) => Ok(()),
 
             // ignore this specific error, as we're passing in `()` as type
-            // so it'll always return this error
+            // so it'll always return this
             Err(LastFMError::JsonError(ref e))
                 if e.to_string() == "invalid type: map, expected unit" =>
             {
