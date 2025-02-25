@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use reqwest::Method;
 
-use crate::{models::APIMethod, LastFM, LastFMError, LastFMParams};
+use crate::{
+    models::{APIMethod, TrackData},
+    LastFM, LastFMError, LastFMParams,
+};
 
 pub struct Track<'a> {
     last_fm: &'a LastFM,
@@ -13,27 +16,25 @@ impl<'a> Track<'a> {
         Self { last_fm }
     }
 
-    pub fn update_now_playing(&self, artist: String, track: String) -> UpdateNowPlaying {
-        UpdateNowPlaying::new(self.last_fm, artist, track)
+    pub fn update_now_playing(&self, track: TrackData) -> UpdateNowPlaying {
+        UpdateNowPlaying::new(self.last_fm, track)
     }
 
-    pub fn scrobble(&self, artist: String, track: String) -> TrackScrobble {
-        TrackScrobble::new(self.last_fm, artist, track)
+    pub fn scrobble(&self, tracks: Vec<TrackData>) -> TrackScrobble {
+        TrackScrobble::new(self.last_fm, tracks)
     }
 }
 
 pub struct UpdateNowPlaying<'a> {
     last_fm: &'a LastFM,
-    artist: String,
-    track: String,
+    track: TrackData,
     method: APIMethod,
 }
 
 impl<'a> UpdateNowPlaying<'a> {
-    fn new(last_fm: &'a LastFM, artist: String, track: String) -> Self {
+    fn new(last_fm: &'a LastFM, track: TrackData) -> Self {
         Self {
             last_fm,
-            artist,
             track,
             method: APIMethod::TrackUpdateNowPlaying,
         }
@@ -42,8 +43,8 @@ impl<'a> UpdateNowPlaying<'a> {
     fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
-        params.insert(String::from("artist"), self.artist.clone());
-        params.insert(String::from("track"), self.track.clone());
+        params.insert(String::from("artist"), self.track.artist.clone());
+        params.insert(String::from("track"), self.track.name.clone());
 
         let session_key = self.last_fm.session_key.clone();
         params.insert(
@@ -84,17 +85,15 @@ impl<'a> UpdateNowPlaying<'a> {
 
 pub struct TrackScrobble<'a> {
     last_fm: &'a LastFM,
-    artist: String,
-    track: String,
+    tracks: Vec<TrackData>,
     method: APIMethod,
 }
 
 impl<'a> TrackScrobble<'a> {
-    fn new(last_fm: &'a LastFM, artist: String, track: String) -> Self {
+    fn new(last_fm: &'a LastFM, tracks: Vec<TrackData>) -> Self {
         Self {
             last_fm,
-            artist,
-            track,
+            tracks,
             method: APIMethod::TrackScrobble,
         }
     }
@@ -102,8 +101,13 @@ impl<'a> TrackScrobble<'a> {
     fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
-        params.insert(String::from("artist"), self.artist.clone());
-        params.insert(String::from("track"), self.track.clone());
+        for (index, track) in self.tracks.iter().enumerate() {
+            let artist_key = format!("artist[{}]", index);
+            let track_key = format!("track[{}]", index);
+
+            params.insert(artist_key, track.artist.clone());
+            params.insert(track_key, track.name.clone());
+        }
 
         let session_key = self.last_fm.session_key.clone();
         params.insert(

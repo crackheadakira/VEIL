@@ -1,6 +1,6 @@
 use crate::{discord, error::FrontendError, player::PlayerState, SodapopState, TauriState};
 use db::models::Tracks;
-use lastfm::LastFMError;
+use lastfm::{LastFMError, TrackData};
 use tauri::{AppHandle, Manager};
 
 #[tauri::command]
@@ -8,12 +8,36 @@ use tauri::{AppHandle, Manager};
 pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), FrontendError> {
     let handle = handle.clone();
     let state = handle.state::<SodapopState>();
-    let track = state.db.by_id::<Tracks>(&track_id)?;
 
+    let mut player = state.player.lock().unwrap();
+
+    // if player has track that's been playing, scrobble condition will pass
+    if player.track.is_some() && player.scrobble() {
+        let player_track_id = player.track.unwrap();
+        let track = state.db.by_id::<Tracks>(&player_track_id)?;
+        let handle = handle.clone();
+        tokio::spawn(async move {
+            let state = handle.state::<SodapopState>();
+            let lastfm = state.lastfm.lock().await;
+            let res = lastfm
+                .track()
+                .scrobble(vec![TrackData {
+                    artist: track.artist_name,
+                    name: track.name,
+                }])
+                .send()
+                .await;
+
+            if let Err(LastFMError::RequestWhenDisabled) = res {
+            } else if let Err(e) = res {
+                eprintln!("LastFM error from player: {:?}", e);
+            }
+        });
+    }
+
+    let track = state.db.by_id::<Tracks>(&track_id)?;
     // temporary scope to drop player before await
     {
-        let mut player = state.player.lock().unwrap();
-
         if player.track.is_some() {
             player.stop();
         };
@@ -49,7 +73,10 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
         let lastfm = state.lastfm.lock().await;
         let res = lastfm
             .track()
-            .update_now_playing(track.artist_name, track.name)
+            .update_now_playing(TrackData {
+                artist: track.artist_name,
+                name: track.name,
+            })
             .send()
             .await;
 

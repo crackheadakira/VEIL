@@ -2,6 +2,7 @@
 
 mod api;
 mod models;
+pub use models::TrackData;
 
 use api::*;
 use models::{APIError, APIMethod};

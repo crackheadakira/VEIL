@@ -62,3 +62,8 @@ impl fmt::Display for APIError {
 }
 
 impl std::error::Error for APIError {}
+
+pub struct TrackData {
+    pub artist: String,
+    pub name: String,
+}
