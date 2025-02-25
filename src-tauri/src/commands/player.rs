@@ -6,15 +6,14 @@ use tauri::{AppHandle, Manager};
 #[tauri::command]
 #[specta::specta]
 pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), FrontendError> {
-    let handle = handle.clone();
     let state = handle.state::<SodapopState>();
-
     let mut player = state.player.lock().unwrap();
 
     // if player has track that's been playing, scrobble condition will pass
     if player.track.is_some() && player.scrobble() {
         let player_track_id = player.track.unwrap();
         let track = state.db.by_id::<Tracks>(&player_track_id)?;
+        let track_timestamp = player.timestamp.clone();
         let handle = handle.clone();
         tokio::spawn(async move {
             let state = handle.state::<SodapopState>();
@@ -24,6 +23,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
                 .scrobble(vec![TrackData {
                     artist: track.artist_name,
                     name: track.name,
+                    timestamp: Some(track_timestamp),
                 }])
                 .send()
                 .await;
@@ -76,6 +76,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
             .update_now_playing(TrackData {
                 artist: track.artist_name,
                 name: track.name,
+                timestamp: None,
             })
             .send()
             .await;

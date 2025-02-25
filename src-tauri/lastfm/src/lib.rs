@@ -29,6 +29,10 @@ pub enum LastFMError {
     InvalidHTTPMethod,
     #[error("Sent request when disabled")]
     RequestWhenDisabled,
+    #[error("Missing parameter {0}")]
+    MissingParameter(String),
+    #[error("Batch scrobble too large")]
+    BatchScrobble,
     #[error(transparent)]
     APIError(#[from] APIError),
     #[error(transparent)]

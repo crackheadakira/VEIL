@@ -38,7 +38,7 @@ export const usePlayerStore = defineStore("player", () => {
    * @param {Tracks} track - The track to play
    */
   async function setPlayerTrack(track: Tracks): Promise<void> {
-    await commands.stopPlayer();
+    await commands.setPlayerProgress(0);
 
     currentTrack.value = track;
     playerProgress.value = 0;

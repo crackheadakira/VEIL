@@ -2,6 +2,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug)]
 pub enum APIMethod {
     AuthGetSession,
     AuthGetToken,
@@ -63,7 +64,9 @@ impl fmt::Display for APIError {
 
 impl std::error::Error for APIError {}
 
+#[derive(Debug)]
 pub struct TrackData {
     pub artist: String,
     pub name: String,
+    pub timestamp: Option<i64>,
 }

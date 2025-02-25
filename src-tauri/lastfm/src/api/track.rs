@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::UNIX_EPOCH};
 
 use reqwest::Method;
 
@@ -74,7 +74,6 @@ impl<'a> UpdateNowPlaying<'a> {
             }
 
             Err(LastFMError::JsonError(e)) => {
-                eprintln!("Unexpected LastFM JSON error encountered: {:?}", e);
                 Err(LastFMError::JsonError(e)) // Propagate the error
             }
 
@@ -101,12 +100,38 @@ impl<'a> TrackScrobble<'a> {
     fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
-        for (index, track) in self.tracks.iter().enumerate() {
-            let artist_key = format!("artist[{}]", index);
-            let track_key = format!("track[{}]", index);
+        if self.tracks.len() > 50 {
+            return Err(LastFMError::BatchScrobble);
+        }
 
-            params.insert(artist_key, track.artist.clone());
-            params.insert(track_key, track.name.clone());
+        let current_timestamp = UNIX_EPOCH.elapsed().expect("Time went backwards");
+
+        if self.tracks.len() > 1 {
+            for (index, track) in self.tracks.iter().enumerate() {
+                let artist_key = format!("artist[{}]", index);
+                let track_key = format!("track[{}]", index);
+                let timestamp_key = format!("timestamp[{}]", index);
+
+                params.insert(artist_key, track.artist.clone());
+                params.insert(track_key, track.name.clone());
+                params.insert(
+                    timestamp_key,
+                    track
+                        .timestamp
+                        .unwrap_or(current_timestamp.as_secs() as i64)
+                        .to_string(),
+                );
+            }
+        } else if let Some(track) = self.tracks.first() {
+            params.insert("artist".to_string(), track.artist.clone());
+            params.insert("track".to_string(), track.name.clone());
+            params.insert(
+                "timestamp".to_string(),
+                track
+                    .timestamp
+                    .unwrap_or(current_timestamp.as_secs() as i64)
+                    .to_string(),
+            );
         }
 
         let session_key = self.last_fm.session_key.clone();
@@ -137,7 +162,6 @@ impl<'a> TrackScrobble<'a> {
             }
 
             Err(LastFMError::JsonError(e)) => {
-                eprintln!("Unexpected LastFM JSON error encountered: {:?}", e);
                 Err(LastFMError::JsonError(e)) // Propagate the error
             }
 

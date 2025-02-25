@@ -1,7 +1,7 @@
 <template>
   <div
     class="aspect-player border-stroke-100 bg-card text-text grid h-28 w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
-    v-if="data"
+    v-show="data"
   >
     <div class="flex w-full items-center gap-5">
       <img

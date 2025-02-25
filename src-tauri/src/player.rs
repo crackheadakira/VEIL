@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use kira::{
     clock::{ClockHandle, ClockSpeed},
     sound::{
@@ -40,6 +42,7 @@ pub struct Player {
     pub volume: f32,
     pub state: PlayerState,
     pub controls: MediaControls,
+    pub timestamp: i64,
 }
 
 impl Player {
@@ -57,6 +60,7 @@ impl Player {
             scrobble_condition: -1.0,
             tween: Tween::default(),
             track: None,
+            timestamp: 0,
             progress: 0.0,
             duration: 0.0,
             volume: -6.0, // externally 0.0 - 1.0
@@ -80,27 +84,20 @@ impl Player {
     pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
         self.track = Some(track.id);
 
-        if self.track.is_some() {
-            let sound_data = self.load_sound(track)?.start_position(self.progress);
-            self.duration = sound_data.duration().as_secs_f32();
+        let sound_data = self.load_sound(track)?.start_position(self.progress);
 
-            let mut sh = self.manager.play(sound_data)?;
-            sh.set_volume(self.volume, Tween::default());
+        let mut sh = self.manager.play(sound_data)?;
+        sh.set_volume(self.volume, Tween::default());
 
-            self.sound_handle = Some(sh);
-            self.state = PlayerState::Playing;
+        self.sound_handle = Some(sh);
+        self.state = PlayerState::Playing;
+        self.timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs() as i64;
 
-            // if duration is greater than 4 mins, set to 4 min,
-            // otherwise half of the duration.
-            if self.duration > 240.0 {
-                self.scrobble_condition = 240.0;
-            } else if self.duration > 30.0 {
-                self.scrobble_condition = (self.duration as f64) / 2.0;
-            };
-
-            self.clock.start();
-            self.set_playback(true).unwrap();
-        }
+        self.clock.start();
+        self.set_playback(true).unwrap();
 
         Ok(())
     }
@@ -121,6 +118,8 @@ impl Player {
     ) -> Result<StreamingSoundData<FromFileError>, PlayerError> {
         let sound_data = StreamingSoundData::from_file(&track.path)?;
         self.duration = sound_data.duration().as_secs_f32();
+
+        self.set_scrobble_condition();
 
         self.controls.set_metadata(MediaMetadata {
             title: Some(&track.name),
@@ -211,7 +210,6 @@ impl Player {
         if let Some(ref mut sound_handle) = self.sound_handle {
             if let PlayerState::Playing = self.state {
                 self.progress = sound_handle.position();
-
                 self.set_playback(true).unwrap();
             }
         }
@@ -222,6 +220,16 @@ impl Player {
         let clock_time = self.clock.time();
         let ticks = clock_time.ticks;
         ticks as f64 >= self.scrobble_condition
+    }
+
+    fn set_scrobble_condition(&mut self) {
+        // if duration is greater than 4 mins, set to 4 min,
+        // otherwise half of the duration.
+        if self.duration > 240.0 {
+            self.scrobble_condition = 240.0;
+        } else if self.duration > 30.0 {
+            self.scrobble_condition = (self.duration as f64) / 2.0;
+        };
     }
 
     fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {
