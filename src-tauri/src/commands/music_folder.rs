@@ -8,7 +8,6 @@ use std::{
     fs::{self, File},
     io::Write,
     path::{Path, PathBuf},
-    sync::Mutex,
 };
 
 use tauri::{Emitter, Manager};
@@ -30,8 +29,7 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
         .set_title("Select your music folder")
         .blocking_pick_folder();
 
-    let state = app.state::<Mutex<SodapopState>>();
-    let state_guard = state.lock().unwrap();
+    let state = app.state::<SodapopState>();
 
     if let Some(path) = folder_path {
         let path = path.try_into().unwrap();
@@ -39,85 +37,103 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
         all_paths.sort();
 
         let mut all_metadata = Vec::new();
-        for path in all_paths.clone() {
+        for (idx, path) in all_paths.clone().iter().enumerate() {
             let metadata = Metadata::from_file(&path);
             match metadata {
-                Ok(m) => all_metadata.push(m),
+                Ok(m) => {
+                    all_metadata.push(m);
+                    if idx % 25 == 0 {
+                        app.emit("indexing-progress", idx).unwrap();
+                        MusicDataEvent {
+                            total: all_paths.len() as u32,
+                            current: idx as u32,
+                            finished: false,
+                        }
+                        .emit(&app)
+                        .unwrap();
+                    }
+                }
                 Err(_) => continue,
             }
         }
 
-        for (idx, metadata) in all_metadata.iter().enumerate() {
-            let artist_exists = state_guard.db.exists::<Artists>("name", &metadata.artist)?;
+        MusicDataEvent {
+            total: all_paths.len() as u32,
+            current: all_paths.len() as u32,
+            finished: true,
+        }
+        .emit(&app)
+        .unwrap();
+
+        for metadata in all_metadata {
+            let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
 
             let artist_id = if artist_exists {
-                state_guard.db.artist_by_name(&metadata.artist)?.id
+                state.db.artist_by_name(&metadata.artist)?.id
             } else {
-                state_guard.db.insert::<Artists>(Artists {
+                state.db.insert::<Artists>(Artists {
                     id: 0,
                     name: metadata.artist.clone(),
                 })?;
 
-                state_guard.db.latest::<Artists>()?.id
+                state.db.latest::<Artists>()?.id
             };
 
             let album_path = get_album_path(path.to_str().unwrap(), &metadata.file_path);
             let cover_path = cover_path(&metadata.artist, &metadata.album);
 
-            let (album_id, cover_path) = if let Some(a) = state_guard
-                .db
-                .album_exists(&metadata.album, metadata.year)?
-            {
-                (a.id, a.cover_path)
-            } else {
-                let mut p = cover_path;
+            let (album_id, cover_path) =
+                if let Some(a) = state.db.album_exists(&metadata.album, metadata.year)? {
+                    (a.id, a.cover_path)
+                } else {
+                    let mut p = cover_path;
 
-                if !Path::new(&p).exists() {
-                    if !metadata.picture_data.is_empty() {
-                        let mut file = File::create(&p)?;
-                        file.write_all(&metadata.picture_data)?;
-                    } else {
-                        let ap = Path::new(&album_path);
-                        // If there is no picture data, check if there exists
-                        // either cover.jpg or cover.png, and then copy that
-                        // over. If not, just point cover_path to placeholder.png
-                        if ap.join("cover.jpg").exists() {
-                            fs::copy(ap.join("cover.jpg"), &p)?;
-                        } else if ap.join("cover.png").exists() {
-                            fs::copy(ap.join("cover.png"), &p)?;
+                    if !Path::new(&p).exists() {
+                        if !metadata.picture_data.is_empty() {
+                            let mut file = File::create(&p)?;
+                            file.write_all(&metadata.picture_data)?;
                         } else {
-                            p = data_path()
-                                .join("covers")
-                                .join("placeholder.png")
-                                .to_str()
-                                .unwrap()
-                                .to_string();
+                            let ap = Path::new(&album_path);
+                            // If there is no picture data, check if there exists
+                            // either cover.jpg or cover.png, and then copy that
+                            // over. If not, just point cover_path to placeholder.png
+                            if ap.join("cover.jpg").exists() {
+                                fs::copy(ap.join("cover.jpg"), &p)?;
+                            } else if ap.join("cover.png").exists() {
+                                fs::copy(ap.join("cover.png"), &p)?;
+                            } else {
+                                p = data_path()
+                                    .join("covers")
+                                    .join("placeholder.png")
+                                    .to_str()
+                                    .unwrap()
+                                    .to_string();
+                            }
                         }
                     }
-                }
 
-                state_guard.db.insert::<Albums>(Albums {
-                    id: 0,
-                    artist_id,
-                    artist_name: metadata.artist.clone(),
-                    name: metadata.album.clone(),
-                    cover_path: p.clone(),
-                    year: metadata.year,
-                    album_type: metadata.album_type.clone().into(),
-                    track_count: 0,
-                    duration: 0,
-                    path: album_path,
-                })?;
+                    state.db.insert::<Albums>(Albums {
+                        id: 0,
+                        artist_id,
+                        artist_name: metadata.artist.clone(),
+                        name: metadata.album.clone(),
+                        cover_path: p.clone(),
+                        year: metadata.year,
+                        album_type: metadata.album_type.clone().into(),
+                        track_count: 0,
+                        duration: 0,
+                        path: album_path,
+                    })?;
 
-                let a_id = state_guard.db.latest::<Albums>()?.id;
+                    let a_id = state.db.latest::<Albums>()?.id;
 
-                (a_id, p)
-            };
+                    (a_id, p)
+                };
 
-            let track_exists = state_guard.db.exists::<Tracks>("name", &metadata.name)?;
+            let track_exists = state.db.exists::<Tracks>("name", &metadata.name)?;
 
             if !track_exists {
-                state_guard.db.insert::<Tracks>(Tracks {
+                state.db.insert::<Tracks>(Tracks {
                     id: 0,
                     duration: metadata.duration.round() as u32,
                     album_name: metadata.album.clone(),
@@ -129,53 +145,32 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
                     cover_path,
                 })?;
             };
-
-            if idx % 50 == 0 {
-                app.emit("indexing-progress", idx).unwrap();
-                MusicDataEvent {
-                    total: all_metadata.len() as u32,
-                    current: idx as u32,
-                    finished: false,
-                }
-                .emit(&app)
-                .unwrap();
-            }
         }
 
         // Remove tracks that are no longer in the music folder
-        let all_tracks = &state_guard.db.all::<Tracks>()?;
+        let all_tracks = &state.db.all::<Tracks>()?;
 
         for track in all_tracks {
             if !all_paths.contains(&PathBuf::from(&track.path)) {
-                state_guard.db.delete::<Tracks>(track.id)?;
+                state.db.delete::<Tracks>(track.id)?;
 
-                let album_tracks = state_guard.db.count::<Tracks>(track.album_id, "album_id")?;
+                let album_tracks = state.db.count::<Tracks>(track.album_id, "album_id")?;
                 if album_tracks == 0 {
-                    state_guard.db.delete::<Albums>(track.album_id)?;
+                    state.db.delete::<Albums>(track.album_id)?;
 
-                    let artist_albums = state_guard
-                        .db
-                        .count::<Albums>(track.artist_id, "artist_id")?;
+                    let artist_albums = state.db.count::<Albums>(track.artist_id, "artist_id")?;
                     if artist_albums == 0 {
-                        state_guard.db.delete::<Artists>(track.artist_id)?;
+                        state.db.delete::<Artists>(track.artist_id)?;
                     }
                 }
             } else {
-                let duration = &state_guard.db.get_album_duration(&track.album_id)?;
+                let duration = &state.db.get_album_duration(&track.album_id)?;
                 let album_type = get_album_type(duration.1, duration.0);
-                state_guard
+                state
                     .db
                     .update_album_type(&track.album_id, album_type, duration)?;
             }
         }
-
-        MusicDataEvent {
-            total: all_metadata.len() as u32,
-            current: all_metadata.len() as u32,
-            finished: true,
-        }
-        .emit(&app)
-        .unwrap();
 
         Ok(String::from(path.to_str().unwrap()))
     } else {

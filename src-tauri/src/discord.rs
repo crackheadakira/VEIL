@@ -38,6 +38,10 @@ impl DiscordState {
         })
     }
 
+    pub fn enable(&mut self, enable: bool) {
+        self.enabled = enable;
+    }
+
     pub fn make_activity(
         &mut self,
         new_payload: PayloadData,

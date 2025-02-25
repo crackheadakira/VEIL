@@ -1,10 +1,13 @@
-use crate::{discord, error::FrontendError, player::PlayerState, TauriState};
+use crate::{discord, error::FrontendError, player::PlayerState, SodapopState, TauriState};
 use db::models::Tracks;
-use lastfm::Track;
+use lastfm::{LastFMError, Track};
+use tauri::{AppHandle, Manager};
 
 #[tauri::command]
 #[specta::specta]
-pub async fn play_track(track_id: u32, state: TauriState<'_>) -> Result<(), FrontendError> {
+pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), FrontendError> {
+    let handle = handle.clone();
+    let state = handle.state::<SodapopState>();
     let track = state.db.by_id::<Tracks>(&track_id)?;
 
     // temporary scope to drop player before await
@@ -40,12 +43,21 @@ pub async fn play_track(track_id: u32, state: TauriState<'_>) -> Result<(), Fron
         discord.make_activity(payload)?;
     }
 
-    state
-        .lastfm
-        .track()
-        .update_now_playing(track.artist_name, track.name)
-        .send()
-        .await?;
+    let handle = handle.clone();
+    tokio::spawn(async move {
+        let state = handle.state::<SodapopState>();
+        let lastfm = state.lastfm.lock().await;
+        let res = lastfm
+            .track()
+            .update_now_playing(track.artist_name, track.name)
+            .send()
+            .await;
+
+        if let Err(LastFMError::RequestWhenDisabled) = res {
+        } else if let Err(e) = res {
+            eprintln!("LastFM error from player: {:?}", e);
+        }
+    });
 
     Ok(())
 }

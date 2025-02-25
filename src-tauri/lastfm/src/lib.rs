@@ -16,17 +16,19 @@ type LastFMParams = HashMap<String, String>;
 #[derive(Debug, thiserror::Error)]
 pub enum LastFMError {
     /// [`LastFMBuilder`] is missing an API key
-    #[error("missing API key")]
+    #[error("Missing API key")]
     MissingAPIKey,
     /// [`LastFMBuilder`] is missing an API secret
-    #[error("missing API secret")]
+    #[error("Missing API secret")]
     MissingAPISecret,
     /// [`LastFM`] is missing the user's session key
-    #[error("missing session key")]
+    #[error("Missing session key")]
     MissingAuthentication,
     /// Passed an invalid HTTP method to [`LastFM::send_request`]
-    #[error("invalid HTTP method")]
+    #[error("Invalid HTTP method")]
     InvalidHTTPMethod,
+    #[error("Sent request when disabled")]
+    RequestWhenDisabled,
     #[error(transparent)]
     APIError(#[from] APIError),
     #[error(transparent)]
@@ -47,6 +49,10 @@ pub struct LastFM {
     base_url: String,
     /// The HTTP request client
     client: reqwest::Client,
+    /// If LastFM API should be enabled, if `false` doesn't send any HTTP requests.
+    ///
+    /// By default is `true`.
+    enabled: bool,
 }
 
 impl LastFM {
@@ -54,7 +60,6 @@ impl LastFM {
         LastFMBuilder {
             api_key: None,
             api_secret: None,
-            session_key: None,
         }
     }
 
@@ -91,6 +96,9 @@ impl LastFM {
         api_method: APIMethod,
         params: &mut LastFMParams,
     ) -> Result<T, LastFMError> {
+        if !self.enabled {
+            return Err(LastFMError::RequestWhenDisabled);
+        }
         params.insert(String::from("method"), api_method.as_query());
         params.insert(String::from("api_key"), self.api_key.clone());
 
@@ -136,15 +144,22 @@ impl LastFM {
         format!("{:x}", digest)
     }
 
+    pub fn set_session_key(&mut self, session_key: String) {
+        self.session_key = Some(session_key);
+    }
+
     pub fn session_key(&self) -> Option<String> {
         self.session_key.clone()
+    }
+
+    pub fn enable(&mut self, value: bool) {
+        self.enabled = value;
     }
 }
 
 pub struct LastFMBuilder {
     api_key: Option<String>,
     api_secret: Option<String>,
-    session_key: Option<String>,
 }
 
 impl LastFMBuilder {
@@ -160,19 +175,15 @@ impl LastFMBuilder {
         self
     }
 
-    /// Add `session_key` to builder
-    pub fn session_key(&mut self, session_key: String) -> () {
-        self.session_key = Some(session_key);
-    }
-
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
     pub fn build(self) -> Result<LastFM, LastFMError> {
         Ok(LastFM {
             api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
             api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
-            session_key: self.session_key,
+            session_key: None,
             base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
             client: reqwest::Client::new(),
+            enabled: true,
         })
     }
 }

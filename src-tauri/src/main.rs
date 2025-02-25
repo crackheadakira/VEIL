@@ -27,7 +27,7 @@ pub struct SodapopState {
     pub db: Arc<db::Database>,
     pub discord: Mutex<discord::DiscordState>,
     pub config: Arc<RwLock<SodapopConfig>>,
-    pub lastfm: Arc<lastfm::LastFM>,
+    pub lastfm: Arc<tokio::sync::Mutex<lastfm::LastFM>>,
 }
 
 pub type TauriState<'a> = State<'a, SodapopState>;
@@ -123,7 +123,7 @@ fn main() {
                 create_dir(&path).expect("Error creating main data directory")
             }
 
-            let config = souvlaki::PlatformConfig {
+            let platform_config = souvlaki::PlatformConfig {
                 dbus_name: "com.sodapop.reimagined.dbus",
                 display_name: "Sodapop Reimagined",
                 hwnd,
@@ -131,20 +131,26 @@ fn main() {
 
             {
                 let sodapop_config = SodapopConfig::new().expect("error making config");
-                let mut lastfm_builder = lastfm::LastFM::builder()
+                let mut lastfm = lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
-                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c");
+                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
+                    .build()
+                    .expect("error making last.fm api");
+                let mut discord = discord::DiscordState::new("1339694314074275882")?;
+
+                lastfm.enable(sodapop_config.last_fm_enabled);
+                discord.enable(sodapop_config.discord_enabled);
 
                 if let Some(sk) = sodapop_config.last_fm_key.clone() {
-                    lastfm_builder.session_key(sk);
+                    lastfm.set_session_key(sk);
                 }
 
                 app.manage(SodapopState {
-                    player: Mutex::new(player::Player::new(config)),
+                    player: Mutex::new(player::Player::new(platform_config)),
                     db: Arc::new(db::Database::new(path.clone())),
-                    lastfm: Arc::new(lastfm_builder.build().expect("error making last.fm api")),
+                    lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),
-                    discord: Mutex::new(discord::DiscordState::new("1339694314074275882")?),
+                    discord: Mutex::new(discord),
                 });
             }
 
@@ -247,6 +253,16 @@ fn main() {
                         discord.enabled = false;
                     }
                 }
+
+                let app_handle = app_handle.clone();
+                tokio::spawn(async move {
+                    if let Some(l) = event.payload.last_fm_enabled {
+                        let state = app_handle.state::<SodapopState>();
+                        let mut lastfm = state.lastfm.lock().await;
+                        lastfm.enable(l);
+                    };
+                });
+
                 let mut config = state.config.write().unwrap();
                 config.update_config(event.payload).unwrap();
             });
