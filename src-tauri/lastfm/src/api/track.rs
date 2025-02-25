@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use reqwest::Method;
-use serde::Deserialize;
 
 use crate::{models::APIMethod, LastFM, LastFMError, LastFMParams};
 
@@ -51,65 +50,30 @@ impl<'a> UpdateNowPlaying<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<TrackInfo, LastFMError> {
+    pub async fn send(self) -> Result<(), LastFMError> {
         let mut params = self.params()?;
         let result = self
             .last_fm
-            .send_request::<TrackInfo>(Method::POST, self.method, &mut params)
-            .await?;
+            .send_request::<()>(Method::POST, self.method, &mut params)
+            .await;
 
-        Ok(result)
+        match result {
+            Ok(_) => Ok(()),
+
+            // ignore this specific error, as we're passing in `()` as type
+            // so it'll always return this error
+            Err(LastFMError::JsonError(ref e))
+                if e.to_string() == "invalid type: map, expected unit" =>
+            {
+                Ok(())
+            }
+
+            Err(LastFMError::JsonError(e)) => {
+                eprintln!("Unexpected LastFM JSON error encountered: {:?}", e);
+                Err(LastFMError::JsonError(e)) // Propagate the error
+            }
+
+            Err(e) => Err(e), // Propagate all other non-JsonError errors
+        }
     }
-}
-
-#[derive(Deserialize, Debug)]
-pub struct TrackInfo {
-    #[serde(rename = "nowplaying")]
-    pub now_playing: NowPlaying,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct NowPlaying {
-    pub album: Album,
-    #[serde(rename = "albumArtist")]
-    pub album_artist: AlbumArtist,
-    pub artist: Artist,
-    #[serde(rename = "ignoredMessage")]
-    pub ignored_message: IgnoredMessage,
-    pub track: TrackStruct,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Album {
-    #[serde(rename = "#text")]
-    pub text: String,
-    pub corrected: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct AlbumArtist {
-    #[serde(rename = "#text")]
-    pub text: String,
-    pub corrected: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Artist {
-    #[serde(rename = "#text")]
-    pub text: String,
-    pub corrected: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct IgnoredMessage {
-    #[serde(rename = "#text")]
-    pub text: String,
-    pub code: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct TrackStruct {
-    #[serde(rename = "#text")]
-    pub text: String,
-    pub corrected: String,
 }
