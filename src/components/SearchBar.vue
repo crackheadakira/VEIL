@@ -1,4 +1,14 @@
 <template>
+  <div
+    @click="enableDialog"
+    class="text-supporting cardStyle bg-background hover:border-stroke-200 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
+  >
+    <span class="i-fluent-search-20-filled"></span>
+    <small>Search...</small>
+    <small class="text-text bg-stroke-200 ml-auto rounded-sm p-1 px-2"
+      >Ctrl F</small
+    >
+  </div>
   <div>
     <Transition
       enter-from-class="opacity-0 scale-95"
@@ -102,12 +112,16 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
+function enableDialog() {
+  showDialog.value = !showDialog.value;
+  nextTick(() => {
+    input.value.focus();
+  });
+}
+
 useEventListener("keydown", (e) => {
   if (e.ctrlKey && e.key === "f") {
-    showDialog.value = !showDialog.value;
-    nextTick(() => {
-      input.value.focus();
-    });
+    enableDialog();
   }
 });
 

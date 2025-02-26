@@ -7,18 +7,11 @@
     </div>
     <Player class="h-28 grow" />
     <ToastManager ref="toastManager" />
-    <DialogSearch />
   </div>
 </template>
 
 <script setup lang="ts">
-import {
-  Player,
-  SideBar,
-  ToastManager,
-  TitleBar,
-  DialogSearch,
-} from "@/components/";
+import { Player, SideBar, ToastManager, TitleBar } from "@/components/";
 import {
   useConfigStore,
   commands,
