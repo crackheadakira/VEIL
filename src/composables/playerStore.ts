@@ -1,6 +1,8 @@
-import { commands, type Tracks } from "@/composables/";
+import { commands, handleBackendError, MediaPayload, type Tracks } from "@/composables/";
+import { listen, Event } from "@tauri-apps/api/event";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
+import { nextTick, ref } from "vue";
 
 /**
  * The player store composable.
@@ -30,6 +32,8 @@ export const usePlayerStore = defineStore("player", () => {
   const playerVolume = useStorage("playerVolume", 0.5);
   const isShuffled = useStorage("isShuffled", false);
 
+  const paused = ref(true);
+
   /**
    * Sets given track as the current track and plays it.
    *
@@ -44,6 +48,7 @@ export const usePlayerStore = defineStore("player", () => {
     playerProgress.value = 0;
 
     await commands.playTrack(track.id);
+    paused.value = false;
   }
 
   /**
@@ -164,7 +169,170 @@ export const usePlayerStore = defineStore("player", () => {
     isShuffled.value = false;
   }
 
+  // PLAYER LOGIC
+
+  /**
+   * If player has a track, update the progress.
+   *
+   * If the progress bar is being held, do not update the progress bar.
+   *
+   * Updates `$playerProgress` with the current progress.
+   */
+  async function handleProgress(held: boolean, p?: number) {
+    const progress = p ? p : await commands.getPlayerProgress();
+
+    if (held) return;
+    playerProgress.value = progress;
+  }
+
+  /**
+   * Handles the play and pause button.
+   *
+   * If player is paused and has a track, resume the track.
+   *
+   * If player is paused and does not have a track, play the current track.
+   *
+   * If player is playing, pause the track.
+   *
+   * Updates `$paused` with the current state, and calls {@linkcode commands.playTrack}.
+   *
+   * @example
+   * ```ts
+   * // Track is currently paused
+   * await handlePlayAndPause(); // Track is now playing
+   * await handlePlayAndPause(); // Track is now paused
+   */
+  async function handlePlayAndPause() {
+    const hasTrack = await commands.playerHasTrack();
+
+    if (!hasTrack && currentTrack.value) {
+      paused.value = false;
+      const result = await commands.playTrack(currentTrack.value.id);
+      if (result.status === "error") return handleBackendError(result.error);
+
+      return;
+    } else if (!hasTrack) {
+      paused.value = true;
+      return;
+    }
+
+    if (paused.value === true) {
+      await commands.resumeTrack();
+    } else {
+      const result = await commands.pauseTrack();
+      if (result.status === "error") return handleBackendError(result.error);
+    }
+
+    paused.value = !paused.value;
+  };
+
+  /**
+   * Handles the end of the song.
+   *
+   * If the player is in track loop, replay the same track.
+   *
+   * If the player is in queue loop, replay the queue.
+   *
+   * If the player is not in loop, pause the player.
+   */
+  async function handleSongEnd() {
+    if (!currentTrack.value) return;
+    while (!(await commands.playerHasEnded())) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    if (loop.value === "track") {
+      // replay the same track
+      await setPlayerTrack(currentTrack.value);
+      await handlePlayAndPause();
+      return;
+    }
+
+
+    if (queue.value.length <= 1 || queue.value.length === queueIndex.value + 1) {
+      if (loop.value === "queue") {
+        queueIndex.value = 0;
+        await setPlayerTrack(queue.value[0]);
+      } else {
+        await handlePlayAndPause();
+      }
+    } else {
+      skipTrack(true);
+    }
+  }
+
+  /**
+   * Updates the volume of the player.
+   */
+  async function handleVolume() {
+    nextTick(async () => {
+      await commands.setVolume(+playerVolume.value);
+    });
+  }
+
+  /**
+   * Initializes required values for the player.
+   *
+   * Pauses the player, gets the current progress, volume, and duration of the player.
+   *
+   * Updates `$progressBar` with the current progress.
+   *
+   * Updates `$volumeBar` with the current volume.
+   *
+   * If the duration is not 0, seeks the player to the current progress.
+   */
+  async function initialLoad() {
+    await commands.pauseTrack();
+    const duration = await commands.getPlayerDuration();
+
+    if (duration !== 0) await commands.seekTrack(playerProgress.value, false);
+    await commands.setVolume(+playerVolume.value);
+  }
+
+  // LISTENERS
+
+  const listenMediaControl = listen(
+    "media-control",
+    async (e: Event<MediaPayload>) => {
+      const payload = e.payload;
+
+      switch (true) {
+        case "Play" in payload:
+          await handlePlayAndPause();
+          break;
+        case "Pause" in payload:
+          await handlePlayAndPause();
+          break;
+        case "Next" in payload:
+          skipTrack(true);
+          break;
+        case "Previous" in payload:
+          skipTrack(false);
+          break;
+        case "Seek" in payload:
+          await commands.seekTrack(payload.Seek, true);
+          break;
+        case "Volume" in payload:
+          await commands.setVolume(payload.Volume);
+          break;
+        case "Position" in payload:
+          await commands.seekTrack(payload.Position, false);
+          break;
+      }
+    },
+  );
+
+  const listenPlayerProgress = listen("player-progress", async (e) => {
+    const progress = e.payload as number;
+    await handleProgress(false, progress);
+  });
+
+  const listenTrackEnd = listen("track-end", async (_) => {
+    await handleSongEnd();
+  });
+
   return {
+    paused,
     currentTrack,
     playerProgress,
     queue,
@@ -181,6 +349,13 @@ export const usePlayerStore = defineStore("player", () => {
     loopQueue,
     shuffleQueue,
     $reset,
+    handleProgress,
+    handlePlayAndPause,
+    handleVolume,
+    initialLoad,
+    listenMediaControl,
+    listenPlayerProgress,
+    listenTrackEnd,
   };
 });
 
