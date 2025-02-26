@@ -32,8 +32,8 @@
       </div>
     </div>
 
-    <div class="flex w-full flex-col gap-4 px-8">
-      <div class="flex w-full items-center justify-center gap-4">
+    <div class="flex w-full flex-col items-center gap-4 px-6">
+      <div class="flex w-fit items-center justify-center gap-4">
         <span
           :class="shuffled ? 'text-primary' : ''"
           class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
@@ -64,7 +64,9 @@
         ></span>
       </div>
 
-      <div class="text-supporting flex items-center gap-4 select-none">
+      <div
+        class="text-supporting flex w-full items-center gap-4 text-center select-none"
+      >
         <label for="progress" class="w-10">{{ currentProgress }}</label>
         <input
           @mousedown="beingHeld = true"
@@ -141,7 +143,7 @@ const currentProgress = computed(() =>
 const data = ref(playerStore.currentTrack);
 
 /**
- * If player has a track, update the progress bar. (Called every 100ms and when the user drags the progress bar)
+ * If player has a track, update the progress bar.
  *
  * If the progress bar is being held, do not update the progress bar.
  *
@@ -150,7 +152,6 @@ const data = ref(playerStore.currentTrack);
  * Updates `$progressBar` with the current progress.
  */
 async function handleProgress(p?: number) {
-  if (!(await commands.playerHasTrack())) return;
   if (progressBar.value) {
     const progress = p ? p : await commands.getPlayerProgress();
 
@@ -286,7 +287,7 @@ async function initialLoad() {
   volumeModel.value = volume;
 
   if (duration !== 0) await commands.seekTrack(progress, false);
-  await commands.setVolume(volume);
+  await commands.setVolume(+volume);
 }
 
 const listenPlayerProgress = listen("player-progress", async (e) => {

@@ -14,6 +14,7 @@
         alt="Album Cover"
         width="192"
         height="192"
+        loading="lazy"
       />
     </RouterLink>
     <div class="text-supporting flex flex-col gap-1">
