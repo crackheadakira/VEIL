@@ -22,9 +22,9 @@
   - [x] Database methods
   - [x] Context menu
   - [x] Playlist page
-- [ ] Add last.fm support
-  - [ ] Allow adding custom key
-  - [ ] Scrobble track > 30s
+- [x] Add last.fm support
+  - [x] Allow adding session key
+  - [x] Scrobble track > 30s
   - [ ] Get metadata for missing files
 - [ ] Artist page
 - [x] Settings page
