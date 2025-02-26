@@ -38,38 +38,7 @@
     </div>
 
     <div class="flex w-full flex-col items-center gap-4 px-6">
-      <div class="flex w-fit items-center justify-center gap-4">
-        <span
-          :class="playerStore.isShuffled ? 'text-primary' : ''"
-          class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
-          @click="playerStore.shuffleQueue()"
-        ></span>
-        <span
-          class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
-          @click="playerStore.skipTrack(false)"
-        ></span>
-        <span
-          @click="playerStore.handlePlayAndPause"
-          :class="
-            !playerStore.paused
-              ? 'i-fluent-pause-24-filled'
-              : 'i-fluent-play-24-filled'
-          "
-          class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"
-        ></span>
-        <span
-          class="i-fluent-next-20-filled cursor-pointer hover:opacity-90"
-          @click="playerStore.skipTrack(true)"
-        ></span>
-        <span
-          @click="playerStore.loopQueue()"
-          :class="
-            (playerStore.loop === 'queue' ? 'text-primary' : '') ||
-            (playerStore.loop === 'track' ? 'text-primary opacity-75' : '')
-          "
-          class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"
-        ></span>
-      </div>
+      <PlayerControls :extra="true" />
 
       <div
         class="text-supporting flex w-full items-center gap-4 text-center select-none"
@@ -109,6 +78,7 @@
 
 <script setup lang="ts">
 import { commands, formatTime, usePlayerStore } from "@/composables/";
+import { PlayerControls } from "@/components/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import {
   computed,

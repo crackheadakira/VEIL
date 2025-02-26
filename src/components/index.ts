@@ -4,6 +4,7 @@ export { default as Dialog } from "./Dialog.vue";
 export { default as DialogGuide } from "./DialogGuide.vue";
 export { default as Dropdown } from "./Dropdown.vue";
 export { default as Player } from "./Player.vue";
+export { default as PlayerControls } from "./PlayerControls.vue";
 export { default as PlaylistCard } from "./PlaylistCard.vue";
 export { default as SideBar } from "./SideBar.vue";
 export { default as Toast } from "./Toast.vue";
