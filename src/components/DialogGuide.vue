@@ -65,7 +65,7 @@ import { DialogPage, readableCapitalization } from "@/composables/";
 
 const showDialog = ref(false);
 
-const props = defineProps<{
+defineProps<{
   currentPage: DialogPage;
 }>();
 

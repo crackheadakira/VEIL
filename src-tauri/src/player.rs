@@ -85,7 +85,8 @@ impl Player {
 
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
     pub fn set_volume(&mut self, volume: f32) {
-        let converted_volume = -60.0 + volume * (61.0);
+        // https://www.desmos.com/calculator/cj1nmmamzb
+        let converted_volume = -60.0 + 61.0 * volume.powf(0.44);
 
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.set_volume(converted_volume, self.tween);
