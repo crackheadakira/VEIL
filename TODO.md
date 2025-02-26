@@ -15,6 +15,7 @@
   - [x] ID3
   - [x] Database
   - [x] Commands
+  - [ ] Better queue system
 
 ## Medium Priority
 

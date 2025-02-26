@@ -47,8 +47,8 @@ impl Block {
         reader.read_exact(&mut len_bytes)?;
         let length = u32::from_be_bytes([0, len_bytes[0], len_bytes[1], len_bytes[2]]);
 
-        let mut data = Vec::new();
-        reader.take(length.into()).read_to_end(&mut data)?;
+        let mut data = vec![0u8; length as usize];
+        reader.read_exact(&mut data)?;
 
         let block = match block_type {
             BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),

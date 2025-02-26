@@ -175,6 +175,9 @@ function updateDialog() {
     nextTick(() => {
       inputElement.value.focus();
     });
+  } else {
+    input.value = "";
+    selected.value = 0;
   }
 }
 
