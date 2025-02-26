@@ -1,4 +1,4 @@
-# Local Music Player
+# Sodapop Reimagined
 
 A local music player built with **Rust**, **Vue.js**, with **Tauri**. It integrates with **Last.fm** for scrobbling and **Discord RPC** to show what you're listening to.
 
