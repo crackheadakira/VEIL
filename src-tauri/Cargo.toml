@@ -1,7 +1,7 @@
 [package]
 name = "Sodapop-Reimagined"
 version = "0.0.0"
-description = "A local modern-looking music player written in Vue + Tauri"
+description = "A modern-looking local music player written in Vue + Tauri"
 authors = ["crackheadakira"]
 edition = "2021"
 

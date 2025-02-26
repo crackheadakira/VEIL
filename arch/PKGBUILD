@@ -1,0 +1,17 @@
+# Maintainer: Morgan Tali (morgan@duckie.party)
+# Contributor: Morgan Tali (morgan@duckie.party)
+pkgname=sodapop_reimagined
+pkgver=0.0.0
+pkgrel=1
+pkgdesc="A modern-looking local music player written in Vue + Tauri"
+arch=('x86_64')
+url="https://github.com/crackheadakira/Sodapop-Reimagined"
+license=('apache-2.0')
+depends=('cairo' 'desktop-file-utils' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libsoup' 'pango' 'webkit2gtk-4.1' 'openssl' 'alsa-lib')
+options=('!strip' '!emptydirs')
+source_x86_64=("https://github.com/<user>/<project>/releases/download/v$pkgver/appname_"$pkgver"_amd64.deb")
+install=${pkgname}.install
+package() {
+    # Extract package data
+    tar -xz -f data.tar.gz -C "${pkgdir}"
+}
