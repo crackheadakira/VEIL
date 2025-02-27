@@ -2,9 +2,8 @@ use crate::{data_path, error::FrontendError, SodapopState};
 
 use db::models::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use specta::Type;
-use tauri_specta::Event;
 
 use std::{
     fs::{self, File},
@@ -32,15 +31,17 @@ pub fn select_music_folder(
     app: tauri::AppHandle,
     on_event: Channel<MetadataEvent>,
 ) -> Result<String, FrontendError> {
-    let folder_path = app
-        .dialog()
-        .file()
-        .set_title("Select your music folder")
-        .blocking_pick_folder();
-
     let state = app.state::<SodapopState>();
+    let config_path = state.config.read().unwrap();
+    let music_dir = config_path.music_dir.clone();
+    drop(config_path);
 
-    if let Some(path) = folder_path {
+    let mut folder_path = app.dialog().file().set_title("Select your music folder");
+    if let Some(m) = music_dir {
+        folder_path = folder_path.set_directory(m);
+    };
+
+    if let Some(path) = folder_path.blocking_pick_folder() {
         let path = path.try_into().unwrap();
         let mut all_paths = recursive_dir(&path);
         all_paths.sort();
@@ -53,7 +54,7 @@ pub fn select_music_folder(
 
         let mut all_metadata = Vec::new();
         for (idx, path) in all_paths.clone().iter().enumerate() {
-            let metadata = Metadata::from_file(&path);
+            let metadata = Metadata::from_file(path);
             match metadata {
                 Ok(m) => {
                     all_metadata.push(m);
