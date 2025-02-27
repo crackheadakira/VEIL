@@ -220,10 +220,8 @@ export const commands = {
 /** user-defined events **/
 
 export const events = __makeEvents__<{
-  musicDataEvent: MusicDataEvent;
   sodapopConfigEvent: SodapopConfigEvent;
 }>({
-  musicDataEvent: "music-data-event",
   sodapopConfigEvent: "sodapop-config-event",
 });
 
@@ -328,11 +326,6 @@ export type MetadataEvent =
   | { event: "started"; data: { id: number; total: number } }
   | { event: "progress"; data: { id: number; current: number } }
   | { event: "finished"; data: { id: number } };
-export type MusicDataEvent = {
-  total: number;
-  current: number;
-  finished: boolean;
-};
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = {
   playlist: Playlists;

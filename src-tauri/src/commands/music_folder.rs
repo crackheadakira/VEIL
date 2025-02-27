@@ -15,13 +15,10 @@ use tauri::{ipc::Channel, Manager};
 use tauri_plugin_dialog::DialogExt;
 
 #[derive(Clone, Serialize, Type)]
-#[serde(rename_all = "camelCase", tag = "event", content = "data")]
+#[serde(tag = "event", content = "data")]
 pub enum MetadataEvent {
-    #[serde(rename_all = "camelCase")]
     Started { id: usize, total: usize },
-    #[serde(rename_all = "camelCase")]
     Progress { id: usize, current: usize },
-    #[serde(rename_all = "camelCase")]
     Finished { id: usize },
 }
 
