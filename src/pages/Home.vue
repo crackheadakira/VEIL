@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background text-text flex flex-col">
+  <div class="bg-background text-text flex flex-col gap-4">
     <div>
       <Dialog
         class="cardStyle w-fit"
@@ -21,6 +21,7 @@
         Show Error Toast
       </button>
     </div>
+    <RangeInput :max="1" :step="0.01" />
     <div class="flex gap-2">
       <PlaylistCard />
       <Dropdown
@@ -32,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, Dropdown, PlaylistCard } from "@/components/";
+import { Dialog, Dropdown, PlaylistCard, RangeInput } from "@/components/";
 import { toastBus, usePlayerStore, usePlaylistStore } from "@/composables/";
 import { onMounted } from "vue";
 
