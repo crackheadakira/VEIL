@@ -2,6 +2,8 @@ use crate::{data_path, error::FrontendError, SodapopState};
 
 use db::models::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
+use serde::{Deserialize, Serialize};
+use specta::Type;
 use tauri_specta::Event;
 
 use std::{
@@ -10,19 +12,26 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tauri::{Emitter, Manager};
+use tauri::{ipc::Channel, Manager};
 use tauri_plugin_dialog::DialogExt;
 
-#[derive(serde::Serialize, serde::Deserialize, specta::Type, tauri_specta::Event, Clone)]
-pub struct MusicDataEvent {
-    pub total: u32,
-    pub current: u32,
-    pub finished: bool,
+#[derive(Clone, Serialize, Type)]
+#[serde(rename_all = "camelCase", tag = "event", content = "data")]
+pub enum MetadataEvent {
+    #[serde(rename_all = "camelCase")]
+    Started { id: usize, total: usize },
+    #[serde(rename_all = "camelCase")]
+    Progress { id: usize, current: usize },
+    #[serde(rename_all = "camelCase")]
+    Finished { id: usize },
 }
 
 #[tauri::command(async)] // spawn on async thread due to `.blocking_pick_folder()``
 #[specta::specta]
-pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendError> {
+pub fn select_music_folder(
+    app: tauri::AppHandle,
+    on_event: Channel<MetadataEvent>,
+) -> Result<String, FrontendError> {
     let folder_path = app
         .dialog()
         .file()
@@ -36,34 +45,28 @@ pub fn select_music_folder(app: tauri::AppHandle) -> Result<String, FrontendErro
         let mut all_paths = recursive_dir(&path);
         all_paths.sort();
 
+        let event_id = 1;
+        on_event.send(MetadataEvent::Started {
+            id: event_id,
+            total: all_paths.len(),
+        })?;
+
         let mut all_metadata = Vec::new();
         for (idx, path) in all_paths.clone().iter().enumerate() {
             let metadata = Metadata::from_file(&path);
             match metadata {
                 Ok(m) => {
                     all_metadata.push(m);
-                    if idx % 25 == 0 {
-                        app.emit("indexing-progress", idx).unwrap();
-                        MusicDataEvent {
-                            total: all_paths.len() as u32,
-                            current: idx as u32,
-                            finished: false,
-                        }
-                        .emit(&app)
-                        .unwrap();
-                    }
+                    on_event.send(MetadataEvent::Progress {
+                        id: event_id,
+                        current: idx,
+                    })?;
                 }
                 Err(_) => continue,
             }
         }
 
-        MusicDataEvent {
-            total: all_paths.len() as u32,
-            current: all_paths.len() as u32,
-            finished: true,
-        }
-        .emit(&app)
-        .unwrap();
+        on_event.send(MetadataEvent::Finished { id: event_id })?;
 
         for metadata in all_metadata {
             let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;

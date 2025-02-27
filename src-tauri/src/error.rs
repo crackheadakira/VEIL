@@ -4,20 +4,22 @@ use specta::Type;
 #[derive(thiserror::Error, Debug, serde::Serialize, Type)]
 #[serde(tag = "type", content = "data")]
 pub enum FrontendError {
-    #[error("io error: {0}")]
+    #[error("IO error: {0}")]
     Io(String),
-    #[error("metadata error: {0}")]
+    #[error("Metadata error: {0}")]
     Metadata(String),
-    #[error("database error: {0}")]
+    #[error("Database error: {0}")]
     Database(String),
-    #[error("player error: {0}")]
+    #[error("Player error: {0}")]
     Player(String),
-    #[error("standard error: {0}")]
+    #[error("Standard error: {0}")]
     Standard(String),
-    #[error("lastfm error: {0}")]
+    #[error("LastFM error: {0}")]
     LastFMError(String),
-    #[error("serde json: {0}")]
+    #[error("Serde JSON: {0}")]
     SerdeJson(String),
+    #[error("Tauri error: {0}")]
+    TauriError(String),
 }
 
 impl From<std::io::Error> for FrontendError {
@@ -59,5 +61,11 @@ impl From<Box<dyn std::error::Error>> for FrontendError {
 impl From<serde_json::Error> for FrontendError {
     fn from(error: serde_json::Error) -> Self {
         Self::SerdeJson(error.to_string())
+    }
+}
+
+impl From<tauri::Error> for FrontendError {
+    fn from(error: tauri::Error) -> Self {
+        Self::TauriError(error.to_string())
     }
 }

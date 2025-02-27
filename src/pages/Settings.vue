@@ -74,11 +74,14 @@ import {
   SodapopConfigEvent,
   usePlayerStore,
   DialogPage,
+  MetadataEvent,
 } from "@/composables/";
 import { RadioButton, IconButton, DialogGuide } from "@/components/";
 import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { Channel } from "@tauri-apps/api/core";
 
+const onEvent = new Channel<MetadataEvent>();
 const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 
@@ -191,7 +194,7 @@ async function registerSession() {
 }
 
 async function openDialog() {
-  const result = await commands.selectMusicFolder();
+  const result = await commands.selectMusicFolder(onEvent);
   if (result.status === "error") return handleBackendError(result.error);
   else if (result.data !== "") {
     toastBus.addToast("success", "Music added successfully");
@@ -201,49 +204,32 @@ async function openDialog() {
 }
 
 const persistentToastId = ref<number | null>(null);
+const totalSongs = ref<number | null>(null);
 
-events.musicDataEvent.once((data) => {
-  const id = Date.now();
-  persistentToastId.value = id;
-  const payload = data.payload;
-  // keep modfying the toast description until the data.finished is true
-  toastBus.persistentToast(
-    id,
-    "info",
-    `Importing songs (${payload.current} / ${payload.total})`,
-  );
+onEvent.onmessage = (res) => {
+  if (res.event === "started") {
+    persistentToastId.value = res.data.id;
+    totalSongs.value = res.data.total;
 
-  if (payload.finished) {
-    setTimeout(() => toastBus.removeToast(id), 2100);
-  }
-});
-
-events.musicDataEvent.listen((data) => {
-  const payload = data.payload;
-
-  if (persistentToastId.value) {
     toastBus.persistentToast(
-      persistentToastId.value,
+      res.data.id,
       "info",
-      `Importing songs (${payload.current} / ${payload.total})`,
+      `Going to import ${res.data.total} songs!`,
+    );
+  } else if (res.event === "progress") {
+    toastBus.persistentToast(
+      res.data.id,
+      "info",
+      `Importing songs (${res.data.current} / ${totalSongs.value})`,
     );
   } else {
-    const id = Date.now();
-    persistentToastId.value = id;
-    toastBus.persistentToast(
-      id,
-      "info",
-      `Importing songs (${payload.current} / ${payload.total})`,
-    );
-  }
-
-  if (payload.finished && persistentToastId.value) {
     setTimeout(() => {
-      toastBus.removeToast(persistentToastId.value!);
+      toastBus.removeToast(res.data.id);
       persistentToastId.value = null;
-    }, 2100);
+      totalSongs.value = null;
+    });
   }
-});
+};
 
 onBeforeMount(async () => {
   playerStore.currentPage = "/settings";

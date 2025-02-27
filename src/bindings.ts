@@ -4,9 +4,14 @@
 /** user-defined commands **/
 
 export const commands = {
-  async selectMusicFolder(): Promise<Result<string, FrontendError>> {
+  async selectMusicFolder(
+    onEvent: TAURI_CHANNEL<MetadataEvent>,
+  ): Promise<Result<string, FrontendError>> {
     try {
-      return { status: "ok", data: await TAURI_INVOKE("select_music_folder") };
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("select_music_folder", { onEvent }),
+      };
     } catch (e) {
       if (e instanceof Error) throw e;
       else return { status: "error", error: e as any };
@@ -300,7 +305,8 @@ export type FrontendError =
   | { type: "Player"; data: string }
   | { type: "Standard"; data: string }
   | { type: "LastFMError"; data: string }
-  | { type: "SerdeJson"; data: string };
+  | { type: "SerdeJson"; data: string }
+  | { type: "TauriError"; data: string };
 export type MediaPayload =
   | { Play: boolean }
   | { Pause: boolean }
@@ -318,6 +324,10 @@ export type MediaPayload =
    * Position in seconds
    */
   | { Position: number };
+export type MetadataEvent =
+  | { event: "started"; data: { id: number; total: number } }
+  | { event: "progress"; data: { id: number; current: number } }
+  | { event: "finished"; data: { id: number } };
 export type MusicDataEvent = {
   total: number;
   current: number;

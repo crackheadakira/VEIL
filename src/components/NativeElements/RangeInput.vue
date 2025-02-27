@@ -54,6 +54,7 @@ useResizeObserver(container, (entries) =>
     () => (sliderWidth.value = entries[0].contentRect.width),
   ),
 );
+
 useResizeObserver(dotEl, (entries) =>
   requestAnimationFrame(() => (dotWidth.value = entries[0].contentRect.width)),
 );

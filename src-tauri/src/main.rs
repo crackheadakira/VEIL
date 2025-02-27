@@ -7,6 +7,7 @@ use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
 use souvlaki::MediaControlEvent;
 use specta::Type;
+use specta_typescript::BigIntExportBehavior;
 use std::io::Write;
 use std::sync::{Arc, Mutex, RwLock};
 use std::{fs::create_dir, fs::File, path::PathBuf};
@@ -47,7 +48,7 @@ pub enum MediaPayload {
 }
 
 fn main() {
-    let builder = Builder::<tauri::Wry>::new()
+    let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::music_folder::select_music_folder,
             commands::sqlite::get_album_with_tracks,
@@ -76,18 +77,16 @@ fn main() {
             commands::lastfm::get_token,
             commands::lastfm::get_session,
         ])
-        .events(collect_events![
-            commands::music_folder::MusicDataEvent,
-            SodapopConfigEvent
-        ])
+        .events(collect_events![SodapopConfigEvent])
         .typ::<MediaPayload>()
         .typ::<SodapopConfig>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
-    builder
+    specta_builder
         .export(
             Typescript::default()
                 .formatter(specta_typescript::formatter::prettier)
+                .bigint(BigIntExportBehavior::Number)
                 .header("// @ts-nocheck"),
             "../src/bindings.ts",
         )
@@ -97,9 +96,9 @@ fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(builder.invoke_handler())
+        .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
-            builder.mount_events(app);
+            specta_builder.mount_events(app);
 
             #[cfg(not(target_os = "windows"))]
             let hwnd = None;
