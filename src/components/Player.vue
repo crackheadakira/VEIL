@@ -40,28 +40,16 @@
     <div class="flex w-full flex-col items-center gap-4 px-6">
       <PlayerControls :extra="true" />
 
-      <div
-        class="text-supporting flex w-full items-center gap-4 text-center select-none"
-      >
+      <div class="text-supporting flex w-full items-center gap-4 text-center">
         <label class="w-10">{{ currentProgress }}</label>
-        <RangeInput
+        <Slider
           class="w-full"
-          @mousedown="beingHeld = true"
-          @mouseup="selectProgress()"
+          @pointerdown="beingHeld = true"
+          @pointerup="selectProgress"
           v-model="progress"
           :max="playerStore.currentTrack.duration"
+          :step="0.001"
         />
-        <!--<input
-          @mousedown="beingHeld = true"
-          @mouseup="selectProgress()"
-          v-model="progress"
-          type="range"
-          ref="progressBar"
-          name="progress"
-          min="0"
-          :max="playerStore.currentTrack.duration"
-          class="bg-stroke-100 accent-placeholder h-1.5 w-full rounded-lg"
-        />-->
         <label class="w-10">{{ totalLength }}</label>
       </div>
     </div>
@@ -70,28 +58,19 @@
       <span
         class="i-fluent-speaker-24-filled hover:text-placeholder cursor-pointer"
       ></span>
-      <RangeInput
+      <Slider
         @update:model-value="playerStore.handleVolume"
         v-model="playerStore.playerVolume"
         :max="1"
         :step="0.01"
       />
-      <!--<input
-        @update:model-value="playerStore.handleVolume"
-        v-model="playerStore.playerVolume"
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        class="bg-stroke-100 accent-placeholder h-1.5 w-full max-w-36 rounded-lg focus:ring-0"
-      />-->
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { commands, formatTime, usePlayerStore } from "@/composables/";
-import { PlayerControls, RangeInput } from "@/components/";
+import { PlayerControls, Slider } from "@/components/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";

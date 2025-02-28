@@ -21,7 +21,7 @@
         Show Error Toast
       </button>
     </div>
-    <RangeInput :max="1" :step="0.01" />
+    <Slider :max="1" :step="0.01" />
     <div class="flex gap-2">
       <PlaylistCard />
       <Dropdown
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { Dialog, Dropdown, PlaylistCard, RangeInput } from "@/components/";
+import { Dialog, Dropdown, PlaylistCard, Slider } from "@/components/";
 import { toastBus, usePlayerStore, usePlaylistStore } from "@/composables/";
 import { onMounted } from "vue";
 

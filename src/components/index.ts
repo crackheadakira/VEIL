@@ -14,5 +14,4 @@ export { default as IconButton } from "./IconButton.vue";
 export { default as TitleBar } from "./TitleBar.vue";
 export { default as SearchBar } from "./SearchBar.vue";
 
-export * from "./NativeElements/index";
 export * from "./RekaUI/index";
