@@ -33,26 +33,12 @@
     <div class="text-supporting flex flex-col gap-4">
       <p>Online Features</p>
       <div class="flex gap-3">
-        <input
-          @change="updateConfig(4, discordRPC)"
-          class="h-4 w-4"
-          type="checkbox"
-          v-model="discordRPC"
-          id="discordRpc"
-          name="discordRpc"
-        />
-        <label for="discordRpc">Enable Discord RPC</label>
+        <Switch v-model="discordRPC" id="discordRPC" />
+        <label for="discordRPC">Discord RPC</label>
       </div>
       <div class="flex gap-3">
-        <input
-          @change="updateConfig(5, lastFM)"
-          class="h-4 w-4"
-          type="checkbox"
-          v-model="lastFM"
-          id="lastFM"
-          name="lastFM"
-        />
-        <label for="lastFM">Enable Last.FM</label>
+        <Switch v-model="lastFM" id="lastFM" />
+        <label for="lastFM">Last.FM</label>
       </div>
       <div v-if="lastFM">
         <small class="pb-2">Last.FM Session Key</small>
@@ -76,7 +62,7 @@ import {
   DialogPage,
   MetadataEvent,
 } from "@/composables/";
-import { RadioButton, IconButton, DialogGuide } from "@/components/";
+import { RadioButton, IconButton, DialogGuide, Switch } from "@/components/";
 import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Channel } from "@tauri-apps/api/core";
@@ -207,7 +193,7 @@ const persistentToastId = ref<number | null>(null);
 const totalSongs = ref<number | null>(null);
 
 onEvent.onmessage = (res) => {
-  if (res.event === "started") {
+  if (res.event === "Started") {
     persistentToastId.value = res.data.id;
     totalSongs.value = res.data.total;
 
@@ -216,7 +202,7 @@ onEvent.onmessage = (res) => {
       "info",
       `Going to import ${res.data.total} songs!`,
     );
-  } else if (res.event === "progress") {
+  } else if (res.event === "Progress") {
     toastBus.persistentToast(
       res.data.id,
       "info",

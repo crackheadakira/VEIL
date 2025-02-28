@@ -323,9 +323,9 @@ export type MediaPayload =
    */
   | { Position: number };
 export type MetadataEvent =
-  | { event: "started"; data: { id: number; total: number } }
-  | { event: "progress"; data: { id: number; current: number } }
-  | { event: "finished"; data: { id: number } };
+  | { event: "Started"; data: { id: number; total: number } }
+  | { event: "Progress"; data: { id: number; current: number } }
+  | { event: "Finished"; data: { id: number } };
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = {
   playlist: Playlists;
