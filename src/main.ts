@@ -11,10 +11,12 @@ import {
   ArtistView,
   PlaylistView,
   SettingsView,
+  WidgetView
 } from "@/pages/";
 
 const routes = [
-  { path: "/settings", component: SettingsView, meta: { pageName: "Settings" } },
+  { path: "/widget", component: WidgetView, name: "widget" },
+  { path: "/settings", component: SettingsView, name: "settings", meta: { pageName: "Settings" } },
   { path: "/album/:id", component: AlbumView, name: "album", meta: { pageName: "Album" } },
   {
     path: "/playlist/:id",
@@ -23,7 +25,7 @@ const routes = [
     meta: { pageName: "Playlist" }
   },
   { path: "/artist/:id", component: ArtistView, name: "artist", meta: { pageName: "Artist" } },
-  { path: "/all_albums", component: AllAlbumsView, meta: { pageName: "All Albums" } },
+  { path: "/all_albums", component: AllAlbumsView, name: "all_albums", meta: { pageName: "All Albums" } },
   { path: "/", component: HomeView, meta: { pageName: "Home" } },
 ];
 const router = createRouter({

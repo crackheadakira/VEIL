@@ -9,7 +9,7 @@
       <SliderRange class="bg-placeholder absolute h-full rounded-full" />
     </SliderTrack>
     <SliderThumb
-      class="focus:shadow-grass9 bg-placeholder hover:bg-text focus:bg-placeholder block h-4 w-4 rounded-full transition-colors duration-150 focus:inset-ring-1 focus:outline-none"
+      class="bg-text hover:bg-placeholder focus:inset-ring-text block h-4 w-4 rounded-full transition-colors duration-150 focus:inset-ring-1 focus:outline-none"
     />
   </SliderRoot>
 </template>

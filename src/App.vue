@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background flex h-screen flex-col">
+  <div v-show="!isWidget" class="bg-background flex h-screen flex-col">
     <TitleBar class="sticky top-0" />
 
     <div class="flex flex-1 overflow-hidden">
@@ -8,7 +8,7 @@
       </div>
 
       <RouterView
-        class="flex-1 overflow-y-scroll p-16"
+        class="flex-1 overflow-y-scroll p-8"
         :key="currentRoute.fullPath"
       />
     </div>
@@ -16,6 +16,7 @@
     <Player class="sticky bottom-0 h-28" />
     <ToastManager ref="toastManager" />
   </div>
+  <RouterView v-if="isWidget" />
 </template>
 
 <script setup lang="ts">
@@ -27,7 +28,7 @@ import {
   usePlayerStore,
   usePlaylistStore,
 } from "@/composables/";
-import { onBeforeMount } from "vue";
+import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -36,7 +37,9 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
-onBeforeMount(async () => {
+const isWidget = computed(() => router.currentRoute.value.name === "widget");
+
+onMounted(async () => {
   await configStore.initialize();
 
   const result = await commands.getAllAlbums();

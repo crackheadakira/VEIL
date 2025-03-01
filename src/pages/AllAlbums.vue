@@ -4,7 +4,7 @@
   >
     <div
       ref="container"
-      class="flex w-full flex-wrap items-center justify-center gap-4 overflow-y-scroll"
+      class="flex h-full w-full flex-wrap items-center justify-center gap-4 overflow-y-scroll"
     >
       <BigCard v-for="album of albums" :data="album" />
     </div>

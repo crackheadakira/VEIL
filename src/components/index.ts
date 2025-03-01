@@ -12,5 +12,6 @@ export { default as TrackList } from "./TrackList.vue";
 export { default as IconButton } from "./IconButton.vue";
 export { default as TitleBar } from "./TitleBar.vue";
 export { default as SearchBar } from "./SearchBar.vue";
+export { default as VolumeControls } from "./VolumeControls.vue";
 
 export * from "./RekaUI/index";

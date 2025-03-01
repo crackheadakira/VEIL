@@ -6,17 +6,23 @@
     <small class="pointer-events-none text-sm"
       >Sodapop Reimagined - {{ currentPage }}</small
     >
-    <div class="flex gap-2 text-xs *:cursor-pointer *:select-none">
+    <div class="flex items-center gap-2 text-xs *:cursor-pointer *:select-none">
+      <RouterLink
+        class="i-fluent-window-new-24-filled aspect-square h-fit"
+        v-if="playerStore.currentTrack"
+        to="/widget"
+      >
+      </RouterLink>
       <span
-        @click="appWindow.minimize"
+        @click="getCurrentWindow().minimize"
         class="i-fluent-subtract-20-filled aspect-square h-fit"
       ></span>
       <span
-        @click="appWindow.maximize"
+        @click="getCurrentWindow().toggleMaximize"
         class="i-fluent-maximize-20-filled aspect-square h-fit"
       ></span>
       <span
-        @click="appWindow.close"
+        @click="getCurrentWindow().close"
         class="i-fluent-dismiss-20-filled aspect-square h-fit"
       ></span>
     </div>
@@ -30,7 +36,6 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const playerStore = usePlayerStore();
 const currentPage = ref(playerStore.pageName);
-const appWindow = getCurrentWindow();
 
 watchEffect(() => {
   currentPage.value = playerStore.pageName;

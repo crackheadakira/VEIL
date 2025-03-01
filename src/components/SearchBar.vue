@@ -9,63 +9,65 @@
       >Ctrl F</small
     >
   </div>
-  <div>
-    <Transition
-      enter-active-class="animate-zoomIn"
-      leave-active-class="animate-zoomOut"
-    >
-      <div
-        v-if="showDialog"
-        class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+  <Teleport to="body">
+    <div>
+      <Transition
+        enter-active-class="animate-zoomIn"
+        leave-active-class="animate-zoomOut"
       >
-        <div class="text-text flex h-72 w-96 flex-col">
-          <div
-            class="bg-background border-stroke-100 flex w-full items-center gap-2 rounded-md border p-2 font-medium"
-          >
-            <span
-              class="i-fluent-search-12-filled text-supporting aspect-square w-5"
-            ></span>
-            <input
-              v-model="input"
-              ref="inputElement"
-              type="text"
-              @focusin="focused = true"
-              @focusout="focused = false"
-              class="placeholder-supporting w-full focus:outline-hidden"
-              placeholder="Search..."
-            />
-          </div>
-
-          <Transition
-            enter-active-class="animate-slideDownAndFade"
-            leave-active-class="animate-slideDownAndFade animation-reverse"
-          >
+        <div
+          v-if="showDialog"
+          class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+        >
+          <div class="text-text flex h-72 w-96 flex-col">
             <div
-              v-if="searchResults && searchResults.length"
-              class="border-stroke-100 bg-card flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+              class="bg-background border-stroke-100 flex w-full items-center gap-2 rounded-md border p-2 font-medium"
+            >
+              <span
+                class="i-fluent-search-12-filled text-supporting aspect-square w-5"
+              ></span>
+              <input
+                v-model="input"
+                ref="inputElement"
+                type="text"
+                @focusin="focused = true"
+                @focusout="focused = false"
+                class="placeholder-supporting w-full focus:outline-hidden"
+                placeholder="Search..."
+              />
+            </div>
+
+            <Transition
+              enter-active-class="animate-slideDownAndFade"
+              leave-active-class="animate-slideDownAndFade animation-reverse"
             >
               <div
-                :key="result.title + result.search_id"
-                @click="
-                  ((showDialog = false),
-                  router.push(`/${result.search_type}/${result.search_id}`))
-                "
-                v-for="(result, idx) of searchResults"
-                :class="idx === selected ? 'bg-background' : ''"
-                ref="resultElements"
-                class="hover:bg-background transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+                v-if="searchResults && searchResults.length"
+                class="border-stroke-100 bg-card flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
               >
-                <small class="truncate">{{ result.title }}</small>
-                <small class="text-supporting shrink-0">{{
-                  readableCapitalization(result.search_type)
-                }}</small>
+                <div
+                  :key="result.title + result.search_id"
+                  @click="
+                    ((showDialog = false),
+                    router.push(`/${result.search_type}/${result.search_id}`))
+                  "
+                  v-for="(result, idx) of searchResults"
+                  :class="idx === selected ? 'bg-background' : ''"
+                  ref="resultElements"
+                  class="hover:bg-background transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+                >
+                  <small class="truncate">{{ result.title }}</small>
+                  <small class="text-supporting shrink-0">{{
+                    readableCapitalization(result.search_type)
+                  }}</small>
+                </div>
               </div>
-            </div>
-          </Transition>
+            </Transition>
+          </div>
         </div>
-      </div>
-    </Transition>
-  </div>
+      </Transition>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
