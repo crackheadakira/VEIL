@@ -10,18 +10,25 @@
         alt="Album Cover"
       />
       <div class="flex flex-col gap-1 truncate">
-        <RouterLink
-          :to="{
-            name: 'album',
-            params: { id: playerStore.currentTrack.album_id },
-          }"
+        <ContextMenu
+          :track="playerStore.currentTrack"
+          :playlists="playlistStore.playlists"
+          @queue="handleAddToQueue"
+          @playlist="handlePlaylist"
         >
-          <small
-            class="text-text hover:text-placeholder cursor-pointer truncate"
+          <RouterLink
+            :to="{
+              name: 'album',
+              params: { id: playerStore.currentTrack.album_id },
+            }"
           >
-            {{ playerStore.currentTrack.name }}
-          </small>
-        </RouterLink>
+            <small
+              class="text-text hover:text-placeholder cursor-pointer truncate"
+            >
+              {{ playerStore.currentTrack.name }}
+            </small>
+          </RouterLink>
+        </ContextMenu>
         <RouterLink
           :to="{
             name: 'artist',
@@ -69,12 +76,20 @@
 </template>
 
 <script setup lang="ts">
-import { commands, formatTime, usePlayerStore } from "@/composables/";
-import { PlayerControls, Slider } from "@/components/";
+import {
+  commands,
+  formatTime,
+  Playlists,
+  Tracks,
+  usePlayerStore,
+  usePlaylistStore,
+} from "@/composables/";
+import { PlayerControls, Slider, ContextMenu } from "@/components/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
+const playlistStore = usePlaylistStore();
 const playerStore = usePlayerStore();
 
 const beingHeld = ref(false);
@@ -110,6 +125,19 @@ async function selectProgress() {
   beingHeld.value = false;
 
   playerStore.handleProgress(false, progress.value);
+}
+
+async function handlePlaylist(
+  type: "add" | "remove",
+  playlist: Playlists,
+  track: Tracks,
+) {
+  if (type === "add") await playlistStore.addToPlaylist(playlist.id, track.id);
+  else await playlistStore.removeFromPlaylist(playlist.id, track.id);
+}
+
+async function handleAddToQueue(track: Tracks) {
+  playerStore.personalQueue.push(track);
 }
 
 onMounted(async () => {
