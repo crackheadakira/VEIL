@@ -133,6 +133,28 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getAlbumsOffset(
+    limit: number,
+    offset: number,
+  ): Promise<Result<Albums[], FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_albums_offset", { limit, offset }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTotalAlbums(): Promise<Result<number, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("get_total_albums") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
     try {
       return {

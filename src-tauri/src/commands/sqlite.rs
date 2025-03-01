@@ -21,6 +21,22 @@ pub fn get_all_albums(state: TauriState) -> Result<Vec<Albums>, FrontendError> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn get_total_albums(state: TauriState) -> Result<u32, FrontendError> {
+    Ok(state.db.rows::<Albums>()?)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_albums_offset(
+    state: TauriState,
+    limit: u32,
+    offset: u32,
+) -> Result<Vec<Albums>, FrontendError> {
+    Ok(state.db.album_pagination(limit, offset)?)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn get_artist_with_albums(
     id: u32,
     state: TauriState,

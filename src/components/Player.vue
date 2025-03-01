@@ -1,6 +1,6 @@
 <template>
   <div
-    class="aspect-player border-stroke-100 bg-card text-text grid h-28 w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
+    class="aspect-player border-stroke-100 bg-card text-text z-20 grid h-28 w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
     v-if="playerStore.currentTrack"
   >
     <div class="flex w-full items-center gap-5">

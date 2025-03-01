@@ -111,6 +111,16 @@ impl Database {
         Ok(result)
     }
 
+    /// Get total length of rows in `T`
+    pub fn rows<T: NeedForDatabase>(&self) -> Result<u32, DatabaseError> {
+        let conn = self.pool.get()?;
+        let stmt_to_call = format!("SELECT COUNT(*) FROM {}", T::table_name());
+        let mut stmt = conn.prepare(&stmt_to_call)?;
+        let result = stmt.query_row([], |row| row.get(0))?;
+
+        Ok(result)
+    }
+
     /// Get value from `T` table where id is same
     pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
         let conn = self.pool.get()?;
@@ -228,6 +238,17 @@ impl Database {
         let result = stmt
             .query_map([search_str], Search::from_row)?
             .collect::<Result<Vec<Search>, Error>>()?;
+
+        Ok(result)
+    }
+
+    /// Fetch albums limited by amount & offset
+    pub fn album_pagination(&self, limit: u32, offset: u32) -> Result<Vec<Albums>, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare(query("albums_offset"))?;
+        let result = stmt
+            .query_map([limit, offset], Albums::from_row)?
+            .collect::<Result<Vec<Albums>, Error>>()?;
 
         Ok(result)
     }

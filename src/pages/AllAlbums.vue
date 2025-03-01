@@ -1,34 +1,64 @@
 <template>
-  <div class="bg-background text-text flex flex-col items-center gap-4">
-    <div class="flex flex-wrap items-center justify-center gap-4">
+  <div
+    class="bg-background text-text flex h-full w-full flex-col items-center gap-4"
+  >
+    <div
+      ref="container"
+      class="flex w-full flex-wrap items-center justify-center gap-4 overflow-y-scroll"
+    >
       <BigCard v-for="album of albums" :data="album" />
     </div>
+    <Pagination
+      @update:page="onNewPage"
+      :total="totalAlbums"
+      :items-per-page="albumsToFetch"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { BigCard } from "@/components/";
+import { BigCard, Pagination } from "@/components/";
 import {
   commands,
   handleBackendError,
   usePlayerStore,
   type Albums,
 } from "@/composables/";
-import { onBeforeMount, onMounted, ref } from "vue";
+import { templateRef } from "@vueuse/core";
+import { computed, onMounted, ref } from "vue";
 
 const playerStore = usePlayerStore();
 const albums = ref<Albums[]>([]);
+const totalAlbums = ref<number>(0);
+const currentPage = ref(1);
 
-onBeforeMount(async () => {
-  const result = await commands.getAllAlbums();
+const container = templateRef("container");
+const containerWidth = ref(container.value?.clientWidth || 1504);
+
+const albumsToFetch = computed(
+  () => Math.floor(containerWidth.value / 192) * 5,
+);
+
+async function onNewPage(page: number) {
+  currentPage.value = page;
+  const result = await commands.getAlbumsOffset(
+    albumsToFetch.value,
+    albumsToFetch.value * (page - 1),
+  );
   if (result.status === "error") return handleBackendError(result.error);
+  albums.value = result.data;
+}
 
-  const response = result.data;
-  albums.value = response;
-});
-
-onMounted(() => {
+onMounted(async () => {
   playerStore.currentPage = "/all_albums";
   playerStore.pageName = "All Albums";
+
+  const total = await commands.getTotalAlbums();
+  if (total.status === "error") return handleBackendError(total.error);
+  totalAlbums.value = total.data;
+
+  const result = await commands.getAlbumsOffset(albumsToFetch.value, 0);
+  if (result.status === "error") return handleBackendError(result.error);
+  albums.value = result.data;
 });
 </script>
