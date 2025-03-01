@@ -1,5 +1,4 @@
 export { default as BigCard } from "./BigCard.vue";
-export { default as ContextMenu } from "./ContextMenu.vue";
 export { default as Dialog } from "./Dialog.vue";
 export { default as DialogGuide } from "./DialogGuide.vue";
 export { default as Dropdown } from "./Dropdown.vue";

@@ -9,7 +9,7 @@
         'text-blue-500',
       ])
     "
-    class="cardStyle flex h-fit w-96 items-center gap-3 p-4"
+    class="sodapop-card flex h-fit w-96 items-center gap-3 p-4"
   >
     <span
       class="shrink-0"

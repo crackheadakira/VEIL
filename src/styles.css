@@ -52,6 +52,97 @@ svg {
   --aspect-secondaryCard: 0.75 / 1;
   --aspect-player: 16.5 / 1;
   --aspect-button: 2.96 / 1;
+
+  /* Sodapop Animations */
+  --ease-sodapop: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Slides */
+  --animate-slideLeftAndFade: slideLeftAndFade 75ms var(--ease-sodapop);
+  --animate-slideRightAndFade: slideRightAndFade 75ms var(--ease-sodapop);
+  --animate-slideUpAndFade: slideUpAndFade 75ms var(--ease-sodapop);
+  --animate-slideDownAndFade: slideDownAndFade 75ms var(--ease-sodapop);
+
+  /* Zooms */
+  --animate-zoomIn: zoomIn 75ms var(--ease-sodapop);
+  --animate-zoomOut: zoomOut 75ms var(--ease-sodapop);
+
+  @keyframes slideLeftAndFade {
+    0% {
+      opacity: 0;
+      transform: translateX(2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0px);
+    }
+  }
+
+  @keyframes slideRightAndFade {
+    0% {
+      opacity: 0;
+      transform: translateX(-2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0px);
+    }
+  }
+
+  @keyframes slideUpAndFade {
+    0% {
+      opacity: 0;
+      transform: translateY(2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0px);
+    }
+  }
+
+  @keyframes slideDownAndFade {
+    0% {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0px);
+    }
+  }
+
+  @keyframes zoomIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes zoomOut {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+  }
+}
+
+@utility animation-reverse {
+  animation-direction: reverse;
+}
+
+@utility sodapop-card {
+  @apply bg-card border-stroke-100 rounded-md border p-2;
+}
+
+@utility context-menu-item {
+  @apply text-supporting data-[disabled]:text-placeholder data-[highlighted]:bg-stroke-200 data-[highlighted]:text-text relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
 }
 
 @layer base {
@@ -95,15 +186,5 @@ svg {
     display: block;
     font-size: 1rem;
     font-weight: 500;
-  }
-}
-
-@layer components {
-  .cardStyle {
-    background-color: var(--color-card);
-    border-color: var(--color-stroke-100);
-    border-width: 1px;
-    border-radius: var(--radius-md);
-    padding: calc(var(--spacing) * 2);
   }
 }

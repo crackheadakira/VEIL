@@ -1,7 +1,7 @@
 <template>
   <div
     @click="updateDialog"
-    class="text-supporting cardStyle bg-background hover:border-stroke-200 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
+    class="text-supporting sodapop-card bg-background hover:border-stroke-200 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
     <small>Search...</small>
@@ -11,10 +11,8 @@
   </div>
   <div>
     <Transition
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95"
-      enter-active-class="transition-all duration-150"
-      leave-active-class="transition-all duration-150"
+      enter-active-class="animate-zoomIn"
+      leave-active-class="animate-zoomOut"
     >
       <div
         v-if="showDialog"
@@ -39,10 +37,8 @@
           </div>
 
           <Transition
-            enter-from-class="opacity-0 -translate-y-2"
-            leave-to-class="opacity-0 -translate-y-2"
-            enter-active-class="transition-all duration-150"
-            leave-active-class="transition-all duration-150"
+            enter-active-class="animate-slideDownAndFade"
+            leave-active-class="animate-slideDownAndFade animation-reverse"
           >
             <div
               v-if="searchResults && searchResults.length"
