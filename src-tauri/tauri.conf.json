@@ -12,7 +12,7 @@
     "windows": [
       {
         "title": "Sodapop Reimagined",
-        "label": "Sodapop-Reimagined",
+        "label": "sodapop-reimagined",
         "url": "index.html",
         "width": 1280,
         "height": 720,

@@ -1,9 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the Sodapop-Reimagined window",
+  "description": "Capability for the windows of Sodapop Reimagined",
   "windows": [
-    "Sodapop-Reimagined"
+    "sodapop-reimagined"
   ],
   "permissions": [
     "core:default",
@@ -19,6 +19,8 @@
     "core:window:allow-maximize",
     "core:window:allow-minimize",
     "core:window:allow-close",
+    "core:window:allow-center",
+    "core:window:allow-set-closable",
     "opener:default",
     "opener:allow-default-urls",
     "opener:allow-open-url",

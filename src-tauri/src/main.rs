@@ -107,7 +107,7 @@ fn main() {
 
             #[cfg(target_os = "windows")]
             let hwnd = {
-                let main_window = app.get_webview_window("main").unwrap();
+                let main_window = app.get_webview_window("sodapop-reimagined").unwrap();
                 let window_handle = main_window.window_handle().unwrap();
 
                 match window_handle.as_raw() {
