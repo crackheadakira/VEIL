@@ -5,7 +5,7 @@
       <p>Theme</p>
       <RadioGroup
         @update:model-value="(e: string) => updateConfig(1, e)"
-        v-model="theme"
+        v-model="theme as ThemeMode"
         :items="['Dark', 'Light', 'System']"
       />
     </div>
@@ -56,6 +56,7 @@ import {
   usePlayerStore,
   DialogPage,
   MetadataEvent,
+  ThemeMode,
 } from "@/composables/";
 import { IconButton, DialogGuide, Switch, RadioGroup } from "@/components/";
 import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";

@@ -19,9 +19,9 @@
         >
           <div
             :key="currentPage.title"
-            class="sodapop-card text-text flex h-36 w-96 flex-col justify-between gap-3 p-4"
+            class="sodapop-card text-text flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
           >
-            <div>
+            <div class="h-fit">
               <p class="mb-2">{{ currentPage.title }}</p>
               <small class="text-supporting">{{
                 currentPage.description

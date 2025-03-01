@@ -23,16 +23,12 @@
     </div>
     <div class="flex gap-2">
       <PlaylistCard />
-      <Dropdown
-        :title="'Filter by'"
-        :options="['Albums', 'Artists', 'Tracks']"
-      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Dialog, Dropdown, PlaylistCard } from "@/components/";
+import { Dialog, PlaylistCard } from "@/components/";
 import { toastBus, usePlayerStore, usePlaylistStore } from "@/composables/";
 import { onMounted } from "vue";
 

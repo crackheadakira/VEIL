@@ -3,7 +3,7 @@
     <ContextMenu
       :track="track"
       :playlists="playlistStore.playlists"
-      :curr_playlist="'playlist' in data ? data.playlist : null"
+      :curr_playlist="'playlist' in data ? data.playlist : undefined"
       @queue="handleAddToQueue"
       @playlist="handlePlaylist"
       v-for="(track, idx) of data.tracks"

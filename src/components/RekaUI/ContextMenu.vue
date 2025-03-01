@@ -70,7 +70,7 @@ import {
 } from "reka-ui";
 
 const props = defineProps<{
-  curr_playlist: Playlists | null;
+  curr_playlist?: Playlists;
   track: Tracks;
   playlists: Playlists[] | null;
 }>();
