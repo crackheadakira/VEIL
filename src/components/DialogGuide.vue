@@ -4,10 +4,8 @@
       <slot></slot>
     </div>
     <Transition
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95"
-      enter-active-class="transition-all duration-150"
-      leave-active-class="transition-all duration-150"
+      enter-active-class="animate-zoomIn"
+      leave-active-class="animate-zoomOut"
     >
       <div
         v-if="showDialog"
@@ -21,9 +19,9 @@
         >
           <div
             :key="currentPage.title"
-            class="cardStyle text-text flex h-36 w-96 flex-col justify-between gap-3 p-4"
+            class="sodapop-card text-text flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
           >
-            <div>
+            <div class="h-fit">
               <p class="mb-2">{{ currentPage.title }}</p>
               <small class="text-supporting">{{
                 currentPage.description
@@ -47,7 +45,7 @@
                     : 'cursor-not-allowed opacity-80'
                 "
                 @click="(button.click(), closeDialog(button.close))"
-                class="aspect-button cardStyle text-supporting w-24 hover:opacity-80"
+                class="aspect-button sodapop-card text-supporting w-24 hover:opacity-80"
               >
                 <small>{{ readableCapitalization(button.name) }}</small>
               </button>

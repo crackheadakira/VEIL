@@ -1,11 +1,8 @@
 <template>
   <div class="fixed right-4 bottom-4 z-30 flex flex-col gap-2">
     <TransitionGroup
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95"
-      enter-active-class="transition-all duration-150"
-      leave-active-class="transition-all duration-150"
-      move-class="transition-all"
+      enter-active-class="animate-zoomIn"
+      leave-active-class="animate-zoomOut"
     >
       <Toast
         v-for="toast in toasts"

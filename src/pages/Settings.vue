@@ -3,23 +3,10 @@
     <h5>Settings</h5>
     <div class="text-supporting flex flex-col gap-4">
       <p>Theme</p>
-      <RadioButton
-        @update:model-value="updateConfig(1, theme)"
-        v-model="theme"
-        input-id="dark"
-        input-value="Dark"
-      />
-      <RadioButton
-        @update:model-value="updateConfig(1, theme)"
-        v-model="theme"
-        input-id="light"
-        input-value="Light"
-      />
-      <RadioButton
-        @update:model-value="updateConfig(1, theme)"
-        v-model="theme"
-        input-id="system"
-        input-value="System"
+      <RadioGroup
+        @update:model-value="(e: string) => updateConfig(1, e)"
+        v-model="theme as ThemeMode"
+        :items="['Dark', 'Light', 'System']"
       />
     </div>
     <div class="text-supporting">
@@ -33,26 +20,20 @@
     <div class="text-supporting flex flex-col gap-4">
       <p>Online Features</p>
       <div class="flex gap-3">
-        <input
-          @change="updateConfig(4, discordRPC)"
-          class="h-4 w-4"
-          type="checkbox"
+        <Switch
+          @update:model-value="(e: boolean) => updateConfig(4, e)"
           v-model="discordRPC"
-          id="discordRpc"
-          name="discordRpc"
+          id="discordRPC"
         />
-        <label for="discordRpc">Enable Discord RPC</label>
+        <label for="discordRPC">Discord RPC</label>
       </div>
       <div class="flex gap-3">
-        <input
-          @change="updateConfig(5, lastFM)"
-          class="h-4 w-4"
-          type="checkbox"
+        <Switch
+          @update:model-value="(e: boolean) => updateConfig(5, e)"
           v-model="lastFM"
           id="lastFM"
-          name="lastFM"
         />
-        <label for="lastFM">Enable Last.FM</label>
+        <label for="lastFM">Last.FM</label>
       </div>
       <div v-if="lastFM">
         <small class="pb-2">Last.FM Session Key</small>
@@ -75,8 +56,9 @@ import {
   usePlayerStore,
   DialogPage,
   MetadataEvent,
+  ThemeMode,
 } from "@/composables/";
-import { RadioButton, IconButton, DialogGuide } from "@/components/";
+import { IconButton, DialogGuide, Switch, RadioGroup } from "@/components/";
 import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { Channel } from "@tauri-apps/api/core";
@@ -145,10 +127,8 @@ function updateConfig(setting: number, value: any) {
 
   switch (setting) {
     case 1:
-      nextTick(() => {
-        updatedConfig.theme = value;
-        configStore.config.theme = value;
-      });
+      updatedConfig.theme = value;
+      configStore.config.theme = value;
       break;
     case 2:
       updatedConfig.music_dir = value;
@@ -207,7 +187,7 @@ const persistentToastId = ref<number | null>(null);
 const totalSongs = ref<number | null>(null);
 
 onEvent.onmessage = (res) => {
-  if (res.event === "started") {
+  if (res.event === "Started") {
     persistentToastId.value = res.data.id;
     totalSongs.value = res.data.total;
 
@@ -216,7 +196,7 @@ onEvent.onmessage = (res) => {
       "info",
       `Going to import ${res.data.total} songs!`,
     );
-  } else if (res.event === "progress") {
+  } else if (res.event === "Progress") {
     toastBus.persistentToast(
       res.data.id,
       "info",

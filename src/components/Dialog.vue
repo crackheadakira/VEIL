@@ -4,17 +4,15 @@
       <slot></slot>
     </div>
     <Transition
-      enter-from-class="opacity-0 scale-95"
-      leave-to-class="opacity-0 scale-95"
-      enter-active-class="transition-all duration-150"
-      leave-active-class="transition-all duration-150"
+      enter-active-class="animate-zoomIn"
+      leave-active-class="animate-zoomOut"
     >
       <div
         id="dialog"
         v-if="showDialog"
         class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
       >
-        <div class="cardStyle relative flex h-fit w-96 flex-col gap-3 p-4">
+        <div class="sodapop-card relative flex h-fit w-96 flex-col gap-3 p-4">
           <div>
             <p class="text-text">{{ props.title }}</p>
             <small v-if="props.description" class="mt-2">{{
@@ -24,13 +22,13 @@
           <input
             v-model="inputValue"
             type="text"
-            class="text-text placeholder-supporting cardStyle bg-background w-full font-medium focus:outline-hidden"
+            class="text-text placeholder-supporting sodapop-card bg-background w-full font-medium focus:outline-hidden"
             :placeholder="placeholder"
           />
           <div class="flex w-full justify-end gap-2">
             <button
               @click="showDialog = false"
-              class="aspect-button cardStyle text-supporting w-24 cursor-pointer hover:opacity-80"
+              class="aspect-button sodapop-card text-supporting w-24 cursor-pointer hover:opacity-80"
             >
               <small>Cancel</small>
             </button>
@@ -42,7 +40,7 @@
                   : 'cursor-pointer'
               "
               @click="handleSubmit"
-              class="aspect-button cardStyle text-supporting w-24 hover:opacity-80"
+              class="aspect-button sodapop-card text-supporting w-24 hover:opacity-80"
             >
               <small>Submit</small>
             </button>

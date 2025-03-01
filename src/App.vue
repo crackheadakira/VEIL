@@ -1,11 +1,19 @@
 <template>
   <div class="bg-background flex h-screen flex-col">
-    <TitleBar class="shrink-0" />
-    <div class="flex h-full shrink grow-0 overflow-y-scroll">
-      <SideBar class="min-w-72" />
-      <RouterView class="overflow-scroll p-16" :key="currentRoute.fullPath" />
+    <TitleBar class="sticky top-0" />
+
+    <div class="flex flex-1 overflow-hidden">
+      <div class="h-full w-72 overflow-y-auto">
+        <SideBar class="sticky top-16 bottom-28 h-full" />
+      </div>
+
+      <RouterView
+        class="flex-1 overflow-y-scroll p-16"
+        :key="currentRoute.fullPath"
+      />
     </div>
-    <Player class="h-28 grow" />
+
+    <Player class="sticky bottom-0 h-28" />
     <ToastManager ref="toastManager" />
   </div>
 </template>
