@@ -24,12 +24,10 @@ const props = defineProps<{
 }>();
 
 const singleValue = defineModel<number>({ required: false, default: 0 });
-const sliderValue = computed({
+const sliderValue = computed<number[] | undefined>({
   get: () => [singleValue.value],
   set: (val) => {
-    if (Array.isArray(val) && val.length > 0) {
-      singleValue.value = val[0];
-    }
+    if (val && val.length > 0) singleValue.value = val[0];
   },
 });
 </script>
