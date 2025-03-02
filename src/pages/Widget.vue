@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-background border-stroke-100 flex h-screen flex-col gap-4 rounded-md border-1 p-4 *:select-none"
+    class="bg-background border-stroke-200 flex h-screen flex-col gap-4 rounded-md border-1 p-4 *:select-none"
   >
     <div
       @mouseover="imageHovered = true"
@@ -39,7 +39,7 @@
         }}</small>
       </div>
       <RouterLink
-        class="i-fluent-window-new-24-filled text-supporting hover:text-stroke-200 pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
+        class="i-fluent-window-new-24-filled text-supporting hover:text-stroke-100 pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
         :to="playerStore.currentPage"
       ></RouterLink>
     </div>

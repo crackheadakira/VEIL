@@ -1,12 +1,12 @@
 <template>
   <div
-    class="border-stroke-100 bg-card text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
+    class="border-stroke-200 bg-card text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
   >
     <div class="flex w-full flex-col gap-2 font-medium *:select-none">
       <SearchBar />
       <div class="flex w-full flex-col gap-4">
         <small class="text-supporting">General</small>
-        <hr class="border-stroke-100 border-t-2" />
+        <hr class="border-stroke-200 border-t-2" />
       </div>
       <RouterLink
         class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
@@ -40,7 +40,7 @@
         class="mb-2 flex w-full flex-col gap-4"
       >
         <small class="text-supporting">Playlists</small>
-        <hr class="border-stroke-100 border-t-2" />
+        <hr class="border-stroke-200 border-t-2" />
       </div>
       <RouterLink
         v-for="playlist of allPlaylists"

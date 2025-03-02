@@ -1,11 +1,11 @@
 <template>
   <div
     @click="updateDialog"
-    class="text-supporting sodapop-card bg-background hover:border-stroke-200 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
+    class="text-supporting sodapop-card bg-background hover:border-stroke-100 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
     <small>Search...</small>
-    <small class="text-text bg-stroke-200 ml-auto rounded-sm p-1 px-2"
+    <small class="text-text bg-stroke-100 ml-auto rounded-sm p-1 px-2"
       >Ctrl F</small
     >
   </div>
@@ -21,7 +21,7 @@
         >
           <div class="text-text flex h-72 w-96 flex-col">
             <div
-              class="bg-background border-stroke-100 flex w-full items-center gap-2 rounded-md border p-2 font-medium"
+              class="bg-background border-stroke-200 flex w-full items-center gap-2 rounded-md border p-2 font-medium"
             >
               <span
                 class="i-fluent-search-12-filled text-supporting aspect-square w-5"
@@ -43,7 +43,7 @@
             >
               <div
                 v-if="searchResults && searchResults.length"
-                class="border-stroke-100 bg-card flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+                class="border-stroke-200 bg-card flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
               >
                 <div
                   :key="result.title + result.search_id"

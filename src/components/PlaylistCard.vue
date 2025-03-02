@@ -1,6 +1,6 @@
 <template>
   <div
-    class="aspect-card sodapop-card hover:border-stroke-200 group flex h-28 cursor-pointer items-center gap-6 p-4 duration-150"
+    class="aspect-card sodapop-card hover:border-stroke-100 group flex h-28 cursor-pointer items-center gap-6 p-4 duration-150"
   >
     <img
       class="aspect-square w-20 rounded-md duration-150 group-hover:opacity-90"

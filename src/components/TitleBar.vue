@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-background text-supporting border-stroke-100 z-[1000] flex h-fit w-full cursor-default items-center justify-between border-b p-2 px-3 text-sm"
+    class="bg-background text-supporting border-stroke-200 z-[1000] flex h-fit w-full cursor-default items-center justify-between border-b p-2 px-3 text-sm"
   >
     <small class="pointer-events-none text-sm"
       >Sodapop Reimagined - {{ currentPage }}</small

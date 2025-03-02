@@ -5,7 +5,7 @@
     </ContextMenuTrigger>
     <ContextMenuPortal>
       <ContextMenuContent
-        class="border-stroke-100 data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-card z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
+        class="border-stroke-200 data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-card z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
         :side-offset="5"
       >
         <ContextMenuSub v-if="props.playlists">
@@ -20,7 +20,7 @@
           </ContextMenuSubTrigger>
           <ContextMenuPortal>
             <ContextMenuSubContent
-              class="border-stroke-100 data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-card z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
+              class="border-stroke-200 data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-card z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
               :side-offset="2"
               :align-offset="-5"
             >

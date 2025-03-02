@@ -13,7 +13,7 @@
             <p>Play</p>
           </button>
           <button
-            class="text aspect-button border-stroke-100 bg-background text-supporting flex h-12 items-center justify-center gap-2 rounded-md border duration-150 hover:opacity-80"
+            class="text aspect-button border-stroke-200 bg-background text-supporting flex h-12 items-center justify-center gap-2 rounded-md border duration-150 hover:opacity-80"
           >
             <span class="i-fluent-arrow-shuffle-20-filled h-7"></span>
             <p>Shuffle</p>

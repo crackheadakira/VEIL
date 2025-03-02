@@ -5,7 +5,7 @@
     :max="props.max"
     :step="props.step"
   >
-    <SliderTrack class="bg-stroke-100 relative h-2 grow rounded-full">
+    <SliderTrack class="bg-stroke-200 relative h-2 grow rounded-full">
       <SliderRange class="bg-placeholder absolute h-full rounded-full" />
     </SliderTrack>
     <SliderThumb

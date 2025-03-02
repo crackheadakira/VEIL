@@ -36,14 +36,16 @@ svg {
   shape-rendering: crispEdges;
 }
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 @theme {
   /* Sodapop Colors */
   --color-primary: #cd1919;
   --color-placeholder: #b29e95;
   --color-text: #c5bbb7;
   --color-supporting: #6d6d6d;
-  --color-stroke-100: #222222;
-  --color-stroke-200: #303030;
+  --color-stroke-100: #303030;
+  --color-stroke-200: #222222;
   --color-background: #0f0f0f;
   --color-card: #111111;
 
@@ -138,11 +140,11 @@ svg {
 }
 
 @utility sodapop-card {
-  @apply bg-card border-stroke-100 rounded-md border p-2;
+  @apply bg-card border-stroke-200 rounded-md border p-2;
 }
 
 @utility context-menu-item {
-  @apply text-supporting data-[disabled]:text-placeholder data-[highlighted]:bg-stroke-200 data-[highlighted]:text-text relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
+  @apply text-supporting data-[disabled]:text-placeholder data-[highlighted]:bg-stroke-100 data-[highlighted]:text-text relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
 }
 
 @layer base {

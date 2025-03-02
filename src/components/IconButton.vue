@@ -4,7 +4,7 @@
     class="sodapop-card flex h-12 w-72 cursor-pointer items-center gap-3 overflow-hidden px-0 pr-2 transition duration-150 hover:opacity-90"
   >
     <div
-      class="bg-background border-r-stroke-100 flex h-12 w-12 shrink-0 items-center justify-center border-r"
+      class="bg-background border-r-stroke-200 flex h-12 w-12 shrink-0 items-center justify-center border-r"
     >
       <span class="text-supporting" :class="icon"></span>
     </div>

@@ -13,7 +13,7 @@
         <PaginationListItem
           v-if="page.type === 'page'"
           :key="index"
-          class="data-[selected]:text-text data-[selected]:bg-stroke-100 hover:bg-stroke-200 border-stroke-100 hover:text-text h-9 w-9 rounded-lg border transition data-[selected]:shadow-sm"
+          class="data-[selected]:text-text data-[selected]:bg-stroke-200 hover:bg-stroke-100 border-stroke-200 hover:text-text h-9 w-9 rounded-lg border transition data-[selected]:shadow-sm"
           :value="page.value"
         >
           {{ page.value }}
