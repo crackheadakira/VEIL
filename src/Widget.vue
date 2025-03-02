@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-background border-stroke-200 flex h-screen flex-col gap-4 rounded-md border-1 p-4 *:select-none"
+    class="bg-background border-stroke-200 flex h-screen flex-col gap-4 overflow-clip border-1 p-4 *:select-none"
   >
     <div
       @mouseover="imageHovered = true"
