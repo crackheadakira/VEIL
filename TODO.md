@@ -15,7 +15,7 @@
   - [x] ID3
   - [x] Database
   - [x] Commands
-  - [ ] Better queue system
+- [ ] Better queue system
 
 ## Medium Priority
 
@@ -27,7 +27,10 @@
   - [x] Allow adding session key
   - [x] Scrobble track > 30s
   - [ ] Get metadata for missing files
+- [ ] Liked Songs
 - [ ] Artist page
+  - [ ] Allow user to view their liked songs for given artist
+  - [ ] Play random track from artist
 - [x] Settings page
 
 ## Low Priority
@@ -40,4 +43,6 @@
   - [x] Control frontend actions
   - [ ] Desync when seeking
 - [ ] Lyric support
+  - [ ] Read .LRC files
+  - [ ] Lyric View
 - [x] Discord RPC
