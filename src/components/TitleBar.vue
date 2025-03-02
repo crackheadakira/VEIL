@@ -7,22 +7,22 @@
       >Sodapop Reimagined - {{ currentPage }}</small
     >
     <div class="flex items-center gap-2 text-xs *:cursor-pointer *:select-none">
-      <RouterLink
+      <span
         class="i-fluent-window-new-24-filled aspect-square h-fit"
         v-if="playerStore.currentTrack"
-        to="/widget"
+        @click="showWidget"
       >
-      </RouterLink>
+      </span>
       <span
-        @click="getCurrentWindow().minimize"
+        @click="window.minimize"
         class="i-fluent-subtract-20-filled aspect-square h-fit"
       ></span>
       <span
-        @click="getCurrentWindow().toggleMaximize"
+        @click="window.toggleMaximize"
         class="i-fluent-maximize-20-filled aspect-square h-fit"
       ></span>
       <span
-        @click="getCurrentWindow().close"
+        @click="close"
         class="i-fluent-dismiss-20-filled aspect-square h-fit"
       ></span>
     </div>
@@ -32,10 +32,28 @@
 <script setup lang="ts">
 import { ref, watchEffect } from "vue";
 import { usePlayerStore } from "@/composables/";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 
 const playerStore = usePlayerStore();
 const currentPage = ref(playerStore.pageName);
+
+const window = getCurrentWindow();
+
+async function showWidget() {
+  const allWindows = await getAllWindows();
+  const widgetWindow = allWindows.find((w) => w.label === "sodapop-widget");
+  if (widgetWindow) {
+    await window.hide();
+    await widgetWindow.show();
+  }
+}
+
+async function close() {
+  const allWindows = await getAllWindows();
+  const widgetWindow = allWindows.find((w) => w.label === "sodapop-widget");
+  await widgetWindow?.close();
+  await window.close();
+}
 
 watchEffect(() => {
   currentPage.value = playerStore.pageName;

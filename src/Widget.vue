@@ -38,48 +38,33 @@
           playerStore.currentTrack.artist_name
         }}</small>
       </div>
-      <RouterLink
+      <span
         class="i-fluent-window-new-24-filled text-supporting hover:text-stroke-100 pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
-        :to="playerStore.currentPage"
-      ></RouterLink>
+        @click="hideWidget"
+      ></span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
-import {
-  getCurrentWindow,
-  LogicalSize,
-  PhysicalPosition,
-  PhysicalSize,
-} from "@tauri-apps/api/window";
-import { onBeforeMount, onBeforeUnmount, ref } from "vue";
+import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
+import { ref } from "vue";
 
 import { usePlayerStore } from "@/composables/";
 import { PlayerControls, VolumeControls } from "@/components/";
 
 const playerStore = usePlayerStore();
-const originalWindowSize = ref(new PhysicalSize(1280, 720));
-const originalPosition = ref(new PhysicalPosition(1920 / 2, 1080 / 2));
 
 const imageHovered = ref(false);
+const window = getCurrentWindow();
 
-onBeforeMount(async () => {
-  const window = getCurrentWindow();
-  originalWindowSize.value = await window.innerSize();
-  originalPosition.value = await window.innerPosition();
-
-  await window.unmaximize();
-  await window.setSize(new LogicalSize(246, 307));
-  await window.setResizable(false);
-});
-
-onBeforeUnmount(async () => {
-  const window = getCurrentWindow();
-
-  await window.setSize(originalWindowSize.value);
-  await window.setPosition(originalPosition.value);
-  await window.setResizable(false);
-});
+async function hideWidget() {
+  const allWindows = await getAllWindows();
+  const mainWindow = allWindows.find((w) => w.label === "sodapop-reimagined");
+  if (mainWindow) {
+    await window.hide();
+    await mainWindow.show();
+  }
+}
 </script>

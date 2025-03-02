@@ -2,7 +2,7 @@ import { createApp } from "vue";
 import { createRouter, createMemoryHistory } from "vue-router";
 import { createPinia } from "pinia";
 import "./styles.css";
-import App from "./App.vue";
+import App from "./App.vue";;
 
 import {
   HomeView,
@@ -11,11 +11,9 @@ import {
   ArtistView,
   PlaylistView,
   SettingsView,
-  WidgetView
 } from "@/pages/";
 
 const routes = [
-  { path: "/widget", component: WidgetView, name: "widget" },
   { path: "/settings", component: SettingsView, name: "settings", meta: { pageName: "Settings" } },
   { path: "/album/:id", component: AlbumView, name: "album", meta: { pageName: "Album" } },
   {

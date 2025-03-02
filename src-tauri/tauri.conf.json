@@ -17,6 +17,17 @@
         "width": 1280,
         "height": 720,
         "decorations": false
+      },
+      {
+        "title": "Sodapop Reimagined",
+        "label": "sodapop-widget",
+        "url": "widget.html",
+        "width": 246,
+        "height": 307,
+        "decorations": false,
+        "resizable": false,
+        "closable": false,
+        "visible": false
       }
     ],
     "security": {

@@ -2,7 +2,7 @@ import { commands, handleBackendError, MediaPayload, type Tracks } from "@/compo
 import { listen, Event } from "@tauri-apps/api/event";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { nextTick, ref } from "vue";
+import { nextTick, ref, watch } from "vue";
 
 /**
  * The player store composable.
@@ -33,6 +33,17 @@ export const usePlayerStore = defineStore("player", () => {
   const isShuffled = useStorage("isShuffled", false);
 
   const paused = ref(true);
+
+  // Channel is for syncing pause state between main window & widget
+  const channel = new BroadcastChannel("player_channel");
+
+  watch(paused, (newValue) => {
+    channel.postMessage({ paused: newValue });
+  });
+
+  channel.onmessage = (event) => {
+    paused.value = event.data.paused;
+  };
 
   /**
    * Sets given track as the current track and plays it.

@@ -1,5 +1,5 @@
 <template>
-  <div v-show="!isWidget" class="bg-background flex h-screen flex-col">
+  <div class="bg-background flex h-screen flex-col">
     <TitleBar class="sticky top-0" />
 
     <div class="flex flex-1 overflow-hidden">
@@ -16,7 +16,6 @@
     <Player class="sticky bottom-0 h-28" />
     <ToastManager ref="toastManager" />
   </div>
-  <RouterView v-if="isWidget" />
 </template>
 
 <script setup lang="ts">
@@ -28,7 +27,7 @@ import {
   usePlayerStore,
   usePlaylistStore,
 } from "@/composables/";
-import { computed, onMounted } from "vue";
+import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -36,8 +35,6 @@ const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
-
-const isWidget = computed(() => router.currentRoute.value.name === "widget");
 
 onMounted(async () => {
   await configStore.initialize();
