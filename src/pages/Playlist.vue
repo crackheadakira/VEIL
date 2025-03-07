@@ -103,8 +103,7 @@ async function handlePlayButton(shuffle: boolean) {
     queueStore.shuffleQueue();
   }
 
-  queueStore.index = 0;
-  await playerStore.setPlayerTrack(queueStore.getQueueTrack());
+  await playerStore.setPlayerTrack(queueStore.setQueueIdx(0));
 }
 
 async function updateData() {
@@ -120,7 +119,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
   if (!data.value) return;
 
   queueStore.globalQueue = [...data.value.tracks];
-  queueStore.index = idx;
+  queueStore.setQueueIdx(idx);
 }
 
 onBeforeMount(async () => {

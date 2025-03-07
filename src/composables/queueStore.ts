@@ -1,20 +1,24 @@
 import { useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { clampRange, Tracks, usePlayerStore } from "@/composables/";
+import { computed } from "vue";
 
 export const useQueueStore = defineStore("queue", () => {
     const globalQueue = useStorage<Tracks[]>("queue", []);
-    const index = useStorage("queueIndex", 0);
+    const internalIndex = useStorage("queueIndex", 0);
     const personalQueue = useStorage<Tracks[]>("personalQueue", []);
 
     const playerStore = usePlayerStore();
+
+    // prevents from modifying index outside of store without using `setQueueIdx()`
+    const index = computed(() => internalIndex.value);
 
     /**
      * Gives you the the next track in the queue depending on the `direction` passed in.
      * 
      * If the user has a track added to their personal queue & `direction` is `next` return from personal queue, otherwise from global queue.
      */
-    function getQueueTrackDirection(direction: "back" | "next") {
+    function getQueueTrack(direction: "back" | "next") {
         // Can't be undefined as we checked if personalQueue contains items
         if (personalQueue.value.length > 0 && direction === "next") return personalQueue.value.shift()!;
 
@@ -22,12 +26,18 @@ export const useQueueStore = defineStore("queue", () => {
         // Clamp the number to go from 0 to globalQueue.length if we do +1 or -1
         const nextIndex = clampRange(index.value + directionNumber, 0, globalQueue.value.length - 1);
 
-        index.value = nextIndex;
-        return globalQueue.value[nextIndex];
+        return setQueueIdx(nextIndex)
     }
 
-    function getQueueTrack() {
-        return globalQueue.value[index.value];
+    /**
+     * Sets the queue index, and returns the track at that index.
+     * 
+     * The index input is clamped to the length of the globalQueue
+     */
+    function setQueueIdx(idx: number) {
+        idx = Math.min(idx, globalQueue.value.length);
+        internalIndex.value = idx;
+        return globalQueue.value[idx];
     }
 
     /**
@@ -69,8 +79,8 @@ export const useQueueStore = defineStore("queue", () => {
         index,
         personalQueue,
         getQueueTrack,
-        getQueueTrackDirection,
         shuffleQueue,
+        setQueueIdx,
     }
 })
 
