@@ -52,7 +52,7 @@ export const useQueueStore = defineStore("queue", () => {
      * queueStore.shuffleQueue() // playerStore.queue = [track1, track2, track3]
      */
     function shuffleQueue() {
-        // If already shuffled, sort the queue by id
+        // If already shuffled, undo the shuffle & sort it back by id
         if (playerStore.isShuffled) {
             globalQueue.value.sort((a, b) => a.id - b.id);
             playerStore.isShuffled = false;

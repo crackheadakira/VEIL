@@ -5,8 +5,6 @@ CREATE TABLE IF NOT EXISTS artists (
 
 CREATE TABLE IF NOT EXISTS albums (
     id          INTEGER NOT NULL PRIMARY KEY,
-    /*artist_id   INTEGER NOT NULL REFERENCES artists(id) ON DELETE CASCADE,
-    artist_name TEXT    NOT NULL,*/
     name        TEXT    NOT NULL,
     year        INTEGER NOT NULL,
     type        TEXT    NOT NULL,
@@ -23,6 +21,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     album_name  TEXT    NOT NULL,
     artist_name TEXT    NOT NULL,
     name        TEXT    NOT NULL,
+    number      INTEGER NOT NULL,
     duration    INTEGER NOT NULL,
     cover_path  TEXT    NOT NULL,
     path        TEXT    NOT NULL UNIQUE

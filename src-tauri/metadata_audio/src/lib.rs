@@ -21,7 +21,7 @@ pub struct Metadata {
     /// Year of publication
     pub year: u16,
     /// Track number
-    pub track_number: u16,
+    pub track_number: i32,
     /// Picture data
     pub picture_data: Vec<u8>,
 }
@@ -79,7 +79,7 @@ impl Metadata {
             year: get_field_value(&vc.fields, "YEAR").parse().unwrap_or(0),
             track_number: get_field_value(&vc.fields, "TRACKNUMBER")
                 .parse()
-                .unwrap_or(0),
+                .unwrap_or(-1),
             picture_data: file.picture.unwrap_or_default().data,
         }
     }
@@ -99,7 +99,7 @@ impl Metadata {
                 .split('/')
                 .next()
                 .and_then(|s| s.parse().ok())
-                .unwrap_or(0),
+                .unwrap_or(-1),
             picture_data: file.attached_picture.unwrap_or_default().picture_data,
         }
     }

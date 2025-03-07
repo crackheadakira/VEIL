@@ -142,6 +142,7 @@ pub fn select_music_folder(
                     artist_name: metadata.artist.clone(),
                     artist_id,
                     name: metadata.name.clone(),
+                    number: metadata.track_number,
                     path: metadata.file_path.clone(),
                     cover_path,
                 })?;

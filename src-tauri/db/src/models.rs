@@ -126,6 +126,8 @@ pub struct Tracks {
     pub artist_name: String,
     /// Track name
     pub name: String,
+    /// Track number in album
+    pub number: i32,
     /// Track duration
     pub duration: u32,
     /// Path to album cover in Sodapop local app data
@@ -250,9 +252,10 @@ impl NeedForDatabase for Tracks {
             album_name: row.get(3)?,
             artist_name: row.get(4)?,
             name: row.get(5)?,
-            duration: row.get(6)?,
-            cover_path: row.get(7)?,
-            path: row.get(8)?,
+            number: row.get(6)?,
+            duration: row.get(7)?,
+            cover_path: row.get(8)?,
+            path: row.get(9)?,
         })
     }
 
@@ -267,6 +270,7 @@ impl NeedForDatabase for Tracks {
             &self.album_name,
             &self.artist_name,
             &self.name,
+            &self.number,
             &self.duration,
             &self.cover_path,
             &self.path,

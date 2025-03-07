@@ -429,6 +429,10 @@ export type Tracks = {
    */
   name: string;
   /**
+   * Track number in album
+   */
+  number: number;
+  /**
    * Track duration
    */
   duration: number;
