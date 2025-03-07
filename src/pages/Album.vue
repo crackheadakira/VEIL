@@ -54,6 +54,7 @@ import {
   type Tracks,
   usePlayerStore,
   useConfigStore,
+  useQueueStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref } from "vue";
@@ -61,6 +62,7 @@ import { useRoute } from "vue-router";
 
 const configStore = useConfigStore();
 const playerStore = usePlayerStore();
+const queueStore = useQueueStore();
 
 const route = useRoute();
 const album_id = ref(route.params.id as string);
@@ -73,13 +75,13 @@ const data = ref<AlbumWithTracks | null>(null);
  */
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
-  playerStore.queue = [...data.value.tracks];
+  queueStore.globalQueue = [...data.value.tracks];
   if (shuffle) {
     playerStore.isShuffled = false;
-    playerStore.shuffleQueue();
+    queueStore.shuffleQueue();
   }
-  playerStore.queueIndex = 0;
-  await playerStore.setPlayerTrack(playerStore.queue[0]);
+  queueStore.index = 0;
+  await playerStore.setPlayerTrack(queueStore.getQueueTrack());
 }
 
 async function updateData() {
@@ -96,8 +98,8 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
   if (!data.value) return;
 
-  playerStore.queue = [...data.value.tracks];
-  playerStore.queueIndex = idx;
+  queueStore.globalQueue = [...data.value.tracks];
+  queueStore.index = idx;
 }
 
 onBeforeMount(async () => {

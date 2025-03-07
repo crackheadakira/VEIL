@@ -1,4 +1,4 @@
-import { commands, handleBackendError, MediaPayload, type Tracks } from "@/composables/";
+import { commands, handleBackendError, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
 import { listen, Event } from "@tauri-apps/api/event";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
@@ -22,15 +22,14 @@ export const usePlayerStore = defineStore("player", () => {
   const currentTrack = useStorage<Tracks>("currentTrack", null, undefined, {
     serializer: StorageSerializers.object,
   });
-  const queue = useStorage<Tracks[]>("queue", []);
-  const queueIndex = useStorage("queueIndex", 0);
-  const personalQueue = useStorage<Tracks[]>("personalQueue", []);
   const loop = useStorage<"none" | "track" | "queue">("loop", "none");
   const playerProgress = useStorage("playerProgress", 0);
   const playerVolume = useStorage("playerVolume", 0.5);
   const isShuffled = useStorage("isShuffled", false);
 
   const paused = ref(true);
+
+  const queueStore = useQueueStore();
 
   // Channel is for syncing pause state between main window & widget
   const channel = new BroadcastChannel("player_channel");
@@ -94,27 +93,12 @@ export const usePlayerStore = defineStore("player", () => {
    * // playerStore.loop = "none"
    * await playerStore.skipTrack(true) // Plays track1
    */
-  async function skipTrack(forward: boolean): Promise<void> {
+  async function skipTrack(direction: "back" | "next"): Promise<void> {
     if (loop.value === "track") loop.value = "queue";
 
-    if (personalQueue.value.length > 0) {
-      await setPlayerTrack(personalQueue.value[0]);
-      personalQueue.value.shift();
-      return;
-    }
+    const nextTrack = queueStore.getQueueTrackDirection(direction);
 
-    let desiredIndex;
-    if (forward) {
-      desiredIndex = queueIndex.value + 1;
-    } else {
-      desiredIndex = queueIndex.value - 1;
-    }
-
-    if (desiredIndex >= queue.value.length) desiredIndex = 0;
-    if (desiredIndex < 0) desiredIndex = queue.value.length - 1;
-
-    queueIndex.value = desiredIndex;
-    await setPlayerTrack(queue.value[desiredIndex]);
+    await setPlayerTrack(nextTrack);
   }
 
   /**
@@ -131,45 +115,8 @@ export const usePlayerStore = defineStore("player", () => {
     else loop.value = "none";
   }
 
-  /**
-   * Shuffles the queue using the Fisher-Yates algorithm if `isShuffled` is false, otherwise sorts the queue by track id.
-   *
-   * Updates the store `queue` and `isShuffled` value.
-   *
-   * @example
-   * // playerStore.queue = [track1, track2, track3]
-   * // playerStore.isShuffled = false
-   * playerStore.shuffleQueue() // playerStore.queue = [track3, track1, track2]
-   * playerStore.shuffleQueue() // playerStore.queue = [track1, track2, track3]
-   */
-  function shuffleQueue() {
-    // If already shuffled, sort the queue by id
-    if (isShuffled.value) {
-      queue.value.sort((a, b) => a.id - b.id);
-      isShuffled.value = false;
-
-      return;
-    }
-
-    const trackIndex = queue.value.findIndex(
-      (track) => track.id === currentTrack.value?.id,
-    );
-
-    if (trackIndex === -1) return;
-
-    queue.value.splice(trackIndex, 1);
-    const shuffledQueue = fisherYatesShuffle(queue.value);
-    shuffledQueue.unshift(currentTrack.value);
-
-    queue.value = shuffledQueue;
-    isShuffled.value = true;
-  }
-
   function $reset() {
     currentTrack.value = null;
-    queue.value = [];
-    queueIndex.value = 0;
-    personalQueue.value = [];
     loop.value = "none";
     playerProgress.value = 0;
     playerVolume.value = 0.5;
@@ -255,17 +202,8 @@ export const usePlayerStore = defineStore("player", () => {
       return;
     }
 
-
-    if (queue.value.length <= 1 || queue.value.length === queueIndex.value + 1) {
-      if (loop.value === "queue") {
-        queueIndex.value = 0;
-        await setPlayerTrack(queue.value[0]);
-      } else {
-        await handlePlayAndPause();
-      }
-    } else {
-      skipTrack(true);
-    }
+    if (loop.value === "queue") return await skipTrack('next');
+    else return await handlePlayAndPause();
   }
 
   /**
@@ -311,10 +249,10 @@ export const usePlayerStore = defineStore("player", () => {
           await handlePlayAndPause();
           break;
         case "Next" in payload:
-          skipTrack(true);
+          skipTrack('next');
           break;
         case "Previous" in payload:
-          skipTrack(false);
+          skipTrack('back');
           break;
         case "Seek" in payload:
           await commands.seekTrack(payload.Seek, true);
@@ -342,9 +280,6 @@ export const usePlayerStore = defineStore("player", () => {
     paused,
     currentTrack,
     playerProgress,
-    queue,
-    queueIndex,
-    personalQueue,
     loop,
     playerVolume,
     isShuffled,
@@ -352,7 +287,6 @@ export const usePlayerStore = defineStore("player", () => {
     setPlayerProgress,
     skipTrack,
     loopQueue,
-    shuffleQueue,
     $reset,
     handleProgress,
     handlePlayAndPause,
@@ -363,25 +297,3 @@ export const usePlayerStore = defineStore("player", () => {
     listenTrackEnd,
   };
 });
-
-/**
- * Shuffles an array using the Fisher-Yates algorithm.
- *
- * @param {T[]} array - The array to shuffle
- * @returns {T[]} The shuffled array
- *
- * @example
- * // Returns [3, 1, 2] or [2, 3, 1] or [1, 2, 3]
- * fisherYatesShuffle([1, 2, 3])
- */
-function fisherYatesShuffle<T>(array: T[]): T[] {
-  const newArray = [];
-
-  while (array.length) {
-    const randomIndex = Math.floor(Math.random() * array.length);
-    const element = array.splice(randomIndex, 1)[0];
-    newArray.push(element);
-  }
-
-  return newArray;
-}

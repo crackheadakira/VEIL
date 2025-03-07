@@ -73,6 +73,7 @@ import {
   Tracks,
   usePlayerStore,
   usePlaylistStore,
+  useQueueStore,
 } from "@/composables/";
 import {
   VolumeControls,
@@ -84,6 +85,7 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
+const queueStore = useQueueStore();
 const playlistStore = usePlaylistStore();
 const playerStore = usePlayerStore();
 
@@ -132,7 +134,7 @@ async function handlePlaylist(
 }
 
 async function handleAddToQueue(track: Tracks) {
-  playerStore.personalQueue.push(track);
+  queueStore.personalQueue.push(track);
 }
 
 onMounted(async () => {

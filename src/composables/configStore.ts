@@ -1,10 +1,12 @@
-import { useStorage } from "@vueuse/core";
+import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { SodapopConfig } from "@/composables/";
 import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 
 export const useConfigStore = defineStore("config", () => {
-    const config = useStorage<SodapopConfig>("config", null);
+    const config = useStorage<SodapopConfig>("config", null, undefined, {
+        serializer: StorageSerializers.object,
+    });
     const currentPage = useStorage("currentPage", "/home");
     const pageName = useStorage("pageName", "Home");
 

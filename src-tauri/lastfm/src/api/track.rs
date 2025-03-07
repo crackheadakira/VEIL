@@ -46,12 +46,6 @@ impl<'a> UpdateNowPlaying<'a> {
         params.insert(String::from("artist"), self.track.artist.clone());
         params.insert(String::from("track"), self.track.name.clone());
 
-        let session_key = self.last_fm.session_key.clone();
-        params.insert(
-            String::from("sk"),
-            session_key.ok_or(LastFMError::MissingAuthentication)?,
-        );
-
         Ok(params)
     }
 
@@ -141,12 +135,6 @@ impl<'a> TrackScrobble<'a> {
                     .to_string(),
             );
         }
-
-        let session_key = self.last_fm.session_key.clone();
-        params.insert(
-            String::from("sk"),
-            session_key.ok_or(LastFMError::MissingAuthentication)?,
-        );
 
         Ok(params)
     }

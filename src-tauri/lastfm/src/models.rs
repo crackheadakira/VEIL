@@ -23,6 +23,11 @@ impl APIMethod {
         ]
     }
 
+    /// If the method needs authentication
+    pub fn need_auth(&self) -> bool {
+        matches![self, |Self::TrackScrobble| Self::TrackUpdateNowPlaying]
+    }
+
     /// Get the method as a method string to pass to last.fm
     pub fn as_query(&self) -> String {
         let result = match self {

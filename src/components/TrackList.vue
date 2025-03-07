@@ -59,14 +59,14 @@ import {
   Playlists,
   type PlaylistWithTracks,
   type Tracks,
-  usePlayerStore,
   usePlaylistStore,
+  useQueueStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, ref } from "vue";
 
 const playlistStore = usePlaylistStore();
-const playerStore = usePlayerStore();
+const queueStore = useQueueStore();
 
 const trackList = ref<HTMLDivElement | null>(null);
 const idxWidth = computed(() => props.data.tracks.length.toString().length); // number of digits
@@ -89,6 +89,6 @@ async function handlePlaylist(
 }
 
 async function handleAddToQueue(track: Tracks) {
-  playerStore.personalQueue.push(track);
+  queueStore.personalQueue.push(track);
 }
 </script>

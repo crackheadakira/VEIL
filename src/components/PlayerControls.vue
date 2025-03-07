@@ -4,11 +4,11 @@
       v-if="extra"
       :class="playerStore.isShuffled ? 'text-primary' : ''"
       class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
-      @click="playerStore.shuffleQueue()"
+      @click="queueStore.shuffleQueue()"
     ></span>
     <span
       class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
-      @click="playerStore.skipTrack(false)"
+      @click="playerStore.skipTrack('back')"
     ></span>
     <span
       @click="playerStore.handlePlayAndPause"
@@ -21,7 +21,7 @@
     ></span>
     <span
       class="i-fluent-next-20-filled cursor-pointer hover:opacity-90"
-      @click="playerStore.skipTrack(true)"
+      @click="playerStore.skipTrack('next')"
     ></span>
     <span
       v-if="extra"
@@ -36,9 +36,11 @@
 </template>
 
 <script setup lang="ts">
-import { usePlayerStore } from "@/composables/";
+import { usePlayerStore, useQueueStore } from "@/composables/";
 
 const playerStore = usePlayerStore();
+const queueStore = useQueueStore();
+
 defineProps<{
   extra?: boolean;
 }>();

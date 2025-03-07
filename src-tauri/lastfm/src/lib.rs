@@ -106,6 +106,15 @@ impl LastFM {
         params.insert(String::from("method"), api_method.as_query());
         params.insert(String::from("api_key"), self.api_key.clone());
 
+        if api_method.need_auth() {
+            params.insert(
+                String::from("sk"),
+                self.session_key
+                    .clone()
+                    .ok_or(LastFMError::MissingAuthentication)?,
+            );
+        }
+
         if api_method.need_sig() {
             let signature = self.sign_api(params);
             params.insert(String::from("api_sig"), signature);

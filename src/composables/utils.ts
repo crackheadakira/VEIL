@@ -103,6 +103,16 @@ export function readableCapitalization(str: string): string {
   return str.split(" ").map((v) => v.charAt(0).toUpperCase() + v.slice(1)).join(" ");
 }
 
+/**
+ * Clamps a number and wraps it.
+ * 
+ * @example
+ * clampRange(16, 1, 15) // Returns 1
+ */
+export function clampRange(value: number, min: number, max: number): number {
+  return ((value - min) % (max - min + 1) + (max - min + 1)) % (max - min + 1) + min;
+}
+
 export type DialogPage = {
   title: string;
   description: string;

@@ -50,6 +50,7 @@ import {
   useConfigStore,
   usePlayerStore,
   usePlaylistStore,
+  useQueueStore,
   type PlaylistWithTracks,
   type Tracks,
 } from "@/composables/";
@@ -59,6 +60,7 @@ import { useRoute } from "vue-router";
 const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
+const queueStore = useQueueStore();
 
 const route = useRoute();
 const playlist_id = ref(route.params.id as string);
@@ -94,15 +96,15 @@ playlistStore.$onAction(({ name, args, after }) => {
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
 
-  playerStore.queue = [...data.value.tracks];
+  queueStore.globalQueue = [...data.value.tracks];
 
   if (shuffle) {
     playerStore.isShuffled = false; // To trigger the shuffle no matter current state
-    playerStore.shuffleQueue();
+    queueStore.shuffleQueue();
   }
 
-  playerStore.queueIndex = 0;
-  await playerStore.setPlayerTrack(playerStore.queue[0]);
+  queueStore.index = 0;
+  await playerStore.setPlayerTrack(queueStore.getQueueTrack());
 }
 
 async function updateData() {
@@ -117,8 +119,8 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
   if (!data.value) return;
 
-  playerStore.queue = [...data.value.tracks];
-  playerStore.queueIndex = idx;
+  queueStore.globalQueue = [...data.value.tracks];
+  queueStore.index = idx;
 }
 
 onBeforeMount(async () => {
