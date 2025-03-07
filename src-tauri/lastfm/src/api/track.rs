@@ -112,6 +112,11 @@ impl<'a> TrackScrobble<'a> {
                 let track_key = format!("track[{}]", index);
                 let timestamp_key = format!("timestamp[{}]", index);
 
+                if let Some(album) = track.album.clone() {
+                    let album_key: String = format!("album[{}]", index);
+                    params.insert(album_key, album);
+                };
+
                 params.insert(artist_key, track.artist.clone());
                 params.insert(track_key, track.name.clone());
                 params.insert(
@@ -123,6 +128,9 @@ impl<'a> TrackScrobble<'a> {
                 );
             }
         } else if let Some(track) = self.tracks.first() {
+            if let Some(album) = track.album.clone() {
+                params.insert("album".to_string(), album);
+            };
             params.insert("artist".to_string(), track.artist.clone());
             params.insert("track".to_string(), track.name.clone());
             params.insert(

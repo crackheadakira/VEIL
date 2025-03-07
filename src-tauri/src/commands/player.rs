@@ -60,6 +60,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
             .update_now_playing(TrackData {
                 artist: track.artist_name,
                 name: track.name,
+                album: Some(track.album_name),
                 timestamp: None,
             })
             .send()
@@ -227,6 +228,7 @@ fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
             .scrobble(vec![TrackData {
                 artist: track.artist_name,
                 name: track.name,
+                album: Some(track.album_name),
                 timestamp: Some(track_timestamp),
             }])
             .send()

@@ -68,5 +68,6 @@ impl std::error::Error for APIError {}
 pub struct TrackData {
     pub artist: String,
     pub name: String,
+    pub album: Option<String>,
     pub timestamp: Option<i64>,
 }
