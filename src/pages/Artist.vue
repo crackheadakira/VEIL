@@ -41,13 +41,14 @@ import {
   type ArtistWithAlbums,
   commands,
   handleBackendError,
-  usePlayerStore,
+  useConfigStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
 
-const playerStore = usePlayerStore();
+const configStore = useConfigStore();
+
 const route = useRoute();
 const artist_id = ref(route.params.id as string);
 const artist_data = ref<ArtistWithAlbums | null>(null);
@@ -65,7 +66,7 @@ async function updateData() {
 
 onBeforeMount(async () => {
   await updateData();
-  playerStore.currentPage = `/artist/${artist_id.value}`;
-  playerStore.pageName = artist_data.value?.artist.name || "Artist";
+  configStore.currentPage = `/artist/${artist_id.value}`;
+  configStore.pageName = artist_data.value?.artist.name || "Artist";
 });
 </script>

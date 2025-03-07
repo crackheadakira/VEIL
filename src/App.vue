@@ -53,7 +53,7 @@ onMounted(async () => {
 
   await playlistStore.fetchPlaylists();
 
-  const page = playerStore.currentPage;
+  const page = configStore.currentPage;
   router.push(page);
 });
 </script>

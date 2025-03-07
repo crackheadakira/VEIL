@@ -29,10 +29,10 @@
 
 <script setup lang="ts">
 import { Dialog, PlaylistCard } from "@/components/";
-import { toastBus, usePlayerStore, usePlaylistStore } from "@/composables/";
+import { toastBus, useConfigStore, usePlaylistStore } from "@/composables/";
 import { onMounted } from "vue";
 
-const playerStore = usePlayerStore();
+const configStore = useConfigStore();
 const playlistStore = usePlaylistStore();
 
 function showToast(type: "success" | "error", description: string) {
@@ -40,7 +40,7 @@ function showToast(type: "success" | "error", description: string) {
 }
 
 onMounted(() => {
-  playerStore.currentPage = "/";
-  playerStore.pageName = "Home";
+  configStore.currentPage = "/";
+  configStore.pageName = "Home";
 });
 </script>

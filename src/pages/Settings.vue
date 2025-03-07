@@ -53,7 +53,6 @@ import {
   commands,
   events,
   SodapopConfigEvent,
-  usePlayerStore,
   DialogPage,
   MetadataEvent,
   ThemeMode,
@@ -65,7 +64,6 @@ import { Channel } from "@tauri-apps/api/core";
 
 const onEvent = new Channel<MetadataEvent>();
 const configStore = useConfigStore();
-const playerStore = usePlayerStore();
 
 const theme = ref(configStore.config.theme);
 const currentDirectory = ref(
@@ -212,7 +210,7 @@ onEvent.onmessage = (res) => {
 };
 
 onBeforeMount(async () => {
-  playerStore.currentPage = "/settings";
-  playerStore.pageName = "Settings";
+  configStore.currentPage = "/settings";
+  configStore.pageName = "Settings";
 });
 </script>

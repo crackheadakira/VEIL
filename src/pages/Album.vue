@@ -53,11 +53,13 @@ import {
   formatTime,
   type Tracks,
   usePlayerStore,
+  useConfigStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
 
+const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 
 const route = useRoute();
@@ -100,7 +102,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
   await updateData();
-  playerStore.currentPage = `/album/${album_id.value}`;
-  playerStore.pageName = data.value?.album.name || "Album";
+  configStore.currentPage = `/album/${album_id.value}`;
+  configStore.pageName = data.value?.album.name || "Album";
 });
 </script>

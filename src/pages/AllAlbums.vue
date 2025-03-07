@@ -21,13 +21,14 @@ import { BigCard, Pagination } from "@/components/";
 import {
   commands,
   handleBackendError,
-  usePlayerStore,
+  useConfigStore,
   type Albums,
 } from "@/composables/";
 import { templateRef } from "@vueuse/core";
 import { computed, onMounted, ref } from "vue";
 
-const playerStore = usePlayerStore();
+const configStore = useConfigStore();
+
 const albums = ref<Albums[]>([]);
 const totalAlbums = ref<number>(0);
 const currentPage = ref(1);
@@ -50,8 +51,8 @@ async function onNewPage(page: number) {
 }
 
 onMounted(async () => {
-  playerStore.currentPage = "/all_albums";
-  playerStore.pageName = "All Albums";
+  configStore.currentPage = "/all_albums";
+  configStore.pageName = "All Albums";
 
   const total = await commands.getTotalAlbums();
   if (total.status === "error") return handleBackendError(total.error);

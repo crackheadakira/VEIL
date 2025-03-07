@@ -31,11 +31,12 @@
 
 <script setup lang="ts">
 import { ref, watchEffect } from "vue";
-import { usePlayerStore } from "@/composables/";
+import { useConfigStore, usePlayerStore } from "@/composables/";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
 
+const configStore = useConfigStore();
 const playerStore = usePlayerStore();
-const currentPage = ref(playerStore.pageName);
+const currentPage = ref(configStore.pageName);
 
 const window = getCurrentWindow();
 
@@ -56,6 +57,6 @@ async function close() {
 }
 
 watchEffect(() => {
-  currentPage.value = playerStore.pageName;
+  currentPage.value = configStore.pageName;
 });
 </script>

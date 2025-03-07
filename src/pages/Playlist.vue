@@ -47,6 +47,7 @@
 import { TrackList } from "@/components/";
 import {
   placeholderIfEmpty,
+  useConfigStore,
   usePlayerStore,
   usePlaylistStore,
   type PlaylistWithTracks,
@@ -55,6 +56,7 @@ import {
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
+const configStore = useConfigStore();
 const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 
@@ -121,7 +123,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
 onBeforeMount(async () => {
   await updateData();
-  playerStore.currentPage = `/playlist/${playlist_id.value}`;
-  playerStore.pageName = data.value?.playlist.name || "Playlist";
+  configStore.currentPage = `/playlist/${playlist_id.value}`;
+  configStore.pageName = data.value?.playlist.name || "Playlist";
 });
 </script>

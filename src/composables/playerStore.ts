@@ -27,8 +27,6 @@ export const usePlayerStore = defineStore("player", () => {
   const personalQueue = useStorage<Tracks[]>("personalQueue", []);
   const loop = useStorage<"none" | "track" | "queue">("loop", "none");
   const playerProgress = useStorage("playerProgress", 0);
-  const currentPage = useStorage("currentPage", "/home");
-  const pageName = useStorage("pageName", "Home");
   const playerVolume = useStorage("playerVolume", 0.5);
   const isShuffled = useStorage("isShuffled", false);
 
@@ -174,8 +172,6 @@ export const usePlayerStore = defineStore("player", () => {
     personalQueue.value = [];
     loop.value = "none";
     playerProgress.value = 0;
-    currentPage.value = "/";
-    pageName.value = "Home";
     playerVolume.value = 0.5;
     isShuffled.value = false;
   }
@@ -350,8 +346,6 @@ export const usePlayerStore = defineStore("player", () => {
     queueIndex,
     personalQueue,
     loop,
-    pageName,
-    currentPage,
     playerVolume,
     isShuffled,
     setPlayerTrack,
