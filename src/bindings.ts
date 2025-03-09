@@ -155,6 +155,19 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getBatchTrack(
+    ids: number[],
+  ): Promise<Result<(Tracks | null)[], FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_batch_track", { ids }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
     try {
       return {

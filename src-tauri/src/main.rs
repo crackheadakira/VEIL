@@ -63,6 +63,7 @@ fn main() {
             commands::sqlite::search_db,
             commands::sqlite::get_albums_offset,
             commands::sqlite::get_total_albums,
+            commands::sqlite::get_batch_track,
             commands::player::play_track,
             commands::player::pause_track,
             commands::player::resume_track,

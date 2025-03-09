@@ -37,6 +37,15 @@ pub fn get_albums_offset(
 
 #[tauri::command]
 #[specta::specta]
+pub fn get_batch_track(
+    state: TauriState,
+    ids: Vec<u32>,
+) -> Result<Vec<Option<Tracks>>, FrontendError> {
+    Ok(state.db.batch_track(ids)?)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn get_artist_with_albums(
     id: u32,
     state: TauriState,

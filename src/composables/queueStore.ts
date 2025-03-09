@@ -26,7 +26,7 @@ export const useQueueStore = defineStore("queue", () => {
         // Clamp the number to go from 0 to globalQueue.length if we do +1 or -1
         const nextIndex = clampRange(index.value + directionNumber, 0, globalQueue.value.length - 1);
 
-        return setQueueIdx(nextIndex)
+        return setQueueIdx(nextIndex);
     }
 
     /**

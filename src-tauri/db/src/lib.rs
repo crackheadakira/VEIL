@@ -6,7 +6,6 @@ use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{Error, OptionalExtension};
-use std::rc::Rc;
 use std::{collections::HashMap, fs::create_dir, path::PathBuf};
 
 fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
@@ -69,7 +68,6 @@ impl Database {
         let manager = SqliteConnectionManager::file(path.join("db.sqlite"));
         let pool = Pool::new(manager).unwrap();
         let conn = pool.get().unwrap();
-        rusqlite::vtab::array::load_module(&conn).unwrap();
 
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
@@ -234,31 +232,24 @@ impl Database {
     }
 
     /// Select multiple tracks from `Vec<u32>` of IDs
-    pub fn batch_track(&self, ids: Vec<u32>) -> Result<Vec<Tracks>, DatabaseError> {
-        let conn = self.pool.get()?;
-        let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+    pub fn batch_track(&self, ids: Vec<u32>) -> Result<Vec<Option<Tracks>>, DatabaseError> {
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
+        let mut tracks = Vec::with_capacity(ids.len());
 
-        let query = format!(
-            "
-            SELECT 
-                t.*
-            FROM 
-                tracks t
-            WHERE 
-                t.id IN ({})
-            ORDER BY 
-                t.album_id, t.track_number;
-            ",
-            placeholders
-        );
+        // temporary scope to get around issues with borrow checker for `tx``
+        {
+            let mut stmt = tx.prepare(query("tracks_id"))?;
+            for id in ids {
+                // if an ID doesn't exist in DB, gets passed as a None
+                let track = stmt.query_row([id], Tracks::from_row).ok();
+                tracks.push(track);
+            }
+        };
 
-        let rc_ids = Rc::new(ids);
-        let mut stmt = conn.prepare(&query)?;
-        let results = stmt
-            .query_map([rc_ids], Tracks::from_row)?
-            .collect::<Result<Vec<Tracks>, Error>>()?;
+        tx.commit()?;
 
-        Ok(results)
+        Ok(tracks)
     }
 
     /// Returns 5 queries that match the `search_str` best
