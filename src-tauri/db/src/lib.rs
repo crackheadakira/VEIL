@@ -231,25 +231,36 @@ impl Database {
         Ok(result)
     }
 
-    /// Select multiple tracks from `Vec<u32>` of IDs
-    pub fn batch_track(&self, ids: Vec<u32>) -> Result<Vec<Option<Tracks>>, DatabaseError> {
+    /// Batch fetch `T` from DB using a `Vec<u32>` of IDs
+    pub fn batch_id<T: NeedForDatabase>(
+        &self,
+        ids: Vec<u32>,
+    ) -> Result<Vec<Option<T>>, DatabaseError> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
-        let mut tracks = Vec::with_capacity(ids.len());
+        let mut results = Vec::with_capacity(ids.len());
 
-        // temporary scope to get around issues with borrow checker for `tx``
+        let stmt_to_call = match T::table_name() {
+            "artists" => query("artists_id"),
+            "albums" => query("albums_id"),
+            "tracks" => query("tracks_id"),
+            "playlists" => query("playlists_id"),
+            _ => unreachable!("Invalid table name"),
+        };
+
+        // temporary scope to get around issues with borrow checker for `tx`
         {
-            let mut stmt = tx.prepare(query("tracks_id"))?;
+            let mut stmt = tx.prepare(stmt_to_call)?;
             for id in ids {
                 // if an ID doesn't exist in DB, gets passed as a None
-                let track = stmt.query_row([id], Tracks::from_row).ok();
-                tracks.push(track);
+                let result = stmt.query_row([id], T::from_row).ok();
+                results.push(result);
             }
         };
 
         tx.commit()?;
 
-        Ok(tracks)
+        Ok(results)
     }
 
     /// Returns 5 queries that match the `search_str` best

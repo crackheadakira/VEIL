@@ -41,7 +41,7 @@ pub fn get_batch_track(
     state: TauriState,
     ids: Vec<u32>,
 ) -> Result<Vec<Option<Tracks>>, FrontendError> {
-    Ok(state.db.batch_track(ids)?)
+    Ok(state.db.batch_id::<Tracks>(ids)?)
 }
 
 #[tauri::command]
