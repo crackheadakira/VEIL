@@ -1,24 +1,24 @@
 import { useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { clampRange, Tracks, usePlayerStore } from "@/composables/";
+import { clampRange, commands, handleBackendError, Tracks, usePlayerStore } from "@/composables/";
 import { computed } from "vue";
 
 export const useQueueStore = defineStore("queue", () => {
-    const globalQueue = useStorage<Tracks[]>("queue", []);
-    const internalIndex = useStorage("queueIndex", 0);
+    const globalQueue = useStorage<number[]>("queue", []);
+    const _index = useStorage("queueIndex", 0);
     const personalQueue = useStorage<Tracks[]>("personalQueue", []);
 
     const playerStore = usePlayerStore();
 
-    // prevents from modifying index outside of store without using `setQueueIdx()`
-    const index = computed(() => internalIndex.value);
+    // prevents from modifying these values outside of the store
+    const index = computed(() => _index.value);
 
     /**
      * Gives you the the next track in the queue depending on the `direction` passed in.
      * 
      * If the user has a track added to their personal queue & `direction` is `next` return from personal queue, otherwise from global queue.
      */
-    function getQueueTrack(direction: "back" | "next") {
+    async function getQueueTrack(direction: "back" | "next"): Promise<Tracks | void> {
         // Can't be undefined as we checked if personalQueue contains items
         if (personalQueue.value.length > 0 && direction === "next") return personalQueue.value.shift()!;
 
@@ -26,7 +26,7 @@ export const useQueueStore = defineStore("queue", () => {
         // Clamp the number to go from 0 to globalQueue.length if we do +1 or -1
         const nextIndex = clampRange(index.value + directionNumber, 0, globalQueue.value.length - 1);
 
-        return setQueueIdx(nextIndex);
+        return await setQueueIdx(nextIndex);
     }
 
     /**
@@ -34,10 +34,28 @@ export const useQueueStore = defineStore("queue", () => {
      * 
      * The index input is clamped to the length of the globalQueue
      */
-    function setQueueIdx(idx: number) {
+    async function setQueueIdx(idx: number): Promise<Tracks | void> {
         idx = Math.min(idx, globalQueue.value.length);
-        internalIndex.value = idx;
-        return globalQueue.value[idx];
+        _index.value = idx;
+        const trackID = globalQueue.value[idx];
+
+        const result = await commands.trackById(trackID);
+        if (result.status === "error") return handleBackendError(result.error);
+
+        return result.data;
+    }
+
+    /**
+     * Allows for setting the global queue
+     */
+    function setGlobalQueue(tracks: Tracks[] | number[]) {
+        if (tracks.length < 0) return;
+
+        if (!isTrack(tracks)) return globalQueue.value = [...tracks];
+
+        const ids: number[] = [];
+        for (const track of tracks) ids.push(track.id);
+        globalQueue.value = ids;
     }
 
     /**
@@ -54,21 +72,28 @@ export const useQueueStore = defineStore("queue", () => {
     function shuffleQueue() {
         // If already shuffled, undo the shuffle & sort it back by id
         if (playerStore.isShuffled) {
-            globalQueue.value.sort((a, b) => a.id - b.id);
+            const sorted = globalQueue.value.sort((a, b) => a - b);
             playerStore.isShuffled = false;
+            const trackIndex = sorted.findIndex(
+                (id) => id === playerStore.currentTrack?.id,
+            );
+
+            if (trackIndex === -1) return;
+
+            _index.value = trackIndex;
 
             return;
         }
 
         const trackIndex = globalQueue.value.findIndex(
-            (track) => track.id === playerStore.currentTrack?.id,
+            (id) => id === playerStore.currentTrack?.id,
         );
 
         if (trackIndex === -1) return;
 
         globalQueue.value.splice(trackIndex, 1);
         const shuffledQueue = fisherYatesShuffle(globalQueue.value);
-        shuffledQueue.unshift(playerStore.currentTrack);
+        shuffledQueue.unshift(playerStore.currentTrack.id);
 
         globalQueue.value = shuffledQueue;
         playerStore.isShuffled = true;
@@ -81,8 +106,14 @@ export const useQueueStore = defineStore("queue", () => {
         getQueueTrack,
         shuffleQueue,
         setQueueIdx,
+        setGlobalQueue,
     }
 })
+
+function isTrack(tracks: Tracks[] | number[] | Tracks | number): tracks is Tracks[] | Tracks {
+    if (Array.isArray(tracks)) return typeof tracks[0] === "object" && "id" in tracks[0];
+    else return typeof tracks === "object" && "id" in tracks;
+}
 
 /**
  * Shuffles an array using the Fisher-Yates algorithm.

@@ -96,9 +96,8 @@ export const usePlayerStore = defineStore("player", () => {
   async function skipTrack(direction: "back" | "next"): Promise<void> {
     if (loop.value === "track") loop.value = "queue";
 
-    const nextTrack = queueStore.getQueueTrack(direction);
-
-    await setPlayerTrack(nextTrack);
+    const nextTrack = await queueStore.getQueueTrack(direction);
+    if (nextTrack) await setPlayerTrack(nextTrack);
   }
 
   /**

@@ -75,13 +75,14 @@ const data = ref<AlbumWithTracks | null>(null);
  */
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
-  queueStore.globalQueue = [...data.value.tracks];
+  queueStore.setGlobalQueue(data.value.tracks);
   if (shuffle) {
     playerStore.isShuffled = false;
     queueStore.shuffleQueue();
   }
 
-  await playerStore.setPlayerTrack(queueStore.setQueueIdx(0));
+  const track = await queueStore.setQueueIdx(0);
+  if (track) await playerStore.setPlayerTrack(track);
 }
 
 async function updateData() {
@@ -98,7 +99,7 @@ async function handleNewTrack(track: Tracks, idx: number) {
 
   if (!data.value) return;
 
-  queueStore.globalQueue = [...data.value.tracks];
+  queueStore.setGlobalQueue(data.value.tracks);
   queueStore.setQueueIdx(idx);
 }
 
