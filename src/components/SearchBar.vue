@@ -5,7 +5,7 @@
   >
     <span class="i-fluent-search-20-filled"></span>
     <small>Search...</small>
-    <small class="text-text bg-stroke-100 ml-auto rounded-sm p-1 px-2"
+    <small class="text-text bg-stroke-200 ml-auto rounded-sm p-1 px-2"
       >Ctrl F</small
     >
   </div>

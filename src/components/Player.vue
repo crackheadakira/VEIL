@@ -17,19 +17,19 @@
           @playlist="handlePlaylist"
         >
           <RouterLink
+            class="max-w-fit"
             :to="{
               name: 'album',
               params: { id: playerStore.currentTrack.album_id },
             }"
           >
-            <small
-              class="text-text hover:text-placeholder cursor-pointer truncate"
-            >
+            <small class="text-text cursor-pointer truncate hover:opacity-80">
               {{ playerStore.currentTrack.name }}
             </small>
           </RouterLink>
         </ContextMenu>
         <RouterLink
+          class="max-w-fit"
           :to="{
             name: 'artist',
             params: { id: playerStore.currentTrack.artist_id },

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-stroke-200 bg-card text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
+    class="border-stroke-200 bg-background text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
   >
     <div class="flex w-full flex-col gap-2 font-medium *:select-none">
       <SearchBar />

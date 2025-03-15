@@ -40,14 +40,14 @@ svg {
 
 @theme {
   /* Sodapop Colors */
-  --color-primary: #cd1919;
-  --color-placeholder: #b29e95;
-  --color-text: #c5bbb7;
-  --color-supporting: #6d6d6d;
+  --color-primary: #b81616;
+  --color-placeholder: #ef2724;
+  --color-text: #b6b3b1;
+  --color-supporting: #656565;
   --color-stroke-100: #303030;
   --color-stroke-200: #222222;
-  --color-background: #0f0f0f;
-  --color-card: #111111;
+  --color-background: #0b0b0b;
+  --color-card: #0c0b0b;
 
   /* Sodapop Aspect Ratios */
   --aspect-card: 3.9 / 1;
