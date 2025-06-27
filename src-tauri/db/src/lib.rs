@@ -43,7 +43,7 @@ static QUERIES: Lazy<HashMap<String, String>> = Lazy::new(|| {
 fn query(name: &str) -> &str {
     QUERIES
         .get(name)
-        .unwrap_or_else(|| panic!("Query '{}' not found", name))
+        .unwrap_or_else(|| panic!("Query '{name}' not found"))
 }
 
 #[derive(Debug, thiserror::Error)]

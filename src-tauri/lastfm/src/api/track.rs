@@ -102,12 +102,12 @@ impl<'a> TrackScrobble<'a> {
 
         if self.tracks.len() > 1 {
             for (index, track) in self.tracks.iter().enumerate() {
-                let artist_key = format!("artist[{}]", index);
-                let track_key = format!("track[{}]", index);
-                let timestamp_key = format!("timestamp[{}]", index);
+                let artist_key = format!("artist[{index}]");
+                let track_key = format!("track[{index}]");
+                let timestamp_key = format!("timestamp[{index}]");
 
                 if let Some(album) = track.album.clone() {
-                    let album_key: String = format!("album[{}]", index);
+                    let album_key: String = format!("album[{index}]");
                     params.insert(album_key, album);
                 };
 

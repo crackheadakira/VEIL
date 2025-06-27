@@ -154,7 +154,7 @@ impl LastFM {
         let digest = md5::compute(params_string);
 
         // converts it to a hexadecimal string
-        format!("{:x}", digest)
+        format!("{digest:x}",)
     }
 
     pub fn set_session_key(&mut self, session_key: String) {

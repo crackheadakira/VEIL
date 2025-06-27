@@ -68,7 +68,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
 
         if let Err(LastFMError::RequestWhenDisabled) = res {
         } else if let Err(e) = res {
-            eprintln!("LastFM error from player: {:?}", e);
+            eprintln!("LastFM error from player: {e}");
         }
     });
 
@@ -236,7 +236,7 @@ fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
 
         if let Err(LastFMError::RequestWhenDisabled) = res {
         } else if let Err(e) = res {
-            eprintln!("LastFM error from player: {:?}", e);
+            eprintln!("LastFM error from player: {e}");
         }
     });
 }
