@@ -20,8 +20,12 @@ impl<'a> Track<'a> {
         UpdateNowPlaying::new(self.last_fm, track)
     }
 
-    pub fn scrobble(&self, tracks: Vec<TrackData>) -> TrackScrobble {
-        TrackScrobble::new(self.last_fm, tracks)
+    pub fn scrobble_one(&self, track: &'a TrackData) -> TrackScrobble {
+        TrackScrobble::new(self.last_fm, ScrobbleBatch::One(track))
+    }
+
+    pub fn scrobble_many(&self, tracks: &'a [TrackData]) -> TrackScrobble {
+        TrackScrobble::new(self.last_fm, ScrobbleBatch::Many(tracks))
     }
 }
 
@@ -76,14 +80,19 @@ impl<'a> UpdateNowPlaying<'a> {
     }
 }
 
+enum ScrobbleBatch<'a> {
+    One(&'a TrackData),
+    Many(&'a [TrackData]),
+}
+
 pub struct TrackScrobble<'a> {
     last_fm: &'a LastFM,
-    tracks: Vec<TrackData>,
+    tracks: ScrobbleBatch<'a>,
     method: APIMethod,
 }
 
 impl<'a> TrackScrobble<'a> {
-    fn new(last_fm: &'a LastFM, tracks: Vec<TrackData>) -> Self {
+    fn new(last_fm: &'a LastFM, tracks: ScrobbleBatch<'a>) -> Self {
         Self {
             last_fm,
             tracks,
@@ -94,47 +103,50 @@ impl<'a> TrackScrobble<'a> {
     fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
-        if self.tracks.len() > 50 {
-            return Err(LastFMError::BatchScrobble);
-        }
-
         let current_timestamp = UNIX_EPOCH.elapsed().expect("Time went backwards");
 
-        if self.tracks.len() > 1 {
-            for (index, track) in self.tracks.iter().enumerate() {
-                let artist_key = format!("artist[{index}]");
-                let track_key = format!("track[{index}]");
-                let timestamp_key = format!("timestamp[{index}]");
-
+        match &self.tracks {
+            ScrobbleBatch::One(track) => {
                 if let Some(album) = track.album.clone() {
-                    let album_key: String = format!("album[{index}]");
-                    params.insert(album_key, album);
+                    params.insert("album".to_string(), album);
                 };
-
-                params.insert(artist_key, track.artist.clone());
-                params.insert(track_key, track.name.clone());
+                params.insert("artist".to_string(), track.artist.clone());
+                params.insert("track".to_string(), track.name.clone());
                 params.insert(
-                    timestamp_key,
+                    "timestamp".to_string(),
                     track
                         .timestamp
                         .unwrap_or(current_timestamp.as_secs() as i64)
                         .to_string(),
                 );
             }
-        } else if let Some(track) = self.tracks.first() {
-            if let Some(album) = track.album.clone() {
-                params.insert("album".to_string(), album);
-            };
-            params.insert("artist".to_string(), track.artist.clone());
-            params.insert("track".to_string(), track.name.clone());
-            params.insert(
-                "timestamp".to_string(),
-                track
-                    .timestamp
-                    .unwrap_or(current_timestamp.as_secs() as i64)
-                    .to_string(),
-            );
-        }
+            ScrobbleBatch::Many(tracks) => {
+                if tracks.len() > 50 {
+                    return Err(LastFMError::BatchScrobble);
+                }
+
+                for (index, track) in tracks.iter().enumerate() {
+                    let artist_key = format!("artist[{index}]");
+                    let track_key = format!("track[{index}]");
+                    let timestamp_key = format!("timestamp[{index}]");
+
+                    if let Some(album) = track.album.clone() {
+                        let album_key: String = format!("album[{index}]");
+                        params.insert(album_key, album);
+                    };
+
+                    params.insert(artist_key, track.artist.clone());
+                    params.insert(track_key, track.name.clone());
+                    params.insert(
+                        timestamp_key,
+                        track
+                            .timestamp
+                            .unwrap_or(current_timestamp.as_secs() as i64)
+                            .to_string(),
+                    );
+                }
+            }
+        };
 
         Ok(params)
     }

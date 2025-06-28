@@ -234,7 +234,7 @@ impl Database {
     /// Batch fetch `T` from DB using a `Vec<u32>` of IDs
     pub fn batch_id<T: NeedForDatabase>(
         &self,
-        ids: Vec<u32>,
+        ids: &[u32],
     ) -> Result<Vec<Option<T>>, DatabaseError> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;

@@ -225,12 +225,12 @@ fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
         let lastfm = state.lastfm.lock().await;
         let res = lastfm
             .track()
-            .scrobble(vec![TrackData {
+            .scrobble_one(&TrackData {
                 artist: track.artist_name,
                 name: track.name,
                 album: Some(track.album_name),
                 timestamp: Some(track_timestamp),
-            }])
+            })
             .send()
             .await;
 

@@ -16,6 +16,7 @@ use tauri_plugin_dialog::DialogExt;
 
 #[derive(Clone, Serialize, Type)]
 #[serde(tag = "event", content = "data")]
+// rust-analyzer expected Expr error: https://github.com/specta-rs/specta/issues/387
 pub enum MetadataEvent {
     Started { id: usize, total: usize },
     Progress { id: usize, current: usize },

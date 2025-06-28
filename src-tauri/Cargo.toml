@@ -15,7 +15,7 @@ dotenvy = "0.15.7"
 kira = "0.10.4"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.139"
-specta = "2.0.0-rc.21"
+specta = "2.0.0-rc.22"
 specta-typescript = "0.0.9"
 souvlaki = { version = "0.8.0", default-features = false, features = [
     "use_zbus",
