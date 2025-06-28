@@ -1,5 +1,5 @@
 [package]
-name = "Sodapop-Reimagined"
+name = "sodapop_reimagined"
 version = "0.0.0"
 description = "A modern-looking local music player written in Vue + Tauri"
 authors = ["crackheadakira"]
@@ -22,8 +22,6 @@ tauri-plugin-dialog = "2.2.0"
 tauri-specta = { version = "2.0.0-rc.21", features = ["typescript", "derive"] }
 thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["full"] }
-tracing = "0.1.41"
-tracing-subscriber = "0.3.19"
 tauri-plugin-opener = "2"
 tauri-plugin-fs = "2"
 
@@ -34,6 +32,7 @@ media_controls = { path = "./crates/media_controls", features = [
     "serialization",
 ] }
 metadata_audio = { path = "./crates/metadata_audio" }
+logging = { path = "./crates/logging" }
 
 [target.'cfg(windows)'.dependencies]
 raw-window-handle = "0.6.2"
@@ -46,6 +45,7 @@ members = [
     "crates/common",
     "crates/db",
     "crates/lastfm",
+    "crates/logging",
     "crates/media_controls",
     "crates/metadata_audio",
 ]

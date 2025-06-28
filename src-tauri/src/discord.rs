@@ -1,12 +1,13 @@
 use discord_rich_presence::{
-    activity::{self, Assets, Timestamps},
     DiscordIpc, DiscordIpcClient,
+    activity::{self, Assets, Timestamps},
 };
 
 pub struct DiscordState {
-    pub rpc: DiscordIpcClient,
-    pub payload: PayloadData,
-    pub enabled: bool,
+    payload: PayloadData,
+    rpc: DiscordIpcClient,
+    enabled: bool,
+    payload_changed: bool,
 }
 
 #[derive(Clone, PartialEq)]
@@ -26,6 +27,7 @@ impl DiscordState {
         Ok(Self {
             enabled: false,
             rpc,
+            payload_changed: false,
             payload: PayloadData {
                 state: String::from("Browsing"),
                 details: String::from("Sodapop Reimagined"),
@@ -42,22 +44,97 @@ impl DiscordState {
         self.enabled = enable;
     }
 
-    pub fn make_activity(
+    pub fn connect(&mut self) -> bool {
+        let res = logging::try_with_log!("Connect Discord RPC", || self.rpc.connect());
+        match res {
+            Ok(_) => {
+                self.enabled = true;
+                true
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub fn close(&mut self) -> bool {
+        let res = logging::try_with_log!("Close Discord RPC", || self.rpc.close());
+        match res {
+            Ok(_) => {
+                self.enabled = false;
+                true
+            }
+            Err(_) => false,
+        }
+    }
+
+    pub fn update_activity_progress(&mut self, progress: f64) -> bool {
+        if progress != self.payload.progress {
+            self.payload.progress = progress;
+            self.payload_changed = true;
+        }
+
+        if self.payload_changed {
+            let res = self.make_activity_from_payload();
+            match res {
+                Ok(_) => true,
+                Err(e) => {
+                    logging::error!("Failed to make Discord activity: {e}");
+                    false
+                }
+            }
+        } else {
+            true
+        }
+    }
+
+    pub fn update_activity(
         &mut self,
-        new_payload: PayloadData,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        let data = new_payload;
-
-        if data == self.payload {
-            return Ok(()); // No need to update the activity
+        small_image: &str,
+        small_text: &str,
+        show_timestamps: bool,
+    ) -> bool {
+        if small_image != self.payload.small_image {
+            self.payload.small_image = small_image.to_string();
+            self.payload_changed = true;
         }
 
-        self.payload = data;
-
-        if !self.enabled {
-            return Ok(());
+        if small_text != self.payload.small_text {
+            self.payload.small_text = small_text.to_string();
+            self.payload_changed = true;
         }
 
+        if show_timestamps != self.payload.show_timestamps {
+            self.payload.show_timestamps = show_timestamps;
+            self.payload_changed = true;
+        }
+
+        if self.payload_changed {
+            let res = self.make_activity_from_payload();
+            match res {
+                Ok(_) => true,
+                Err(e) => {
+                    logging::error!("Failed to make Discord activity: {e}");
+                    false
+                }
+            }
+        } else {
+            true
+        }
+    }
+
+    /// Wraps around [`DiscordState::make_activity`] and logs upon an error
+    pub fn safe_make_activity(&mut self, new_payload: &PayloadData) -> bool {
+        let res = self.make_activity(new_payload);
+
+        match res {
+            Ok(_) => true,
+            Err(e) => {
+                logging::error!("Failed to make Discord activity: {e}");
+                false
+            }
+        }
+    }
+
+    fn make_activity_from_payload(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut activity = activity::Activity::new()
             .state(&self.payload.state)
             .details(&self.payload.details)
@@ -83,6 +160,25 @@ impl DiscordState {
         };
 
         self.rpc.set_activity(activity)?;
+        self.payload_changed = false;
+        Ok(())
+    }
+
+    pub fn make_activity(
+        &mut self,
+        new_payload: &PayloadData,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // Avoid updating the activity
+        if *new_payload == self.payload {
+            return Ok(());
+        }
+
+        self.payload = new_payload.clone();
+
+        if self.enabled {
+            self.make_activity_from_payload()?;
+        }
+
         Ok(())
     }
 }

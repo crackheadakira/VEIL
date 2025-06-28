@@ -3,8 +3,7 @@
 
 use anyhow::anyhow;
 use config::{SodapopConfig, SodapopConfigEvent};
-use discord::PayloadData;
-use discord_rich_presence::DiscordIpc;
+use logging::{error, info, lock_or_log, try_with_log};
 use serde::Serialize;
 use specta::Type;
 use specta_typescript::BigIntExportBehavior;
@@ -13,7 +12,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::{fs::File, fs::create_dir, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{Builder, Event, collect_commands, collect_events};
-use tracing::{error, info};
 
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
@@ -47,7 +45,7 @@ pub enum MediaPayload {
 }
 
 fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
+    logging::init();
 
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
@@ -144,31 +142,16 @@ fn main() -> anyhow::Result<()> {
                     }
                 };
 
-                let mut lastfm = match lastfm::LastFM::builder()
-                    .api_key("abc01a1c2188ad44508b12229563de11")
-                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
-                    .build()
-                {
-                    Ok(lfm) => {
-                        info!("Started LastFM API");
-                        lfm
-                    }
-                    Err(e) => {
-                        error!("Error starting LastFM API: {e}");
-                        return Err(anyhow!("LastFM start failed: {e}").into());
-                    }
-                };
+                let mut lastfm = try_with_log!("LastFM API", || {
+                    lastfm::LastFM::builder()
+                        .api_key("abc01a1c2188ad44508b12229563de11")
+                        .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
+                        .build()
+                })?;
 
-                let mut discord = match discord::DiscordState::new("1339694314074275882") {
-                    Ok(d) => {
-                        info!("Started Discord RPC connection");
-                        d
-                    }
-                    Err(e) => {
-                        error!("Error starting Discord RPC connection: {e}");
-                        return Err(anyhow!("Discord RPC start failed: {e}").into());
-                    }
-                };
+                let mut discord = try_with_log!("Discord RPC", || {
+                    discord::DiscordState::new("1339694314074275882")
+                })?;
 
                 lastfm.enable(sodapop_config.last_fm_enabled);
                 discord.enable(sodapop_config.discord_enabled);
@@ -191,8 +174,7 @@ fn main() -> anyhow::Result<()> {
             let config = lock_or_log(state.config.read(), "Config RwLock")?;
             if config.discord_enabled {
                 let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
-                discord.rpc.connect()?;
-                discord.enabled = true;
+                discord.connect();
             }
 
             let handle = app.handle().clone();
@@ -264,20 +246,15 @@ fn main() -> anyhow::Result<()> {
             SodapopConfigEvent::listen(app, move |event| {
                 let state = app_handle.state::<SodapopState>();
                 if let Some(d) = event.payload.discord_enabled {
-                    let mut discord = state.discord.lock().unwrap();
-                    let player = state.player.lock().unwrap();
+                    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
+                    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
 
                     if d {
-                        discord.rpc.connect().unwrap();
-                        discord.enabled = true;
-                        let curr_payload = PayloadData {
-                            progress: player.progress,
-                            ..discord.payload.clone()
-                        };
-                        discord.make_activity(curr_payload).unwrap();
+                        if discord.connect() {
+                            discord.update_activity_progress(player.progress);
+                        }
                     } else {
-                        discord.rpc.close().unwrap();
-                        discord.enabled = false;
+                        discord.close();
                     }
                 }
 
@@ -313,7 +290,7 @@ fn main() -> anyhow::Result<()> {
                 let mut discord = state.discord.lock().unwrap();
 
                 if config.discord_enabled {
-                    discord.rpc.close().unwrap();
+                    discord.close();
                 };
 
                 state.db.shutdown().unwrap();
@@ -326,17 +303,4 @@ fn main() -> anyhow::Result<()> {
 pub fn data_path() -> PathBuf {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.join("com.sodapop.reimagined")
-}
-
-fn lock_or_log<T>(
-    guard: Result<T, std::sync::PoisonError<T>>,
-    lock_name: &str,
-) -> Result<T, anyhow::Error> {
-    match guard {
-        Ok(g) => Ok(g),
-        Err(poisoned) => {
-            error!("{} lock poisoned: {:?}", lock_name, poisoned);
-            anyhow::bail!("{} lock poisoned: {:?}", lock_name, poisoned);
-        }
-    }
 }

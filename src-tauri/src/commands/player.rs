@@ -49,7 +49,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
         };
 
         let mut discord = state.discord.lock().unwrap();
-        discord.make_activity(payload)?;
+        discord.make_activity(&payload)?;
     }
 
     let handle = handle.clone();
@@ -94,15 +94,7 @@ pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
         scrobble_helper(handle, track, track_timestamp);
     }
 
-    let mut payload = discord.payload.clone();
-    payload = discord::PayloadData {
-        small_image: String::from("paused"),
-        small_text: String::from("Paused"),
-        show_timestamps: false,
-        ..payload
-    };
-
-    discord.make_activity(payload).unwrap();
+    discord.update_activity("paused", "Paused", false);
     Ok(())
 }
 
@@ -113,16 +105,7 @@ pub fn resume_track(state: TauriState) {
     let mut discord = state.discord.lock().unwrap();
 
     player.resume();
-
-    let mut payload = discord.payload.clone();
-    payload = discord::PayloadData {
-        small_image: String::from("playing"),
-        small_text: String::from("Playing"),
-        show_timestamps: true,
-        ..payload
-    };
-
-    discord.make_activity(payload).unwrap();
+    discord.update_activity("playing", "Playing", true);
 }
 
 #[tauri::command]
@@ -132,21 +115,9 @@ pub fn seek_track(position: f64, resume: bool, state: TauriState) {
     let mut discord = state.discord.lock().unwrap();
     player.seek(position, resume);
 
-    let text_display = if resume {
-        String::from("Playing")
-    } else {
-        String::from("Paused")
-    };
+    let text_display = if resume { "Playing" } else { "Paused" };
 
-    let mut payload = discord.payload.clone();
-    payload = discord::PayloadData {
-        small_image: text_display.to_lowercase(),
-        small_text: text_display,
-        show_timestamps: true,
-        ..payload
-    };
-
-    discord.make_activity(payload).unwrap();
+    discord.update_activity(&text_display.to_lowercase(), text_display, true);
 }
 
 #[tauri::command]
