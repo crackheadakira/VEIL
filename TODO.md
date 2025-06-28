@@ -16,6 +16,8 @@
   - [x] Database
   - [x] Commands
 - [ ] Better queue system
+- [ ] Logging System
+  - [ ] Log warn / error instead of unwrapping
 
 ## Medium Priority
 
