@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use anyhow::anyhow;
 use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
@@ -13,6 +14,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::{fs::create_dir, fs::File, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{collect_commands, collect_events, Builder, Event};
+use tracing::{error, info};
 
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
@@ -47,7 +49,9 @@ pub enum MediaPayload {
     Position(f64),
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
+
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::music_folder::select_music_folder,
@@ -132,13 +136,42 @@ fn main() {
             };
 
             {
-                let sodapop_config = SodapopConfig::new().expect("error making config");
-                let mut lastfm = lastfm::LastFM::builder()
+                let sodapop_config = match SodapopConfig::new() {
+                    Ok(cfg) => {
+                        info!("Loaded Sodapop config");
+                        cfg
+                    }
+                    Err(e) => {
+                        error!("Error loading Sodapop config: {e}");
+                        return Err(anyhow!("Config init failed: {e}").into());
+                    }
+                };
+
+                let mut lastfm = match lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
                     .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
                     .build()
-                    .expect("error making last.fm api");
-                let mut discord = discord::DiscordState::new("1339694314074275882")?;
+                {
+                    Ok(lfm) => {
+                        info!("Started LastFM API");
+                        lfm
+                    }
+                    Err(e) => {
+                        error!("Error starting LastFM API: {e}");
+                        return Err(anyhow!("LastFM start failed: {e}").into());
+                    }
+                };
+
+                let mut discord = match discord::DiscordState::new("1339694314074275882") {
+                    Ok(d) => {
+                        info!("Started Discord RPC connection");
+                        d
+                    }
+                    Err(e) => {
+                        error!("Error starting Discord RPC connection: {e}");
+                        return Err(anyhow!("Discord RPC start failed: {e}").into());
+                    }
+                };
 
                 lastfm.enable(sodapop_config.last_fm_enabled);
                 discord.enable(sodapop_config.discord_enabled);
@@ -158,78 +191,73 @@ fn main() {
 
             let state = app.state::<SodapopState>();
 
-            let config = state.config.read().unwrap();
+            let config = lock_or_log(state.config.read(), "Config RwLock")?;
             if config.discord_enabled {
-                let mut discord = state.discord.lock().unwrap();
+                let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
                 discord.rpc.connect()?;
                 discord.enabled = true;
             }
 
             let handle = app.handle().clone();
-            let mut player = state.player.lock().unwrap();
-            player
-                .controls
-                .attach(move |event| match event {
+            let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+            player.controls.attach(move |event| {
+                let result = match event {
                     MediaControlEvent::Play => {
-                        handle
-                            .emit("media-control", MediaPayload::Play(false))
-                            .unwrap();
+                        handle.emit("media-control", MediaPayload::Play(false))
                     }
                     MediaControlEvent::Pause => {
-                        handle
-                            .emit("media-control", MediaPayload::Pause(false))
-                            .unwrap();
+                        handle.emit("media-control", MediaPayload::Pause(false))
                     }
                     MediaControlEvent::Next => {
-                        handle
-                            .emit("media-control", MediaPayload::Next(false))
-                            .unwrap();
+                        handle.emit("media-control", MediaPayload::Next(false))
                     }
                     MediaControlEvent::Previous => {
-                        handle
-                            .emit("media-control", MediaPayload::Previous(false))
-                            .unwrap();
+                        handle.emit("media-control", MediaPayload::Previous(false))
                     }
                     MediaControlEvent::SetVolume(value) => {
-                        handle
-                            .emit("media-control", MediaPayload::Volume(value))
-                            .unwrap();
+                        handle.emit("media-control", MediaPayload::Volume(value))
                     }
                     MediaControlEvent::SeekBy(direction, duration) => {
-                        let duration = match direction {
-                            souvlaki::SeekDirection::Forward => duration.as_secs_f64(),
-                            souvlaki::SeekDirection::Backward => -(duration.as_secs_f64()),
+                        let sign = match direction {
+                            souvlaki::SeekDirection::Forward => 1.0,
+                            souvlaki::SeekDirection::Backward => -1.0,
                         };
-                        handle
-                            .emit("media-control", MediaPayload::Seek(duration))
-                            .unwrap();
+                        let secs = duration.as_secs_f64() * sign;
+                        handle.emit("media-control", MediaPayload::Seek(secs))
                     }
-                    MediaControlEvent::SetPosition(position) => {
-                        handle
-                            .emit(
-                                "media-control",
-                                MediaPayload::Position(position.0.as_secs_f64()),
-                            )
-                            .unwrap();
+                    MediaControlEvent::SetPosition(position) => handle.emit(
+                        "media-control",
+                        MediaPayload::Position(position.0.as_secs_f64()),
+                    ),
+                    _ => Ok(()),
+                };
+
+                match result {
+                    Ok(_) => (),
+                    Err(e) => {
+                        error!("Media control event got an error during emit: {e}");
                     }
-                    _ => (),
-                })
-                .unwrap();
+                }
+            })?;
 
             let app_handle = app.handle().clone();
-            std::thread::spawn(move || loop {
-                std::thread::sleep(std::time::Duration::from_millis(50));
-                // get the player state
-                let state = app_handle.state::<SodapopState>();
-                let player = state.player.lock().unwrap();
 
-                if let player::PlayerState::Playing = player.state {
-                    let progress = player.get_progress();
-                    app_handle.emit("player-progress", progress).unwrap();
+            std::thread::spawn(move || {
+                let duration = std::time::Duration::from_millis(50);
+                loop {
+                    std::thread::sleep(duration);
+                    // get the player state
+                    let state = app_handle.state::<SodapopState>();
+                    let player = state.player.lock().unwrap();
 
-                    if progress >= (player.duration - 0.05) as f64 {
-                        app_handle.emit("track-end", 0.0).unwrap();
-                    };
+                    if let player::PlayerState::Playing = player.state {
+                        let progress = player.get_progress();
+                        app_handle.emit("player-progress", progress).unwrap();
+
+                        if progress >= (player.duration - 0.05) as f64 {
+                            app_handle.emit("track-end", 0.0).unwrap();
+                        };
+                    }
                 }
             });
 
@@ -292,9 +320,24 @@ fn main() {
                 state.db.shutdown().unwrap();
             }
         });
+
+    Ok(())
 }
 
 pub fn data_path() -> PathBuf {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.join("com.sodapop.reimagined")
+}
+
+fn lock_or_log<T>(
+    guard: Result<T, std::sync::PoisonError<T>>,
+    lock_name: &str,
+) -> Result<T, anyhow::Error> {
+    match guard {
+        Ok(g) => Ok(g),
+        Err(poisoned) => {
+            error!("{} lock poisoned: {:?}", lock_name, poisoned);
+            anyhow::bail!("{} lock poisoned: {:?}", lock_name, poisoned);
+        }
+    }
 }
