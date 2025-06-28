@@ -4,14 +4,15 @@ version = "0.0.0"
 edition = "2024"
 
 [dependencies]
-thiserror = "2.0.11"
-kira = "0.10.4"
-souvlaki = { version = "0.8.0", default-features = false, features = [
+thiserror = "2.0.12"
+kira = "0.10.8"
+souvlaki = { version = "0.8.3", default-features = false, features = [
     "use_zbus",
 ] }
 common = { path = "../common" }
+logging = { path = "../logging" }
 
-serde = { version = "1.0.218", features = ["derive"], optional = true }
+serde = { version = "1.0.219", features = ["derive"], optional = true }
 specta = { version = "2.0.0-rc.21", optional = true }
 
 [features]

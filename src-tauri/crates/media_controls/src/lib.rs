@@ -105,6 +105,7 @@ impl Player {
     pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
         self.track = Some(track.id);
 
+        logging::debug!("Trying to play track {}", track.name);
         let sound_data = self.load_sound(track)?.start_position(self.progress);
 
         let mut sh = self.manager.play(sound_data)?;
@@ -119,13 +120,18 @@ impl Player {
 
         self.scrobbled = false;
         self.clock.start();
-        self.set_playback(true).unwrap();
+        self.set_playback(true)?;
+        logging::debug!("Succesfully playing track {}", track.name);
 
         Ok(())
     }
 
     /// Initialize the player with a track and a progress
     pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<(), PlayerError> {
+        logging::debug!(
+            "Initializing player with track {} and progress {progress}",
+            track.name
+        );
         self.load_sound(&track)?;
         self.progress = progress;
 
@@ -166,6 +172,7 @@ impl Player {
     /// Pause track if has sound_handle
     pub fn pause(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
+            logging::debug!("Pausing track");
             sound_handle.pause(self.tween);
             self.state = PlayerState::Paused;
             self.progress = sound_handle.position();
@@ -178,6 +185,7 @@ impl Player {
     /// Resume track if has sound_handle
     pub fn resume(&mut self) {
         if let Some(ref mut sound_handle) = self.sound_handle {
+            logging::debug!("Resuming track");
             sound_handle.resume(self.tween);
             self.state = PlayerState::Playing;
 
@@ -189,6 +197,7 @@ impl Player {
     /// Seek to a specific position in the track and resume playing if the player is paused and resume is true
     pub fn seek(&mut self, position: f64, resume: bool) {
         if let Some(ref mut sound_handle) = self.sound_handle {
+            logging::debug!("Seeking track to {position}");
             match self.state {
                 PlayerState::Playing => {
                     sound_handle.seek_to(position);
@@ -211,6 +220,7 @@ impl Player {
 
     /// Stop track if has sound_handle
     pub fn stop(&mut self) {
+        logging::debug!("Stopping track");
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(self.tween);
         }
@@ -224,6 +234,7 @@ impl Player {
 
     /// Set the progress of the player
     pub fn set_progress(&mut self, progress: f64) {
+        logging::debug!("Setting track progress");
         self.progress = progress;
     }
 

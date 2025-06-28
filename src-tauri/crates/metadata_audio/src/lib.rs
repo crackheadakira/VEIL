@@ -95,7 +95,7 @@ impl Metadata {
             year: get_field_value(&file.text_frames, "TYER")
                 .parse()
                 .unwrap_or(0),
-            track_number: get_field_value(&file.text_frames, "TRCK") //
+            track_number: get_field_value(&file.text_frames, "TRCK")
                 .split('/')
                 .next()
                 .and_then(|s| s.parse().ok())
@@ -107,6 +107,7 @@ impl Metadata {
     /// Create a `Metadata` struct from a valid audio file
     pub fn from_file(path: &std::path::Path) -> Result<Metadata, MetadataError> {
         let ext = path.extension().unwrap().to_str().unwrap();
+        logging::debug!("Reading audio file: {path:?}");
 
         match ext {
             "flac" => {
@@ -121,14 +122,17 @@ impl Metadata {
         }
     }
 
-    /// Create a vector of Metadata structs from a list of audio files
+    /// Create a vec of `Metadata` structs from a list of audio files
     pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>, MetadataError> {
         let mut all_metadata = Vec::new();
         for path in file_paths {
             let metadata = Metadata::from_file(path);
             match metadata {
                 Ok(m) => all_metadata.push(m),
-                Err(_) => continue,
+                Err(e) => {
+                    logging::warn!("Skipping over audio file ({path:?}) due to error: {e}");
+                    continue;
+                }
             }
         }
         Ok(all_metadata)
