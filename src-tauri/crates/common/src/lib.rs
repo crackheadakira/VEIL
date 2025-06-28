@@ -1,0 +1,136 @@
+#[cfg(feature = "serialization")]
+use serde::Serialize;
+#[cfg(feature = "serialization")]
+use specta::Type;
+
+pub mod traits;
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub enum AlbumType {
+    Unknown,
+    Single,
+    EP,
+    Album,
+}
+
+impl AlbumType {
+    pub fn get(tracks: u32, duration: u32) -> Self {
+        if duration == 0 || tracks == 0 {
+            Self::Unknown
+        } else if tracks < 3 && duration < 1800 {
+            Self::Single
+        } else if tracks <= 6 && duration < 1800 {
+            Self::EP
+        } else {
+            Self::Album
+        }
+    }
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Artists {
+    /// ID of artist in database
+    pub id: u32,
+    /// Name of artist
+    pub name: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Albums {
+    /// ID of album in database
+    pub id: u32,
+    /// ID of artist in database
+    pub artist_id: u32,
+    /// Name of artist
+    pub artist_name: String,
+    /// Name of album
+    pub name: String,
+    /// Year album was published
+    pub year: u16,
+    /// Album type
+    pub album_type: AlbumType,
+    /// Amount of tracks in album
+    pub track_count: u32,
+    /// Album duration
+    pub duration: u32,
+    /// Path to album cover in Sodapop local app data
+    pub cover_path: String,
+    /// Path to album folder from where it was imported
+    pub path: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Tracks {
+    /// ID of track in database
+    pub id: u32,
+    /// ID of album in database
+    pub album_id: u32,
+    /// ID of artist in database
+    pub artist_id: u32,
+    /// Album name
+    pub album_name: String,
+    /// Artist name
+    pub artist_name: String,
+    /// Track name
+    pub name: String,
+    /// Track number in album
+    pub number: i32,
+    /// Track duration
+    pub duration: u32,
+    /// Path to album cover in Sodapop local app data
+    pub cover_path: String,
+    /// Path to track file
+    pub path: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Playlists {
+    /// ID of playlist in database
+    pub id: u32,
+    /// Playlist name
+    pub name: String,
+    /// Playlist description
+    pub description: String,
+    /// Path to playlist cover in Sodapop local app data
+    pub cover_path: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct Search {
+    /// ID of the search item
+    pub search_id: u32,
+    /// Name of the search item
+    pub title: String,
+    /// Type of the search item
+    pub search_type: String,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct PlaylistWithTracks {
+    pub playlist: Playlists,
+    /// All tracks belonging to playlist
+    pub tracks: Vec<Tracks>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct AlbumWithTracks {
+    pub album: Albums,
+    /// All tracks belonging to album
+    pub tracks: Vec<Tracks>,
+}
+
+#[derive(Debug)]
+#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+pub struct ArtistWithAlbums {
+    pub artist: Artists,
+    /// All albums belonging to artist
+    pub albums: Vec<AlbumWithTracks>,
+}

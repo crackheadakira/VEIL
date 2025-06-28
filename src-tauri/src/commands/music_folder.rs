@@ -1,6 +1,6 @@
-use crate::{data_path, error::FrontendError, SodapopState};
+use crate::{SodapopState, data_path, error::FrontendError};
 
-use db::models::{AlbumType, Albums, Artists, Tracks};
+use common::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
 use serde::Serialize;
 use specta::Type;
@@ -11,7 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use tauri::{ipc::Channel, Manager};
+use tauri::{Manager, ipc::Channel};
 use tauri_plugin_dialog::DialogExt;
 
 #[derive(Clone, Serialize, Type)]

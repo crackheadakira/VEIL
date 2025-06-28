@@ -1,6 +1,7 @@
-use crate::{discord, error::FrontendError, player::PlayerState, SodapopState, TauriState};
-use db::models::Tracks;
+use crate::{SodapopState, TauriState, discord, error::FrontendError};
+use common::Tracks;
 use lastfm::{LastFMError, TrackData};
+use media_controls::PlayerState;
 use tauri::{AppHandle, Manager};
 
 #[tauri::command]

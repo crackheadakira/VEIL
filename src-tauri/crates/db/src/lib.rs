@@ -1,7 +1,6 @@
-pub mod models;
-
-use include_dir::{include_dir, Dir};
-use models::*;
+use common::traits::*;
+use common::*;
+use include_dir::{Dir, include_dir};
 use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;

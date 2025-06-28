@@ -6,14 +6,13 @@ use config::{SodapopConfig, SodapopConfigEvent};
 use discord::PayloadData;
 use discord_rich_presence::DiscordIpc;
 use serde::Serialize;
-use souvlaki::MediaControlEvent;
 use specta::Type;
 use specta_typescript::BigIntExportBehavior;
 use std::io::Write;
 use std::sync::{Arc, Mutex, RwLock};
-use std::{fs::create_dir, fs::File, path::PathBuf};
+use std::{fs::File, fs::create_dir, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
-use tauri_specta::{collect_commands, collect_events, Builder, Event};
+use tauri_specta::{Builder, Event, collect_commands, collect_events};
 use tracing::{error, info};
 
 #[cfg(debug_assertions)]
@@ -23,10 +22,8 @@ mod commands;
 mod config;
 mod discord;
 mod error;
-mod player;
-
 pub struct SodapopState {
-    pub player: Mutex<player::Player>,
+    pub player: Mutex<media_controls::Player>,
     pub db: Arc<db::Database>,
     pub discord: Mutex<discord::DiscordState>,
     pub config: Arc<RwLock<SodapopConfig>>,
@@ -129,7 +126,7 @@ fn main() -> anyhow::Result<()> {
                 create_dir(&path).expect("Error creating main data directory")
             }
 
-            let platform_config = souvlaki::PlatformConfig {
+            let platform_config = media_controls::PlatformConfig {
                 dbus_name: "com.sodapop.reimagined.dbus",
                 display_name: "Sodapop Reimagined",
                 hwnd,
@@ -181,7 +178,7 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 app.manage(SodapopState {
-                    player: Mutex::new(player::Player::new(platform_config)),
+                    player: Mutex::new(media_controls::Player::new(platform_config)),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),
@@ -201,6 +198,8 @@ fn main() -> anyhow::Result<()> {
             let handle = app.handle().clone();
             let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
             player.controls.attach(move |event| {
+                use media_controls::MediaControlEvent;
+
                 let result = match event {
                     MediaControlEvent::Play => {
                         handle.emit("media-control", MediaPayload::Play(false))
@@ -219,8 +218,8 @@ fn main() -> anyhow::Result<()> {
                     }
                     MediaControlEvent::SeekBy(direction, duration) => {
                         let sign = match direction {
-                            souvlaki::SeekDirection::Forward => 1.0,
-                            souvlaki::SeekDirection::Backward => -1.0,
+                            media_controls::SeekDirection::Forward => 1.0,
+                            media_controls::SeekDirection::Backward => -1.0,
                         };
                         let secs = duration.as_secs_f64() * sign;
                         handle.emit("media-control", MediaPayload::Seek(secs))
@@ -250,7 +249,7 @@ fn main() -> anyhow::Result<()> {
                     let state = app_handle.state::<SodapopState>();
                     let player = state.player.lock().unwrap();
 
-                    if let player::PlayerState::Playing = player.state {
+                    if let media_controls::PlayerState::Playing = player.state {
                         let progress = player.get_progress();
                         app_handle.emit("player-progress", progress).unwrap();
 

@@ -1,0 +1,14 @@
+[package]
+name = "common"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0.218", features = ["derive"], optional = true }
+specta = { version = "2.0.0-rc.21", optional = true }
+rusqlite = { version = "0.34.0", features = ["bundled"], optional = true }
+
+[features]
+default = []
+rusqlite = ["dep:rusqlite"]
+serialization = ["dep:serde", "dep:specta"]

@@ -3,7 +3,7 @@ name = "Sodapop-Reimagined"
 version = "0.0.0"
 description = "A modern-looking local music player written in Vue + Tauri"
 authors = ["crackheadakira"]
-edition = "2021"
+edition = "2024"
 
 [build-dependencies]
 tauri-build = { version = "2.0.5", features = [] }
@@ -13,14 +13,10 @@ anyhow = "1.0.98"
 dirs = "6.0.0"
 discord-rich-presence = "0.2.5"
 dotenvy = "0.15.7"
-kira = "0.10.4"
 serde = { version = "1.0.218", features = ["derive"] }
 serde_json = "1.0.139"
 specta = "2.0.0-rc.22"
 specta-typescript = "0.0.9"
-souvlaki = { version = "0.8.0", default-features = false, features = [
-    "use_zbus",
-] }
 tauri = { version = "2.3.0", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2.2.0"
 tauri-specta = { version = "2.0.0-rc.21", features = ["typescript", "derive"] }
@@ -28,12 +24,16 @@ thiserror = "2.0.11"
 tokio = { version = "1.43.0", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
-
-metadata_audio = { path = "./metadata_audio" }
-db = { path = "./db", features = ["serialization"] }
-lastfm = { path = "./lastfm" }
 tauri-plugin-opener = "2"
 tauri-plugin-fs = "2"
+
+common = { path = "./crates/common", features = ["serialization"] }
+db = { path = "./crates/db" }
+lastfm = { path = "./crates/lastfm" }
+media_controls = { path = "./crates/media_controls", features = [
+    "serialization",
+] }
+metadata_audio = { path = "./crates/metadata_audio" }
 
 [target.'cfg(windows)'.dependencies]
 raw-window-handle = "0.6.2"
@@ -42,7 +42,13 @@ raw-window-handle = "0.6.2"
 incremental = true
 
 [workspace]
-members = ["db", "lastfm", "metadata_audio"]
+members = [
+    "crates/common",
+    "crates/db",
+    "crates/lastfm",
+    "crates/media_controls",
+    "crates/metadata_audio",
+]
 
 [profile.release]
 codegen-units = 1 # Allows LLVM to perform better optimization.

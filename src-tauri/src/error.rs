@@ -1,4 +1,3 @@
-use crate::player;
 use specta::Type;
 
 #[derive(thiserror::Error, Debug, serde::Serialize, Type)]
@@ -40,8 +39,8 @@ impl From<db::DatabaseError> for FrontendError {
     }
 }
 
-impl From<player::PlayerError> for FrontendError {
-    fn from(error: player::PlayerError) -> Self {
+impl From<media_controls::PlayerError> for FrontendError {
+    fn from(error: media_controls::PlayerError) -> Self {
         Self::Player(error.to_string())
     }
 }
