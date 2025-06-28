@@ -1,9 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use anyhow::anyhow;
 use config::{SodapopConfig, SodapopConfigEvent};
-use logging::{error, info, lock_or_log, try_with_log};
+use logging::{error, lock_or_log, try_with_log};
 use serde::Serialize;
 use specta::Type;
 use specta_typescript::BigIntExportBehavior;
@@ -131,27 +130,16 @@ fn main() -> anyhow::Result<()> {
             };
 
             {
-                let sodapop_config = match SodapopConfig::new() {
-                    Ok(cfg) => {
-                        info!("Loaded Sodapop config");
-                        cfg
-                    }
-                    Err(e) => {
-                        error!("Error loading Sodapop config: {e}");
-                        return Err(anyhow!("Config init failed: {e}").into());
-                    }
-                };
+                let sodapop_config = try_with_log!("Sodapop Config", || SodapopConfig::new())?;
 
-                let mut lastfm = try_with_log!("LastFM API", || {
-                    lastfm::LastFM::builder()
-                        .api_key("abc01a1c2188ad44508b12229563de11")
-                        .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
-                        .build()
-                })?;
+                let mut lastfm = try_with_log!("LastFM API", || lastfm::LastFM::builder()
+                    .api_key("abc01a1c2188ad44508b12229563de11")
+                    .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
+                    .build())?;
 
-                let mut discord = try_with_log!("Discord RPC", || {
-                    discord::DiscordState::new("1339694314074275882")
-                })?;
+                let mut discord = try_with_log!("Discord RPC", || discord::DiscordState::new(
+                    "1339694314074275882"
+                ))?;
 
                 lastfm.enable(sodapop_config.last_fm_enabled);
                 discord.enable(sodapop_config.discord_enabled);
@@ -160,8 +148,12 @@ fn main() -> anyhow::Result<()> {
                     lastfm.set_session_key(sk);
                 }
 
+                let player = try_with_log!("Music Player", || media_controls::Player::new(
+                    platform_config
+                ))?;
+
                 app.manage(SodapopState {
-                    player: Mutex::new(media_controls::Player::new(platform_config)),
+                    player: Mutex::new(player),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),

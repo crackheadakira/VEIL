@@ -69,6 +69,7 @@
 import {
   commands,
   formatTime,
+  handleBackendError,
   Playlists,
   Tracks,
   usePlayerStore,
@@ -118,7 +119,14 @@ watch(
 async function selectProgress() {
   if (!(await commands.playerHasTrack())) return;
   const skipTo = (await commands.getPlayerState()) === "Playing";
-  await commands.seekTrack(parseFloat(progress.value.toString()), skipTo);
+
+  const result = await commands.seekTrack(
+    parseFloat(progress.value.toString()),
+    skipTo,
+  );
+
+  if (result.status === "error") return handleBackendError(result.error);
+
   beingHeld.value = false;
 
   playerStore.handleProgress(false, progress.value);
@@ -142,7 +150,8 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  await commands.stopPlayer();
+  const result = await commands.stopPlayer();
+  if (result.status === "error") return handleBackendError(result.error);
 
   (await playerStore.listenPlayerProgress)();
   (await playerStore.listenTrackEnd)();

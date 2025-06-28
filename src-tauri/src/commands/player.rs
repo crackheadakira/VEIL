@@ -24,7 +24,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
     // temporary scope to drop player before await
     {
         if player.track.is_some() {
-            player.stop();
+            player.stop()?;
         };
 
         let duration = player.duration;
@@ -82,7 +82,7 @@ pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
     let state = handle.state::<SodapopState>();
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
-    player.pause();
+    player.pause()?;
 
     // if player has track that's been playing, scrobble condition will pass
     if player.track.is_some() && player.scrobble() && !player.scrobbled {
@@ -100,32 +100,35 @@ pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
 
 #[tauri::command]
 #[specta::specta]
-pub fn resume_track(state: TauriState) {
+pub fn resume_track(state: TauriState) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
 
-    player.resume();
+    player.resume()?;
     discord.update_activity("playing", "Playing", true);
+    Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn seek_track(position: f64, resume: bool, state: TauriState) {
+pub fn seek_track(position: f64, resume: bool, state: TauriState) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
     let mut discord = state.discord.lock().unwrap();
-    player.seek(position, resume);
+    player.seek(position, resume)?;
 
     let text_display = if resume { "Playing" } else { "Paused" };
 
     discord.update_activity(&text_display.to_lowercase(), text_display, true);
+    Ok(())
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn set_volume(volume: f32, state: TauriState) {
+pub fn set_volume(volume: f32, state: TauriState) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
 
-    player.set_volume(volume);
+    player.set_volume(volume)?;
+    Ok(())
 }
 
 #[tauri::command]
@@ -165,9 +168,10 @@ pub fn get_player_duration(state: TauriState) -> f32 {
 
 #[tauri::command]
 #[specta::specta]
-pub fn stop_player(state: TauriState) {
+pub fn stop_player(state: TauriState) -> Result<(), FrontendError> {
     let mut player = state.player.lock().unwrap();
-    player.stop();
+    player.stop()?;
+    Ok(())
 }
 
 #[tauri::command]

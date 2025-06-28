@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{u32_from_bytes, Endian, MetadataError};
+use crate::{Endian, MetadataError, u32_from_bytes};
 
 pub enum FrameType {
     AttachedPicture,

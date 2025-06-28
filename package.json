@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "RUST_LOG=\"common=debug,db=debug,lastfm=debug,logging=debug,media_controls=debug,metadata_audio=debug,sodapop_reimagined=debug\" tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "2.2.0",

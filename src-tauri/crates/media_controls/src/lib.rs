@@ -21,6 +21,10 @@ pub enum PlayerError {
     FromFile(#[from] FromFileError),
     #[error(transparent)]
     Souvlaki(#[from] souvlaki::Error),
+    #[error(transparent)]
+    Cpal(#[from] kira::backend::cpal::Error),
+    #[error(transparent)]
+    ResourceLimitReached(#[from] kira::ResourceLimitReached),
 }
 
 #[cfg(feature = "serialization")]
@@ -65,14 +69,13 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(c: souvlaki::PlatformConfig) -> Self {
-        let mut manager =
-            AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).unwrap();
+    pub fn new(c: souvlaki::PlatformConfig) -> Result<Self, PlayerError> {
+        let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
 
         // 1 tick per second
-        let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0)).unwrap();
+        let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0))?;
 
-        Player {
+        Ok(Player {
             sound_handle: None,
             manager,
             clock,
@@ -85,21 +88,23 @@ impl Player {
             duration: 0.0,
             volume: -6.0, // externally 0.0 - 1.0
             state: PlayerState::Paused,
-            controls: MediaControls::new(c).unwrap(),
-        }
+            controls: MediaControls::new(c)?,
+        })
     }
 
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
-    pub fn set_volume(&mut self, volume: f32) {
+    pub fn set_volume(&mut self, volume: f32) -> Result<(), PlayerError> {
         // https://www.desmos.com/calculator/cj1nmmamzb
         let converted_volume = -60.0 + 61.0 * volume.powf(0.44);
 
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.set_volume(converted_volume, self.tween);
-            self.controls.set_volume(volume as f64).unwrap();
+            self.controls.set_volume(volume as f64)?;
         }
 
         self.volume = converted_volume;
+
+        Ok(())
     }
 
     pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
@@ -135,7 +140,7 @@ impl Player {
         self.load_sound(&track)?;
         self.progress = progress;
 
-        self.set_playback(false).unwrap();
+        self.set_playback(false)?;
 
         Ok(())
     }
@@ -170,7 +175,7 @@ impl Player {
     }
 
     /// Pause track if has sound_handle
-    pub fn pause(&mut self) {
+    pub fn pause(&mut self) -> Result<(), PlayerError> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Pausing track");
             sound_handle.pause(self.tween);
@@ -178,48 +183,54 @@ impl Player {
             self.progress = sound_handle.position();
 
             self.clock.pause();
-            self.set_playback(false).unwrap();
+            self.set_playback(false)?;
         }
+
+        Ok(())
     }
 
     /// Resume track if has sound_handle
-    pub fn resume(&mut self) {
+    pub fn resume(&mut self) -> Result<(), PlayerError> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Resuming track");
             sound_handle.resume(self.tween);
             self.state = PlayerState::Playing;
 
             self.clock.start();
-            self.set_playback(true).unwrap();
+            self.set_playback(true)?;
         }
+
+        Ok(())
     }
 
     /// Seek to a specific position in the track and resume playing if the player is paused and resume is true
-    pub fn seek(&mut self, position: f64, resume: bool) {
+    pub fn seek(&mut self, position: f64, resume: bool) -> Result<(), PlayerError> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Seeking track to {position}");
             match self.state {
                 PlayerState::Playing => {
                     sound_handle.seek_to(position);
                     self.progress = position;
-                    self.set_playback(true).unwrap();
+                    self.set_playback(true)?;
                 }
                 _ => {
                     sound_handle.seek_to(position);
                     self.progress = position;
 
                     if resume {
-                        self.resume()
+                        self.resume()?
                     } else {
-                        self.set_playback(false).unwrap()
+                        self.set_playback(false)?
                     }
                 }
             }
         }
+
+        Ok(())
     }
 
     /// Stop track if has sound_handle
-    pub fn stop(&mut self) {
+    pub fn stop(&mut self) -> Result<(), PlayerError> {
         logging::debug!("Stopping track");
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(self.tween);
@@ -229,7 +240,9 @@ impl Player {
         self.track = None;
 
         self.clock.stop();
-        self.controls.set_playback(MediaPlayback::Stopped).unwrap();
+        self.controls.set_playback(MediaPlayback::Stopped)?;
+
+        Ok(())
     }
 
     /// Set the progress of the player

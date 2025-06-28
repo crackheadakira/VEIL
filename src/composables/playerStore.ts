@@ -170,7 +170,8 @@ export const usePlayerStore = defineStore("player", () => {
     }
 
     if (paused.value === true) {
-      await commands.resumeTrack();
+      const result = await commands.resumeTrack();
+      if (result.status === "error") return handleBackendError(result.error);
     } else {
       const result = await commands.pauseTrack();
       if (result.status === "error") return handleBackendError(result.error);
@@ -210,7 +211,8 @@ export const usePlayerStore = defineStore("player", () => {
    */
   async function handleVolume() {
     nextTick(async () => {
-      await commands.setVolume(+playerVolume.value);
+      const result = await commands.setVolume(+playerVolume.value);
+      if (result.status === "error") return handleBackendError(result.error);
     });
   }
 
@@ -229,8 +231,13 @@ export const usePlayerStore = defineStore("player", () => {
     await commands.pauseTrack();
     const duration = await commands.getPlayerDuration();
 
-    if (duration !== 0) await commands.seekTrack(playerProgress.value, false);
-    await commands.setVolume(+playerVolume.value);
+    if (duration !== 0) {
+      const result = await commands.seekTrack(playerProgress.value, false);
+      if (result.status === "error") return handleBackendError(result.error);
+    }
+
+    const result = await commands.setVolume(+playerVolume.value);
+    if (result.status === "error") return handleBackendError(result.error);
   }
 
   // LISTENERS
@@ -253,15 +260,19 @@ export const usePlayerStore = defineStore("player", () => {
         case "Previous" in payload:
           skipTrack('back');
           break;
-        case "Seek" in payload:
-          await commands.seekTrack(payload.Seek, true);
+        case "Seek" in payload: {
+          const result = await commands.seekTrack(payload.Seek, true);
+          if (result.status === "error") return handleBackendError(result.error);
           break;
-        case "Volume" in payload:
-          await commands.setVolume(payload.Volume);
+        } case "Volume" in payload: {
+          const result = await commands.setVolume(+playerVolume.value);
+          if (result.status === "error") return handleBackendError(result.error);
           break;
-        case "Position" in payload:
-          await commands.seekTrack(payload.Position, false);
+        } case "Position" in payload: {
+          const result = await commands.seekTrack(payload.Position, false);
+          if (result.status === "error") return handleBackendError(result.error);
           break;
+        }
       }
     },
   );

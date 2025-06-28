@@ -187,14 +187,38 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async resumeTrack(): Promise<void> {
-    await TAURI_INVOKE("resume_track");
+  async resumeTrack(): Promise<Result<null, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("resume_track") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
   },
-  async seekTrack(position: number, resume: boolean): Promise<void> {
-    await TAURI_INVOKE("seek_track", { position, resume });
+  async seekTrack(
+    position: number,
+    resume: boolean,
+  ): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("seek_track", { position, resume }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
   },
-  async setVolume(volume: number): Promise<void> {
-    await TAURI_INVOKE("set_volume", { volume });
+  async setVolume(volume: number): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("set_volume", { volume }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
   },
   async getPlayerState(): Promise<PlayerState> {
     return await TAURI_INVOKE("get_player_state");
@@ -208,8 +232,13 @@ export const commands = {
   async getPlayerDuration(): Promise<number> {
     return await TAURI_INVOKE("get_player_duration");
   },
-  async stopPlayer(): Promise<void> {
-    await TAURI_INVOKE("stop_player");
+  async stopPlayer(): Promise<Result<null, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("stop_player") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
   },
   async initializePlayer(
     trackId: number,
