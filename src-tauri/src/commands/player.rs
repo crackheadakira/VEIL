@@ -1,6 +1,7 @@
 use crate::{SodapopState, TauriState, discord, error::FrontendError};
 use common::Tracks;
 use lastfm::{LastFMError, TrackData};
+use logging::lock_or_log;
 use media_controls::PlayerState;
 use tauri::{AppHandle, Manager};
 
@@ -8,7 +9,7 @@ use tauri::{AppHandle, Manager};
 #[specta::specta]
 pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), FrontendError> {
     let state = handle.state::<SodapopState>();
-    let mut player = state.player.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
 
     // if player has track that's been playing, scrobble condition will pass
     if player.track.is_some() && player.scrobble() && !player.scrobbled {
@@ -48,7 +49,7 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
             progress,
         };
 
-        let mut discord = state.discord.lock().unwrap();
+        let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
         discord.make_activity(&payload)?;
     }
 
@@ -80,8 +81,8 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
 #[specta::specta]
 pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
     let state = handle.state::<SodapopState>();
-    let mut player = state.player.lock().unwrap();
-    let mut discord = state.discord.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
     player.pause()?;
 
     // if player has track that's been playing, scrobble condition will pass
@@ -101,8 +102,9 @@ pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
 #[tauri::command]
 #[specta::specta]
 pub fn resume_track(state: TauriState) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
-    let mut discord = state.discord.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+
+    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
 
     player.resume()?;
     discord.update_activity("playing", "Playing", true);
@@ -112,8 +114,8 @@ pub fn resume_track(state: TauriState) -> Result<(), FrontendError> {
 #[tauri::command]
 #[specta::specta]
 pub fn seek_track(position: f64, resume: bool, state: TauriState) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
-    let mut discord = state.discord.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
     player.seek(position, resume)?;
 
     let text_display = if resume { "Playing" } else { "Paused" };
@@ -125,7 +127,7 @@ pub fn seek_track(position: f64, resume: bool, state: TauriState) -> Result<(), 
 #[tauri::command]
 #[specta::specta]
 pub fn set_volume(volume: f32, state: TauriState) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
 
     player.set_volume(volume)?;
     Ok(())
@@ -134,42 +136,42 @@ pub fn set_volume(volume: f32, state: TauriState) -> Result<(), FrontendError> {
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_state(state: TauriState) -> PlayerState {
-    let player = state.player.lock().unwrap();
+    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.state
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_progress(state: TauriState) -> f64 {
-    let player = state.player.lock().unwrap();
+    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.progress
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn player_has_ended(state: TauriState) -> bool {
-    let player = state.player.lock().unwrap();
+    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.has_ended()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn player_has_track(state: TauriState) -> bool {
-    let player = state.player.lock().unwrap();
+    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.track.is_some()
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn get_player_duration(state: TauriState) -> f32 {
-    let player = state.player.lock().unwrap();
+    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.duration
 }
 
 #[tauri::command]
 #[specta::specta]
 pub fn stop_player(state: TauriState) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
     player.stop()?;
     Ok(())
 }
@@ -181,7 +183,7 @@ pub fn initialize_player(
     progress: f64,
     state: TauriState,
 ) -> Result<(), FrontendError> {
-    let mut player = state.player.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
     let track = state.db.by_id::<Tracks>(&track_id)?;
     player.initialize_player(track, progress)?;
 
@@ -191,7 +193,7 @@ pub fn initialize_player(
 #[tauri::command]
 #[specta::specta]
 pub fn set_player_progress(progress: f64, state: TauriState) {
-    let mut player = state.player.lock().unwrap();
+    let mut player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.set_progress(progress);
 }
 

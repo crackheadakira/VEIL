@@ -12,6 +12,9 @@ use std::{fs::File, fs::create_dir, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{Builder, Event, collect_commands, collect_events};
 
+#[cfg(target_os = "windows")]
+use raw_window_handle::HasWindowHandle;
+
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
 
@@ -106,14 +109,14 @@ fn main() -> anyhow::Result<()> {
 
             #[cfg(target_os = "windows")]
             let hwnd = {
-                let main_window = app.get_webview_window("sodapop-reimagined").unwrap();
-                let window_handle = main_window.window_handle().unwrap();
-
-                match window_handle.as_raw() {
-                    RawWindowHandle::Win32(handle) => {
-                        Some(handle.hwnd.get() as *mut std::ffi::c_void)
-                    }
-                    _ => panic!("Failed to get a Win32 HWND! Are you running on Windows?"),
+                if let Some(main_window) = app.get_webview_window("sodapop-reimagined")
+                    && let Ok(window_handle) = main_window.window_handle()
+                    && let raw_window_handle::RawWindowHandle::Win32(handle) =
+                        window_handle.as_raw()
+                {
+                    Some(handle.hwnd.get() as *mut std::ffi::c_void)
+                } else {
+                    None
                 }
             };
 
@@ -221,7 +224,7 @@ fn main() -> anyhow::Result<()> {
                     std::thread::sleep(duration);
                     // get the player state
                     let state = app_handle.state::<SodapopState>();
-                    let player = state.player.lock().unwrap();
+                    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
 
                     if let media_controls::PlayerState::Playing = player.state {
                         let progress = player.get_progress();
@@ -259,7 +262,7 @@ fn main() -> anyhow::Result<()> {
                     };
                 });
 
-                let mut config = state.config.write().unwrap();
+                let mut config = lock_or_log(state.config.write(), "Config Write").unwrap();
                 config.update_config(event.payload).unwrap();
             });
 
@@ -278,8 +281,8 @@ fn main() -> anyhow::Result<()> {
         .run(|_app, _event| {
             if let RunEvent::ExitRequested { .. } = _event {
                 let state = _app.state::<SodapopState>();
-                let config = state.config.read().unwrap();
-                let mut discord = state.discord.lock().unwrap();
+                let config = lock_or_log(state.config.read(), "Config Lock").unwrap();
+                let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
 
                 if config.discord_enabled {
                     discord.close();

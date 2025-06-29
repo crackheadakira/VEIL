@@ -30,7 +30,7 @@ pub fn select_music_folder(
     on_event: Channel<MetadataEvent>,
 ) -> Result<String, FrontendError> {
     let state = app.state::<SodapopState>();
-    let config_path = state.config.read().unwrap();
+    let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
     let music_dir = config_path.music_dir.clone();
     drop(config_path);
 
