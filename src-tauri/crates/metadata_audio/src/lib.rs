@@ -34,6 +34,8 @@ impl Default for Metadata {
 
 #[derive(Debug, thiserror::Error)]
 pub enum MetadataError {
+    #[error("Invalid file path")]
+    InvalidFilePath,
     #[error("Unsupported file type")]
     UnsupportedFileType,
     #[error("Invalid FLAC signature")]
@@ -106,19 +108,23 @@ impl Metadata {
 
     /// Create a `Metadata` struct from a valid audio file
     pub fn from_file(path: &std::path::Path) -> Result<Metadata, MetadataError> {
-        let ext = path.extension().unwrap().to_str().unwrap();
-        logging::debug!("Reading audio file: {path:?}");
-
-        match ext {
-            "flac" => {
-                let file = flac::Flac::new(path)?;
-                Ok(Metadata::from_flac(file))
+        if let Some(os_ext) = path.extension()
+            && let Some(ext) = os_ext.to_str()
+        {
+            logging::debug!("Reading audio file: {path:?}");
+            match ext {
+                "flac" => {
+                    let file = flac::Flac::new(path)?;
+                    Ok(Metadata::from_flac(file))
+                }
+                "mp3" => {
+                    let file = id3::Id3::new(path)?;
+                    Ok(Metadata::from_id3(file))
+                }
+                _ => Err(MetadataError::UnsupportedFileType),
             }
-            "mp3" => {
-                let file = id3::Id3::new(path)?;
-                Ok(Metadata::from_id3(file))
-            }
-            _ => Err(MetadataError::UnsupportedFileType),
+        } else {
+            Err(MetadataError::InvalidFilePath)
         }
     }
 

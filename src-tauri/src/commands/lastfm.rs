@@ -1,4 +1,4 @@
-use crate::{error::FrontendError, TauriState};
+use crate::{TauriState, error::FrontendError};
 use lastfm::LastFMData;
 
 #[tauri::command]
@@ -23,7 +23,7 @@ pub async fn get_session(state: TauriState<'_>, token: String) -> Result<(), Fro
     let a = lastfm.auth().session(token).send().await?;
     lastfm.set_session_key(a.session.key.clone());
 
-    let mut config = state.config.write().unwrap();
+    let mut config = logging::lock_or_log(state.config.write(), "Config Write")?;
     config.last_fm_key = Some(a.session.key);
     config.write_config()?;
 

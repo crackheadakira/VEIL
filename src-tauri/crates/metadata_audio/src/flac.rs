@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{read_n_bits, u32_from_bytes, Endian, MetadataError};
+use crate::{Endian, MetadataError, read_n_bits, u32_from_bytes};
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]

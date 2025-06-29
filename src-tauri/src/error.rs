@@ -19,6 +19,8 @@ pub enum FrontendError {
     SerdeJson(String),
     #[error("Tauri error: {0}")]
     TauriError(String),
+    #[error("Anyhow error: {0}")]
+    AnyhowError(String),
 }
 
 impl From<std::io::Error> for FrontendError {
@@ -66,5 +68,11 @@ impl From<serde_json::Error> for FrontendError {
 impl From<tauri::Error> for FrontendError {
     fn from(error: tauri::Error) -> Self {
         Self::TauriError(error.to_string())
+    }
+}
+
+impl From<anyhow::Error> for FrontendError {
+    fn from(error: anyhow::Error) -> Self {
+        Self::AnyhowError(error.to_string())
     }
 }
