@@ -269,7 +269,7 @@ fn main() -> anyhow::Result<()> {
             let covers = path.join("covers");
             if !covers.exists() {
                 create_dir(&covers).expect("Error creating covers directory");
-                let pc = include_bytes!("../../public/placeholder.png");
+                let pc = include_bytes!("../../../../public/placeholder.png");
                 let mut file = File::create(covers.join("placeholder.png"))?;
                 file.write_all(pc)?;
             }

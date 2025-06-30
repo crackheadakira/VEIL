@@ -10,4 +10,4 @@ r2d2_sqlite = "0.30.0"
 rusqlite = { version = "0.36.0", features = ["bundled"] }
 thiserror = "2.0.12"
 include_dir = "0.7.4"
-common = { path = "../common", features = ["rusqlite"] }
+common = { workspace = true, features = ["rusqlite"] }

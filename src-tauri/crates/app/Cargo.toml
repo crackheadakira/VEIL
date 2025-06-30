@@ -1,0 +1,34 @@
+[package]
+name = "app"
+version = "0.0.0"
+edition = "2024"
+
+[build-dependencies]
+tauri-build = { version = "2.3.0", features = [] }
+
+[dependencies]
+anyhow = "1.0.98"
+dirs = "6.0.0"
+discord-rich-presence = "0.2.5"
+dotenvy = "0.15.7"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+specta = "2.0.0-rc.22"
+specta-typescript = "0.0.9"
+tauri = { version = "2.6.2", features = ["protocol-asset"] }
+tauri-plugin-dialog = "2.3.0"
+tauri-plugin-opener = "2.4.0"
+tauri-plugin-fs = "2.4.0"
+tauri-specta = { version = "2.0.0-rc.21", features = ["typescript", "derive"] }
+thiserror = "2.0.11"
+tokio = { version = "1.43.0", features = ["full"] }
+
+common = { workspace = true, features = ["serialization"] }
+db.workspace = true
+lastfm.workspace = true
+media_controls = { workspace = true, features = ["serialization"] }
+metadata_audio.workspace = true
+logging.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+raw-window-handle = "0.6.2"

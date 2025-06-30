@@ -5,4 +5,4 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.12"
-logging = { path = "../logging" }
+logging.workspace = true
