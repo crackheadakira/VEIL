@@ -1,10 +1,11 @@
-use std::{collections::HashMap, time::UNIX_EPOCH};
+use std::{borrow::Cow, collections::HashMap, time::UNIX_EPOCH};
 
+use once_cell::sync::Lazy;
 use reqwest::Method;
 
 use crate::{
-    models::{APIMethod, TrackData},
     LastFM, LastFMError, LastFMParams,
+    models::{APIMethod, TrackData},
 };
 
 pub struct Track<'a> {
@@ -44,20 +45,21 @@ impl<'a> UpdateNowPlaying<'a> {
         }
     }
 
-    fn params(&self) -> Result<LastFMParams, LastFMError> {
+    fn params(&'a self) -> Result<LastFMParams<'a>, LastFMError> {
         let mut params = HashMap::new();
 
-        params.insert(String::from("artist"), self.track.artist.clone());
-        params.insert(String::from("track"), self.track.name.clone());
+        params.insert("artist", Cow::Borrowed(self.track.artist.as_str()));
+        params.insert("track", Cow::Borrowed(self.track.name.as_str()));
 
         Ok(params)
     }
 
     pub async fn send(self) -> Result<(), LastFMError> {
         let mut params = self.params()?;
+
         let result = self
             .last_fm
-            .send_request::<()>(Method::POST, self.method, &mut params)
+            .send_request::<()>(Method::POST, &self.method, &mut params)
             .await;
 
         match result {
@@ -91,6 +93,46 @@ pub struct TrackScrobble<'a> {
     method: APIMethod,
 }
 
+static ARTIST_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+    let mut keys = Vec::with_capacity(50);
+    for i in 0..50 {
+        let s = format!("artist[{i}]");
+        let leaked: &'static str = Box::leak(s.into_boxed_str());
+        keys.push(leaked);
+    }
+    keys.try_into().unwrap()
+});
+
+static ALBUM_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+    let mut keys = Vec::with_capacity(50);
+    for i in 0..50 {
+        let s = format!("artist[{i}]");
+        let leaked: &'static str = Box::leak(s.into_boxed_str());
+        keys.push(leaked);
+    }
+    keys.try_into().unwrap()
+});
+
+static TRACK_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+    let mut keys = Vec::with_capacity(50);
+    for i in 0..50 {
+        let s = format!("track[{i}]");
+        let leaked: &'static str = Box::leak(s.into_boxed_str());
+        keys.push(leaked);
+    }
+    keys.try_into().unwrap()
+});
+
+static TIMESTAMP_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+    let mut keys = Vec::with_capacity(50);
+    for i in 0..50 {
+        let s = format!("timestamp[{i}]");
+        let leaked: &'static str = Box::leak(s.into_boxed_str());
+        keys.push(leaked);
+    }
+    keys.try_into().unwrap()
+});
+
 impl<'a> TrackScrobble<'a> {
     fn new(last_fm: &'a LastFM, tracks: ScrobbleBatch<'a>) -> Self {
         Self {
@@ -108,16 +150,17 @@ impl<'a> TrackScrobble<'a> {
         match &self.tracks {
             ScrobbleBatch::One(track) => {
                 if let Some(album) = track.album.clone() {
-                    params.insert("album".to_string(), album);
+                    params.insert("album", Cow::from(album));
                 };
-                params.insert("artist".to_string(), track.artist.clone());
-                params.insert("track".to_string(), track.name.clone());
+                params.insert("artist", Cow::from(track.artist.as_str()));
+                params.insert("track", Cow::from(track.name.as_str()));
                 params.insert(
-                    "timestamp".to_string(),
+                    "timestamp",
                     track
                         .timestamp
                         .unwrap_or(current_timestamp.as_secs() as i64)
-                        .to_string(),
+                        .to_string()
+                        .into(),
                 );
             }
             ScrobbleBatch::Many(tracks) => {
@@ -126,23 +169,19 @@ impl<'a> TrackScrobble<'a> {
                 }
 
                 for (index, track) in tracks.iter().enumerate() {
-                    let artist_key = format!("artist[{index}]");
-                    let track_key = format!("track[{index}]");
-                    let timestamp_key = format!("timestamp[{index}]");
-
-                    if let Some(album) = track.album.clone() {
-                        let album_key: String = format!("album[{index}]");
-                        params.insert(album_key, album);
+                    if let Some(album) = &track.album {
+                        params.insert(ALBUM_KEYS[index], album.into());
                     };
 
-                    params.insert(artist_key, track.artist.clone());
-                    params.insert(track_key, track.name.clone());
+                    params.insert(ARTIST_KEYS[index], track.artist.as_str().into());
+                    params.insert(TRACK_KEYS[index], track.name.as_str().into());
                     params.insert(
-                        timestamp_key,
+                        TIMESTAMP_KEYS[index],
                         track
                             .timestamp
                             .unwrap_or(current_timestamp.as_secs() as i64)
-                            .to_string(),
+                            .to_string()
+                            .into(),
                     );
                 }
             }
@@ -155,7 +194,7 @@ impl<'a> TrackScrobble<'a> {
         let mut params = self.params()?;
         let result = self
             .last_fm
-            .send_request::<()>(Method::POST, self.method, &mut params)
+            .send_request::<()>(Method::POST, &self.method, &mut params)
             .await;
 
         match result {

@@ -8,7 +8,7 @@
         class="border-stroke-200 data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-card z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
         :side-offset="5"
       >
-        <ContextMenuSub v-if="props.playlists">
+        <ContextMenuSub v-if="props.playlists && props.playlists.length">
           <ContextMenuSubTrigger class="group context-menu-item w-full pr-0">
             <span class="i-fluent-add-24-regular"></span>
             <small class="text-sm">Add to Playlist</small>

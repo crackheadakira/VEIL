@@ -1,10 +1,10 @@
 use crate::{
-    models::{APIMethod, Image},
     LastFM, LastFMError, LastFMParams,
+    models::{APIMethod, Image},
 };
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 pub struct User<'a> {
     last_fm: &'a LastFM,
@@ -39,17 +39,17 @@ impl<'a> GetUserInfo<'a> {
     fn params(&self) -> Result<LastFMParams, LastFMError> {
         let mut params = HashMap::new();
 
-        if let Some(u) = self.user.clone() {
-            params.insert(String::from("user"), u);
+        if let Some(u) = &self.user {
+            params.insert("user", Cow::from(u));
         } else {
             let session_key = self.last_fm.session_key.clone();
             params.insert(
-                String::from("sk"),
-                session_key.ok_or(LastFMError::MissingAuthentication)?,
+                "sk",
+                Cow::from(session_key.ok_or(LastFMError::MissingAuthentication)?),
             );
         };
 
-        params.insert(String::from("api_key"), self.last_fm.api_key.clone());
+        params.insert("api_key", Cow::from(self.last_fm.api_key.as_str()));
 
         Ok(params)
     }
@@ -58,7 +58,7 @@ impl<'a> GetUserInfo<'a> {
         let mut params = self.params()?;
         let response: UserInfoResponse = self
             .last_fm
-            .send_request(Method::GET, self.method, &mut params)
+            .send_request(Method::GET, &self.method, &mut params)
             .await?;
         Ok(response.user)
     }

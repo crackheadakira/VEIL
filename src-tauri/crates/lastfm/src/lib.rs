@@ -8,10 +8,10 @@ use api::*;
 use models::{APIError, APIMethod};
 use reqwest::Method;
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 /// A helper type for all parameters to have same type without any accidental change
-type LastFMParams = HashMap<String, String>;
+type LastFMParams<'a> = HashMap<&'static str, Cow<'a, str>>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum LastFMError {
@@ -59,7 +59,7 @@ pub struct LastFM {
     enabled: bool,
 }
 
-impl LastFM {
+impl<'a> LastFM {
     pub fn builder() -> LastFMBuilder {
         LastFMBuilder {
             api_key: None,
@@ -71,7 +71,7 @@ impl LastFM {
     async fn http_request(
         &self,
         method: Method,
-        params: &mut LastFMParams,
+        params: &mut LastFMParams<'a>,
     ) -> Result<serde_json::Value, LastFMError> {
         let url = &self.base_url;
 
@@ -94,33 +94,35 @@ impl LastFM {
 
     /// Wraps around [`LastFM::http_request`] and inserts all the required
     /// parameters into `params`
-    async fn send_request<T: for<'a> Deserialize<'a>>(
-        &self,
+    async fn send_request<T: for<'b> Deserialize<'b>>(
+        &'a self,
         method: Method,
-        api_method: APIMethod,
-        params: &mut LastFMParams,
+        api_method: &APIMethod,
+        params: &mut LastFMParams<'a>,
     ) -> Result<T, LastFMError> {
         if !self.enabled {
             return Err(LastFMError::RequestWhenDisabled);
         }
-        params.insert(String::from("method"), api_method.as_query());
-        params.insert(String::from("api_key"), self.api_key.clone());
+        params.insert("method", Cow::Borrowed(api_method.as_query()));
+        params.insert("api_key", Cow::Borrowed(self.api_key.as_str()));
 
         if api_method.need_auth() {
             params.insert(
-                String::from("sk"),
-                self.session_key
-                    .clone()
-                    .ok_or(LastFMError::MissingAuthentication)?,
+                "sk",
+                Cow::from(
+                    self.session_key
+                        .clone()
+                        .ok_or(LastFMError::MissingAuthentication)?,
+                ),
             );
         }
 
         if api_method.need_sig() {
             let signature = self.sign_api(params);
-            params.insert(String::from("api_sig"), signature);
+            params.insert("api_sig", Cow::from(signature));
         }
 
-        params.insert(String::from("format"), String::from("json"));
+        params.insert("format", Cow::from("json"));
 
         let res = self.http_request(method, params).await?;
 
@@ -137,7 +139,7 @@ impl LastFM {
     ///
     /// This is needed by Last.FM to sign your API requests
     fn sign_api(&self, params: &mut LastFMParams) -> String {
-        let mut sorted_keys = params.keys().cloned().collect::<Vec<String>>();
+        let mut sorted_keys = params.keys().copied().collect::<Vec<&str>>();
         sorted_keys.sort();
 
         let mut params_string = String::new();

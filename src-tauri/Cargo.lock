@@ -2480,6 +2480,7 @@ name = "lastfm"
 version = "0.0.0"
 dependencies = [
  "md5",
+ "once_cell",
  "reqwest",
  "serde",
  "serde_json",

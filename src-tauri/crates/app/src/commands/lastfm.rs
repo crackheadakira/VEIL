@@ -20,7 +20,7 @@ pub async fn get_token(state: TauriState<'_>) -> Result<(String, String), Fronte
 #[specta::specta]
 pub async fn get_session(state: TauriState<'_>, token: String) -> Result<(), FrontendError> {
     let mut lastfm = state.lastfm.lock().await;
-    let a = lastfm.auth().session(token).send().await?;
+    let a = lastfm.auth().session(&token).send().await?;
     lastfm.set_session_key(a.session.key.clone());
 
     let mut config = logging::lock_or_log(state.config.write(), "Config Write")?;

@@ -1,7 +1,7 @@
-use crate::{models::APIMethod, LastFM, LastFMError, LastFMParams};
+use crate::{LastFM, LastFMError, LastFMParams, models::APIMethod};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{borrow::Cow, collections::HashMap};
 
 pub struct Auth<'a> {
     last_fm: &'a LastFM,
@@ -40,19 +40,19 @@ impl<'a> Auth<'a> {
     /// let res = last_fm.auth().session(token).send()?;
     ///
     /// ```
-    pub fn session(&mut self, token: String) -> AuthGetSession<'_> {
+    pub fn session(&mut self, token: &'a str) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }
 }
 
 pub struct AuthGetSession<'a> {
     last_fm: &'a LastFM,
-    token: String,
+    token: &'a str,
     method: APIMethod,
 }
 
 impl<'a> AuthGetSession<'a> {
-    fn new(last_fm: &'a LastFM, token: String) -> Self {
+    fn new(last_fm: &'a LastFM, token: &'a str) -> Self {
         Self {
             last_fm,
             token,
@@ -60,20 +60,21 @@ impl<'a> AuthGetSession<'a> {
         }
     }
 
-    fn params(&self) -> LastFMParams {
+    fn params(&self) -> LastFMParams<'a> {
         let mut params = HashMap::new();
 
-        params.insert("api_key".to_string(), self.last_fm.api_key.clone());
-        params.insert("token".to_string(), self.token.clone());
+        params.insert("api_key", Cow::Borrowed(self.last_fm.api_key.as_str()));
+        params.insert("token", self.token.into());
 
         params
     }
 
     pub async fn send(self) -> Result<AuthGetSessionResponse, LastFMError> {
         let mut session_params = self.params();
+
         let response = self
             .last_fm
-            .send_request(Method::GET, self.method, &mut session_params)
+            .send_request(Method::GET, &self.method, &mut session_params)
             .await?;
 
         Ok(response)
@@ -106,10 +107,10 @@ impl<'a> AuthGetToken<'a> {
         }
     }
 
-    fn params(&self) -> LastFMParams {
+    fn params(&self) -> LastFMParams<'a> {
         let mut params = HashMap::new();
 
-        params.insert(String::from("api_key"), self.last_fm.api_key.clone());
+        params.insert("api_key", self.last_fm.api_key.clone().into());
 
         params
     }
@@ -118,7 +119,7 @@ impl<'a> AuthGetToken<'a> {
         let mut token_params = self.params();
         let response = self
             .last_fm
-            .send_request(Method::GET, self.method, &mut token_params)
+            .send_request(Method::GET, &self.method, &mut token_params)
             .await?;
 
         Ok(response)

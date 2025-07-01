@@ -2,7 +2,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum APIMethod {
     AuthGetSession,
     AuthGetToken,
@@ -29,7 +29,7 @@ impl APIMethod {
     }
 
     /// Get the method as a method string to pass to last.fm
-    pub fn as_query(&self) -> String {
+    pub fn as_query(&self) -> &'static str {
         let result = match self {
             Self::AuthGetSession => "auth.getSession",
             Self::AuthGetToken => "auth.getToken",
@@ -38,7 +38,7 @@ impl APIMethod {
             Self::TrackScrobble => "track.scrobble",
         };
 
-        String::from(result)
+        result
     }
 }
 
