@@ -202,7 +202,7 @@ export const usePlayerStore = defineStore("player", () => {
       return;
     }
 
-    if (loop.value === "queue") return await skipTrack('next');
+    if (queueStore.queueHasTrack) return await skipTrack('next');
     else return await handlePlayAndPause();
   }
 

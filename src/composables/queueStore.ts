@@ -12,6 +12,14 @@ export const useQueueStore = defineStore("queue", () => {
 
     // prevents from modifying these values outside of the store
     const index = computed(() => _index.value);
+    const queueHasTrack = computed(() => {
+        const globalQueueLength = globalQueue.value.length;
+        const personalQueueLength = personalQueue.value.length;
+        const globalQueueReachedEnd = (globalQueueLength - 1) == _index.value;
+
+        if (globalQueueLength != 0) return !globalQueueReachedEnd || personalQueueLength > 0;
+        else return personalQueueLength > 0;
+    });
 
     /**
      * Gives you the the next track in the queue depending on the `direction` passed in.
@@ -103,6 +111,7 @@ export const useQueueStore = defineStore("queue", () => {
         globalQueue,
         index,
         personalQueue,
+        queueHasTrack,
         getQueueTrack,
         shuffleQueue,
         setQueueIdx,
