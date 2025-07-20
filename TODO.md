@@ -18,6 +18,7 @@
 - [ ] Better queue system
 - [ ] Logging System
   - [ ] Log warn / error instead of unwrapping
+- [ ] Add a fullscreen view
 
 ## Medium Priority
 
