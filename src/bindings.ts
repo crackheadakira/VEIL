@@ -279,6 +279,14 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async readCustomStyle(): Promise<Result<string, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("read_custom_style") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -368,7 +376,8 @@ export type FrontendError =
   | { type: "Standard"; data: string }
   | { type: "LastFMError"; data: string }
   | { type: "SerdeJson"; data: string }
-  | { type: "TauriError"; data: string };
+  | { type: "TauriError"; data: string }
+  | { type: "AnyhowError"; data: string };
 export type MediaPayload =
   | { Play: boolean }
   | { Pause: boolean }

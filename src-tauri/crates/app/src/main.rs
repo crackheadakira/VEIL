@@ -80,6 +80,7 @@ fn main() -> anyhow::Result<()> {
             commands::player::player_has_ended,
             commands::lastfm::get_token,
             commands::lastfm::get_session,
+            commands::read_custom_style,
         ])
         .events(collect_events![SodapopConfigEvent])
         .typ::<MediaPayload>()
@@ -92,7 +93,7 @@ fn main() -> anyhow::Result<()> {
                 .formatter(specta_typescript::formatter::prettier)
                 .bigint(BigIntExportBehavior::Number)
                 .header("// @ts-nocheck"),
-            "../src/bindings.ts",
+            "../../../src/bindings.ts",
         )
         .expect("Failed to export TypeScript bindings");
 

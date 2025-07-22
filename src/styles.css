@@ -30,6 +30,15 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --color-primary: #F8612A;
+  --color-placeholder: #F66935;
+  --color-text: #C5C5C5;
+  --color-supporting: #777777;
+  --color-stroke-100: #303030;
+  --color-stroke-200: #222222;
+  --color-background: #121212;
+  --color-card: #131212;
 }
 
 svg {
@@ -40,14 +49,14 @@ svg {
 
 @theme {
   /* Sodapop Colors */
-  --color-primary: #b81616;
-  --color-placeholder: #ef2724;
-  --color-text: #b6b3b1;
-  --color-supporting: #656565;
-  --color-stroke-100: #303030;
-  --color-stroke-200: #222222;
-  --color-background: #0b0b0b;
-  --color-card: #0c0b0b;
+  --color-primary: var(--color-primary);
+  --color-placeholder: var(--color-placeholder);
+  --color-text: var(--color-text);
+  --color-supporting: var(--color-supporting);
+  --color-stroke-100: var(--color-stroke-100);
+  --color-stroke-200: var(--color-stroke-200);
+  --color-background: var(--color-background);
+  --color-card: var(--color-card);
 
   /* Sodapop Aspect Ratios */
   --aspect-card: 3.9 / 1;
@@ -73,6 +82,7 @@ svg {
       opacity: 0;
       transform: translateX(2px);
     }
+
     100% {
       opacity: 1;
       transform: translateX(0px);
@@ -84,6 +94,7 @@ svg {
       opacity: 0;
       transform: translateX(-2px);
     }
+
     100% {
       opacity: 1;
       transform: translateX(0px);
@@ -95,6 +106,7 @@ svg {
       opacity: 0;
       transform: translateY(2px);
     }
+
     100% {
       opacity: 1;
       transform: translateX(0px);
@@ -106,6 +118,7 @@ svg {
       opacity: 0;
       transform: translateY(-2px);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0px);
@@ -117,6 +130,7 @@ svg {
       opacity: 0;
       transform: scale(0.95);
     }
+
     100% {
       opacity: 1;
       transform: scale(1);
@@ -128,6 +142,7 @@ svg {
       opacity: 1;
       transform: scale(1);
     }
+
     100% {
       opacity: 0;
       transform: scale(0.95);

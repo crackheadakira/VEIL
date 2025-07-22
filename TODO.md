@@ -19,6 +19,7 @@
 - [ ] Logging System
   - [ ] Log warn / error instead of unwrapping
 - [ ] Add a fullscreen view
+- [x] Add support for a custom CSS folder
 
 ## Medium Priority
 

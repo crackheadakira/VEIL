@@ -37,6 +37,19 @@ const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
 onMounted(async () => {
+  const css = await commands.readCustomStyle();
+  let styleElement = document.getElementById("custom-style");
+
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "custom-style";
+    document.head.appendChild(styleElement);
+  }
+
+  if (css.status === "ok" && styleElement) {
+    styleElement.innerText = css.data;
+  }
+
   await configStore.initialize();
 
   const result = await commands.getAllAlbums();
