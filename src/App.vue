@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background flex h-screen flex-col">
+  <div class="bg-bg-primary flex h-screen flex-col">
     <TitleBar class="sticky top-0" />
 
     <div class="flex flex-1 overflow-hidden">
@@ -27,7 +27,7 @@ import {
   usePlayerStore,
   usePlaylistStore,
 } from "@/composables/";
-import { onMounted } from "vue";
+import { onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -36,7 +36,27 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
+const theme = configStore.config.theme;
+
+watch(
+  () => configStore.config?.theme,
+  (newTheme) => {
+    if (newTheme === "Dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  },
+  { immediate: true },
+);
+
 onMounted(async () => {
+  if (theme === "Dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
   const css = await commands.readCustomStyle();
   let styleElement = document.getElementById("custom-style");
 

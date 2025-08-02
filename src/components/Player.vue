@@ -1,6 +1,6 @@
 <template>
   <div
-    class="aspect-player border-stroke-200 bg-card text-text z-20 grid h-28 w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
+    class="aspect-player border-border-secondary bg-bg-secondary text-text-primary z-20 grid h-28 w-screen grid-cols-[25%_50%_25%] items-center justify-items-center border-t p-4"
     v-if="playerStore.currentTrack"
   >
     <div class="flex w-full items-center gap-5">
@@ -23,7 +23,9 @@
               params: { id: playerStore.currentTrack.album_id },
             }"
           >
-            <p class="text-text cursor-pointer truncate hover:opacity-80">
+            <p
+              class="text-text-primary cursor-pointer truncate hover:opacity-80"
+            >
               {{ playerStore.currentTrack.name }}
             </p>
           </RouterLink>
@@ -36,7 +38,7 @@
           }"
         >
           <p
-            class="text-supporting cursor-pointer truncate font-normal hover:opacity-85"
+            class="text-text-secondary cursor-pointer truncate font-normal hover:opacity-85"
           >
             {{ playerStore.currentTrack.artist_name }}
           </p>
@@ -47,7 +49,9 @@
     <div class="flex w-full flex-col items-center gap-4 px-6">
       <PlayerControls :extra="true" />
 
-      <div class="text-supporting flex w-full items-center gap-4 text-center">
+      <div
+        class="text-text-secondary flex w-full items-center gap-4 text-center"
+      >
         <label class="w-10">{{ currentProgress }}</label>
         <Slider
           class="w-full"

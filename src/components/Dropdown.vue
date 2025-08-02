@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-stroke-200 bg-background text-supporting relative flex h-fit w-56 cursor-pointer flex-col gap-2 rounded-md border select-none"
+    class="border-border-secondary bg-bg-primary text-text-secondary relative flex h-fit w-56 cursor-pointer flex-col gap-2 rounded-md border select-none"
   >
     <div @click="handleShow()" class="flex items-center gap-2 p-2 px-3">
       <span
@@ -17,12 +17,12 @@
     >
       <div
         v-if="showOptions"
-        class="border-stroke-200 bg-background absolute top-1/1 -left-[1px] z-10 flex w-56 flex-col rounded-b-md border duration-150"
+        class="border-border-secondary bg-bg-primary absolute top-1/1 -left-[1px] z-10 flex w-56 flex-col rounded-b-md border duration-150"
       >
         <small
           v-for="option in options"
           @click="(handleSelect(option), $emit('dropdownSelected', option))"
-          class="hover:bg-card hover:text-text p-3 duration-150"
+          class="hover:bg-bg-secondary hover:text-text-primary p-3 duration-150"
         >
           {{ option }}
         </small>

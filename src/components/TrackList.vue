@@ -9,14 +9,14 @@
       v-for="(track, idx) of data.tracks"
     >
       <div
-        class="hover:bg-stroke-200 flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+        class="hover:bg-border-secondary flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
         @dblclick="$emit('new-track', track, idx)"
       >
         <div class="flex shrink-0 items-center gap-4">
           <!-- (10 / 16) rem === 10px if rem = 16px -->
           <p
             :style="{ width: idxWidth * (10 / 16) + 'rem' }"
-            class="text-supporting text-right"
+            class="text-text-secondary text-right"
           >
             {{ idx + 1 }}
           </p>
@@ -27,8 +27,8 @@
           />
         </div>
         <div class="grow basis-0 truncate *:truncate">
-          <p class="text-text mb-1">{{ track.name }}</p>
-          <p class="text-supporting">
+          <p class="text-text-primary mb-1">{{ track.name }}</p>
+          <p class="text-text-secondary">
             {{ track.artist_name }}
           </p>
         </div>
@@ -40,11 +40,11 @@
             params: { id: track.album_id },
           }"
         >
-          <p class="text-supporting hover:text-text truncate">
+          <p class="text-text-secondary hover:text-text-primary truncate">
             {{ track.album_name }}
           </p>
         </RouterLink>
-        <p class="text-text text-right">
+        <p class="text-text-primary text-right">
           {{ formatTime("mm:ss", track.duration) }}
         </p>
       </div>

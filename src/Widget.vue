@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-background border-stroke-200 flex h-screen flex-col gap-4 overflow-clip border-1 p-4 *:select-none"
+    class="bg-bg-primary border-border-secondary flex h-screen flex-col gap-4 overflow-clip border-1 p-4 *:select-none"
   >
     <div
       @mouseover="imageHovered = true"
@@ -21,9 +21,9 @@
           class="relative flex h-full items-center justify-center"
           v-show="imageHovered"
         >
-          <PlayerControls class="text-text" />
+          <PlayerControls class="text-text-primary" />
           <VolumeControls
-            class="text-text absolute bottom-1 left-1/2 -translate-x-1/2"
+            class="text-text-primary absolute bottom-1 left-1/2 -translate-x-1/2"
           />
         </div>
       </Transition>
@@ -33,13 +33,13 @@
       class="pointer-events-none flex w-full items-center justify-between gap-2"
     >
       <div class="flex flex-col gap-2 truncate *:truncate">
-        <p class="text-text">{{ playerStore.currentTrack.name }}</p>
-        <p class="text-supporting">
+        <p class="text-text-primary">{{ playerStore.currentTrack.name }}</p>
+        <p class="text-text-secondary">
           {{ playerStore.currentTrack.artist_name }}
         </p>
       </div>
       <span
-        class="i-fluent-window-new-24-filled text-supporting hover:text-stroke-100 pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
+        class="i-fluent-window-new-24-filled text-text-secondary hover:text-border-primary pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
         @click="hideWidget"
       ></span>
     </div>

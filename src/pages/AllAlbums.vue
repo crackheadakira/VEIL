@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-background text-text flex h-full w-full flex-col items-center gap-4"
+    class="bg-bg-primary text-text-primary flex h-full w-full flex-col items-center gap-4"
   >
     <div
       ref="container"

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-background text-text flex flex-col gap-4">
+  <div class="bg-bg-primary text-text-primary flex flex-col gap-4">
     <div>
       <Dialog
         class="sodapop-card w-fit"

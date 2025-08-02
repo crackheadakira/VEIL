@@ -9,7 +9,7 @@
     >
       <div
         v-if="showDialog"
-        class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+        class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
       >
         <TransitionGroup
           enter-from-class="opacity-0 -translate-x-10"
@@ -19,11 +19,11 @@
         >
           <div
             :key="currentPage.title"
-            class="sodapop-card text-text flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
+            class="sodapop-card text-text-primary flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
           >
             <div class="h-fit">
               <h6 class="mb-2">{{ currentPage.title }}</h6>
-              <p class="text-supporting">{{ currentPage.description }}</p>
+              <p class="text-text-secondary">{{ currentPage.description }}</p>
             </div>
             <div
               :class="
@@ -43,7 +43,7 @@
                     : 'cursor-not-allowed opacity-80'
                 "
                 @click="(button.click(), closeDialog(button.close))"
-                class="aspect-button sodapop-card text-supporting w-24 hover:opacity-80"
+                class="aspect-button sodapop-card text-text-secondary w-24 hover:opacity-80"
               >
                 <p>{{ readableCapitalization(button.name) }}</p>
               </button>

@@ -1,7 +1,7 @@
 <template>
-  <div class="text-text flex w-full flex-col gap-8">
+  <div class="text-text-primary flex w-full flex-col gap-8">
     <h5>Settings</h5>
-    <div class="text-supporting flex flex-col gap-4">
+    <div class="text-text-secondary flex flex-col gap-4">
       <p>Theme</p>
       <RadioGroup
         @update:model-value="(e: string) => updateConfig(1, e)"
@@ -9,7 +9,7 @@
         :items="['Dark', 'Light', 'System']"
       />
     </div>
-    <div class="text-supporting">
+    <div class="text-text-secondary">
       <p class="pb-4">Music Directory</p>
       <IconButton
         @click="openDialog"
@@ -17,7 +17,7 @@
         :placeholder="currentDirectory"
       />
     </div>
-    <div class="text-supporting flex flex-col gap-4">
+    <div class="text-text-secondary flex flex-col gap-4">
       <p>Online Features</p>
       <div class="flex gap-3">
         <Switch

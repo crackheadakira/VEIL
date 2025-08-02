@@ -6,11 +6,11 @@
 }
 
 @font-face {
-  font-family: "Inter";
+  font-family: "Geist";
+  font-optical-sizing: auto;
+  font-weight: 400 900;
   font-style: normal;
-  font-weight: 100 800;
-  font-display: swap;
-  src: url("/fonts/Inter-VariableFont_slnt,wght.ttf") format("truetype");
+  src: url("/fonts/Geist-VariableFont_wght.ttf") format("truetype");
 }
 
 * {
@@ -19,44 +19,74 @@
   box-sizing: border-box;
 }
 
+svg {
+  shape-rendering: crispEdges;
+}
+
 :root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Geist", "Avenir", "Helvetica", "Arial", "sans-serif";
   font-size: 16px;
   line-height: 1.2;
   background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 
-  --color-primary: #F8612A;
-  --color-placeholder: #F66935;
-  --color-text: #C5C5C5;
-  --color-supporting: #777777;
-  --color-stroke-100: #303030;
-  --color-stroke-200: #222222;
-  --color-background: #121212;
-  --color-card: #131212;
+  /* Accent Colors */
+  --color-accent-primary: #F8612A;
+  --color-accent-secondary: #F66935;
+
+  /* Text Colors */
+  --color-text-primary: #333333;
+  --color-text-secondary: #777777;
+
+  /* Backgrounds */
+  --color-bg-primary: #f2f2f2;
+  --color-bg-secondary: #efefef;
+
+  /* Borders */
+  --color-border-primary: #CCC;
+  --color-border-secondary: #AAA;
 }
 
-svg {
-  shape-rendering: crispEdges;
-}
+html[data-theme="dark"] {
+  /* Accent Colors */
+  --color-accent-primary: #F8612A;
+  --color-accent-secondary: #F66935;
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+  /* Text Colors */
+  --color-text-primary: #C5C5C5;
+  --color-text-secondary: #777777;
+
+  /* Backgrounds */
+  --color-bg-primary: #121212;
+  --color-bg-secondary: #131212;
+
+  /* Borders */
+  --color-border-primary: #303030;
+  --color-border-secondary: #222222;
+}
 
 @theme {
-  /* Sodapop Colors */
-  --color-primary: var(--color-primary);
-  --color-placeholder: var(--color-placeholder);
-  --color-text: var(--color-text);
-  --color-supporting: var(--color-supporting);
-  --color-stroke-100: var(--color-stroke-100);
-  --color-stroke-200: var(--color-stroke-200);
-  --color-background: var(--color-background);
-  --color-card: var(--color-card);
+  /* Accent Colors */
+  --color-accent-primary: var(--color-accent-primary);
+  --color-accent-secondary: var(--color-accent-secondary);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+
+  /* Backgrounds */
+  --color-bg-primary: var(--color-bg-primary);
+  --color-bg-secondary: var(--color-bg-secondary);
+
+  /* Borders */
+  --color-border-primary: var(--color-border-primary);
+  --color-border-secondary: var(--color-border-secondary);
 
   /* Sodapop Aspect Ratios */
   --aspect-card: 3.9 / 1;
@@ -155,11 +185,11 @@ svg {
 }
 
 @utility sodapop-card {
-  @apply bg-card border-stroke-200 rounded-md border p-2;
+  @apply bg-bg-secondary border-border-secondary rounded-md border p-3;
 }
 
 @utility context-menu-item {
-  @apply text-supporting data-[disabled]:text-placeholder data-[highlighted]:bg-stroke-100 data-[highlighted]:text-text relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
+  @apply text-text-secondary data-[disabled]:text-text-secondary data-[highlighted]:bg-border-primary data-[highlighted]:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
 }
 
 @layer base {
@@ -197,10 +227,10 @@ svg {
   label {
     font-size: 1rem;
     font-weight: 500;
+    line-height: 1.25;
   }
 
   small {
-    display: block;
     font-size: 0.833rem;
     font-weight: 500;
   }

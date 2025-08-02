@@ -1,11 +1,12 @@
 <template>
   <div
     @click="updateDialog"
-    class="text-supporting sodapop-card bg-background hover:border-stroke-100 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
+    class="text-text-secondary sodapop-card bg-bg-primary hover:border-border-primary flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
     <p>Search...</p>
-    <small class="text-text bg-stroke-200 ml-auto rounded-sm p-1 px-2"
+    <small
+      class="text-text-primary bg-border-secondary ml-auto rounded-sm p-1 px-2"
       >Ctrl F</small
     >
   </div>
@@ -17,14 +18,14 @@
       >
         <div
           v-if="showDialog"
-          class="bg-background/50 absolute inset-0 z-50 flex items-center justify-center"
+          class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
         >
-          <div class="text-text flex h-72 w-96 flex-col">
+          <div class="text-text-primary flex h-72 w-96 flex-col">
             <div
-              class="bg-background border-stroke-200 flex w-full items-center gap-2 rounded-md border p-2 font-medium"
+              class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2 font-medium"
             >
               <span
-                class="i-fluent-search-12-filled text-supporting aspect-square w-5"
+                class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
               ></span>
               <input
                 v-model="input"
@@ -32,7 +33,7 @@
                 type="text"
                 @focusin="focused = true"
                 @focusout="focused = false"
-                class="placeholder-supporting w-full focus:outline-hidden"
+                class="placeholder-text-secondary w-full focus:outline-hidden"
                 placeholder="Search..."
               />
             </div>
@@ -43,7 +44,7 @@
             >
               <div
                 v-if="searchResults && searchResults.length"
-                class="border-stroke-200 bg-card flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+                class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
               >
                 <div
                   :key="result.title + result.search_id"
@@ -52,12 +53,12 @@
                     router.push(`/${result.search_type}/${result.search_id}`))
                   "
                   v-for="(result, idx) of searchResults"
-                  :class="idx === selected ? 'bg-background' : ''"
+                  :class="idx === selected ? 'bg-bg-primary' : ''"
                   ref="resultElements"
-                  class="hover:bg-background transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+                  class="hover:bg-bg-primary transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
                 >
                   <p class="truncate">{{ result.title }}</p>
-                  <p class="text-supporting shrink-0">
+                  <p class="text-text-secondary shrink-0">
                     {{ readableCapitalization(result.search_type) }}
                   </p>
                 </div>

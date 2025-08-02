@@ -7,13 +7,13 @@
   >
     <PaginationList
       v-slot="{ items }"
-      class="text-supporting flex items-center gap-1"
+      class="text-text-secondary flex items-center gap-1"
     >
       <template v-for="(page, index) in items">
         <PaginationListItem
           v-if="page.type === 'page'"
           :key="index"
-          class="data-[selected]:text-text data-[selected]:bg-stroke-200 hover:bg-stroke-100 border-stroke-200 hover:text-text h-9 w-9 rounded-lg border transition data-[selected]:shadow-sm"
+          class="data-[selected]:text-text-primary data-[selected]:bg-border-secondary hover:bg-border-primary border-border-secondary hover:text-text-primary h-9 w-9 rounded-lg border transition data-[selected]:shadow-sm"
           :value="page.value"
         >
           {{ page.value }}

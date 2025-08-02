@@ -17,8 +17,8 @@
         loading="lazy"
       />
     </RouterLink>
-    <div class="text-supporting flex flex-col gap-1">
-      <h6 class="text-text truncate">{{ album_data.name }}</h6>
+    <div class="text-text-secondary flex flex-col gap-1">
+      <h6 class="text-text-primary truncate">{{ album_data.name }}</h6>
       <p class="truncate">{{ album_data.artist_name }}</p>
       <p>{{ album_data.album_type }}</p>
     </div>
