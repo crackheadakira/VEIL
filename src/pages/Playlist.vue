@@ -8,7 +8,7 @@
 
       <div class="flex flex-col gap-4">
         <div class="flex cursor-default flex-col gap-1 select-none">
-          <p class="text-supporting font-medium">Playlist</p>
+          <h6 class="text-supporting font-medium">Playlist</h6>
           <h4 class="text-text">{{ data.playlist.name }}</h4>
           <p class="text-supporting" v-if="data.playlist.description != ''">
             {{ data.playlist.description }}

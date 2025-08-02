@@ -7,7 +7,7 @@
         id="dropdown_icon"
         class="i-fluent-caret-down-24-filled w-6 duration-150"
       ></span>
-      <small>{{ selectedValue }}</small>
+      <p>{{ selectedValue }}</p>
     </div>
     <Transition
       enter-from-class="-translate-y-[10%] opacity-0"

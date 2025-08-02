@@ -22,10 +22,8 @@
             class="sodapop-card text-text flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
           >
             <div class="h-fit">
-              <p class="mb-2">{{ currentPage.title }}</p>
-              <small class="text-supporting">{{
-                currentPage.description
-              }}</small>
+              <h6 class="mb-2">{{ currentPage.title }}</h6>
+              <p class="text-supporting">{{ currentPage.description }}</p>
             </div>
             <div
               :class="
@@ -47,7 +45,7 @@
                 @click="(button.click(), closeDialog(button.close))"
                 class="aspect-button sodapop-card text-supporting w-24 hover:opacity-80"
               >
-                <small>{{ readableCapitalization(button.name) }}</small>
+                <p>{{ readableCapitalization(button.name) }}</p>
               </button>
             </div>
           </div>

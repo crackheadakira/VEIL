@@ -14,10 +14,8 @@
       >
         <div class="sodapop-card relative flex h-fit w-96 flex-col gap-3 p-4">
           <div>
-            <p class="text-text">{{ props.title }}</p>
-            <small v-if="props.description" class="mt-2">{{
-              props.description
-            }}</small>
+            <h6 class="text-text">{{ props.title }}</h6>
+            <p v-if="props.description" class="mt-2">{{ props.description }}</p>
           </div>
           <input
             v-model="inputValue"
@@ -30,7 +28,7 @@
               @click="showDialog = false"
               class="aspect-button sodapop-card text-supporting w-24 cursor-pointer hover:opacity-80"
             >
-              <small>Cancel</small>
+              <p>Cancel</p>
             </button>
 
             <button
@@ -42,7 +40,7 @@
               @click="handleSubmit"
               class="aspect-button sodapop-card text-supporting w-24 hover:opacity-80"
             >
-              <small>Submit</small>
+              <p>Submit</p>
             </button>
           </div>
         </div>

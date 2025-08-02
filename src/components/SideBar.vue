@@ -1,47 +1,44 @@
 <template>
-  <div
-    class="border-stroke-200 bg-background text-text flex min-h-fit flex-col items-center gap-8 border-r p-8"
+  <nav
+    class="border-stroke-200 bg-background text-supporting flex min-h-fit w-full flex-col gap-8 border-r p-8 font-medium"
   >
-    <div class="flex w-full flex-col gap-2 font-medium *:select-none">
-      <SearchBar />
-      <div class="flex w-full flex-col gap-4">
-        <small class="text-supporting">General</small>
-        <hr class="border-stroke-200 border-t-2" />
-      </div>
-      <RouterLink
-        class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
-        to="/"
-      >
-        <span class="i-fluent-home-16-filled h-8"></span>
-        <small>Home</small>
-      </RouterLink>
+    <SearchBar />
+
+    <section class="flex flex-col gap-4">
+      <p>General</p>
+      <hr class="border-stroke-200 border-t-2" />
+
       <div
-        class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
+        class="*:hover:text-text flex flex-col gap-4 *:inline-flex *:items-center *:gap-4"
       >
-        <span class="i-fluent-heart-16-filled h-8"></span>
-        <small>Liked Songs</small>
+        <RouterLink to="/">
+          <span class="i-fluent-home-16-filled h-8"></span>
+          <p>Home</p>
+        </RouterLink>
+
+        <div>
+          <span class="i-fluent-heart-16-filled h-8"></span>
+          <p>Liked Songs</p>
+        </div>
+
+        <RouterLink to="/all_albums">
+          <span class="i-fluent-music-note-2-16-filled h-8"></span>
+          <p>Albums</p>
+        </RouterLink>
+
+        <RouterLink to="/settings">
+          <span class="i-fluent-settings-16-filled h-8"></span>
+          <p>Settings</p>
+        </RouterLink>
       </div>
-      <RouterLink
-        class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
-        to="/all_albums"
-      >
-        <span class="i-fluent-music-note-2-16-filled h-8"></span>
-        <small>Albums</small>
-      </RouterLink>
-      <RouterLink
-        class="text-supporting hover:text-text flex items-center gap-4 rounded-md p-2 duration-75"
-        to="/settings"
-      >
-        <span class="i-fluent-settings-16-filled h-8"></span>
-        <small>Settings</small>
-      </RouterLink>
-      <div
-        v-if="allPlaylists && allPlaylists.length > 0"
-        class="mb-2 flex w-full flex-col gap-4"
-      >
-        <small class="text-supporting">Playlists</small>
-        <hr class="border-stroke-200 border-t-2" />
-      </div>
+    </section>
+
+    <section
+      v-if="allPlaylists && allPlaylists.length > 0"
+      class="flex flex-col gap-4"
+    >
+      <p class="text-supporting">Playlists</p>
+      <hr class="border-stroke-200 border-t-2" />
       <RouterLink
         v-for="playlist of allPlaylists"
         :key="playlist.id"
@@ -49,10 +46,10 @@
         class="text-supporting hover:text-text flex items-center gap-4 rounded-md duration-75"
       >
         <img :src="playlist.cover_path" class="aspect-square w-16 rounded-sm" />
-        <small>{{ playlist.name }}</small>
+        <p>{{ playlist.name }}</p>
       </RouterLink>
-    </div>
-  </div>
+    </section>
+  </nav>
 </template>
 
 <script setup lang="ts">

@@ -8,7 +8,9 @@
 
       <div class="flex flex-col gap-4">
         <div class="flex cursor-default flex-col gap-1 select-none">
-          <p class="text-supporting font-medium">{{ data.album.album_type }}</p>
+          <h6 class="text-supporting font-medium">
+            {{ data.album.album_type }}
+          </h6>
           <h4 class="text-text">{{ data.album.name }}</h4>
           <p class="text-supporting">{{ data.album.artist_name }}</p>
           <small class="text-supporting">
@@ -16,9 +18,9 @@
             {{ data.album.track_count }}
             {{ data.album.track_count > 1 ? "songs" : "song" }}
           </small>
-          <small v-if="data.album.year" class="text-supporting">{{
-            data.album.year
-          }}</small>
+          <p v-if="data.album.year" class="text-supporting">
+            {{ data.album.year }}
+          </p>
         </div>
 
         <div class="flex gap-4 *:cursor-pointer">

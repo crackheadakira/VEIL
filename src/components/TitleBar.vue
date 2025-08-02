@@ -3,9 +3,9 @@
     data-tauri-drag-region
     class="bg-background text-supporting border-stroke-200 z-[1000] flex h-fit w-full cursor-default items-center justify-between border-b p-2 px-3 text-sm"
   >
-    <small class="pointer-events-none text-sm"
-      >Sodapop Reimagined - {{ currentPage }}</small
-    >
+    <p class="pointer-events-none text-sm">
+      Sodapop Reimagined - {{ currentPage }}
+    </p>
     <div class="flex items-center gap-2 text-xs *:cursor-pointer *:select-none">
       <span
         class="i-fluent-window-new-24-filled aspect-square h-fit"

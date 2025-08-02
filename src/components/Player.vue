@@ -23,9 +23,9 @@
               params: { id: playerStore.currentTrack.album_id },
             }"
           >
-            <small class="text-text cursor-pointer truncate hover:opacity-80">
+            <p class="text-text cursor-pointer truncate hover:opacity-80">
               {{ playerStore.currentTrack.name }}
-            </small>
+            </p>
           </RouterLink>
         </ContextMenu>
         <RouterLink
@@ -35,11 +35,11 @@
             params: { id: playerStore.currentTrack.artist_id },
           }"
         >
-          <small
+          <p
             class="text-supporting cursor-pointer truncate font-normal hover:opacity-85"
           >
             {{ playerStore.currentTrack.artist_name }}
-          </small>
+          </p>
         </RouterLink>
       </div>
     </div>

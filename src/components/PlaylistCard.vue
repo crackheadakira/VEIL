@@ -8,10 +8,10 @@
       alt="Album Cover"
     />
     <div class="w-72 select-none">
-      <p class="text-text truncate">Nice long playlist name that also cuts</p>
-      <small class="text-supporting truncate"
-        >This is a really long playlist description that should cut off</small
-      >
+      <h6 class="text-text truncate">Nice long playlist name that also cuts</h6>
+      <p class="text-supporting truncate">
+        This is a really long playlist description that should cut off
+      </p>
     </div>
   </div>
 </template>

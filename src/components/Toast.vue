@@ -22,7 +22,7 @@
         ])
       "
     ></span>
-    <small>{{ props.description }}</small>
+    <p>{{ props.description }}</p>
   </div>
 </template>
 

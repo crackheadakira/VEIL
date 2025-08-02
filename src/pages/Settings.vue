@@ -36,7 +36,7 @@
         <label for="lastFM">Last.FM</label>
       </div>
       <div v-if="lastFM">
-        <small class="pb-2">Last.FM Session Key</small>
+        <p class="pb-2">Last.FM Session Key</p>
         <DialogGuide @close="pageIdx = 0" :current-page="pages[pageIdx]">
           <IconButton icon="i-fluent-key-24-filled" :placeholder="lastFMKey" />
         </DialogGuide>

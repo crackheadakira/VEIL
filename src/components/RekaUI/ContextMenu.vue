@@ -11,7 +11,7 @@
         <ContextMenuSub v-if="props.playlists && props.playlists.length">
           <ContextMenuSubTrigger class="group context-menu-item w-full pr-0">
             <span class="i-fluent-add-24-regular"></span>
-            <small class="text-sm">Add to Playlist</small>
+            <small>Add to Playlist</small>
             <div class="pl-5">
               <span
                 class="i-fluent-chevron-right-24-regular ml-auto text-xs"
@@ -29,7 +29,7 @@
                 class="group context-menu-item"
                 @select="$emit('playlist', 'add', playlist, props.track)"
               >
-                <small class="text-sm">{{ playlist.name }}</small>
+                <small>{{ playlist.name }}</small>
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuPortal>
@@ -41,7 +41,7 @@
           @select="$emit('playlist', 'remove', curr_playlist, props.track)"
         >
           <span class="i-fluent-delete-24-regular"></span>
-          <small class="text-sm">Remove from Playlist</small>
+          <small>Remove from Playlist</small>
         </ContextMenuItem>
 
         <ContextMenuItem
@@ -49,7 +49,7 @@
           @select="$emit('queue', props.track)"
         >
           <span class="i-fluent-add-square-multiple-24-regular"></span>
-          <small class="text-sm">Add to Queue</small>
+          <small>Add to Queue</small>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenuPortal>

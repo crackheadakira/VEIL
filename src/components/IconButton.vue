@@ -8,7 +8,7 @@
     >
       <span class="text-supporting" :class="icon"></span>
     </div>
-    <small class="truncate">{{ placeholder }}</small>
+    <p class="truncate">{{ placeholder }}</p>
   </div>
 </template>
 

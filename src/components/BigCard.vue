@@ -18,9 +18,9 @@
       />
     </RouterLink>
     <div class="text-supporting flex flex-col gap-1">
-      <p class="text-text truncate">{{ album_data.name }}</p>
-      <small class="truncate">{{ album_data.artist_name }}</small>
-      <small>{{ album_data.album_type }}</small>
+      <h6 class="text-text truncate">{{ album_data.name }}</h6>
+      <p class="truncate">{{ album_data.artist_name }}</p>
+      <p>{{ album_data.album_type }}</p>
     </div>
   </div>
 </template>

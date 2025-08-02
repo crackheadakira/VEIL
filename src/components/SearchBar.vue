@@ -4,7 +4,7 @@
     class="text-supporting sodapop-card bg-background hover:border-stroke-100 flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
-    <small>Search...</small>
+    <p>Search...</p>
     <small class="text-text bg-stroke-200 ml-auto rounded-sm p-1 px-2"
       >Ctrl F</small
     >
@@ -56,10 +56,10 @@
                   ref="resultElements"
                   class="hover:bg-background transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
                 >
-                  <small class="truncate">{{ result.title }}</small>
-                  <small class="text-supporting shrink-0">{{
-                    readableCapitalization(result.search_type)
-                  }}</small>
+                  <p class="truncate">{{ result.title }}</p>
+                  <p class="text-supporting shrink-0">
+                    {{ readableCapitalization(result.search_type) }}
+                  </p>
                 </div>
               </div>
             </Transition>

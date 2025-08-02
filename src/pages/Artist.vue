@@ -27,7 +27,7 @@
     </div>
 
     <div>
-      <small class="text-supporting mb-2">View all</small>
+      <p class="text-supporting mb-2">View all</p>
       <div class="flex flex-wrap gap-4">
         <BigCard v-for="album of artist_data.albums" :data="album" />
       </div>

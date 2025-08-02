@@ -14,11 +14,12 @@
       >
         <div class="flex shrink-0 items-center gap-4">
           <!-- (10 / 16) rem === 10px if rem = 16px -->
-          <small
+          <p
             :style="{ width: idxWidth * (10 / 16) + 'rem' }"
             class="text-supporting text-right"
-            >{{ idx + 1 }}</small
           >
+            {{ idx + 1 }}
+          </p>
           <img
             v-if="'playlist' in data"
             :src="convertFileSrc(track.cover_path)"
@@ -26,10 +27,10 @@
           />
         </div>
         <div class="grow basis-0 truncate *:truncate">
-          <small class="text-text mb-1">{{ track.name }}</small>
-          <small class="text-supporting">
+          <p class="text-text mb-1">{{ track.name }}</p>
+          <p class="text-supporting">
             {{ track.artist_name }}
-          </small>
+          </p>
         </div>
         <RouterLink
           class="grow basis-0 truncate"
@@ -39,13 +40,13 @@
             params: { id: track.album_id },
           }"
         >
-          <small class="text-supporting hover:text-text truncate">{{
-            track.album_name
-          }}</small>
+          <p class="text-supporting hover:text-text truncate">
+            {{ track.album_name }}
+          </p>
         </RouterLink>
-        <small class="text-text text-right">{{
-          formatTime("mm:ss", track.duration)
-        }}</small>
+        <p class="text-text text-right">
+          {{ formatTime("mm:ss", track.duration) }}
+        </p>
       </div>
     </ContextMenu>
   </div>

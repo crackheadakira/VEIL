@@ -33,10 +33,10 @@
       class="pointer-events-none flex w-full items-center justify-between gap-2"
     >
       <div class="flex flex-col gap-2 truncate *:truncate">
-        <small class="text-text">{{ playerStore.currentTrack.name }}</small>
-        <small class="text-supporting">{{
-          playerStore.currentTrack.artist_name
-        }}</small>
+        <p class="text-text">{{ playerStore.currentTrack.name }}</p>
+        <p class="text-supporting">
+          {{ playerStore.currentTrack.artist_name }}
+        </p>
       </div>
       <span
         class="i-fluent-window-new-24-filled text-supporting hover:text-stroke-100 pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
