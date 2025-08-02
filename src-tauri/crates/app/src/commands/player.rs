@@ -9,21 +9,23 @@ use tauri::{AppHandle, Manager};
 #[specta::specta]
 pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), FrontendError> {
     let state = handle.state::<SodapopState>();
-    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
-
-    // if player has track that's been playing, scrobble condition will pass
-    if player.track.is_some() && player.scrobble() && !player.scrobbled {
-        let player_track_id = player.track.unwrap();
-        let track = state.db.by_id::<Tracks>(&player_track_id)?;
-        let track_timestamp = player.timestamp;
-        let handle = handle.clone();
-        player.scrobbled = true;
-        scrobble_helper(handle, track, track_timestamp);
-    }
-
     let track = state.db.by_id::<Tracks>(&track_id)?;
-    // temporary scope to drop player before await
-    {
+
+    let (progress, duration) = {
+        let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+
+        // if player has track that's been playing, scrobble condition will pass
+        if player.track.is_some() && player.scrobble() && !player.scrobbled {
+            let player_track_id = player.track.unwrap();
+            let track = state.db.by_id::<Tracks>(&player_track_id)?;
+            let track_timestamp = player.timestamp;
+            let handle = handle.clone();
+            player.scrobbled = true;
+            scrobble_helper(handle, track, track_timestamp);
+        }
+
+        // temporary scope to drop player before await
+
         if player.track.is_some() {
             player.stop()?;
         };
@@ -40,21 +42,54 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
 
         let _ = player.play(&track);
 
-        let progress = player.progress;
-        let payload = discord::PayloadData {
-            state: format!("{} - {}", &track.artist_name, &track.album_name),
-            // state: track.artist_name.clone() + " - " + &track.album_name,
-            details: track.name.clone(),
-            small_image: String::from("playing"),
-            small_text: String::from("Playing"),
-            show_timestamps: true,
-            duration,
-            progress,
+        (player.progress, duration)
+    };
+
+    let handle = handle.clone();
+    let album_cover = {
+        let enabled = {
+            let config = lock_or_log(state.config.read(), "Config Read")?;
+            config.last_fm_enabled && config.discord_enabled
         };
 
-        let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
-        discord.make_activity(&payload)?;
-    }
+        if enabled {
+            let state = handle.state::<SodapopState>();
+            let lastfm = state.lastfm.lock().await;
+            match lastfm
+                .album()
+                .info(&track.album_name, &track.artist_name)
+                .send()
+                .await
+            {
+                Ok(response) => response
+                    .image
+                    .iter()
+                    .rev()
+                    .find(|img| !img.url.is_empty())
+                    .map(|img| img.url.clone()),
+                Err(e) => {
+                    logging::error!("LastFM album fetch error: {e}");
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    };
+
+    let payload = discord::PayloadData {
+        state: format!("{} - {}", &track.artist_name, &track.album_name),
+        details: track.name.clone(),
+        small_image: String::from("playing"),
+        small_text: String::from("Playing"),
+        album_cover,
+        show_timestamps: true,
+        duration,
+        progress,
+    };
+
+    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+    discord.make_activity(&payload)?;
 
     let handle = handle.clone();
     tokio::spawn(async move {

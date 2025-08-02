@@ -182,6 +182,10 @@ impl<'a> LastFM {
     pub fn track(&self) -> track::Track {
         track::Track::new(self)
     }
+
+    pub fn album(&self) -> album::Album {
+        album::Album::new(self)
+    }
 }
 
 pub trait LastFMData {

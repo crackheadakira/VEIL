@@ -16,6 +16,7 @@ pub struct PayloadData {
     pub details: String,
     pub small_image: String,
     pub small_text: String,
+    pub album_cover: Option<String>,
     pub show_timestamps: bool,
     pub progress: f64,
     pub duration: f32,
@@ -33,6 +34,7 @@ impl DiscordState {
                 details: String::from("Sodapop Reimagined"),
                 small_image: String::from("paused"),
                 small_text: String::from("Paused"),
+                album_cover: None,
                 show_timestamps: false,
                 progress: 0.0,
                 duration: -1.0,
@@ -143,17 +145,25 @@ impl DiscordState {
     }
 
     fn make_activity_from_payload(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let assets = if let Some(cover) = &self.payload.album_cover {
+            Assets::new()
+                .large_image(cover)
+                .large_text("Sodapop Reimagined")
+                .small_image(&self.payload.small_image)
+                .small_text(&self.payload.small_text)
+        } else {
+            Assets::new()
+                .large_image("sodapop")
+                .large_text("Sodapop Reimagined")
+                .small_image(&self.payload.small_image)
+                .small_text(&self.payload.small_text)
+        };
+
         let mut activity = activity::Activity::new()
             .state(&self.payload.state)
             .details(&self.payload.details)
             .activity_type(activity::ActivityType::Listening)
-            .assets(
-                Assets::new()
-                    .large_image("sodapop")
-                    .large_text("Sodapop Reimagined")
-                    .small_image(&self.payload.small_image)
-                    .small_text(&self.payload.small_text),
-            );
+            .assets(assets);
 
         if self.payload.show_timestamps && self.payload.duration != -1.0 {
             let (timestamp, start) = make_timestamp();
@@ -177,15 +187,10 @@ impl DiscordState {
         new_payload: &PayloadData,
     ) -> Result<bool, Box<dyn std::error::Error>> {
         let mut update_activity = false;
-        logging::debug!("Updating Discord activity: {:?}", new_payload);
 
         // Avoid updating the activity
         if *new_payload == self.payload {
             return Ok(update_activity);
-        }
-
-        if *new_payload == self.payload {
-            return Ok(false);
         }
 
         self.payload = new_payload.clone();

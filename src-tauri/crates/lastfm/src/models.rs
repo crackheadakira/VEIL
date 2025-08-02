@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub enum APIMethod {
+    AlbumGetInfo,
     AuthGetSession,
     AuthGetToken,
     UserGetInfo,
@@ -31,6 +32,7 @@ impl APIMethod {
     /// Get the method as a method string to pass to last.fm
     pub fn as_query(&self) -> &'static str {
         let result = match self {
+            Self::AlbumGetInfo => "album.getInfo",
             Self::AuthGetSession => "auth.getSession",
             Self::AuthGetToken => "auth.getToken",
             Self::UserGetInfo => "user.getInfo",
@@ -46,10 +48,10 @@ impl APIMethod {
 #[serde(rename_all = "camelCase")]
 pub struct Image {
     /// The size of the image (i.e "small", "medium", "large")
-    size: String,
+    pub size: String,
     /// The URL of the image
     #[serde(alias = "#text")]
-    text: String,
+    pub url: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
