@@ -28,19 +28,22 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
             player.stop()?;
         };
 
-        let duration = player.duration;
-
-        if track.duration == 0 {
+        let duration = if track.duration == 0 {
             state
                 .db
-                .update_duration(&track_id, &track.album_id, &(duration as u32))?;
-        }
+                .update_duration(&track_id, &track.album_id, &(player.duration as u32))?;
+
+            player.duration
+        } else {
+            track.duration as f32
+        };
 
         let _ = player.play(&track);
 
         let progress = player.progress;
         let payload = discord::PayloadData {
-            state: track.artist_name.clone() + " - " + &track.album_name,
+            state: format!("{} - {}", &track.artist_name, &track.album_name),
+            // state: track.artist_name.clone() + " - " + &track.album_name,
             details: track.name.clone(),
             small_image: String::from("playing"),
             small_text: String::from("Playing"),
@@ -95,7 +98,7 @@ pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
         scrobble_helper(handle, track, track_timestamp);
     }
 
-    discord.update_activity("paused", "Paused", false);
+    discord.update_activity("paused", "Paused", false, None);
     Ok(())
 }
 
@@ -107,7 +110,7 @@ pub fn resume_track(state: TauriState) -> Result<(), FrontendError> {
     let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
 
     player.resume()?;
-    discord.update_activity("playing", "Playing", true);
+    discord.update_activity("playing", "Playing", true, Some(player.get_progress()));
     Ok(())
 }
 
@@ -120,7 +123,12 @@ pub fn seek_track(position: f64, resume: bool, state: TauriState) -> Result<(), 
 
     let text_display = if resume { "Playing" } else { "Paused" };
 
-    discord.update_activity(&text_display.to_lowercase(), text_display, true);
+    discord.update_activity(
+        &text_display.to_lowercase(),
+        text_display,
+        resume,
+        Some(position),
+    );
     Ok(())
 }
 

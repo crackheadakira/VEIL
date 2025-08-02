@@ -10,7 +10,7 @@ pub struct DiscordState {
     payload_changed: bool,
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub struct PayloadData {
     pub state: String,
     pub details: String,
@@ -91,6 +91,7 @@ impl DiscordState {
         small_image: &str,
         small_text: &str,
         show_timestamps: bool,
+        progress: Option<f64>,
     ) -> bool {
         if small_image != self.payload.small_image {
             self.payload.small_image = small_image.to_string();
@@ -105,6 +106,13 @@ impl DiscordState {
         if show_timestamps != self.payload.show_timestamps {
             self.payload.show_timestamps = show_timestamps;
             self.payload_changed = true;
+        }
+
+        if let Some(p) = progress {
+            if p != self.payload.progress {
+                self.payload.progress = p;
+                self.payload_changed = true;
+            }
         }
 
         if self.payload_changed {
@@ -167,19 +175,27 @@ impl DiscordState {
     pub fn make_activity(
         &mut self,
         new_payload: &PayloadData,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    ) -> Result<bool, Box<dyn std::error::Error>> {
+        let mut update_activity = false;
+        logging::debug!("Updating Discord activity: {:?}", new_payload);
+
         // Avoid updating the activity
         if *new_payload == self.payload {
-            return Ok(());
+            return Ok(update_activity);
+        }
+
+        if *new_payload == self.payload {
+            return Ok(false);
         }
 
         self.payload = new_payload.clone();
 
         if self.enabled {
             self.make_activity_from_payload()?;
+            update_activity = true;
         }
 
-        Ok(())
+        Ok(update_activity)
     }
 }
 
