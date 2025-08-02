@@ -5,6 +5,7 @@ SELECT
     t.album_name,
     t.artist_name,
     t.name,
+    t.number,
     t.duration,
     t.cover_path,
     t.path

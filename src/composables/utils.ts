@@ -91,6 +91,7 @@ export function placeholderIfEmpty(imagePath: string | undefined): string {
  */
 export function handleBackendError(error: FrontendError): void {
   toastBus.addToast("error", `[${error.type}] ${error.data}`);
+  console.error(`[${error.type}] ${error.data}`);
 }
 
 /**

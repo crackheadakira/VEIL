@@ -13,6 +13,8 @@ export const useConfigStore = defineStore("config", () => {
         const configFile = await commands.readConfig();
         if (configFile.status === "ok") {
             config.value = configFile.data;
+        } else {
+            console.log("Error reading config file");
         }
     }
 
