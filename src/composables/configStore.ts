@@ -1,7 +1,6 @@
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { SodapopConfig } from "@/composables/";
-import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
+import { commands, SodapopConfig } from "@/composables/";
 
 export const useConfigStore = defineStore("config", () => {
     const config = useStorage<SodapopConfig>("config", null, undefined, {
@@ -11,10 +10,10 @@ export const useConfigStore = defineStore("config", () => {
     const pageName = useStorage("pageName", "Home");
 
     async function initialize() {
-        const file: SodapopConfig = JSON.parse(await readTextFile('config.json', {
-            baseDir: BaseDirectory.AppLocalData
-        }));
-        config.value = file;
+        const configFile = await commands.readConfig();
+        if (configFile.status === "ok") {
+            config.value = configFile.data;
+        }
     }
 
     return {

@@ -81,6 +81,7 @@ fn main() -> anyhow::Result<()> {
             commands::lastfm::get_token,
             commands::lastfm::get_session,
             commands::read_custom_style,
+            commands::read_config,
         ])
         .events(collect_events![SodapopConfigEvent])
         .typ::<MediaPayload>()
@@ -98,7 +99,6 @@ fn main() -> anyhow::Result<()> {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(specta_builder.invoke_handler())

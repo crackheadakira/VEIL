@@ -287,6 +287,14 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async readConfig(): Promise<Result<SodapopConfig, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("read_config") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/

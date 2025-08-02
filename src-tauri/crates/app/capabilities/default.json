@@ -17,8 +17,6 @@
     "core:window:allow-close",
     "opener:default",
     "opener:allow-default-urls",
-    "opener:allow-open-url",
-    "fs:default",
-    "fs:allow-applocaldata-read"
+    "opener:allow-open-url"
   ]
 }

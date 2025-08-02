@@ -9,7 +9,7 @@
       v-for="(track, idx) of data.tracks"
     >
       <div
-        class="hover:bg-background flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 duration-75 select-none"
+        class="hover:bg-stroke-200 flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 duration-75 select-none"
         @dblclick="$emit('new-track', track, idx)"
       >
         <div class="flex shrink-0 items-center gap-4">

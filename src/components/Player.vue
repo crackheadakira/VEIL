@@ -61,7 +61,7 @@
       </div>
     </div>
 
-    <VolumeControls />
+    <VolumeControls class="pr-4" />
   </div>
 </template>
 

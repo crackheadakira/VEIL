@@ -68,6 +68,6 @@ impl SodapopConfig {
     }
 }
 
-fn config_path() -> PathBuf {
+pub fn config_path() -> PathBuf {
     data_path().join("config.json")
 }
