@@ -17,12 +17,13 @@ export const usePlaylistStore = defineStore("playlist", () => {
     playlists.value = result.data;
   }
 
-  async function createPlaylist(name: string): Promise<void> {
+  async function createPlaylist(name: string): Promise<number | void> {
     const result = await commands.newPlaylist(name);
     if (result.status === "error") return handleBackendError(result.error);
     else toastBus.addToast("success", "Playlist created successfully");
 
     await fetchPlaylists();
+    return result.data;
   }
 
   async function addToPlaylist(playlistId: number, trackId: number) {

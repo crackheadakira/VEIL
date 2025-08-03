@@ -43,7 +43,7 @@
         v-for="playlist of allPlaylists"
         :key="playlist.id"
         :to="`/playlist/${playlist.id}`"
-        class="text-text-secondary hover:text-text-primary flex items-center gap-4 rounded-md duration-75"
+        class="text-text-secondary hover:text-text-primary flex items-center gap-4 rounded-md"
       >
         <img :src="playlist.cover_path" class="aspect-square w-16 rounded-sm" />
         <p>{{ playlist.name }}</p>

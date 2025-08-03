@@ -6,17 +6,25 @@
       :curr_playlist="'playlist' in data ? data.playlist : undefined"
       @queue="handleAddToQueue"
       @playlist="handlePlaylist"
+      @create-playlist="
+        async (playlist, trackId) => {
+          const playlistId = await playlistStore.createPlaylist(playlist);
+          if (playlistId) {
+            handlePlaylist('add', playlistId, trackId);
+          }
+        }
+      "
       v-for="(track, idx) of data.tracks"
     >
       <div
-        class="hover:bg-border-secondary flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+        class="hover:bg-bg-hovered group flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
         @dblclick="$emit('new-track', track, idx)"
       >
         <div class="flex shrink-0 items-center gap-4">
           <!-- (10 / 16) rem === 10px if rem = 16px -->
           <p
             :style="{ width: idxWidth * (10 / 16) + 'rem' }"
-            class="text-text-secondary text-right"
+            class="text-text-secondary group-hover:text-text-secondary-hovered text-right"
           >
             {{ idx + 1 }}
           </p>
@@ -27,8 +35,14 @@
           />
         </div>
         <div class="grow basis-0 truncate *:truncate">
-          <p class="text-text-primary mb-1">{{ track.name }}</p>
-          <p class="text-text-secondary">
+          <p
+            class="text-text-primary group-hover:text-text-primary-hovered mb-1"
+          >
+            {{ track.name }}
+          </p>
+          <p
+            class="text-text-secondary group-hover:text-text-secondary-hovered"
+          >
             {{ track.artist_name }}
           </p>
         </div>
@@ -40,7 +54,7 @@
             params: { id: track.album_id },
           }"
         >
-          <p class="text-text-secondary hover:text-text-primary truncate">
+          <p class="text-text-secondary hover:text-accent-primary truncate">
             {{ track.album_name }}
           </p>
         </RouterLink>
@@ -57,7 +71,6 @@ import { ContextMenu } from "@/components/";
 import {
   type AlbumWithTracks,
   formatTime,
-  Playlists,
   type PlaylistWithTracks,
   type Tracks,
   usePlaylistStore,
@@ -82,11 +95,11 @@ defineEmits<{
 
 async function handlePlaylist(
   type: "add" | "remove",
-  playlist: Playlists,
-  track: Tracks,
+  playlistId: number,
+  trackId: number,
 ) {
-  if (type === "add") await playlistStore.addToPlaylist(playlist.id, track.id);
-  else await playlistStore.removeFromPlaylist(playlist.id, track.id);
+  if (type === "add") await playlistStore.addToPlaylist(playlistId, trackId);
+  else await playlistStore.removeFromPlaylist(playlistId, trackId);
 }
 
 async function handleAddToQueue(track: Tracks) {

@@ -3,66 +3,76 @@
     <div class="h-fit w-fit" @click="showDialog = true">
       <slot></slot>
     </div>
-    <Transition
-      enter-active-class="animate-zoomIn"
-      leave-active-class="animate-zoomOut"
-    >
-      <div
-        id="dialog"
-        v-if="showDialog"
-        class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
+    <Teleport to="body">
+      <Transition
+        enter-active-class="animate-zoomIn"
+        leave-active-class="animate-zoomOut"
       >
-        <div class="sodapop-card relative flex h-fit w-96 flex-col gap-3 p-4">
-          <div>
-            <h6 class="text-text-primary">{{ props.title }}</h6>
-            <p v-if="props.description" class="mt-2">{{ props.description }}</p>
-          </div>
-          <input
-            v-model="inputValue"
-            type="text"
-            class="text-text-primary placeholder-text-secondary sodapop-card bg-bg-primary w-full font-medium focus:outline-hidden"
-            :placeholder="placeholder"
-          />
-          <div class="flex w-full justify-end gap-2">
-            <button
-              @click="showDialog = false"
-              class="aspect-button sodapop-card text-text-secondary w-24 cursor-pointer hover:opacity-80"
-            >
-              <p>Cancel</p>
-            </button>
+        <div
+          id="dialog"
+          v-if="showDialog"
+          class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
+        >
+          <div class="sodapop-card relative flex h-fit w-96 flex-col gap-3 p-4">
+            <div>
+              <h6 class="text-text-primary">{{ props.title }}</h6>
+              <p v-if="props.description" class="mt-2">
+                {{ props.description }}
+              </p>
+            </div>
+            <input
+              v-model="inputValue"
+              type="text"
+              class="text-text-primary placeholder-text-secondary sodapop-card bg-bg-primary w-full font-medium focus:outline-hidden"
+              :placeholder="placeholder"
+            />
+            <div class="flex w-full justify-end gap-2">
+              <button
+                @click="showDialog = false"
+                class="aspect-button sodapop-card text-text-secondary w-24 cursor-pointer hover:opacity-80"
+              >
+                <p>Cancel</p>
+              </button>
 
-            <button
-              :class="
-                inputValue.length === 0
-                  ? 'cursor-not-allowed opacity-80'
-                  : 'cursor-pointer'
-              "
-              @click="handleSubmit"
-              class="aspect-button sodapop-card text-text-secondary w-24 hover:opacity-80"
-            >
-              <p>Submit</p>
-            </button>
+              <button
+                :class="
+                  inputValue.length === 0
+                    ? 'cursor-not-allowed opacity-80'
+                    : 'cursor-pointer'
+                "
+                @click="handleSubmit"
+                class="aspect-button sodapop-card text-text-secondary w-24 hover:opacity-80"
+              >
+                <p>Submit</p>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </Transition>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps<{
   title: string;
   description?: string;
   placeholder?: string;
+  modelValue?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "submitted", inputValue: string): void;
+  (e: "update:modelValue", value: boolean): void;
 }>();
 
-const showDialog = ref(false);
+const showDialog = computed({
+  get: () => props.modelValue ?? false,
+  set: (value: boolean) => emit("update:modelValue", value),
+});
+
 const inputValue = ref("");
 
 /**

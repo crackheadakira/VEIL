@@ -26,7 +26,7 @@
         <div class="flex gap-4 *:cursor-pointer">
           <button
             @click="handlePlayButton(false)"
-            class="text aspect-button bg-accent-primary text-bg-primary flex h-12 items-center justify-center gap-2 rounded-md duration-150 hover:opacity-90"
+            class="text aspect-button bg-accent-primary text-bg-primary hover:bg-accent-primary-hovered flex h-12 items-center justify-center gap-2 rounded-md duration-150"
           >
             <span class="i-fluent-play-24-filled h-7"></span>
             <p>Play</p>

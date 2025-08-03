@@ -39,32 +39,35 @@ svg {
   /* Accent Colors */
   --color-accent-primary: #F8612A;
   --color-accent-secondary: #F66935;
+  --color-accent-primary-hovered: hsl(16, 79%, 52%);
 
   /* Text Colors */
   --color-text-primary: #333333;
   --color-text-secondary: #777777;
+  --color-text-primary-hovered: #2D2D2d;
+  --color-text-secondary-hovered: #616161;
 
   /* Backgrounds */
-  --color-bg-primary: #f2f2f2;
-  --color-bg-secondary: #efefef;
+  --color-bg-primary: #FCFCFC;
+  --color-bg-secondary: #F5F5F5;
+  --color-bg-hovered: #E7E7E7;
 
   /* Borders */
-  --color-border-primary: #CCC;
-  --color-border-secondary: #AAA;
+  --color-border-primary: #DDDDDD;
+  --color-border-secondary: #DADADA;
 }
 
 html[data-theme="dark"] {
-  /* Accent Colors */
-  --color-accent-primary: #F8612A;
-  --color-accent-secondary: #F66935;
-
   /* Text Colors */
   --color-text-primary: #C5C5C5;
   --color-text-secondary: #777777;
+  --color-text-primary-hovered: #B5B5B5;
+  --color-text-secondary-hovered: #6A6A6A;
 
   /* Backgrounds */
   --color-bg-primary: #121212;
   --color-bg-secondary: #131212;
+  --color-bg-hovered: #101010;
 
   /* Borders */
   --color-border-primary: #303030;
@@ -75,14 +78,17 @@ html[data-theme="dark"] {
   /* Accent Colors */
   --color-accent-primary: var(--color-accent-primary);
   --color-accent-secondary: var(--color-accent-secondary);
-
-  /* Text Colors */
-  --color-text-primary: var(--color-text-primary);
+  --color-accent-primary-hovered: var(--color-accent-primary-hovered)
+    /* Text Colors */
+    --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
+  --color-text-primary-hovered: var(--color-text-primary-hovered);
+  --color-text-secondary-hovered: var(--color-text-secondary-hovered);
 
   /* Backgrounds */
   --color-bg-primary: var(--color-bg-primary);
   --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-hovered: var(--color-bg-hovered);
 
   /* Borders */
   --color-border-primary: var(--color-border-primary);
@@ -189,7 +195,7 @@ html[data-theme="dark"] {
 }
 
 @utility context-menu-item {
-  @apply text-text-secondary data-[disabled]:text-text-secondary data-[highlighted]:bg-border-primary data-[highlighted]:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
+  @apply text-text-primary data-[disabled]:text-text-secondary data-[highlighted]:bg-accent-primary data-[highlighted]:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
 }
 
 @layer base {

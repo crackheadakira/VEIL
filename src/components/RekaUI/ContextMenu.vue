@@ -8,7 +8,7 @@
         class="border-border-secondary data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-bg-secondary z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
         :side-offset="5"
       >
-        <ContextMenuSub v-if="props.playlists && props.playlists.length">
+        <ContextMenuSub>
           <ContextMenuSubTrigger class="group context-menu-item w-full pr-0">
             <span class="i-fluent-add-24-regular"></span>
             <small>Add to Playlist</small>
@@ -25,9 +25,17 @@
               :align-offset="-5"
             >
               <ContextMenuItem
+                class="group context-menu-item"
+                @select="showDialog = true"
+              >
+                <span class="i-fluent-star-add-24-regular"></span>
+                <small>Create new Playlist</small>
+              </ContextMenuItem>
+
+              <ContextMenuItem
                 v-for="playlist of props.playlists"
                 class="group context-menu-item"
-                @select="$emit('playlist', 'add', playlist, props.track)"
+                @select="$emit('playlist', 'add', playlist.id, props.track.id)"
               >
                 <small>{{ playlist.name }}</small>
               </ContextMenuItem>
@@ -38,7 +46,9 @@
         <ContextMenuItem
           v-if="curr_playlist"
           class="group context-menu-item"
-          @select="$emit('playlist', 'remove', curr_playlist, props.track)"
+          @select="
+            $emit('playlist', 'remove', curr_playlist.id, props.track.id)
+          "
         >
           <span class="i-fluent-delete-24-regular"></span>
           <small>Remove from Playlist</small>
@@ -54,10 +64,17 @@
       </ContextMenuContent>
     </ContextMenuPortal>
   </ContextMenuRoot>
+  <Dialog
+    :title="'New Playlist'"
+    placeholder="New Playlist"
+    @submitted="(name) => $emit('create-playlist', name, props.track.id)"
+    v-model="showDialog"
+  ></Dialog>
 </template>
 
 <script setup lang="ts">
 import { Playlists, Tracks } from "@/composables/";
+import { Dialog } from "@/components/";
 import {
   ContextMenuRoot,
   ContextMenuTrigger,
@@ -68,6 +85,9 @@ import {
   ContextMenuSubTrigger,
   ContextMenuSubContent,
 } from "reka-ui";
+import { ref } from "vue";
+
+const showDialog = ref(false);
 
 const props = defineProps<{
   curr_playlist?: Playlists;
@@ -80,8 +100,9 @@ defineEmits<{
   (
     e: "playlist",
     type: "add" | "remove",
-    playlist: Playlists,
-    track: Tracks,
+    playlistId: number,
+    trackId: number,
   ): void;
+  (e: "create-playlist", name: string, trackId: number): void;
 }>();
 </script>

@@ -24,7 +24,7 @@
             }"
           >
             <p
-              class="text-text-primary cursor-pointer truncate hover:opacity-80"
+              class="text-text-primary hover:text-text-primary-hovered cursor-pointer truncate"
             >
               {{ playerStore.currentTrack.name }}
             </p>
@@ -38,7 +38,7 @@
           }"
         >
           <p
-            class="text-text-secondary cursor-pointer truncate font-normal hover:opacity-85"
+            class="text-text-secondary hover:text-text-secondary-hovered cursor-pointer truncate font-normal"
           >
             {{ playerStore.currentTrack.artist_name }}
           </p>
@@ -52,16 +52,16 @@
       <div
         class="text-text-secondary flex w-full items-center gap-4 text-center"
       >
-        <label class="w-10">{{ currentProgress }}</label>
+        <label class="w-10 text-sm">{{ currentProgress }}</label>
         <Slider
           class="w-full"
           @pointerdown="beingHeld = true"
           @pointerup="selectProgress"
           v-model="progress"
           :max="playerStore.currentTrack.duration"
-          :step="0.001"
+          :step="0.1"
         />
-        <label class="w-10">{{ totalLength }}</label>
+        <label class="w-10 text-sm">{{ totalLength }}</label>
       </div>
     </div>
 

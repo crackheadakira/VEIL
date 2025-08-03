@@ -59,7 +59,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async newPlaylist(name: string): Promise<Result<null, FrontendError>> {
+  async newPlaylist(name: string): Promise<Result<number, FrontendError>> {
     try {
       return {
         status: "ok",
