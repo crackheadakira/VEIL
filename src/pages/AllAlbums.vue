@@ -24,8 +24,7 @@ import {
   useConfigStore,
   type Albums,
 } from "@/composables/";
-import { templateRef } from "@vueuse/core";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 
 const configStore = useConfigStore();
 
@@ -33,7 +32,7 @@ const albums = ref<Albums[]>([]);
 const totalAlbums = ref<number>(0);
 const currentPage = ref(1);
 
-const container = templateRef("container");
+const container = useTemplateRef<HTMLElement>("container");
 const containerWidth = ref(container.value?.clientWidth || 1504);
 
 const albumsToFetch = computed(

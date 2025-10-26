@@ -7,7 +7,7 @@
       @queue="handleAddToQueue"
       @playlist="handlePlaylist"
       @create-playlist="
-        async (playlist, trackId) => {
+        async (playlist: string, trackId: number) => {
           const playlistId = await playlistStore.createPlaylist(playlist);
           if (playlistId) {
             handlePlaylist('add', playlistId, trackId);

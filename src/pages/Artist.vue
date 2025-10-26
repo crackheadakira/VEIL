@@ -21,7 +21,7 @@
         </div>
       </div>
       <img
-        class="aspect-square w-2/3 rounded-md object-cover [mask-image:linear-gradient(90deg,rgba(17,17,17,0),rgba(17,17,17,0.4))]"
+        class="aspect-square w-2/3 rounded-md mask-[linear-gradient(90deg,rgba(17,17,17,0),rgba(17,17,17,0.4))] object-cover"
         :src="convertFileSrc(artist_data.albums[0].album.cover_path)"
       />
     </div>

@@ -17,7 +17,7 @@
     >
       <div
         v-if="showOptions"
-        class="border-border-secondary bg-bg-primary absolute top-1/1 -left-[1px] z-10 flex w-56 flex-col rounded-b-md border duration-150"
+        class="border-border-secondary bg-bg-primary absolute top-1/1 -left-px z-10 flex w-56 flex-col rounded-b-md border duration-150"
       >
         <small
           v-for="option in options"

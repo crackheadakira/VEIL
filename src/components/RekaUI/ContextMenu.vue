@@ -67,7 +67,9 @@
   <Dialog
     :title="'New Playlist'"
     placeholder="New Playlist"
-    @submitted="(name) => $emit('create-playlist', name, props.track.id)"
+    @submitted="
+      (name: string) => $emit('create-playlist', name, props.track.id)
+    "
     v-model="showDialog"
   ></Dialog>
 </template>

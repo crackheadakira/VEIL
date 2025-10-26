@@ -72,9 +72,9 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue";
+import { nextTick, ref, useTemplateRef, watch } from "vue";
 import { Search, commands, readableCapitalization } from "@/composables/";
-import { templateRef, useEventListener } from "@vueuse/core";
+import { useEventListener } from "@vueuse/core";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -87,19 +87,19 @@ const clamp = (v: number) =>
 const showDialog = ref(false);
 const lastInput = ref(Date.now());
 
-const inputElement = templateRef("inputElement");
+const inputElement = useTemplateRef<HTMLInputElement>("inputElement");
 const input = ref("");
 const selected = ref(0);
 const focused = ref(false);
 
 const searchResults = ref<Search[] | null>(null);
-const resultElements = templateRef("resultElements");
+const resultElements = useTemplateRef<HTMLElement[]>("resultElements");
 
 watch(input, async () => {
   const calledAt = Date.now();
   lastInput.value = Date.now();
 
-  await new Promise((r) => setTimeout(r, 250));
+  await new Promise((r) => setTimeout(r, 100));
 
   if (calledAt != lastInput.value) return;
   selected.value = 0;
@@ -126,7 +126,7 @@ watch(input, async () => {
  *
  * `Enter` is pressed, router goes to selected element.
  *
- * ## When input is not in focus
+ * ## When input is in focus
  *
  * `Backspace` is pressed, remove one letter from input value
  *
@@ -136,11 +136,13 @@ function handleKeyDown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     showDialog.value = false;
   } else if (e.key === "ArrowUp") {
-    if (!searchResults.value) return;
+    if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value - 1);
-    resultElements.value[selected.value].scrollIntoView({ behavior: "smooth" });
+    resultElements.value[selected.value].scrollIntoView({
+      behavior: "smooth",
+    });
   } else if (e.key === "ArrowDown") {
-    if (!searchResults.value) return;
+    if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value + 1);
     resultElements.value[selected.value].scrollIntoView({ behavior: "smooth" });
   } else if (e.key === "Enter") {
@@ -172,7 +174,7 @@ function updateDialog() {
   showDialog.value = !showDialog.value;
   if (showDialog.value) {
     nextTick(() => {
-      inputElement.value.focus();
+      inputElement.value?.focus();
     });
   } else {
     input.value = "";
