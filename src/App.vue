@@ -36,7 +36,7 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
-const theme = configStore.config.theme;
+const theme = configStore.config?.theme || "Dark";
 
 watch(
   () => configStore.config?.theme,

@@ -74,7 +74,6 @@ import {
   commands,
   formatTime,
   handleBackendError,
-  Playlists,
   Tracks,
   usePlayerStore,
   usePlaylistStore,
@@ -138,11 +137,11 @@ async function selectProgress() {
 
 async function handlePlaylist(
   type: "add" | "remove",
-  playlist: Playlists,
-  track: Tracks,
+  playlistId: number,
+  trackId: number,
 ) {
-  if (type === "add") await playlistStore.addToPlaylist(playlist.id, track.id);
-  else await playlistStore.removeFromPlaylist(playlist.id, track.id);
+  if (type === "add") await playlistStore.addToPlaylist(playlistId, trackId);
+  else await playlistStore.removeFromPlaylist(playlistId, trackId);
 }
 
 async function handleAddToQueue(track: Tracks) {

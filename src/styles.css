@@ -78,9 +78,10 @@ html[data-theme="dark"] {
   /* Accent Colors */
   --color-accent-primary: var(--color-accent-primary);
   --color-accent-secondary: var(--color-accent-secondary);
-  --color-accent-primary-hovered: var(--color-accent-primary-hovered)
-    /* Text Colors */
-    --color-text-primary: var(--color-text-primary);
+  --color-accent-primary-hovered: var(--color-accent-primary-hovered);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-primary-hovered: var(--color-text-primary-hovered);
   --color-text-secondary-hovered: var(--color-text-secondary-hovered);
