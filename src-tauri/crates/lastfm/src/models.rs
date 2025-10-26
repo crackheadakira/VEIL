@@ -31,16 +31,14 @@ impl APIMethod {
 
     /// Get the method as a method string to pass to last.fm
     pub fn as_query(&self) -> &'static str {
-        let result = match self {
+        match self {
             Self::AlbumGetInfo => "album.getInfo",
             Self::AuthGetSession => "auth.getSession",
             Self::AuthGetToken => "auth.getToken",
             Self::UserGetInfo => "user.getInfo",
             Self::TrackUpdateNowPlaying => "track.updateNowPlaying",
             Self::TrackScrobble => "track.scrobble",
-        };
-
-        result
+        }
     }
 }
 

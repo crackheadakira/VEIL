@@ -146,7 +146,7 @@ impl<'a> LastFM {
 
         for key in sorted_keys {
             if let Some(v) = params.get(&key) {
-                params_string.push_str(&key);
+                params_string.push_str(key);
                 params_string.push_str(v);
             };
         }
@@ -171,19 +171,19 @@ impl<'a> LastFM {
         self.enabled = value;
     }
 
-    pub fn auth(&self) -> auth::Auth {
+    pub fn auth(&'_ self) -> auth::Auth<'_> {
         auth::Auth::new(self)
     }
 
-    pub fn user(&self) -> user::User {
+    pub fn user(&'_ self) -> user::User<'_> {
         user::User::new(self)
     }
 
-    pub fn track(&self) -> track::Track {
+    pub fn track(&'_ self) -> track::Track<'_> {
         track::Track::new(self)
     }
 
-    pub fn album(&self) -> album::Album {
+    pub fn album(&'_ self) -> album::Album<'_> {
         album::Album::new(self)
     }
 }

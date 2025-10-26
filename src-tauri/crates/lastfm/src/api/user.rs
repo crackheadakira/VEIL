@@ -36,7 +36,7 @@ impl<'a> GetUserInfo<'a> {
         }
     }
 
-    fn params(&self) -> Result<LastFMParams, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
         let mut params = HashMap::new();
 
         if let Some(u) = &self.user {

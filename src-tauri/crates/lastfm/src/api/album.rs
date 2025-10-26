@@ -38,7 +38,7 @@ impl<'a> GetAlbumInfo<'a> {
         }
     }
 
-    fn params(&self) -> Result<LastFMParams, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
         let mut params = HashMap::new();
 
         params.insert("album", Cow::from(self.album));

@@ -17,15 +17,15 @@ impl<'a> Track<'a> {
         Self { last_fm }
     }
 
-    pub fn update_now_playing(&self, track: TrackData) -> UpdateNowPlaying {
+    pub fn update_now_playing(&'_ self, track: TrackData) -> UpdateNowPlaying<'_> {
         UpdateNowPlaying::new(self.last_fm, track)
     }
 
-    pub fn scrobble_one(&self, track: &'a TrackData) -> TrackScrobble {
+    pub fn scrobble_one(&'_ self, track: &'a TrackData) -> TrackScrobble<'_> {
         TrackScrobble::new(self.last_fm, ScrobbleBatch::One(track))
     }
 
-    pub fn scrobble_many(&self, tracks: &'a [TrackData]) -> TrackScrobble {
+    pub fn scrobble_many(&'_ self, tracks: &'a [TrackData]) -> TrackScrobble<'_> {
         TrackScrobble::new(self.last_fm, ScrobbleBatch::Many(tracks))
     }
 }
@@ -142,7 +142,7 @@ impl<'a> TrackScrobble<'a> {
         }
     }
 
-    fn params(&self) -> Result<LastFMParams, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
         let mut params = HashMap::new();
 
         let current_timestamp = UNIX_EPOCH.elapsed().expect("Time went backwards");

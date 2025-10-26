@@ -134,7 +134,7 @@ fn main() -> anyhow::Result<()> {
             };
 
             {
-                let sodapop_config = try_with_log!("Sodapop Config", || SodapopConfig::new())?;
+                let sodapop_config = try_with_log!("Sodapop Config", SodapopConfig::new)?;
 
                 let mut lastfm = try_with_log!("LastFM API", || lastfm::LastFM::builder()
                     .api_key("abc01a1c2188ad44508b12229563de11")
