@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <TrackList :data="data" @new-track="handleNewTrack" />
+    <TrackList :tracks="data.tracks" />
   </div>
 </template>
 
@@ -53,7 +53,6 @@ import {
   commands,
   handleBackendError,
   formatTime,
-  type Tracks,
   usePlayerStore,
   useConfigStore,
   useQueueStore,
@@ -94,15 +93,6 @@ async function updateData() {
     if (result.status === "error") return handleBackendError(result.error);
 
   data.value = result.data;
-}
-
-async function handleNewTrack(track: Tracks, idx: number) {
-  await playerStore.setPlayerTrack(track);
-
-  if (!data.value) return;
-
-  queueStore.setGlobalQueue(data.value.tracks);
-  queueStore.setQueueIdx(idx);
 }
 
 onBeforeMount(async () => {

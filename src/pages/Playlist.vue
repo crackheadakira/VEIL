@@ -39,7 +39,7 @@
       </div>
     </div>
 
-    <TrackList :data="data" @new-track="handleNewTrack" />
+    <TrackList :tracks="data.tracks" :playlist="data.playlist" />
   </div>
 </template>
 
@@ -52,7 +52,6 @@ import {
   usePlaylistStore,
   useQueueStore,
   type PlaylistWithTracks,
-  type Tracks,
 } from "@/composables/";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
@@ -112,15 +111,6 @@ async function updateData() {
     parseInt(playlist_id.value),
   );
   if (res_data) data.value = res_data;
-}
-
-async function handleNewTrack(track: Tracks, idx: number) {
-  await playerStore.setPlayerTrack(track);
-
-  if (!data.value) return;
-
-  queueStore.setGlobalQueue(data.value.tracks);
-  queueStore.setQueueIdx(idx);
 }
 
 onBeforeMount(async () => {

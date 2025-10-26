@@ -3,7 +3,7 @@
     <ContextMenu
       :track="track"
       :playlists="playlistStore.playlists"
-      :curr_playlist="'playlist' in data ? data.playlist : undefined"
+      :curr_playlist="playlist"
       @queue="handleAddToQueue"
       @playlist="handlePlaylist"
       @create-playlist="
@@ -14,11 +14,11 @@
           }
         }
       "
-      v-for="(track, idx) of data.tracks"
+      v-for="(track, idx) of tracks"
     >
       <div
         class="hover:bg-bg-hovered group flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
-        @dblclick="$emit('new-track', track, idx)"
+        @dblclick="() => emitNewTrack(track, idx)"
       >
         <div class="flex shrink-0 items-center gap-4">
           <!-- (10 / 16) rem === 10px if rem = 16px -->
@@ -29,7 +29,7 @@
             {{ idx + 1 }}
           </p>
           <img
-            v-if="'playlist' in data"
+            v-if="playlist"
             :src="convertFileSrc(track.cover_path)"
             class="aspect-square w-10 rounded-md"
           />
@@ -48,7 +48,7 @@
         </div>
         <RouterLink
           class="grow basis-0 truncate"
-          v-if="'playlist' in data"
+          v-if="playlist"
           :to="{
             name: 'album',
             params: { id: track.album_id },
@@ -69,29 +69,34 @@
 <script setup lang="ts">
 import { ContextMenu } from "@/components/";
 import {
-  type AlbumWithTracks,
   formatTime,
-  type PlaylistWithTracks,
+  Playlists,
   type Tracks,
   usePlaylistStore,
   useQueueStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import { computed, ref } from "vue";
 
 const playlistStore = usePlaylistStore();
 const queueStore = useQueueStore();
 
 const trackList = ref<HTMLDivElement | null>(null);
-const idxWidth = computed(() => props.data.tracks.length.toString().length); // number of digits
+const idxWidth = computed(() => props.tracks.length.toString().length); // number of digits
 
 const props = defineProps<{
-  data: AlbumWithTracks | PlaylistWithTracks;
+  tracks: Tracks[];
+  playlist?: Playlists;
 }>();
 
-defineEmits<{
-  (e: "new-track", track: Tracks, idx: number): void;
-}>();
+// make the backend set the track and do everything related to it.
+async function emitNewTrack(track: Tracks, trackIdx: number) {
+  await emit("select-new-track", { track });
+
+  queueStore.setGlobalQueue(props.tracks);
+  queueStore.setQueueIdx(trackIdx);
+}
 
 async function handlePlaylist(
   type: "add" | "remove",
