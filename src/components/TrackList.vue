@@ -90,10 +90,16 @@ const props = defineProps<{
   playlist?: Playlists;
 }>();
 
-// make the backend set the track and do everything related to it.
+// Make the backend set the track and do everything related to it.
 async function emitNewTrack(track: Tracks, trackIdx: number) {
   await emit("select-new-track", { track });
 
+  // Might move queue to backend & instead of persisting
+  // queue across runs, make a new queue every time
+  // dependent on shuffle state and playlist / album.
+  // In backend could simply store a Vec of track IDs.
+  // Would allow for pre-fetching the next track in
+  // the audio player.
   queueStore.setGlobalQueue(props.tracks);
   queueStore.setQueueIdx(trackIdx);
 }

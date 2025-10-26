@@ -82,7 +82,8 @@ async function handlePlayButton(shuffle: boolean) {
     queueStore.shuffleQueue();
   }
 
-  const track = await queueStore.setQueueIdx(0);
+  queueStore.setQueueIdx(0);
+  const track = await queueStore.getTrackAtIdx(0);
   if (track) await playerStore.setPlayerTrack(track);
 }
 

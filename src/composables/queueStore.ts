@@ -34,18 +34,25 @@ export const useQueueStore = defineStore("queue", () => {
         // Clamp the number to go from 0 to globalQueue.length if we do +1 or -1
         const nextIndex = clampRange(index.value + directionNumber, 0, globalQueue.value.length - 1);
 
-        return await setQueueIdx(nextIndex);
+        setQueueIdx(nextIndex);
+        return await getTrackAtIdx(nextIndex);
     }
 
     /**
-     * Sets the queue index, and returns the track at that index.
+     * Sets the queue index.
      * 
      * The index input is clamped to the length of the globalQueue
      */
-    async function setQueueIdx(idx: number): Promise<Tracks | void> {
+    function setQueueIdx(idx: number): void {
         idx = Math.min(idx, globalQueue.value.length);
         _index.value = idx;
-        const trackID = globalQueue.value[idx];
+    }
+
+    /**
+     * Retrieves the track at the queue index, or if index is passed in from that index.
+     */
+    async function getTrackAtIdx(idx?: number): Promise<Tracks | void> {
+        const trackID = globalQueue.value[idx ?? index.value];
 
         const result = await commands.trackById(trackID);
         if (result.status === "error") return handleBackendError(result.error);
@@ -116,6 +123,7 @@ export const useQueueStore = defineStore("queue", () => {
         shuffleQueue,
         setQueueIdx,
         setGlobalQueue,
+        getTrackAtIdx,
     }
 })
 
