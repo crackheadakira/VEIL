@@ -295,6 +295,14 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async openUrl(url: string): Promise<Result<null, FrontendError>> {
+    try {
+      return { status: "ok", data: await TAURI_INVOKE("open_url", { url }) };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/

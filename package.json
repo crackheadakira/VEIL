@@ -11,7 +11,6 @@
   },
   "dependencies": {
     "@tauri-apps/api": "2.9.0",
-    "@tauri-apps/plugin-opener": "^2.4.0",
     "@vueuse/core": "^14.0.0",
     "pinia": "^3.0.3",
     "reka-ui": "^2.6.0",

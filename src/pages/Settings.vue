@@ -59,7 +59,6 @@ import {
 } from "@/composables/";
 import { IconButton, DialogGuide, Switch, RadioGroup } from "@/components/";
 import { computed, ComputedRef, nextTick, onBeforeMount, ref } from "vue";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { Channel } from "@tauri-apps/api/core";
 
 const onEvent = new Channel<MetadataEvent>();
@@ -154,7 +153,8 @@ async function getToken() {
   if (result.status === "error") return handleBackendError(result.error);
 
   lastFMURL.value = result.data;
-  await openUrl(result.data[0]);
+  // await openUrl(result.data[0]);
+  await commands.openUrl(result.data[0]);
   pageIdx.value = 1;
 }
 

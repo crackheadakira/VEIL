@@ -14,9 +14,6 @@
     "core:window:allow-minimize",
     "core:window:allow-hide",
     "core:window:allow-show",
-    "core:window:allow-close",
-    "opener:default",
-    "opener:allow-default-urls",
-    "opener:allow-open-url"
+    "core:window:allow-close"
   ]
 }
