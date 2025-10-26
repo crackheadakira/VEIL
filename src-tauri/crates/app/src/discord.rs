@@ -53,7 +53,10 @@ impl DiscordState {
                 self.enabled = true;
                 true
             }
-            Err(_) => false,
+            Err(_) => {
+                self.enabled = false;
+                false
+            }
         }
     }
 
@@ -69,6 +72,10 @@ impl DiscordState {
     }
 
     pub fn update_activity_progress(&mut self, progress: f64) -> bool {
+        if !self.enabled {
+            return false;
+        }
+
         if progress != self.payload.progress {
             self.payload.progress = progress;
             self.payload_changed = true;
@@ -95,6 +102,10 @@ impl DiscordState {
         show_timestamps: bool,
         progress: Option<f64>,
     ) -> bool {
+        if !self.enabled {
+            return false;
+        }
+
         if small_image != self.payload.small_image {
             self.payload.small_image = small_image.to_string();
             self.payload_changed = true;

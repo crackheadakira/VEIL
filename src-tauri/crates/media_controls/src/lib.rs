@@ -1,15 +1,15 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use common::Tracks;
+pub use kira::sound::PlaybackState;
 use kira::{
     AudioManager, AudioManagerSettings, DefaultBackend, Tween,
     clock::{ClockHandle, ClockSpeed},
     sound::{
-        FromFileError, PlaybackState,
+        FromFileError,
         streaming::{StreamingSoundData, StreamingSoundHandle},
     },
 };
-
-use common::Tracks;
 pub use souvlaki::{MediaControlEvent, PlatformConfig, SeekDirection};
 use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
 
@@ -42,8 +42,8 @@ pub enum PlayerState {
 
 pub struct Player {
     /// Handler for  [`StreamingSoundData`]
-    sound_handle: Option<StreamingSoundHandle<FromFileError>>,
-    manager: AudioManager<DefaultBackend>,
+    pub sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    pub manager: AudioManager<DefaultBackend>,
     /// To use for playback & volume
     tween: Tween,
     /// Clock to keep track of user's progress, can't use [`Player::progress`] as the user can manipulate that
@@ -265,6 +265,15 @@ impl Player {
         let clock_time = self.clock.time();
         let ticks = clock_time.ticks;
         ticks as f64 >= self.scrobble_condition
+    }
+
+    /// Gets players state from sound handle if exists.
+    pub fn get_player_state(&self) -> Option<PlaybackState> {
+        if let Some(handle) = &self.sound_handle {
+            Some(handle.state())
+        } else {
+            None
+        }
     }
 
     fn set_scrobble_condition(&mut self) {

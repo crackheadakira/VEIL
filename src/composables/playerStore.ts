@@ -191,9 +191,9 @@ export const usePlayerStore = defineStore("player", () => {
    */
   async function handleSongEnd() {
     if (!currentTrack.value) return;
-    while (!(await commands.playerHasEnded())) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
+    // while (!(await commands.playerHasEnded())) {
+    //   await new Promise((resolve) => setTimeout(resolve, 10));
+    // }
 
     if (loop.value === "track") {
       // replay the same track
@@ -283,6 +283,7 @@ export const usePlayerStore = defineStore("player", () => {
   });
 
   const listenTrackEnd = listen("track-end", async (_) => {
+    console.log("received track-end event");
     await handleSongEnd();
   });
 

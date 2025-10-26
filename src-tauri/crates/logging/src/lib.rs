@@ -24,6 +24,7 @@ where
 }
 
 #[macro_export]
+/// Takes a result and passes it through logging before returning result.
 macro_rules! try_with_log {
     ($name:expr, $op:expr) => {{
         match $op() {

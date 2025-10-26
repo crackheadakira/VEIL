@@ -464,10 +464,10 @@ export type SodapopConfig = {
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
-  music_dir: string | null;
-  last_fm_key: string | null;
   discord_enabled: boolean | null;
   last_fm_enabled: boolean | null;
+  music_dir: string | null;
+  last_fm_key: string | null;
 };
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {
