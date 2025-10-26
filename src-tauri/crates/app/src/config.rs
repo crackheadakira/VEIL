@@ -24,10 +24,10 @@ pub enum ThemeMode {
 #[derive(Serialize, Deserialize, Type, tauri_specta::Event, Clone)]
 pub struct SodapopConfigEvent {
     pub theme: Option<ThemeMode>,
-    pub music_dir: Option<String>,
-    pub last_fm_key: Option<String>,
     pub discord_enabled: Option<bool>,
     pub last_fm_enabled: Option<bool>,
+    pub music_dir: Option<String>,
+    pub last_fm_key: Option<String>,
 }
 
 impl SodapopConfig {

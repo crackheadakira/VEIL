@@ -114,7 +114,7 @@ impl Player {
         let sound_data = self.load_sound(track)?.start_position(self.progress);
 
         let mut sh = self.manager.play(sound_data)?;
-        sh.set_volume(self.volume, Tween::default());
+        sh.set_volume(self.volume, self.tween);
 
         self.sound_handle = Some(sh);
         self.state = PlayerState::Playing;

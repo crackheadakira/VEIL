@@ -6,8 +6,7 @@ use serde::Serialize;
 use specta::Type;
 
 use std::{
-    fs::{self, File},
-    io::Write,
+    fs::{self},
     path::{Path, PathBuf},
 };
 
@@ -22,7 +21,7 @@ pub enum MetadataEvent {
     Finished { id: usize },
 }
 
-#[tauri::command] // spawn on async thread due to `.blocking_pick_folder()``
+#[tauri::command]
 #[specta::specta]
 pub async fn select_music_folder(
     app: tauri::AppHandle,
@@ -48,7 +47,7 @@ pub async fn select_music_folder(
         })?;
 
         let mut all_metadata = Vec::new();
-        for (idx, path) in all_paths.clone().iter().enumerate() {
+        for (idx, path) in all_paths.iter().enumerate() {
             let metadata = Metadata::from_file(path);
             match metadata {
                 Ok(m) => {
@@ -85,23 +84,23 @@ pub async fn select_music_folder(
                 if let Some(a) = state.db.album_exists(&metadata.album, metadata.year)? {
                     (a.id, a.cover_path)
                 } else {
-                    let mut p = cover_path;
+                    let mut cover_path = cover_path;
 
-                    if !Path::new(&p).exists() {
+                    if !Path::new(&cover_path).exists() {
                         if !metadata.picture_data.is_empty() {
-                            let mut file = File::create(&p)?;
-                            file.write_all(&metadata.picture_data)?;
+                            fs::write(&cover_path, &metadata.picture_data)?;
                         } else {
-                            let ap = Path::new(&album_path);
+                            let album_path = Path::new(&album_path);
+
                             // If there is no picture data, check if there exists
                             // either cover.jpg or cover.png, and then copy that
                             // over. If not, just point cover_path to placeholder.png
-                            if ap.join("cover.jpg").exists() {
-                                fs::copy(ap.join("cover.jpg"), &p)?;
-                            } else if ap.join("cover.png").exists() {
-                                fs::copy(ap.join("cover.png"), &p)?;
+                            if album_path.join("cover.jpg").exists() {
+                                fs::copy(album_path.join("cover.jpg"), &cover_path)?;
+                            } else if album_path.join("cover.png").exists() {
+                                fs::copy(album_path.join("cover.png"), &cover_path)?;
                             } else {
-                                p = data_path()
+                                cover_path = data_path()
                                     .join("covers")
                                     .join("placeholder.png")
                                     .to_str()
@@ -116,7 +115,7 @@ pub async fn select_music_folder(
                         artist_id,
                         artist_name: metadata.artist.clone(),
                         name: metadata.album.clone(),
-                        cover_path: p.clone(),
+                        cover_path: cover_path.clone(),
                         year: metadata.year,
                         album_type: metadata.album_type.clone().into(),
                         track_count: 0,
@@ -126,7 +125,7 @@ pub async fn select_music_folder(
 
                     let a_id = state.db.latest::<Albums>()?.id;
 
-                    (a_id, p)
+                    (a_id, cover_path)
                 };
 
             let track_exists = state.db.exists::<Tracks>("name", &metadata.name)?;
