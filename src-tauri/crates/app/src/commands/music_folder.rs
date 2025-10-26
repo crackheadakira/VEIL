@@ -1,4 +1,4 @@
-use crate::{SodapopState, data_path, error::FrontendError};
+use crate::{SodapopState, commands::plugins::open_folder_picker, data_path, error::FrontendError};
 
 use common::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
@@ -12,7 +12,6 @@ use std::{
 };
 
 use tauri::{Manager, ipc::Channel};
-use tauri_plugin_dialog::DialogExt;
 
 #[derive(Clone, Serialize, Type)]
 #[serde(tag = "event", content = "data")]
@@ -23,25 +22,23 @@ pub enum MetadataEvent {
     Finished { id: usize },
 }
 
-#[tauri::command(async)] // spawn on async thread due to `.blocking_pick_folder()``
+#[tauri::command] // spawn on async thread due to `.blocking_pick_folder()``
 #[specta::specta]
-pub fn select_music_folder(
+pub async fn select_music_folder(
     app: tauri::AppHandle,
     on_event: Channel<MetadataEvent>,
 ) -> Result<String, FrontendError> {
     let state = app.state::<SodapopState>();
-    let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
-    let music_dir = config_path.music_dir.clone();
-    drop(config_path);
 
-    let mut folder_path = app.dialog().file().set_title("Select your music folder");
-    if let Some(m) = music_dir {
-        folder_path = folder_path.set_directory(m);
+    let music_dir = {
+        let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
+        config_path.music_dir.clone()
     };
 
-    if let Some(path) = folder_path.blocking_pick_folder() {
-        let path = path.try_into().unwrap();
-        let mut all_paths = recursive_dir(&path);
+    let handle = open_folder_picker(music_dir.as_deref(), "Select your music folder").await;
+    if let Some(handle) = handle {
+        let path = handle.path();
+        let mut all_paths = recursive_dir(path);
         all_paths.sort();
 
         let event_id = 1;
@@ -181,7 +178,7 @@ pub fn select_music_folder(
     }
 }
 
-fn recursive_dir(path: &PathBuf) -> Vec<PathBuf> {
+fn recursive_dir(path: &Path) -> Vec<PathBuf> {
     let paths = fs::read_dir(path).unwrap();
     let mut tracks = Vec::new();
 

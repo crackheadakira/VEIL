@@ -100,7 +100,6 @@ fn main() -> anyhow::Result<()> {
         .expect("Failed to export TypeScript bindings");
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(specta_builder.invoke_handler())
         .setup(move |app| {
             specta_builder.mount_events(app);
