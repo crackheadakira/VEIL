@@ -277,16 +277,6 @@ export const usePlayerStore = defineStore("player", () => {
     },
   );
 
-  const listenPlayerProgress = listen("player-progress", async (e) => {
-    const progress = e.payload as number;
-    await handleProgress(false, progress);
-  });
-
-  const listenTrackEnd = listen("track-end", async (_) => {
-    console.log("received track-end event");
-    await handleSongEnd();
-  });
-
   return {
     paused,
     currentTrack,
@@ -303,8 +293,7 @@ export const usePlayerStore = defineStore("player", () => {
     handlePlayAndPause,
     handleVolume,
     initialLoad,
+    handleSongEnd,
     listenMediaControl,
-    listenPlayerProgress,
-    listenTrackEnd,
   };
 });

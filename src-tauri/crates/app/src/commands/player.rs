@@ -3,7 +3,9 @@ use common::Tracks;
 use lastfm::{LastFMError, TrackData};
 use logging::lock_or_log;
 use media_controls::PlayerState;
-use tauri::{AppHandle, Manager};
+use serde::Serialize;
+use specta::Type;
+use tauri::{AppHandle, Manager, ipc::Channel};
 
 #[tauri::command]
 #[specta::specta]
@@ -238,6 +240,66 @@ pub fn initialize_player(
 pub fn set_player_progress(progress: f64, state: TauriState) {
     let mut player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
     player.set_progress(progress);
+}
+
+#[derive(Clone, Serialize, Type)]
+#[serde(tag = "event", content = "data")]
+// rust-analyzer expected Expr error: https://github.com/specta-rs/specta/issues/387
+pub enum PlayerProgressEvent {
+    Progress { progress: f64 },
+    TrackEnd,
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn player_progress_channel(
+    handle: AppHandle,
+    on_event: Channel<PlayerProgressEvent>,
+) -> Result<(), FrontendError> {
+    std::thread::spawn(move || {
+        let state = handle.state::<SodapopState>();
+
+        let track_end_interval = std::time::Duration::from_millis(25);
+        let mut last_track_end_check = std::time::Instant::now();
+
+        let progress_interval = std::time::Duration::from_millis(400);
+        let mut last_progress_sent = std::time::Instant::now();
+
+        loop {
+            std::thread::sleep(std::time::Duration::from_millis(10));
+            let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
+
+            if last_track_end_check.elapsed() >= track_end_interval {
+                if let Some(player_state) = player.get_player_state() {
+                    if player_state == media_controls::PlaybackState::Stopped
+                        || player_state == media_controls::PlaybackState::Stopping
+                    {
+                        if on_event.send(PlayerProgressEvent::TrackEnd).is_err() {
+                            logging::error!("Track-end channel closed");
+                            break;
+                        }
+                    }
+                }
+                last_track_end_check = std::time::Instant::now();
+            }
+
+            if last_progress_sent.elapsed() >= progress_interval {
+                if let media_controls::PlayerState::Playing = player.state {
+                    let progress = player.get_progress();
+                    if on_event
+                        .send(PlayerProgressEvent::Progress { progress })
+                        .is_err()
+                    {
+                        logging::error!("Progress channel closed");
+                        break;
+                    }
+                }
+                last_progress_sent = std::time::Instant::now();
+            }
+        }
+    });
+
+    Ok(())
 }
 
 fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {

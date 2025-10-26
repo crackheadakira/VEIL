@@ -156,8 +156,6 @@ onUnmounted(async () => {
   const result = await commands.stopPlayer();
   if (result.status === "error") return handleBackendError(result.error);
 
-  (await playerStore.listenPlayerProgress)();
-  (await playerStore.listenTrackEnd)();
   (await playerStore.listenMediaControl)();
 });
 </script>

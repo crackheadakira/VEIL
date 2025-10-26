@@ -79,6 +79,7 @@ fn main() -> anyhow::Result<()> {
             commands::player::initialize_player,
             commands::player::set_player_progress,
             commands::player::player_has_ended,
+            commands::player::player_progress_channel,
             commands::lastfm::get_token,
             commands::lastfm::get_session,
             commands::read_custom_style,
@@ -216,32 +217,6 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
             })?;
-
-            let app_handle = app.handle().clone();
-
-            // TODO: Is there a better way to handle this other than constant polling & the progress rounding issue?
-            std::thread::spawn(move || {
-                let duration = std::time::Duration::from_millis(50);
-                let state = app_handle.state::<SodapopState>();
-
-                loop {
-                    std::thread::sleep(duration);
-                    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
-
-                    if let media_controls::PlayerState::Playing = player.state {
-                        let progress = player.get_progress();
-                        app_handle.emit("player-progress", progress).unwrap();
-
-                        if let Some(player_state) = player.get_player_state() {
-                            if player_state == media_controls::PlaybackState::Stopped
-                                || player_state == media_controls::PlaybackState::Stopping
-                            {
-                                app_handle.emit("track-end", 0.0).unwrap();
-                            }
-                        }
-                    }
-                }
-            });
 
             let app_handle: tauri::AppHandle = app.handle().clone();
             SodapopConfigEvent::listen(app, move |event| {

@@ -26,7 +26,9 @@ import {
   handleBackendError,
   usePlayerStore,
   usePlaylistStore,
+  PlayerProgressEvent,
 } from "@/composables/";
+import { Channel } from "@tauri-apps/api/core";
 import { onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 
@@ -88,5 +90,15 @@ onMounted(async () => {
 
   const page = configStore.currentPage;
   router.push(page);
+
+  const channel = new Channel<PlayerProgressEvent>();
+  channel.onmessage = async (msg) => {
+    if (msg.event === "Progress")
+      await playerStore.handleProgress(false, msg.data.progress);
+    else await playerStore.handleSongEnd();
+  };
+
+  const res = await commands.playerProgressChannel(channel);
+  if (res.status === "error") console.error(res.error);
 });
 </script>

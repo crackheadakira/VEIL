@@ -260,6 +260,19 @@ export const commands = {
   async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
   },
+  async playerProgressChannel(
+    onEvent: TAURI_CHANNEL<PlayerProgressEvent>,
+  ): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("player_progress_channel", { onEvent }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async getToken(): Promise<Result<[string, string], FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("get_token") };
@@ -415,6 +428,9 @@ export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
+export type PlayerProgressEvent =
+  | { event: "Progress"; data: { progress: number } }
+  | { event: "TrackEnd" };
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = {
   playlist: Playlists;
