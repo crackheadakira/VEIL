@@ -12,6 +12,20 @@ pub struct QueueSystem {
     rng_state: u32,
 }
 
+// TODO: Currently with preloading a track, how do we handle the
+// scenario that a track is already preloaded, but a user adds
+// a song to the queue last millisecond?
+
+// 1. Do we just add it to the queue as the next song (easiest) --> makes most sense
+//      we will already have consumed the personal queue track at this point.
+//
+// 2. Somehow quickly preload the next one (difficult)
+//      Would have to unconsume the personal queue track by simply setting an index
+//      rather than actually consuming.
+
+// TODO: Support sorting based on different criteria --> would depend on queries and
+// how to fetch it from database.
+
 impl QueueSystem {
     pub fn new(rng_state: u32) -> Self {
         Self {
