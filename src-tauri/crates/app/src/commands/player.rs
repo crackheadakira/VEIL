@@ -103,7 +103,7 @@ pub fn player_progress_channel(
                 last_progress_sent = std::time::Instant::now();
             }
 
-            if player.next_sound_handle.is_none()
+            if !player.has_next_sound_handle()
                 && (player.duration as f64 - player.get_progress()) <= 0.3
             {
                 drop(player);

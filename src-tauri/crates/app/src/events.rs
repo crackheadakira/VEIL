@@ -346,8 +346,6 @@ impl QueueEvent {
         let state = handle.state::<SodapopState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
-        logging::debug!("Enqueued track {track_id} to personal queue");
-
         queue.enqueue_personal(track_id);
         Ok(())
     }

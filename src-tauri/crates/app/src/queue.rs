@@ -42,28 +42,34 @@ impl QueueSystem {
 
     /// Add a track to the personal queue
     pub fn enqueue_personal(&mut self, track_id: u32) {
+        logging::debug!("Enqueued track {track_id} to personal queue");
         self.personal_queue.push_back(track_id);
     }
 
     /// Add a track to the global queue
     pub fn enqueue_global(&mut self, track_id: u32) {
+        logging::debug!("Enqueued track {track_id} to global queue");
         self.global_queue.push(track_id);
     }
 
     /// Mass-replace whole global queue
     pub fn set_global(&mut self, new_global: Vec<u32>) {
+        logging::debug!("Set global queue to a vec of length {}", new_global.len());
         self.global_queue = new_global;
     }
 
     /// Get the next track
     pub fn next(&mut self) -> Option<u32> {
         if let Some(track) = self.personal_queue.pop_front() {
+            logging::debug!("Fetching next track from personal queue");
             Some(track)
         } else if !self.global_queue.is_empty() {
             let track = if self.shuffle {
+                logging::debug!("Fetching next track from shuffled global queue");
                 let idx = self.rand() % self.global_queue.len();
                 self.global_queue[idx]
             } else {
+                logging::debug!("Fetching next track from non-shuffled global queue");
                 let track = self.global_queue[self.current_index % self.global_queue.len()];
                 self.current_index = (self.current_index + 1) % self.global_queue.len();
                 track
@@ -78,12 +84,15 @@ impl QueueSystem {
     /// Peek at the next track, and consumes if it's from personal queue
     pub fn peek_next(&mut self) -> Option<u32> {
         if let Some(track) = self.personal_queue.pop_front() {
+            logging::debug!("Peeking at next track from personal queue");
             Some(track)
         } else if !self.global_queue.is_empty() {
             if self.shuffle {
+                logging::debug!("Peeking at next track from shuffled global queue");
                 let idx = self.rand() % self.global_queue.len();
                 Some(self.global_queue[idx])
             } else {
+                logging::debug!("Peeking at next track from non-shuffled global queue");
                 Some(self.global_queue[self.current_index % self.global_queue.len()])
             }
         } else {
@@ -97,6 +106,7 @@ impl QueueSystem {
     }
 
     pub fn shuffle_global(&mut self) {
+        logging::debug!("Shuffling global queue");
         let len = self.global_queue.len();
         for i in (1..len).rev() {
             let j = self.rand() % (i + 1);

@@ -45,7 +45,7 @@ pub struct Player {
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
 
     /// Handler for next song [`StreamingSoundData`], allows for preloading.
-    pub next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
 
     next_duration: f32,
 
@@ -347,6 +347,10 @@ impl Player {
     /// Gets players state from sound handle if exists.
     pub fn get_player_state(&self) -> Option<PlaybackState> {
         self.sound_handle.as_ref().map(|handle| handle.state())
+    }
+
+    pub fn has_next_sound_handle(&self) -> bool {
+        self.next_sound_handle.is_some()
     }
 
     fn set_scrobble_condition(&mut self) {
