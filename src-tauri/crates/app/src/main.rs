@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use config::{SodapopConfig, SodapopConfigEvent};
+use config::SodapopConfig;
 use logging::{error, lock_or_log, try_with_log};
 use serde::Serialize;
 use specta::Type;
@@ -18,10 +18,14 @@ use raw_window_handle::HasWindowHandle;
 #[cfg(debug_assertions)]
 use specta_typescript::Typescript;
 
+use crate::events::{NewTrackEvent, SodapopConfigEvent};
+
 mod commands;
 mod config;
 mod discord;
 mod error;
+mod events;
+
 pub struct SodapopState {
     pub player: Mutex<media_controls::Player>,
     pub db: Arc<db::Database>,
@@ -86,7 +90,7 @@ fn main() -> anyhow::Result<()> {
             commands::read_config,
             commands::plugins::open_url,
         ])
-        .events(collect_events![SodapopConfigEvent])
+        .events(collect_events![SodapopConfigEvent, NewTrackEvent])
         .typ::<MediaPayload>()
         .typ::<SodapopConfig>();
 
@@ -245,6 +249,15 @@ fn main() -> anyhow::Result<()> {
 
                 let mut config = lock_or_log(state.config.write(), "Config Write").unwrap();
                 config.update_config(event.payload).unwrap();
+            });
+
+            let app_handle: tauri::AppHandle = app.handle().clone();
+            NewTrackEvent::listen(app, move |event| {
+                let state = app_handle.state::<SodapopState>();
+
+                if let Err(e) = NewTrackEvent::set_new_track(event, state) {
+                    logging::error!("Failed to set new track: {:?}", e);
+                }
             });
 
             let covers = path.join("covers");

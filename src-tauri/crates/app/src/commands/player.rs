@@ -272,7 +272,7 @@ pub fn player_progress_channel(
             if last_track_end_check.elapsed() >= track_end_interval {
                 if let Some(player_state) = player.get_player_state() {
                     if player_state == media_controls::PlaybackState::Stopped
-                        || player_state == media_controls::PlaybackState::Stopping
+                    // || player_state == media_controls::PlaybackState::Stopping
                     {
                         if on_event.send(PlayerProgressEvent::TrackEnd).is_err() {
                             logging::error!("Track-end channel closed");
@@ -302,7 +302,7 @@ pub fn player_progress_channel(
     Ok(())
 }
 
-fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
+pub fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
     tokio::spawn(async move {
         let state = handle.state::<SodapopState>();
         let lastfm = state.lastfm.lock().await;

@@ -46,6 +46,7 @@
 <script setup lang="ts">
 import { TrackList } from "@/components/";
 import {
+  events,
   placeholderIfEmpty,
   useConfigStore,
   usePlayerStore,
@@ -104,7 +105,7 @@ async function handlePlayButton(shuffle: boolean) {
 
   queueStore.setQueueIdx(0);
   const track = await queueStore.getTrackAtIdx(0);
-  if (track) await playerStore.setPlayerTrack(track);
+  if (track) await events.newTrackEvent.emit({ track });
 }
 
 async function updateData() {

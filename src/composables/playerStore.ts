@@ -1,4 +1,4 @@
-import { commands, handleBackendError, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
+import { commands, events, handleBackendError, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
 import { listen, Event } from "@tauri-apps/api/event";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
@@ -11,9 +11,6 @@ import { nextTick, ref, watch } from "vue";
  *
  * @example
  * const playerStore = usePlayerStore();
- *
- * // Set the current track
- * playerStore.setPlayerTrack(track);
  *
  * // Set the player progress
  * playerStore.setPlayerProgress(50);
@@ -41,23 +38,6 @@ export const usePlayerStore = defineStore("player", () => {
   channel.onmessage = (event) => {
     paused.value = event.data.paused;
   };
-
-  /**
-   * Sets given track as the current track and plays it.
-   *
-   * Calls Rust backend (setPlayerProgress, playTrack), and updates store `currentTrack` & `playerProgress`.
-   *
-   * @param {Tracks} track - The track to play
-   */
-  async function setPlayerTrack(track: Tracks): Promise<void> {
-    await commands.setPlayerProgress(0);
-
-    currentTrack.value = track;
-    playerProgress.value = 0;
-
-    await commands.playTrack(track.id);
-    paused.value = false;
-  }
 
   /**
    * Sets the player progress to the given value.
@@ -97,7 +77,7 @@ export const usePlayerStore = defineStore("player", () => {
     if (loop.value === "track") loop.value = "queue";
 
     const nextTrack = await queueStore.getQueueTrack(direction);
-    if (nextTrack) await setPlayerTrack(nextTrack);
+    if (nextTrack) await events.newTrackEvent.emit({ track: nextTrack });
   }
 
   /**
@@ -191,14 +171,10 @@ export const usePlayerStore = defineStore("player", () => {
    */
   async function handleSongEnd() {
     if (!currentTrack.value) return;
-    // while (!(await commands.playerHasEnded())) {
-    //   await new Promise((resolve) => setTimeout(resolve, 10));
-    // }
 
     if (loop.value === "track") {
       // replay the same track
-      await setPlayerTrack(currentTrack.value);
-      await handlePlayAndPause();
+      await events.newTrackEvent.emit({ track: currentTrack.value });
       return;
     }
 
@@ -242,6 +218,12 @@ export const usePlayerStore = defineStore("player", () => {
 
   // LISTENERS
 
+  const listenNewTrack = events.newTrackEvent.listen((e) => {
+    currentTrack.value = e.payload.track;
+    playerProgress.value = 0;
+    paused.value = false;
+  });
+
   const listenMediaControl = listen(
     "media-control",
     async (e: Event<MediaPayload>) => {
@@ -284,7 +266,7 @@ export const usePlayerStore = defineStore("player", () => {
     loop,
     playerVolume,
     isShuffled,
-    setPlayerTrack,
+    listenNewTrack,
     setPlayerProgress,
     skipTrack,
     loopQueue,

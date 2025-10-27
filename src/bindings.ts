@@ -321,8 +321,10 @@ export const commands = {
 /** user-defined events **/
 
 export const events = __makeEvents__<{
+  newTrackEvent: NewTrackEvent;
   sodapopConfigEvent: SodapopConfigEvent;
 }>({
+  newTrackEvent: "new-track-event",
   sodapopConfigEvent: "sodapop-config-event",
 });
 
@@ -428,6 +430,7 @@ export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
+export type NewTrackEvent = { track: Tracks };
 export type PlayerProgressEvent =
   | { event: "Progress"; data: { progress: number } }
   | { event: "TrackEnd" };

@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::{data_path, error::FrontendError};
+use crate::{data_path, error::FrontendError, events::SodapopConfigEvent};
 
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct SodapopConfig {
@@ -19,15 +19,6 @@ pub enum ThemeMode {
     Dark,
     Light,
     System,
-}
-
-#[derive(Serialize, Deserialize, Type, tauri_specta::Event, Clone)]
-pub struct SodapopConfigEvent {
-    pub theme: Option<ThemeMode>,
-    pub discord_enabled: Option<bool>,
-    pub last_fm_enabled: Option<bool>,
-    pub music_dir: Option<String>,
-    pub last_fm_key: Option<String>,
 }
 
 impl SodapopConfig {

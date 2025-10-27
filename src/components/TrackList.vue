@@ -69,6 +69,7 @@
 <script setup lang="ts">
 import { ContextMenu } from "@/components/";
 import {
+  events,
   formatTime,
   Playlists,
   type Tracks,
@@ -76,7 +77,6 @@ import {
   useQueueStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
 import { computed, ref } from "vue";
 
 const playlistStore = usePlaylistStore();
@@ -92,7 +92,7 @@ const props = defineProps<{
 
 // Make the backend set the track and do everything related to it.
 async function emitNewTrack(track: Tracks, trackIdx: number) {
-  await emit("select-new-track", { track });
+  await events.newTrackEvent.emit({ track });
 
   // Might move queue to backend & instead of persisting
   // queue across runs, make a new queue every time
