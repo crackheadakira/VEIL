@@ -25,18 +25,38 @@ pub struct SodapopConfigEvent {
 #[derive(Serialize, Deserialize, Type, Event)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayerEvent {
+    /// If a new track is to be played.
     NewTrack { track: Tracks },
+
+    /// If the current track is to be paused.
     Pause,
+
+    /// If the current track is to be resumed.
     Resume,
+
+    /// If the current track is to be stopped.
     Stop,
+
+    /// Where to set the progress of the currently playing track.
+    Seek { position: f64, resume: bool },
+
+    /// Set the volume of the player.
+    SetVolume { volume: f32 },
 }
 
 struct OnlineFeatures {
+    /// Whether or not Discord is enabled, and any corresponding features should be used.
     discord_enabled: bool,
+
+    /// Whether or not Last.FM is enabled, and any corresponding features should be used.
     last_fm_enabled: bool,
 }
 
 impl PlayerEvent {
+    /// Take in the corresponding events and pass them to the appropriate
+    /// private handler.
+    ///
+    /// Will also emit the required updates to the frontend.
     pub async fn handle(
         event: TypedEvent<PlayerEvent>,
         handle: &AppHandle,
@@ -52,11 +72,18 @@ impl PlayerEvent {
         };
 
         match event.payload {
-            PlayerEvent::NewTrack { track } => Self::set_new_track(track, &handle, online).await?,
-            PlayerEvent::Pause => Self::pause_current_track(&handle, online).await?,
-            PlayerEvent::Resume => todo!(),
-            PlayerEvent::Stop => todo!(),
+            PlayerEvent::NewTrack { track } => Self::set_new_track(track, handle, online).await?,
+            PlayerEvent::Pause => Self::pause_current_track(handle, online).await?,
+            PlayerEvent::Resume => Self::resume_current_track(handle, online)?,
+            PlayerEvent::Stop => Self::stop_current_track(handle)?,
+            PlayerEvent::Seek { position, resume } => {
+                Self::seek_current_track(handle, position, resume, online)?
+            }
+            PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
         };
+
+        // TODO: Implement frontend emits.
+        // These emits would then sync the frontend to the backend, with the backend being the source of truth.
 
         Ok(())
     }
@@ -176,6 +203,72 @@ impl PlayerEvent {
             }
         }
 
+        Ok(())
+    }
+
+    /// Resumes the current track.
+    ///
+    /// Updates Discord activity.
+    fn resume_current_track(
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+
+        let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+        player.resume()?;
+
+        if online.discord_enabled {
+            let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+            discord.update_activity("playing", "Playing", true, Some(player.get_progress()));
+        }
+
+        Ok(())
+    }
+
+    /// Stops the current track.
+    fn stop_current_track(handle: &AppHandle) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+
+        player.stop()?;
+
+        Ok(())
+    }
+
+    /// Seek the current track to the given position.
+    ///
+    /// Updates Discord activity.
+    fn seek_current_track(
+        handle: &AppHandle,
+        position: f64,
+        resume: bool,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+
+        let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+        player.seek(position, resume)?;
+
+        if online.discord_enabled {
+            let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+            let text_display = if resume { "Playing" } else { "Paused" };
+            discord.update_activity(
+                &text_display.to_lowercase(),
+                text_display,
+                resume,
+                Some(position),
+            );
+        }
+
+        Ok(())
+    }
+
+    fn set_player_volume(handle: &AppHandle, volume: f32) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+
+        player.set_volume(volume)?;
         Ok(())
     }
 }
