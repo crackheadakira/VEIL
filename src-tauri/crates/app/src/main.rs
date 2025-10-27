@@ -28,7 +28,7 @@ mod error;
 mod events;
 
 pub struct SodapopState {
-    pub player: Mutex<media_controls::Player>,
+    pub player: Arc<RwLock<media_controls::Player>>,
     pub db: Arc<db::Database>,
     pub discord: Mutex<discord::DiscordState>,
     pub config: Arc<RwLock<SodapopConfig>>,
@@ -71,7 +71,6 @@ fn main() -> anyhow::Result<()> {
             commands::sqlite::get_albums_offset,
             commands::sqlite::get_total_albums,
             commands::sqlite::get_batch_track,
-            commands::player::play_track,
             commands::player::pause_track,
             commands::player::resume_track,
             commands::player::seek_track,
@@ -167,7 +166,7 @@ fn main() -> anyhow::Result<()> {
                 ))?;
 
                 app.manage(SodapopState {
-                    player: Mutex::new(player),
+                    player: Arc::new(RwLock::new(player)),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),
@@ -184,7 +183,7 @@ fn main() -> anyhow::Result<()> {
             }
 
             let handle = app.handle().clone();
-            let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+            let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
             player.controls.attach(move |event| {
                 use media_controls::MediaControlEvent;
 
@@ -232,7 +231,7 @@ fn main() -> anyhow::Result<()> {
                 let state = app_handle.state::<SodapopState>();
                 if let Some(discord_enabled) = event.payload.discord_enabled {
                     let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
-                    let player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
+                    let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
 
                     if discord_enabled {
                         if discord.connect() {

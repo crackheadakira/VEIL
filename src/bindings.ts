@@ -168,17 +168,6 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("play_track", { trackId }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
   async pauseTrack(): Promise<Result<null, FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("pause_track") };

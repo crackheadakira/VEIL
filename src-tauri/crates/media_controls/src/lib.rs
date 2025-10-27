@@ -287,11 +287,7 @@ impl Player {
 
     /// Gets players state from sound handle if exists.
     pub fn get_player_state(&self) -> Option<PlaybackState> {
-        if let Some(handle) = &self.sound_handle {
-            Some(handle.state())
-        } else {
-            None
-        }
+        self.sound_handle.as_ref().map(|handle| handle.state())
     }
 
     fn set_scrobble_condition(&mut self) {

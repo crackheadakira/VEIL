@@ -140,8 +140,7 @@ export const usePlayerStore = defineStore("player", () => {
 
     if (!hasTrack && currentTrack.value) {
       paused.value = false;
-      const result = await commands.playTrack(currentTrack.value.id);
-      if (result.status === "error") return handleBackendError(result.error);
+      await events.newTrackEvent.emit({ track: currentTrack.value });
 
       return;
     } else if (!hasTrack) {

@@ -43,7 +43,7 @@ impl NewTrackEvent {
         };
 
         let should_scrobble = {
-            let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+            let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
             player.should_scrobble()
         };
 
@@ -57,7 +57,7 @@ impl NewTrackEvent {
         }
 
         let (duration, progress) = {
-            let mut player = lock_or_log(state.player.lock(), "Player Mutex").unwrap();
+            let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
 
             // Reset the player's internal progress to 0
             player.set_progress(0.0);
