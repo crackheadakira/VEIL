@@ -6,9 +6,9 @@ use logging::{error, lock_or_log, try_with_log};
 use serde::Serialize;
 use specta::Type;
 use specta_typescript::BigIntExportBehavior;
-use std::io::Write;
+use std::fs;
 use std::sync::{Arc, Mutex, RwLock};
-use std::{fs::File, fs::create_dir, path::PathBuf};
+use std::{fs::create_dir, path::PathBuf};
 use tauri::{Emitter, Manager, RunEvent, State};
 use tauri_specta::{Builder, Event, collect_commands, collect_events};
 
@@ -75,8 +75,6 @@ fn main() -> anyhow::Result<()> {
             commands::player::player_has_track,
             commands::player::get_player_progress,
             commands::player::get_player_duration,
-            commands::player::stop_player,
-            commands::player::initialize_player,
             commands::player::set_player_progress,
             commands::player::player_has_ended,
             commands::player::player_progress_channel,
@@ -275,8 +273,8 @@ fn main() -> anyhow::Result<()> {
             if !covers.exists() {
                 create_dir(&covers).expect("Error creating covers directory");
                 let pc = include_bytes!("../../../../public/placeholder.png");
-                let mut file = File::create(covers.join("placeholder.png"))?;
-                file.write_all(pc)?;
+
+                fs::write(covers.join("placeholder.png"), pc)?
             }
 
             Ok(())

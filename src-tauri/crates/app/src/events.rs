@@ -25,6 +25,9 @@ pub struct SodapopConfigEvent {
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayerEvent {
+    /// Initialize the player to load in this track, seeked to the specified position.
+    Initialize { track: Tracks, progress: f64 },
+
     /// If a new track is to be played.
     NewTrack { track: Tracks },
 
@@ -72,7 +75,10 @@ impl PlayerEvent {
         };
 
         match event.payload {
-            PlayerEvent::NewTrack { track } => Self::set_new_track(track, handle, online).await?,
+            PlayerEvent::Initialize { track, progress } => {
+                Self::initialize_player_with_track(handle, track, progress)?
+            }
+            PlayerEvent::NewTrack { track } => Self::set_new_track(handle, track, online).await?,
             PlayerEvent::Pause => Self::pause_current_track(handle, online).await?,
             PlayerEvent::Resume => Self::resume_current_track(handle, online)?,
             PlayerEvent::Stop => Self::stop_current_track(handle)?,
@@ -88,12 +94,25 @@ impl PlayerEvent {
         Ok(())
     }
 
+    /// Loads the track into the player at the specified position.
+    fn initialize_player_with_track(
+        handle: &AppHandle,
+        track: Tracks,
+        progress: f64,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+        player.initialize_player(track, progress)?;
+
+        Ok(())
+    }
+
     /// Resets the player states to as if no track had been playing, then loads in the new track.
     ///
     /// Also handles Discord RPC & Last.FM scrobbling.
     async fn set_new_track(
-        track: Tracks,
         handle: &AppHandle,
+        track: Tracks,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();

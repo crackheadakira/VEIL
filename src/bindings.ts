@@ -180,28 +180,6 @@ export const commands = {
   async getPlayerDuration(): Promise<number> {
     return await TAURI_INVOKE("get_player_duration");
   },
-  async stopPlayer(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("stop_player") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async initializePlayer(
-    trackId: number,
-    progress: number,
-  ): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("initialize_player", { trackId, progress }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
   async setPlayerProgress(progress: number): Promise<void> {
     await TAURI_INVOKE("set_player_progress", { progress });
   },
@@ -381,6 +359,10 @@ export type MetadataEvent =
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
 export type PlayerEvent =
+  /**
+   * Initialize the player to load in this track, seeked to the specified position.
+   */
+  | { type: "Initialize"; data: { track: Tracks; progress: number } }
   /**
    * If a new track is to be played.
    */

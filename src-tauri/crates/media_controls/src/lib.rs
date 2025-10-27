@@ -42,28 +42,40 @@ pub enum PlayerState {
 
 pub struct Player {
     /// Handler for  [`StreamingSoundData`]
-    pub sound_handle: Option<StreamingSoundHandle<FromFileError>>,
-    pub manager: AudioManager<DefaultBackend>,
+    sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+
+    manager: AudioManager<DefaultBackend>,
+
     /// To use for playback & volume
     tween: Tween,
+
     /// Clock to keep track of user's progress, can't use [`Player::progress`] as the user can manipulate that
     clock: ClockHandle,
+
     /// How many seconds does the user need to listen to to scrobble
     scrobble_condition: f64,
+
     /// If it has already scrobbled this track
     pub scrobbled: bool,
+
     /// ID of the track
     pub track: Option<u32>,
+
     /// Progress of the player
     pub progress: f64,
+
     /// Duration of the track
     pub duration: f32,
+
     /// Volume that ranges from -60 to 1.0
     pub volume: f32,
+
     /// Player State
     pub state: PlayerState,
+
     /// Souvlaki Controls
     pub controls: MediaControls,
+
     // When the user started listening to track
     pub timestamp: i64,
 }
@@ -137,6 +149,7 @@ impl Player {
             "Initializing player with track {} and progress {progress}",
             track.name
         );
+
         self.load_sound(&track)?;
         self.progress = progress;
 

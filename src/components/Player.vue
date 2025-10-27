@@ -74,7 +74,6 @@ import {
   commands,
   events,
   formatTime,
-  handleBackendError,
   Tracks,
   usePlayerStore,
   usePlaylistStore,
@@ -153,8 +152,7 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  const result = await commands.stopPlayer();
-  if (result.status === "error") return handleBackendError(result.error);
+  await events.playerEvent.emit({ type: "Stop" });
 
   (await playerStore.listenMediaControl)();
 });

@@ -44,28 +44,6 @@ pub fn get_player_duration(state: TauriState) -> f32 {
 
 #[tauri::command]
 #[specta::specta]
-pub fn stop_player(state: TauriState) -> Result<(), FrontendError> {
-    let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
-    player.stop()?;
-    Ok(())
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn initialize_player(
-    track_id: u32,
-    progress: f64,
-    state: TauriState,
-) -> Result<(), FrontendError> {
-    let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
-    let track = state.db.by_id::<Tracks>(&track_id)?;
-    player.initialize_player(track, progress)?;
-
-    Ok(())
-}
-
-#[tauri::command]
-#[specta::specta]
 pub fn set_player_progress(progress: f64, state: TauriState) {
     let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
     player.set_progress(progress);

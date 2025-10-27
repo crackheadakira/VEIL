@@ -85,7 +85,10 @@ onMounted(async () => {
   if (result.data.length === 0 && track) {
     playerStore.$reset();
   } else if (track) {
-    await commands.initializePlayer(track.id, progress);
+    await events.playerEvent.emit({
+      type: "Initialize",
+      data: { track, progress },
+    });
   }
 
   await playlistStore.fetchPlaylists();
