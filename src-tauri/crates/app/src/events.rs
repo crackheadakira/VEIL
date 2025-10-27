@@ -33,7 +33,7 @@ impl NewTrackEvent {
     /// Also handles Discord RPC & Last.FM scrobbling.
     pub async fn set_new_track(
         event: TypedEvent<NewTrackEvent>,
-        handle: tauri::AppHandle,
+        handle: &tauri::AppHandle,
     ) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();
 

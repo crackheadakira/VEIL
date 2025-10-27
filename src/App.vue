@@ -27,6 +27,8 @@ import {
   usePlayerStore,
   usePlaylistStore,
   PlayerProgressEvent,
+  events,
+  toastBus,
 } from "@/composables/";
 import { Channel } from "@tauri-apps/api/core";
 import { onMounted, watch } from "vue";
@@ -97,6 +99,10 @@ onMounted(async () => {
       await playerStore.handleProgress(false, msg.data.progress);
     else await playerStore.handleSongEnd();
   };
+
+  await events.frontendError.listen((e) => {
+    toastBus.addToast("error", `${e.payload.type}: ${e.payload.data}`);
+  });
 
   const res = await commands.playerProgressChannel(channel);
   if (res.status === "error") console.error(res.error);

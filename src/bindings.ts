@@ -321,9 +321,11 @@ export const commands = {
 /** user-defined events **/
 
 export const events = __makeEvents__<{
+  frontendError: FrontendError;
   newTrackEvent: NewTrackEvent;
   sodapopConfigEvent: SodapopConfigEvent;
 }>({
+  frontendError: "frontend-error",
   newTrackEvent: "new-track-event",
   sodapopConfigEvent: "sodapop-config-event",
 });

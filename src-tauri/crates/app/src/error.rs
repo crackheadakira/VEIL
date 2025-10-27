@@ -1,6 +1,7 @@
 use specta::Type;
+use tauri_specta::Event;
 
-#[derive(thiserror::Error, Debug, serde::Serialize, Type)]
+#[derive(thiserror::Error, Debug, serde::Serialize, Type, Event, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum FrontendError {
     #[error("IO error: {0}")]

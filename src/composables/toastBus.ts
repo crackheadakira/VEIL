@@ -21,7 +21,7 @@ export const toastBus = reactive({
    * @example
    * toastBus.addToast("success", "The operation was successful.");
    */
-  addToast: (type: ToastType, description: string) => {},
+  addToast: (type: ToastType, description: string) => { },
 
   /**
    * Add a persistent toast to the toast manager.
@@ -32,7 +32,7 @@ export const toastBus = reactive({
    * @param id - The id of the toast. Used to update the toast later.
    * @param type - The type of the toast. Can be either "success", "error", or "warning".
    */
-  persistentToast: (id: number, type: ToastType, description: string) => {},
+  persistentToast: (id: number, type: ToastType, description: string) => { },
 
   /**
    * Remove an existing toast by `id` from the toast manager.
@@ -42,5 +42,5 @@ export const toastBus = reactive({
    * @example
    * toastBus.remove(1);
    */
-  removeToast: (id: number) => {},
+  removeToast: (id: number) => { },
 });
