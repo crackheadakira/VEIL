@@ -45,6 +45,9 @@ pub enum PlayerEvent {
 
     /// Set the volume of the player.
     SetVolume { volume: f32 },
+
+    /// Add to personal queue via context menu
+    EnqueuePersonal { track_id: u32 },
 }
 
 struct OnlineFeatures {
@@ -86,6 +89,9 @@ impl PlayerEvent {
                 Self::seek_current_track(handle, position, resume, online)?
             }
             PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
+            PlayerEvent::EnqueuePersonal { track_id } => {
+                Self::enqueue_personal_track(handle, track_id)?
+            }
         };
 
         // TODO: Implement frontend emits.
@@ -288,6 +294,16 @@ impl PlayerEvent {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.set_volume(volume)?;
+        Ok(())
+    }
+
+    fn enqueue_personal_track(handle: &AppHandle, track_id: u32) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+
+        logging::debug!("Enqueued track {track_id} to personal queue");
+
+        queue.enqueue_personal(track_id);
         Ok(())
     }
 }

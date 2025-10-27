@@ -45,7 +45,7 @@ pub struct Player {
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
 
     /// Handler for next song [`StreamingSoundData`], allows for preloading.
-    next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    pub next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
 
     next_duration: f32,
 
@@ -135,7 +135,7 @@ impl Player {
 
         logging::debug!("Trying to play track {}", track.name);
 
-        let mut sh = if let Some(sound_handle) = self.next_sound_handle.take() {
+        let mut sh = if let Some(mut sound_handle) = self.next_sound_handle.take() {
             logging::debug!("Found preloaded sound_handle for track {}", track.name);
 
             self.duration = self.next_duration;
@@ -148,6 +148,8 @@ impl Player {
                 cover_url: Some(&track.cover_path),
                 duration: Some(std::time::Duration::from_secs(self.duration as u64)),
             })?;
+
+            sound_handle.resume(self.tween);
 
             sound_handle
         } else {

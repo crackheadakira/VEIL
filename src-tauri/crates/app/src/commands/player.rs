@@ -103,15 +103,27 @@ pub fn player_progress_channel(
                 last_progress_sent = std::time::Instant::now();
             }
 
-            if last_track_end_check.elapsed() >= track_end_interval
+            if player.next_sound_handle.is_none()
                 && (player.duration as f64 - player.get_progress()) <= 0.3
             {
                 drop(player);
-                let player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
+                let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
+                let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
 
-                // need to add a queue system to backend
-
-                // player.maybe_queue_next(next);
+                if let Some(next) = queue.peek_next() {
+                    match state.db.by_id::<Tracks>(&next) {
+                        Ok(track) => {
+                            if let Err(e) = player.maybe_queue_next(&track) {
+                                logging::error!("Failed to preload next track: {e}");
+                            }
+                        }
+                        Err(e) => {
+                            logging::error!(
+                                "Tried preloading next track but got error fetching from database: {e}"
+                            );
+                        }
+                    };
+                }
             }
         }
     });

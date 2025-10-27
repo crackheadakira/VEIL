@@ -20,15 +20,18 @@ use specta_typescript::Typescript;
 
 use crate::error::FrontendError;
 use crate::events::{PlayerEvent, SodapopConfigEvent};
+use crate::queue::QueueSystem;
 
 mod commands;
 mod config;
 mod discord;
 mod error;
 mod events;
+mod queue;
 
 pub struct SodapopState {
     pub player: Arc<RwLock<media_controls::Player>>,
+    pub queue: Arc<Mutex<QueueSystem>>,
     pub db: Arc<db::Database>,
     pub discord: Mutex<discord::DiscordState>,
     pub config: Arc<RwLock<SodapopConfig>>,
@@ -161,6 +164,7 @@ fn main() -> anyhow::Result<()> {
 
                 app.manage(SodapopState {
                     player: Arc::new(RwLock::new(player)),
+                    queue: Arc::new(Mutex::new(QueueSystem::new(0x12345678))),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),

@@ -386,7 +386,11 @@ export type PlayerEvent =
   /**
    * Set the volume of the player.
    */
-  | { type: "SetVolume"; data: { volume: number } };
+  | { type: "SetVolume"; data: { volume: number } }
+  /**
+   * Add to personal queue via context menu
+   */
+  | { type: "EnqueuePersonal"; data: { track_id: number } };
 export type PlayerProgressEvent =
   | { event: "Progress"; data: { progress: number } }
   | { event: "TrackEnd" };

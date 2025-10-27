@@ -115,5 +115,10 @@ async function handlePlaylist(
 
 async function handleAddToQueue(track: Tracks) {
   queueStore.personalQueue.push(track);
+
+  await events.playerEvent.emit({
+    type: "EnqueuePersonal",
+    data: { track_id: track.id },
+  });
 }
 </script>
