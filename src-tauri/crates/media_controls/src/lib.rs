@@ -1,9 +1,9 @@
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use common::Tracks;
 pub use kira::sound::PlaybackState;
 use kira::{
-    AudioManager, AudioManagerSettings, DefaultBackend, Tween,
+    AudioManager, AudioManagerSettings, DefaultBackend, StartTime, Tween,
     clock::{ClockHandle, ClockSpeed},
     sound::{
         FromFileError,
@@ -41,8 +41,13 @@ pub enum PlayerState {
 }
 
 pub struct Player {
-    /// Handler for  [`StreamingSoundData`]
+    /// Handler for current [`StreamingSoundData`]
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+
+    /// Handler for next song [`StreamingSoundData`], allows for preloading.
+    next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+
+    next_duration: f32,
 
     manager: AudioManager<DefaultBackend>,
 
@@ -89,11 +94,17 @@ impl Player {
 
         Ok(Player {
             sound_handle: None,
+            next_sound_handle: None,
+            next_duration: -1.0,
             manager,
             clock,
             scrobble_condition: -1.0,
             scrobbled: false,
-            tween: Tween::default(),
+            tween: Tween {
+                start_time: StartTime::Immediate,
+                duration: Duration::from_millis(0),
+                easing: kira::Easing::Linear,
+            },
             track: None,
             timestamp: 0,
             progress: 0.0,
@@ -123,9 +134,27 @@ impl Player {
         self.track = Some(track.id);
 
         logging::debug!("Trying to play track {}", track.name);
-        let sound_data = self.load_sound(track)?.start_position(self.progress);
 
-        let mut sh = self.manager.play(sound_data)?;
+        let mut sh = if let Some(sound_handle) = self.next_sound_handle.take() {
+            logging::debug!("Found preloaded sound_handle for track {}", track.name);
+
+            self.duration = self.next_duration;
+            self.set_scrobble_condition();
+
+            self.controls.set_metadata(MediaMetadata {
+                title: Some(&track.name),
+                album: Some(&track.album_name),
+                artist: Some(&track.artist_name),
+                cover_url: Some(&track.cover_path),
+                duration: Some(std::time::Duration::from_secs(self.duration as u64)),
+            })?;
+
+            sound_handle
+        } else {
+            let sound_data = self.load_sound(track)?.start_position(self.progress);
+            self.manager.play(sound_data)?
+        };
+
         sh.set_volume(self.volume, self.tween);
 
         self.sound_handle = Some(sh);
@@ -176,6 +205,21 @@ impl Player {
         })?;
 
         Ok(sound_data)
+    }
+
+    pub fn maybe_queue_next(&mut self, next: &Tracks) -> Result<(), PlayerError> {
+        logging::debug!("Preloading next track for gapless playback.");
+
+        let next_data = StreamingSoundData::from_file(&next.path)?;
+        self.next_duration = next_data.duration().as_secs_f32();
+
+        let mut next_handle = self.manager.play(next_data)?;
+        next_handle.set_volume(self.volume, self.tween);
+        next_handle.pause(self.tween);
+
+        self.next_sound_handle = Some(next_handle);
+
+        Ok(())
     }
 
     /// Check if the track has ended

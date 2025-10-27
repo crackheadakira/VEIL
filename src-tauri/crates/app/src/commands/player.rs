@@ -77,6 +77,7 @@ pub fn player_progress_channel(
             let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
 
             if last_track_end_check.elapsed() >= track_end_interval {
+                // Track is about to end within 300ms
                 if let Some(player_state) = player.get_player_state() {
                     if player_state == media_controls::PlaybackState::Stopped
                         && on_event.send(PlayerProgressEvent::TrackEnd).is_err()
@@ -100,6 +101,17 @@ pub fn player_progress_channel(
                     }
                 }
                 last_progress_sent = std::time::Instant::now();
+            }
+
+            if last_track_end_check.elapsed() >= track_end_interval
+                && (player.duration as f64 - player.get_progress()) <= 0.3
+            {
+                drop(player);
+                let player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
+
+                // need to add a queue system to backend
+
+                // player.maybe_queue_next(next);
             }
         }
     });
