@@ -261,10 +261,28 @@ impl Player {
     }
 
     /// Whether or not the clock progress has passsed `scrobble_condition`
-    pub fn scrobble(&self) -> bool {
+    fn scrobble(&self) -> bool {
         let clock_time = self.clock.time();
         let ticks = clock_time.ticks;
         ticks as f64 >= self.scrobble_condition
+    }
+
+    /// Whether or not the track should be scrobbled depending on three factors.
+    ///
+    /// 1. The clock progress has passed `scrobble_condition`.
+    /// 2. The track hasn't already been scrobbled.
+    /// 3. `track` contains Some(id)
+    pub fn should_scrobble(&mut self) -> Option<(u32, i64)> {
+        let should_scrobble = self.track.is_some() && self.scrobble() && !self.scrobbled;
+
+        if let Some(track_id) = self.track
+            && should_scrobble
+        {
+            self.scrobbled = true;
+            Some((track_id, self.timestamp))
+        } else {
+            None
+        }
     }
 
     /// Gets players state from sound handle if exists.

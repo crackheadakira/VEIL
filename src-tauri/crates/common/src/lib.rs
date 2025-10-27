@@ -62,7 +62,7 @@ pub struct Albums {
     pub path: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
 pub struct Tracks {
     /// ID of track in database

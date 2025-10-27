@@ -17,7 +17,7 @@ impl<'a> Track<'a> {
         Self { last_fm }
     }
 
-    pub fn update_now_playing(&'_ self, track: TrackData) -> UpdateNowPlaying<'_> {
+    pub fn update_now_playing(&'_ self, track: &'a TrackData) -> UpdateNowPlaying<'_> {
         UpdateNowPlaying::new(self.last_fm, track)
     }
 
@@ -32,12 +32,12 @@ impl<'a> Track<'a> {
 
 pub struct UpdateNowPlaying<'a> {
     last_fm: &'a LastFM,
-    track: TrackData,
+    track: &'a TrackData,
     method: APIMethod,
 }
 
 impl<'a> UpdateNowPlaying<'a> {
-    fn new(last_fm: &'a LastFM, track: TrackData) -> Self {
+    fn new(last_fm: &'a LastFM, track: &'a TrackData) -> Self {
         Self {
             last_fm,
             track,

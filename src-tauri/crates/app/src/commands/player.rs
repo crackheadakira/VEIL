@@ -13,20 +13,26 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
     let state = handle.state::<SodapopState>();
     let track = state.db.by_id::<Tracks>(&track_id)?;
 
+    let (last_fm_enabled, discord_enabled) = {
+        let config = lock_or_log(state.config.read(), "Config Read")?;
+        (config.last_fm_enabled, config.discord_enabled)
+    };
+
+    let should_scrobble = {
+        let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+        player.should_scrobble()
+    };
+
+    // if player has track that's been playing, scrobble condition will pass
+    if let Some((track_id, track_timestamp)) = should_scrobble
+        && last_fm_enabled
+    {
+        try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
+    }
+
+    // Temporary scope to avoid MutexGuard + async issues
     let (progress, duration) = {
         let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
-
-        // if player has track that's been playing, scrobble condition will pass
-        if player.track.is_some() && player.scrobble() && !player.scrobbled {
-            let player_track_id = player.track.unwrap();
-            let track = state.db.by_id::<Tracks>(&player_track_id)?;
-            let track_timestamp = player.timestamp;
-            let handle = handle.clone();
-            player.scrobbled = true;
-            scrobble_helper(handle, track, track_timestamp);
-        }
-
-        // temporary scope to drop player before await
 
         if player.track.is_some() {
             player.stop()?;
@@ -47,72 +53,51 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
         (player.progress, duration)
     };
 
+    // Get album_cover to be used in Discord RPC if both Discord && LastFM are enabled.
     let handle = handle.clone();
-    let album_cover = {
-        let enabled = {
-            let config = lock_or_log(state.config.read(), "Config Read")?;
-            config.last_fm_enabled && config.discord_enabled
-        };
-
-        if enabled {
-            let state = handle.state::<SodapopState>();
-            let lastfm = state.lastfm.lock().await;
-            match lastfm
-                .album()
-                .info(&track.album_name, &track.artist_name)
-                .send()
-                .await
-            {
-                Ok(response) => response
-                    .image
-                    .iter()
-                    .rev()
-                    .find(|img| !img.url.is_empty())
-                    .map(|img| img.url.clone()),
-                Err(e) => {
-                    logging::error!("LastFM album fetch error: {e}");
-                    None
-                }
-            }
-        } else {
-            None
-        }
-    };
-
-    let payload = discord::PayloadData {
-        state: format!("{} - {}", &track.artist_name, &track.album_name),
-        details: track.name.clone(),
-        small_image: String::from("playing"),
-        small_text: String::from("Playing"),
-        album_cover,
-        show_timestamps: true,
-        duration,
-        progress,
-    };
-
-    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
-    discord.make_activity(&payload)?;
-
-    let handle = handle.clone();
-    tokio::spawn(async move {
+    let album_cover = if last_fm_enabled && discord_enabled {
         let state = handle.state::<SodapopState>();
         let lastfm = state.lastfm.lock().await;
-        let res = lastfm
-            .track()
-            .update_now_playing(TrackData {
-                artist: track.artist_name,
-                name: track.name,
-                album: Some(track.album_name),
-                timestamp: None,
-            })
+        match lastfm
+            .album()
+            .info(&track.album_name, &track.artist_name)
             .send()
-            .await;
-
-        if let Err(LastFMError::RequestWhenDisabled) = res {
-        } else if let Err(e) = res {
-            logging::error!("LastFM error from player: {e}");
+            .await
+        {
+            Ok(response) => response
+                .image
+                .iter()
+                .rev()
+                .find(|img| !img.url.is_empty())
+                .map(|img| img.url.clone()),
+            Err(e) => {
+                logging::error!("LastFM album fetch error: {e}");
+                None
+            }
         }
-    });
+    } else {
+        None
+    };
+
+    if discord_enabled {
+        let payload = discord::PayloadData {
+            state: format!("{} - {}", &track.artist_name, &track.album_name),
+            details: track.name.clone(),
+            small_image: String::from("playing"),
+            small_text: String::from("Playing"),
+            album_cover,
+            show_timestamps: true,
+            duration,
+            progress,
+        };
+
+        let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+        discord.make_activity(&payload)?;
+    }
+
+    if last_fm_enabled {
+        try_update_now_playing_to_lastfm(handle.clone(), track).await?;
+    }
 
     Ok(())
 }
@@ -121,21 +106,24 @@ pub async fn play_track(handle: AppHandle, track_id: u32) -> Result<(), Frontend
 #[specta::specta]
 pub async fn pause_track(handle: AppHandle) -> Result<(), FrontendError> {
     let state = handle.state::<SodapopState>();
-    let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
-    let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
-    player.pause()?;
+
+    {
+        let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+        discord.update_activity("paused", "Paused", false, None);
+    };
+
+    let should_scrobble = {
+        let mut player = lock_or_log(state.player.lock(), "Player Mutex")?;
+        player.pause()?;
+
+        player.should_scrobble()
+    };
 
     // if player has track that's been playing, scrobble condition will pass
-    if player.track.is_some() && player.scrobble() && !player.scrobbled {
-        let player_track_id = player.track.unwrap();
-        let track = state.db.by_id::<Tracks>(&player_track_id)?;
-        let track_timestamp = player.timestamp;
-        let handle = handle.clone();
-        player.scrobbled = true;
-        scrobble_helper(handle, track, track_timestamp);
+    if let Some((track_id, track_timestamp)) = should_scrobble {
+        try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
     }
 
-    discord.update_activity("paused", "Paused", false, None);
     Ok(())
 }
 
@@ -302,24 +290,64 @@ pub fn player_progress_channel(
     Ok(())
 }
 
-pub fn scrobble_helper(handle: AppHandle, track: Tracks, track_timestamp: i64) {
-    tokio::spawn(async move {
-        let state = handle.state::<SodapopState>();
-        let lastfm = state.lastfm.lock().await;
-        let res = lastfm
-            .track()
-            .scrobble_one(&TrackData {
-                artist: track.artist_name,
-                name: track.name,
-                album: Some(track.album_name),
-                timestamp: Some(track_timestamp),
-            })
-            .send()
-            .await;
+/// Try to scrobble the track to LastFM.
+///
+/// Spawns an async task, and upon an error logs it.
+pub async fn try_scrobble_track_to_lastfm(
+    handle: AppHandle,
+    track_id: u32,
+    track_timestamp: i64,
+) -> Result<(), FrontendError> {
+    let state = handle.state::<SodapopState>();
+    let track = state.db.by_id::<Tracks>(&track_id)?;
 
-        if let Err(LastFMError::RequestWhenDisabled) = res {
-        } else if let Err(e) = res {
-            logging::error!("LastFM error from player: {e}");
-        }
-    });
+    let lastfm = state.lastfm.lock().await;
+    let res = lastfm
+        .track()
+        .scrobble_one(&TrackData {
+            artist: track.artist_name,
+            name: track.name,
+            album: Some(track.album_name),
+            timestamp: Some(track_timestamp),
+        })
+        .send()
+        .await;
+
+    match res {
+        Err(LastFMError::RequestWhenDisabled) => {}
+        Err(e) => return Err(e.into()),
+        Ok(_) => {}
+    }
+
+    Ok(())
+}
+
+/// Tries to set now playing to given track on LastFM.
+///
+/// Spawns an async task, and upon an error logs it.
+pub async fn try_update_now_playing_to_lastfm(
+    handle: AppHandle,
+    track: Tracks,
+) -> Result<(), FrontendError> {
+    let state = handle.state::<SodapopState>();
+
+    let lastfm = state.lastfm.lock().await;
+    let res = lastfm
+        .track()
+        .update_now_playing(&TrackData {
+            artist: track.artist_name,
+            name: track.name,
+            album: Some(track.album_name),
+            timestamp: None,
+        })
+        .send()
+        .await;
+
+    match res {
+        Err(LastFMError::RequestWhenDisabled) => {}
+        Err(e) => return Err(e.into()),
+        Ok(_) => {}
+    }
+
+    Ok(())
 }

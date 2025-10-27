@@ -239,7 +239,7 @@ fn main() -> anyhow::Result<()> {
                 }
 
                 let app_handle = app_handle.clone();
-                tokio::spawn(async move {
+                tauri::async_runtime::spawn(async move {
                     if let Some(l) = event.payload.last_fm_enabled {
                         let state = app_handle.state::<SodapopState>();
                         let mut lastfm = state.lastfm.lock().await;
@@ -251,13 +251,14 @@ fn main() -> anyhow::Result<()> {
                 config.update_config(event.payload).unwrap();
             });
 
-            let app_handle: tauri::AppHandle = app.handle().clone();
+            let app_handle = app.handle().clone();
             NewTrackEvent::listen(app, move |event| {
-                let state = app_handle.state::<SodapopState>();
-
-                if let Err(e) = NewTrackEvent::set_new_track(event, state) {
-                    logging::error!("Failed to set new track: {:?}", e);
-                }
+                let app_handle = app_handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(e) = NewTrackEvent::set_new_track(event, app_handle).await {
+                        logging::error!("Failed to set new track: {:?}", e);
+                    }
+                });
             });
 
             let covers = path.join("covers");
