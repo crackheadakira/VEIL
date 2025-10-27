@@ -19,7 +19,7 @@ use raw_window_handle::HasWindowHandle;
 use specta_typescript::Typescript;
 
 use crate::error::FrontendError;
-use crate::events::{PlayerEvent, SodapopConfigEvent};
+use crate::events::{EventSystemHandler, PlayerEvent, QueueEvent, SodapopConfigEvent};
 use crate::queue::QueueSystem;
 
 mod commands;
@@ -90,7 +90,8 @@ fn main() -> anyhow::Result<()> {
         .events(collect_events![
             SodapopConfigEvent,
             PlayerEvent,
-            FrontendError
+            FrontendError,
+            QueueEvent
         ])
         .typ::<MediaPayload>()
         .typ::<SodapopConfig>();
@@ -262,16 +263,10 @@ fn main() -> anyhow::Result<()> {
             });
 
             let app_handle = app.handle().clone();
-            PlayerEvent::listen(app, move |event| {
-                let app_handle = app_handle.clone();
-                tauri::async_runtime::spawn(async move {
-                    if let Err(e) = PlayerEvent::handle(event, &app_handle).await {
-                        if let Err(e) = e.emit(&app_handle) {
-                            logging::error!("Failed to emit error to Frontend: {:?}", e);
-                        }
-                    }
-                });
-            });
+            PlayerEvent::attach_listener(app_handle);
+
+            let app_handle = app.handle().clone();
+            QueueEvent::attach_listener(app_handle);
 
             let covers = path.join("covers");
             if !covers.exists() {

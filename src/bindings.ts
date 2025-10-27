@@ -249,10 +249,12 @@ export const commands = {
 export const events = __makeEvents__<{
   frontendError: FrontendError;
   playerEvent: PlayerEvent;
+  queueEvent: QueueEvent;
   sodapopConfigEvent: SodapopConfigEvent;
 }>({
   frontendError: "frontend-error",
   playerEvent: "player-event",
+  queueEvent: "queue-event",
   sodapopConfigEvent: "sodapop-config-event",
 });
 
@@ -386,11 +388,7 @@ export type PlayerEvent =
   /**
    * Set the volume of the player.
    */
-  | { type: "SetVolume"; data: { volume: number } }
-  /**
-   * Add to personal queue via context menu
-   */
-  | { type: "EnqueuePersonal"; data: { track_id: number } };
+  | { type: "SetVolume"; data: { volume: number } };
 export type PlayerProgressEvent =
   | { event: "Progress"; data: { progress: number } }
   | { event: "TrackEnd" };
@@ -420,6 +418,11 @@ export type Playlists = {
    */
   cover_path: string;
 };
+export type QueueEvent =
+  /**
+   * Add to personal queue via context menu
+   */
+  { type: "EnqueuePersonal"; data: { track_id: number } };
 export type Search = {
   /**
    * ID of the search item

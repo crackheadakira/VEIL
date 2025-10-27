@@ -45,9 +45,6 @@ pub enum PlayerEvent {
 
     /// Set the volume of the player.
     SetVolume { volume: f32 },
-
-    /// Add to personal queue via context menu
-    EnqueuePersonal { track_id: u32 },
 }
 
 struct OnlineFeatures {
@@ -58,12 +55,37 @@ struct OnlineFeatures {
     last_fm_enabled: bool,
 }
 
-impl PlayerEvent {
+// oh dear god what have I made
+pub trait EventSystemHandler: Event + Sized + Send + Sync + 'static + Serialize {
     /// Take in the corresponding events and pass them to the appropriate
     /// private handler.
     ///
     /// Will also emit the required updates to the frontend.
-    pub async fn handle(
+    fn handle(
+        event: TypedEvent<Self>,
+        handle: &AppHandle,
+    ) -> impl Future<Output = Result<(), FrontendError>> + Send;
+
+    /// Attaches a listener to the given event on it's own async task.
+    fn attach_listener(handle: AppHandle)
+    where
+        for<'de> Self: Deserialize<'de>,
+    {
+        Self::listen(&handle.clone(), move |event| {
+            let handle = handle.clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = Self::handle(event, &handle).await {
+                    if let Err(e) = e.emit(&handle) {
+                        logging::error!("Failed to emit error to Frontend: {:?}", e);
+                    }
+                }
+            });
+        });
+    }
+}
+
+impl EventSystemHandler for PlayerEvent {
+    async fn handle(
         event: TypedEvent<PlayerEvent>,
         handle: &AppHandle,
     ) -> Result<(), FrontendError> {
@@ -89,9 +111,6 @@ impl PlayerEvent {
                 Self::seek_current_track(handle, position, resume, online)?
             }
             PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
-            PlayerEvent::EnqueuePersonal { track_id } => {
-                Self::enqueue_personal_track(handle, track_id)?
-            }
         };
 
         // TODO: Implement frontend emits.
@@ -99,7 +118,9 @@ impl PlayerEvent {
 
         Ok(())
     }
+}
 
+impl PlayerEvent {
     /// Loads the track into the player at the specified position.
     fn initialize_player_with_track(
         handle: &AppHandle,
@@ -296,7 +317,31 @@ impl PlayerEvent {
         player.set_volume(volume)?;
         Ok(())
     }
+}
 
+#[derive(Serialize, Deserialize, Type, Event, Clone)]
+#[serde(tag = "type", content = "data")]
+pub enum QueueEvent {
+    /// Add to personal queue via context menu
+    EnqueuePersonal { track_id: u32 },
+}
+
+impl EventSystemHandler for QueueEvent {
+    async fn handle(
+        event: TypedEvent<QueueEvent>,
+        handle: &AppHandle,
+    ) -> Result<(), FrontendError> {
+        match event.payload {
+            QueueEvent::EnqueuePersonal { track_id } => {
+                Self::enqueue_personal_track(handle, track_id)?
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl QueueEvent {
     fn enqueue_personal_track(handle: &AppHandle, track_id: u32) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;

@@ -26,6 +26,9 @@ pub struct QueueSystem {
 // TODO: Support sorting based on different criteria --> would depend on queries and
 // how to fetch it from database.
 
+// TODO: How do we handle recreating the queue on boot-up, i.e. how do we know if the queue
+// is from playlist or album & how do we remember the current track --> store in config?
+
 impl QueueSystem {
     pub fn new(rng_state: u32) -> Self {
         Self {
