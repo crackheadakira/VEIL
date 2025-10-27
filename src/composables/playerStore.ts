@@ -77,7 +77,7 @@ export const usePlayerStore = defineStore("player", () => {
     if (loop.value === "track") loop.value = "queue";
 
     const nextTrack = await queueStore.getQueueTrack(direction);
-    if (nextTrack) await events.newTrackEvent.emit({ track: nextTrack });
+    if (nextTrack) await events.playerEvent.emit({ type: "NewTrack", data: { track: nextTrack } });
   }
 
   /**
@@ -140,7 +140,7 @@ export const usePlayerStore = defineStore("player", () => {
 
     if (!hasTrack && currentTrack.value) {
       paused.value = false;
-      await events.newTrackEvent.emit({ track: currentTrack.value });
+      await events.playerEvent.emit({ type: "NewTrack", data: { track: currentTrack.value } });
 
       return;
     } else if (!hasTrack) {
@@ -173,7 +173,7 @@ export const usePlayerStore = defineStore("player", () => {
 
     if (loop.value === "track") {
       // replay the same track
-      await events.newTrackEvent.emit({ track: currentTrack.value });
+      await events.playerEvent.emit({ type: "NewTrack", data: { track: currentTrack.value } });
       return;
     }
 
@@ -217,10 +217,23 @@ export const usePlayerStore = defineStore("player", () => {
 
   // LISTENERS
 
-  const listenNewTrack = events.newTrackEvent.listen((e) => {
-    currentTrack.value = e.payload.track;
-    playerProgress.value = 0;
-    paused.value = false;
+  const listenNewTrack = events.playerEvent.listen((e) => {
+    switch (e.payload.type) {
+      case "NewTrack":
+        currentTrack.value = e.payload.data.track;
+        playerProgress.value = 0;
+        paused.value = false;
+        break;
+
+      case "Pause":
+        break;
+
+      case "Resume":
+        break;
+
+      case "Stop":
+        break;
+    }
   });
 
   const listenMediaControl = listen(

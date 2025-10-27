@@ -92,7 +92,7 @@ const props = defineProps<{
 
 // Make the backend set the track and do everything related to it.
 async function emitNewTrack(track: Tracks, trackIdx: number) {
-  await events.newTrackEvent.emit({ track });
+  await events.playerEvent.emit({ type: "NewTrack", data: { track } });
 
   // Might move queue to backend & instead of persisting
   // queue across runs, make a new queue every time

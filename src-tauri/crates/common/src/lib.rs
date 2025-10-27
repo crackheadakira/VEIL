@@ -67,22 +67,31 @@ pub struct Albums {
 pub struct Tracks {
     /// ID of track in database
     pub id: u32,
+
     /// ID of album in database
     pub album_id: u32,
+
     /// ID of artist in database
     pub artist_id: u32,
+
     /// Album name
     pub album_name: String,
+
     /// Artist name
     pub artist_name: String,
+
     /// Track name
     pub name: String,
+
     /// Track number in album
     pub number: i32,
+
     /// Track duration
     pub duration: u32,
+
     /// Path to album cover in Sodapop local app data
     pub cover_path: String,
+
     /// Path to track file
     pub path: String,
 }

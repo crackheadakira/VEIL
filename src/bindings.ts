@@ -311,11 +311,11 @@ export const commands = {
 
 export const events = __makeEvents__<{
   frontendError: FrontendError;
-  newTrackEvent: NewTrackEvent;
+  playerEvent: PlayerEvent;
   sodapopConfigEvent: SodapopConfigEvent;
 }>({
   frontendError: "frontend-error",
-  newTrackEvent: "new-track-event",
+  playerEvent: "player-event",
   sodapopConfigEvent: "sodapop-config-event",
 });
 
@@ -421,7 +421,11 @@ export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
-export type NewTrackEvent = { track: Tracks };
+export type PlayerEvent =
+  | { type: "NewTrack"; data: { track: Tracks } }
+  | { type: "Pause" }
+  | { type: "Resume" }
+  | { type: "Stop" };
 export type PlayerProgressEvent =
   | { event: "Progress"; data: { progress: number } }
   | { event: "TrackEnd" };

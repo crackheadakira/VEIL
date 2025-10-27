@@ -85,7 +85,8 @@ async function handlePlayButton(shuffle: boolean) {
 
   queueStore.setQueueIdx(0);
   const track = await queueStore.getTrackAtIdx(0);
-  if (track) await events.newTrackEvent.emit({ track });
+  if (track)
+    await events.playerEvent.emit({ type: "NewTrack", data: { track } });
 }
 
 async function updateData() {

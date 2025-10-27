@@ -23,18 +23,33 @@ pub struct SodapopConfigEvent {
 }
 
 #[derive(Serialize, Deserialize, Type, Event)]
-pub struct NewTrackEvent {
-    pub track: Tracks,
+#[serde(tag = "type", content = "data")]
+pub enum PlayerEvent {
+    NewTrack { track: Tracks },
+    Pause,
+    Resume,
+    Stop,
 }
 
-impl NewTrackEvent {
+impl PlayerEvent {
+    pub async fn handle(
+        event: TypedEvent<PlayerEvent>,
+        handle: &tauri::AppHandle,
+    ) -> Result<(), FrontendError> {
+        match event.payload {
+            PlayerEvent::NewTrack { track } => Self::set_new_track(track, &handle).await?,
+            PlayerEvent::Pause => todo!(),
+            PlayerEvent::Resume => todo!(),
+            PlayerEvent::Stop => todo!(),
+        };
+
+        Ok(())
+    }
+
     /// Resets the player states to as if no track had been playing, then loads in the new track.
     ///
     /// Also handles Discord RPC & Last.FM scrobbling.
-    pub async fn set_new_track(
-        event: TypedEvent<NewTrackEvent>,
-        handle: &tauri::AppHandle,
-    ) -> Result<(), FrontendError> {
+    async fn set_new_track(track: Tracks, handle: &tauri::AppHandle) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();
 
         let (last_fm_enabled, discord_enabled) = {
@@ -46,8 +61,6 @@ impl NewTrackEvent {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
             player.should_scrobble()
         };
-
-        let track = event.payload.track;
 
         // Scrobble the previous track to Last.FM
         if let Some((track_id, track_timestamp)) = should_scrobble
