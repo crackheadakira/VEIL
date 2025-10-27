@@ -2,7 +2,7 @@ use common::Tracks;
 use logging::lock_or_log;
 use serde::{Deserialize, Serialize};
 use specta::Type;
-use tauri::Manager;
+use tauri::{AppHandle, Manager};
 use tauri_specta::{Event, TypedEvent};
 
 use crate::{
@@ -31,14 +31,29 @@ pub enum PlayerEvent {
     Stop,
 }
 
+struct OnlineFeatures {
+    discord_enabled: bool,
+    last_fm_enabled: bool,
+}
+
 impl PlayerEvent {
     pub async fn handle(
         event: TypedEvent<PlayerEvent>,
-        handle: &tauri::AppHandle,
+        handle: &AppHandle,
     ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+
+        let online = {
+            let config = lock_or_log(state.config.read(), "Config Read")?;
+            OnlineFeatures {
+                last_fm_enabled: config.last_fm_enabled,
+                discord_enabled: config.discord_enabled,
+            }
+        };
+
         match event.payload {
-            PlayerEvent::NewTrack { track } => Self::set_new_track(track, &handle).await?,
-            PlayerEvent::Pause => todo!(),
+            PlayerEvent::NewTrack { track } => Self::set_new_track(track, &handle, online).await?,
+            PlayerEvent::Pause => Self::pause_current_track(&handle, online).await?,
             PlayerEvent::Resume => todo!(),
             PlayerEvent::Stop => todo!(),
         };
@@ -49,13 +64,12 @@ impl PlayerEvent {
     /// Resets the player states to as if no track had been playing, then loads in the new track.
     ///
     /// Also handles Discord RPC & Last.FM scrobbling.
-    async fn set_new_track(track: Tracks, handle: &tauri::AppHandle) -> Result<(), FrontendError> {
+    async fn set_new_track(
+        track: Tracks,
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();
-
-        let (last_fm_enabled, discord_enabled) = {
-            let config = lock_or_log(state.config.read(), "Config Read")?;
-            (config.last_fm_enabled, config.discord_enabled)
-        };
 
         let should_scrobble = {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
@@ -64,7 +78,7 @@ impl PlayerEvent {
 
         // Scrobble the previous track to Last.FM
         if let Some((track_id, track_timestamp)) = should_scrobble
-            && last_fm_enabled
+            && online.last_fm_enabled
         {
             try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
         }
@@ -85,32 +99,32 @@ impl PlayerEvent {
             (player.duration, player.progress)
         };
 
-        // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
-        let album_cover = if last_fm_enabled && discord_enabled {
-            let state = handle.state::<SodapopState>();
-            let lastfm = state.lastfm.lock().await;
-            match lastfm
-                .album()
-                .info(&track.album_name, &track.artist_name)
-                .send()
-                .await
-            {
-                Ok(response) => response
-                    .image
-                    .iter()
-                    .rev()
-                    .find(|img| !img.url.is_empty())
-                    .map(|img| img.url.clone()),
-                Err(e) => {
-                    logging::error!("LastFM album fetch error: {e}");
-                    None
+        if online.discord_enabled {
+            // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
+            let album_cover = if online.last_fm_enabled {
+                let state = handle.state::<SodapopState>();
+                let lastfm = state.lastfm.lock().await;
+                match lastfm
+                    .album()
+                    .info(&track.album_name, &track.artist_name)
+                    .send()
+                    .await
+                {
+                    Ok(response) => response
+                        .image
+                        .iter()
+                        .rev()
+                        .find(|img| !img.url.is_empty())
+                        .map(|img| img.url.clone()),
+                    Err(e) => {
+                        logging::error!("LastFM album fetch error: {e}");
+                        None
+                    }
                 }
-            }
-        } else {
-            None
-        };
+            } else {
+                None
+            };
 
-        if discord_enabled {
             let payload = discord::PayloadData {
                 state: format!("{} - {}", &track.artist_name, &track.album_name),
                 details: track.name.clone(),
@@ -127,8 +141,39 @@ impl PlayerEvent {
         }
 
         // Update Last.FM now playing to current track
-        if last_fm_enabled {
+        if online.last_fm_enabled {
             try_update_now_playing_to_lastfm(handle.clone(), track).await?;
+        }
+
+        Ok(())
+    }
+
+    /// Pauses the currently playing track.
+    ///
+    /// Update Discord activity to also say paused, and will check if the current playing track
+    /// should be scrobbled on Last.FM
+    async fn pause_current_track(
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+
+        if online.discord_enabled {
+            let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
+            discord.update_activity("paused", "Paused", false, None);
+        };
+
+        let should_scrobble = {
+            let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
+            player.pause()?;
+
+            player.should_scrobble()
+        };
+
+        if online.last_fm_enabled {
+            if let Some((track_id, track_timestamp)) = should_scrobble {
+                try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
+            }
         }
 
         Ok(())
