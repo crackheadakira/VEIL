@@ -22,7 +22,7 @@ pub struct SodapopConfigEvent {
     pub last_fm_key: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Type, Event)]
+#[derive(Serialize, Deserialize, Type, Event, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayerEvent {
     /// If a new track is to be played.

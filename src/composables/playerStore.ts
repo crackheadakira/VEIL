@@ -1,4 +1,4 @@
-import { commands, events, handleBackendError, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
+import { commands, events, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
 import { listen, Event } from "@tauri-apps/api/event";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
@@ -132,12 +132,14 @@ export const usePlayerStore = defineStore("player", () => {
    * @example
    * ```ts
    * // Track is currently paused
-   * await handlePlayAndPause(); // Track is now playing
-   * await handlePlayAndPause(); // Track is now paused
+   * await handleResumeAndPause(); // Track is now playing
+   * await handleResumeAndPause(); // Track is now paused
    */
-  async function handlePlayAndPause() {
+  async function handleResumeAndPause() {
     const hasTrack = await commands.playerHasTrack();
 
+    // If the backend player has no track and the frontend
+    // does, play a new track.
     if (!hasTrack && currentTrack.value) {
       paused.value = false;
       await events.playerEvent.emit({ type: "NewTrack", data: { track: currentTrack.value } });
@@ -148,13 +150,8 @@ export const usePlayerStore = defineStore("player", () => {
       return;
     }
 
-    if (paused.value === true) {
-      const result = await commands.resumeTrack();
-      if (result.status === "error") return handleBackendError(result.error);
-    } else {
-      const result = await commands.pauseTrack();
-      if (result.status === "error") return handleBackendError(result.error);
-    }
+    if (paused.value === true) await events.playerEvent.emit({ type: "Resume" });
+    else await events.playerEvent.emit({ type: "Pause" });
 
     paused.value = !paused.value;
   };
@@ -178,7 +175,7 @@ export const usePlayerStore = defineStore("player", () => {
     }
 
     if (queueStore.queueHasTrack) return await skipTrack('next');
-    else return await handlePlayAndPause();
+    else return await handleResumeAndPause();
   }
 
   /**
@@ -186,8 +183,7 @@ export const usePlayerStore = defineStore("player", () => {
    */
   async function handleVolume() {
     nextTick(async () => {
-      const result = await commands.setVolume(+playerVolume.value);
-      if (result.status === "error") return handleBackendError(result.error);
+      await events.playerEvent.emit({ type: "SetVolume", data: { volume: playerVolume.value } });
     });
   }
 
@@ -203,16 +199,13 @@ export const usePlayerStore = defineStore("player", () => {
    * If the duration is not 0, seeks the player to the current progress.
    */
   async function initialLoad() {
-    await commands.pauseTrack();
+    // Unsure of the purpose of this.
+    // await events.playerEvent.emit({ type: "Pause" });
     const duration = await commands.getPlayerDuration();
 
-    if (duration !== 0) {
-      const result = await commands.seekTrack(playerProgress.value, false);
-      if (result.status === "error") return handleBackendError(result.error);
-    }
+    if (duration !== 0) await events.playerEvent.emit({ type: "Seek", data: { position: playerProgress.value, resume: false } });
 
-    const result = await commands.setVolume(+playerVolume.value);
-    if (result.status === "error") return handleBackendError(result.error);
+    await events.playerEvent.emit({ type: "SetVolume", data: { volume: playerVolume.value } });
   }
 
   // LISTENERS
@@ -242,31 +235,12 @@ export const usePlayerStore = defineStore("player", () => {
       const payload = e.payload;
 
       switch (true) {
-        case "Play" in payload:
-          await handlePlayAndPause();
-          break;
-        case "Pause" in payload:
-          await handlePlayAndPause();
-          break;
         case "Next" in payload:
           skipTrack('next');
           break;
         case "Previous" in payload:
           skipTrack('back');
           break;
-        case "Seek" in payload: {
-          const result = await commands.seekTrack(payload.Seek, true);
-          if (result.status === "error") return handleBackendError(result.error);
-          break;
-        } case "Volume" in payload: {
-          const result = await commands.setVolume(+playerVolume.value);
-          if (result.status === "error") return handleBackendError(result.error);
-          break;
-        } case "Position" in payload: {
-          const result = await commands.seekTrack(payload.Position, false);
-          if (result.status === "error") return handleBackendError(result.error);
-          break;
-        }
       }
     },
   );
@@ -284,7 +258,7 @@ export const usePlayerStore = defineStore("player", () => {
     loopQueue,
     $reset,
     handleProgress,
-    handlePlayAndPause,
+    handleResumeAndPause,
     handleVolume,
     initialLoad,
     handleSongEnd,

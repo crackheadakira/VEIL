@@ -72,6 +72,7 @@
 <script setup lang="ts">
 import {
   commands,
+  events,
   formatTime,
   handleBackendError,
   Tracks,
@@ -120,15 +121,14 @@ watch(
  * If the player is playing it continues playing from the selected progress. Otherwise it just seeks to the selected progress.
  */
 async function selectProgress() {
+  // TODO: bake this logic into playerStore w/ listeners.
   if (!(await commands.playerHasTrack())) return;
   const skipTo = (await commands.getPlayerState()) === "Playing";
 
-  const result = await commands.seekTrack(
-    parseFloat(progress.value.toString()),
-    skipTo,
-  );
-
-  if (result.status === "error") return handleBackendError(result.error);
+  await events.playerEvent.emit({
+    type: "Seek",
+    data: { position: progress.value, resume: skipTo },
+  });
 
   beingHeld.value = false;
 

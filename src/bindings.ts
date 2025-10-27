@@ -168,47 +168,6 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async pauseTrack(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("pause_track") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async resumeTrack(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("resume_track") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async seekTrack(
-    position: number,
-    resume: boolean,
-  ): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("seek_track", { position, resume }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async setVolume(volume: number): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_volume", { volume }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
   async getPlayerState(): Promise<PlayerState> {
     return await TAURI_INVOKE("get_player_state");
   },
@@ -422,10 +381,30 @@ export type MetadataEvent =
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
 export type PlayerEvent =
+  /**
+   * If a new track is to be played.
+   */
   | { type: "NewTrack"; data: { track: Tracks } }
+  /**
+   * If the current track is to be paused.
+   */
   | { type: "Pause" }
+  /**
+   * If the current track is to be resumed.
+   */
   | { type: "Resume" }
-  | { type: "Stop" };
+  /**
+   * If the current track is to be stopped.
+   */
+  | { type: "Stop" }
+  /**
+   * Where to set the progress of the currently playing track.
+   */
+  | { type: "Seek"; data: { position: number; resume: boolean } }
+  /**
+   * Set the volume of the player.
+   */
+  | { type: "SetVolume"; data: { volume: number } };
 export type PlayerProgressEvent =
   | { event: "Progress"; data: { progress: number } }
   | { event: "TrackEnd" };

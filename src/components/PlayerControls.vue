@@ -11,7 +11,7 @@
       @click="playerStore.skipTrack('back')"
     ></span>
     <span
-      @click="playerStore.handlePlayAndPause"
+      @click="playerStore.handleResumeAndPause"
       :class="
         !playerStore.paused
           ? 'i-fluent-pause-24-filled'

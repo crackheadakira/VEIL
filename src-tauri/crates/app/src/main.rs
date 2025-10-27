@@ -184,32 +184,40 @@ fn main() -> anyhow::Result<()> {
                 use media_controls::MediaControlEvent;
 
                 let result = match event {
-                    MediaControlEvent::Play => {
-                        handle.emit("media-control", MediaPayload::Play(false))
-                    }
-                    MediaControlEvent::Pause => {
-                        handle.emit("media-control", MediaPayload::Pause(false))
-                    }
+                    MediaControlEvent::Play => PlayerEvent::emit(&PlayerEvent::Resume, &handle),
+                    MediaControlEvent::Pause => PlayerEvent::emit(&PlayerEvent::Pause, &handle),
                     MediaControlEvent::Next => {
                         handle.emit("media-control", MediaPayload::Next(false))
                     }
                     MediaControlEvent::Previous => {
                         handle.emit("media-control", MediaPayload::Previous(false))
                     }
-                    MediaControlEvent::SetVolume(value) => {
-                        handle.emit("media-control", MediaPayload::Volume(value))
-                    }
+                    MediaControlEvent::SetVolume(volume) => PlayerEvent::emit(
+                        &PlayerEvent::SetVolume {
+                            volume: volume as f32,
+                        },
+                        &handle,
+                    ),
                     MediaControlEvent::SeekBy(direction, duration) => {
                         let sign = match direction {
                             media_controls::SeekDirection::Forward => 1.0,
                             media_controls::SeekDirection::Backward => -1.0,
                         };
                         let secs = duration.as_secs_f64() * sign;
-                        handle.emit("media-control", MediaPayload::Seek(secs))
+                        PlayerEvent::emit(
+                            &PlayerEvent::Seek {
+                                position: secs,
+                                resume: true,
+                            },
+                            &handle,
+                        )
                     }
-                    MediaControlEvent::SetPosition(position) => handle.emit(
-                        "media-control",
-                        MediaPayload::Position(position.0.as_secs_f64()),
+                    MediaControlEvent::SetPosition(position) => PlayerEvent::emit(
+                        &PlayerEvent::Seek {
+                            position: position.0.as_secs_f64(),
+                            resume: false,
+                        },
+                        &handle,
                     ),
                     _ => Ok(()),
                 };
