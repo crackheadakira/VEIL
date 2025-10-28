@@ -87,6 +87,7 @@ const idxWidth = computed(() => props.tracks.length.toString().length); // numbe
 
 const props = defineProps<{
   tracks: Tracks[];
+  originId: number;
   playlist?: Playlists;
 }>();
 
@@ -100,6 +101,21 @@ async function emitNewTrack(track: Tracks, trackIdx: number) {
   // In backend could simply store a Vec of track IDs.
   // Would allow for pre-fetching the next track in
   // the audio player.
+
+  const trackIds = props.tracks.map((track) => track.id);
+
+  await events.queueEvent.emit({
+    type: "SetGlobalQueue",
+    data: {
+      tracks: trackIds,
+      queue_idx: trackIdx,
+      origin: {
+        type: props.playlist !== undefined ? "Playlist" : "Album",
+        data: { id: props.originId },
+      },
+    },
+  });
+
   queueStore.setGlobalQueue(props.tracks);
   queueStore.setQueueIdx(trackIdx);
 }

@@ -42,7 +42,7 @@
       </div>
     </div>
 
-    <TrackList :tracks="data.tracks" />
+    <TrackList :origin-id="data.album.id" :tracks="data.tracks" />
   </div>
 </template>
 

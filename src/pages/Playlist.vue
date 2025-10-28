@@ -39,7 +39,11 @@
       </div>
     </div>
 
-    <TrackList :tracks="data.tracks" :playlist="data.playlist" />
+    <TrackList
+      :tracks="data.tracks"
+      :origin-id="data.playlist.id"
+      :playlist="data.playlist"
+    />
   </div>
 </template>
 

@@ -422,7 +422,11 @@ export type QueueEvent =
   /**
    * Add to personal queue via context menu
    */
-  { type: "EnqueuePersonal"; data: { track_id: number } };
+  | { type: "EnqueuePersonal"; data: { track_id: number } }
+  | {
+      type: "SetGlobalQueue";
+      data: { tracks: number[]; queue_idx: number; origin: QueueOrigin };
+    };
 export type QueueOrigin =
   | { type: "Playlist"; data: { id: number } }
   | { type: "Album"; data: { id: number } };

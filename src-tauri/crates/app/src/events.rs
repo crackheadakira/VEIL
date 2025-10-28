@@ -25,6 +25,20 @@ pub struct SodapopConfigEvent {
     pub queue_idx: Option<usize>,
 }
 
+impl Default for SodapopConfigEvent {
+    fn default() -> Self {
+        Self {
+            theme: None,
+            discord_enabled: None,
+            last_fm_enabled: None,
+            music_dir: None,
+            last_fm_key: None,
+            queue_origin: None,
+            queue_idx: None,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayerEvent {
@@ -327,6 +341,12 @@ impl PlayerEvent {
 pub enum QueueEvent {
     /// Add to personal queue via context menu
     EnqueuePersonal { track_id: u32 },
+
+    SetGlobalQueue {
+        tracks: Vec<u32>,
+        queue_idx: usize,
+        origin: QueueOrigin,
+    },
 }
 
 impl EventSystemHandler for QueueEvent {
@@ -338,6 +358,11 @@ impl EventSystemHandler for QueueEvent {
             QueueEvent::EnqueuePersonal { track_id } => {
                 Self::enqueue_personal_track(handle, track_id)?
             }
+            QueueEvent::SetGlobalQueue {
+                tracks,
+                queue_idx,
+                origin,
+            } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
         }
 
         Ok(())
@@ -350,6 +375,39 @@ impl QueueEvent {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         queue.enqueue_personal(track_id);
+        Ok(())
+    }
+
+    fn set_global_queue(
+        handle: &AppHandle,
+        tracks: Vec<u32>,
+        queue_idx: usize,
+        origin: QueueOrigin,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+        let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
+
+        if let Some(original_origin) = queue.origin
+            && original_origin != origin
+        {
+            queue.set_global(tracks);
+            queue.set_origin(origin);
+
+            config.update_config(SodapopConfigEvent {
+                queue_origin: Some(origin),
+                ..SodapopConfigEvent::default()
+            })?;
+        }
+
+        if queue.current_index() != queue_idx {
+            queue.set_current_index(queue_idx);
+            config.update_config(SodapopConfigEvent {
+                queue_idx: Some(queue_idx),
+                ..SodapopConfigEvent::default()
+            })?;
+        }
+
         Ok(())
     }
 }

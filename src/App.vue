@@ -100,7 +100,7 @@ onMounted(async () => {
   channel.onmessage = async (msg) => {
     if (msg.event === "Progress")
       await playerStore.handleProgress(false, msg.data.progress);
-    else await playerStore.handleSongEnd();
+    // else await playerStore.handleSongEnd();
   };
 
   await events.frontendError.listen((e) => {

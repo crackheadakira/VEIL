@@ -1,4 +1,4 @@
-use crate::{SodapopState, TauriState, error::FrontendError};
+use crate::{SodapopState, TauriState, error::FrontendError, events::PlayerEvent};
 use common::Tracks;
 use lastfm::{LastFMError, TrackData};
 use logging::lock_or_log;
@@ -6,6 +6,7 @@ use media_controls::PlayerState;
 use serde::Serialize;
 use specta::Type;
 use tauri::{AppHandle, Manager, ipc::Channel};
+use tauri_specta::Event;
 
 #[tauri::command]
 #[specta::specta]
@@ -77,15 +78,35 @@ pub fn player_progress_channel(
             let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
 
             if last_track_end_check.elapsed() >= track_end_interval {
-                // Track is about to end within 300ms
                 if let Some(player_state) = player.get_player_state() {
-                    if player_state == media_controls::PlaybackState::Stopped
-                        && on_event.send(PlayerProgressEvent::TrackEnd).is_err()
-                    {
-                        logging::error!("Track-end channel closed");
-                        break;
+                    if player_state == media_controls::PlaybackState::Stopped {
+                        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+                        if let Some(next_track_id) = queue.next() {
+                            let track = match state.db.by_id::<Tracks>(&next_track_id) {
+                                Ok(t) => t,
+                                Err(e) => {
+                                    logging::error!(
+                                        "Error fetching track from database in queue: {e}"
+                                    );
+                                    return;
+                                }
+                            };
+
+                            match PlayerEvent::emit(
+                                &PlayerEvent::NewTrack { track: track },
+                                &handle,
+                            ) {
+                                Ok(_) => {}
+                                Err(e) => {
+                                    logging::error!(
+                                        "Error emitting new track from queue system: {e}"
+                                    );
+                                }
+                            };
+                        }
                     }
                 }
+
                 last_track_end_check = std::time::Instant::now();
             }
 

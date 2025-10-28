@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-#[derive(Serialize, Deserialize, Type, Copy, Clone)]
+#[derive(Serialize, Deserialize, Type, Copy, Clone, Debug, PartialEq)]
 #[serde(tag = "type", content = "data")]
 pub enum QueueOrigin {
     Playlist { id: u32 },
@@ -18,7 +18,7 @@ pub struct QueueSystem {
     pub shuffle: bool,
 
     /// Index into the global queue
-    pub current_index: usize,
+    current_index: usize,
 
     /// Internal state for PRNG
     rng_state: u32,
@@ -54,8 +54,9 @@ impl QueueSystem {
     }
 
     /// Set queue origin
-    pub fn set_origin(&mut self, origin: Option<QueueOrigin>) {
-        self.origin = origin;
+    pub fn set_origin(&mut self, origin: QueueOrigin) {
+        logging::debug!("Setting queue origin to {origin:?}");
+        self.origin = Some(origin);
     }
 
     /// Add a track to the personal queue
@@ -76,6 +77,14 @@ impl QueueSystem {
         self.global_queue = new_global;
     }
 
+    fn get_previous_index(&self) -> usize {
+        (self.current_index + 1) % self.global_queue.len()
+    }
+
+    fn get_next_index(&self) -> usize {
+        (self.current_index + 1) % self.global_queue.len()
+    }
+
     /// Get the next track
     pub fn next(&mut self) -> Option<u32> {
         if let Some(track) = self.personal_queue.pop_front() {
@@ -83,13 +92,18 @@ impl QueueSystem {
             Some(track)
         } else if !self.global_queue.is_empty() {
             let track = if self.shuffle {
-                logging::debug!("Fetching next track from shuffled global queue");
                 let idx = self.rand() % self.global_queue.len();
+                logging::debug!("Fetching next track from shuffled global queue at index {idx}");
                 self.global_queue[idx]
             } else {
-                logging::debug!("Fetching next track from non-shuffled global queue");
-                let track = self.global_queue[self.current_index % self.global_queue.len()];
-                self.current_index = (self.current_index + 1) % self.global_queue.len();
+                let idx = self.get_next_index();
+                logging::debug!(
+                    "Fetching next track from non-shuffled global queue at index {idx}"
+                );
+
+                let track = self.global_queue[idx];
+
+                self.set_current_index(idx);
                 track
             };
 
@@ -99,23 +113,35 @@ impl QueueSystem {
         }
     }
 
-    /// Peek at the next track, and consumes if it's from personal queue
+    /// Peek at the next track
     pub fn peek_next(&mut self) -> Option<u32> {
-        if let Some(track) = self.personal_queue.pop_front() {
+        if let Some(track) = self.personal_queue.front() {
             logging::debug!("Peeking at next track from personal queue");
-            Some(track)
+            Some(*track)
         } else if !self.global_queue.is_empty() {
             if self.shuffle {
-                logging::debug!("Peeking at next track from shuffled global queue");
                 let idx = self.rand() % self.global_queue.len();
+                logging::debug!("Peeking at next track from shuffled global queue at index {idx}");
                 Some(self.global_queue[idx])
             } else {
-                logging::debug!("Peeking at next track from non-shuffled global queue");
-                Some(self.global_queue[self.current_index % self.global_queue.len()])
+                let idx = self.get_next_index();
+                logging::debug!(
+                    "Peeking at next track from non-shuffled global queue at index {idx}"
+                );
+                Some(self.global_queue[idx])
             }
         } else {
             None
         }
+    }
+
+    pub fn current_index(&self) -> usize {
+        self.current_index
+    }
+
+    pub fn set_current_index(&mut self, new_index: usize) {
+        logging::debug!("Setting index from {} to {new_index}", self.current_index);
+        self.current_index = new_index;
     }
 
     /// Check if the queues are empty

@@ -283,7 +283,7 @@ fn main() -> anyhow::Result<()> {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             if let Some(queue_origin) = queue.origin {
                 let config = lock_or_log(state.config.read(), "Config Read").unwrap();
-                queue.current_index = config.queue_idx;
+                queue.set_current_index(config.queue_idx);
 
                 match queue_origin {
                     QueueOrigin::Album { id } => {
