@@ -389,9 +389,10 @@ export type PlayerEvent =
    * Set the volume of the player.
    */
   | { type: "SetVolume"; data: { volume: number } };
-export type PlayerProgressEvent =
-  | { event: "Progress"; data: { progress: number } }
-  | { event: "TrackEnd" };
+export type PlayerProgressEvent = {
+  event: "Progress";
+  data: { progress: number };
+};
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = {
   playlist: Playlists;

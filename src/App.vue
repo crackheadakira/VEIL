@@ -98,9 +98,7 @@ onMounted(async () => {
 
   const channel = new Channel<PlayerProgressEvent>();
   channel.onmessage = async (msg) => {
-    if (msg.event === "Progress")
-      await playerStore.handleProgress(false, msg.data.progress);
-    // else await playerStore.handleSongEnd();
+    await playerStore.handleProgress(false, msg.data.progress);
   };
 
   await events.frontendError.listen((e) => {

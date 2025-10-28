@@ -55,7 +55,6 @@ pub fn set_player_progress(progress: f64, state: TauriState) {
 // rust-analyzer expected Expr error: https://github.com/specta-rs/specta/issues/387
 pub enum PlayerProgressEvent {
     Progress { progress: f64 },
-    TrackEnd,
 }
 
 #[tauri::command]
@@ -64,18 +63,20 @@ pub fn player_progress_channel(
     handle: AppHandle,
     on_event: Channel<PlayerProgressEvent>,
 ) -> Result<(), FrontendError> {
-    std::thread::spawn(move || {
+    tauri::async_runtime::spawn(async move {
         let state = handle.state::<SodapopState>();
 
+        let sleep_duration = std::time::Duration::from_millis(10);
         let track_end_interval = std::time::Duration::from_millis(25);
-        let mut last_track_end_check = std::time::Instant::now();
-
         let progress_interval = std::time::Duration::from_millis(400);
-        let mut last_progress_sent = std::time::Instant::now();
+
+        let mut last_track_end_check = tokio::time::Instant::now();
+        let mut last_progress_sent = tokio::time::Instant::now();
 
         loop {
-            std::thread::sleep(std::time::Duration::from_millis(10));
-            let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
+            tokio::time::sleep(sleep_duration).await;
+            let player: std::sync::RwLockReadGuard<'_, media_controls::Player> =
+                lock_or_log(state.player.read(), "Player Read Lock").unwrap();
 
             if last_track_end_check.elapsed() >= track_end_interval {
                 if let Some(player_state) = player.get_player_state() {
@@ -92,10 +93,7 @@ pub fn player_progress_channel(
                                 }
                             };
 
-                            match PlayerEvent::emit(
-                                &PlayerEvent::NewTrack { track: track },
-                                &handle,
-                            ) {
+                            match PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle) {
                                 Ok(_) => {}
                                 Err(e) => {
                                     logging::error!(
@@ -107,7 +105,7 @@ pub fn player_progress_channel(
                     }
                 }
 
-                last_track_end_check = std::time::Instant::now();
+                last_track_end_check = tokio::time::Instant::now();
             }
 
             if last_progress_sent.elapsed() >= progress_interval {
@@ -121,11 +119,11 @@ pub fn player_progress_channel(
                         break;
                     }
                 }
-                last_progress_sent = std::time::Instant::now();
+                last_progress_sent = tokio::time::Instant::now();
             }
 
             if !player.has_next_sound_handle()
-                && (player.duration as f64 - player.get_progress()) <= 0.3
+                && (player.duration as f64 - player.get_progress()) <= 0.5
             {
                 drop(player);
                 let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
