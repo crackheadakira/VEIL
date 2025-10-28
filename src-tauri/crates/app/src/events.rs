@@ -11,6 +11,7 @@ use crate::{
     config::ThemeMode,
     discord,
     error::FrontendError,
+    queue::QueueOrigin,
 };
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
@@ -20,6 +21,8 @@ pub struct SodapopConfigEvent {
     pub last_fm_enabled: Option<bool>,
     pub music_dir: Option<String>,
     pub last_fm_key: Option<String>,
+    pub queue_origin: Option<QueueOrigin>,
+    pub queue_idx: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]

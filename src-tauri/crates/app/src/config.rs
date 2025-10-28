@@ -3,7 +3,7 @@ use std::{fs, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 
-use crate::{data_path, error::FrontendError, events::SodapopConfigEvent};
+use crate::{data_path, error::FrontendError, events::SodapopConfigEvent, queue::QueueOrigin};
 
 #[derive(Serialize, Deserialize, Type, Clone)]
 pub struct SodapopConfig {
@@ -12,6 +12,8 @@ pub struct SodapopConfig {
     pub discord_enabled: bool,
     pub last_fm_enabled: bool,
     pub last_fm_key: Option<String>,
+    pub queue_origin: Option<QueueOrigin>,
+    pub queue_idx: usize,
 }
 
 #[derive(Serialize, Deserialize, Type, Clone, Copy)]
@@ -34,6 +36,8 @@ impl SodapopConfig {
                 last_fm_key: None,
                 discord_enabled: false,
                 last_fm_enabled: false,
+                queue_origin: None,
+                queue_idx: 0,
             };
             config.write_config()?;
             Ok(config)
@@ -47,6 +51,8 @@ impl SodapopConfig {
         self.last_fm_key = new_config.last_fm_key.or(self.last_fm_key.take());
         self.discord_enabled = new_config.discord_enabled.unwrap_or(self.discord_enabled);
         self.last_fm_enabled = new_config.last_fm_enabled.unwrap_or(self.last_fm_enabled);
+        self.queue_origin = new_config.queue_origin.or(self.queue_origin.take());
+        self.queue_idx = new_config.queue_idx.unwrap_or(self.queue_idx);
 
         self.write_config()?;
 

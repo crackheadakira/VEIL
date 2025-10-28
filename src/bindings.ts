@@ -423,6 +423,9 @@ export type QueueEvent =
    * Add to personal queue via context menu
    */
   { type: "EnqueuePersonal"; data: { track_id: number } };
+export type QueueOrigin =
+  | { type: "Playlist"; data: { id: number } }
+  | { type: "Album"; data: { id: number } };
 export type Search = {
   /**
    * ID of the search item
@@ -443,6 +446,8 @@ export type SodapopConfig = {
   discord_enabled: boolean;
   last_fm_enabled: boolean;
   last_fm_key: string | null;
+  queue_origin: QueueOrigin | null;
+  queue_idx: number;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
@@ -450,6 +455,8 @@ export type SodapopConfigEvent = {
   last_fm_enabled: boolean | null;
   music_dir: string | null;
   last_fm_key: string | null;
+  queue_origin: QueueOrigin | null;
+  queue_idx: number | null;
 };
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {

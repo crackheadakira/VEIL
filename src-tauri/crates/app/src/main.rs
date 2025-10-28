@@ -20,7 +20,7 @@ use specta_typescript::Typescript;
 
 use crate::error::FrontendError;
 use crate::events::{EventSystemHandler, PlayerEvent, QueueEvent, SodapopConfigEvent};
-use crate::queue::QueueSystem;
+use crate::queue::{QueueOrigin, QueueSystem};
 
 mod commands;
 mod config;
@@ -165,7 +165,10 @@ fn main() -> anyhow::Result<()> {
 
                 app.manage(SodapopState {
                     player: Arc::new(RwLock::new(player)),
-                    queue: Arc::new(Mutex::new(QueueSystem::new(0x12345678))),
+                    queue: Arc::new(Mutex::new(QueueSystem::new(
+                        0x12345678,
+                        sodapop_config.queue_origin,
+                    ))),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
                     config: Arc::new(RwLock::new(sodapop_config)),
@@ -274,6 +277,30 @@ fn main() -> anyhow::Result<()> {
                 let pc = include_bytes!("../../../../public/placeholder.png");
 
                 fs::write(covers.join("placeholder.png"), pc)?
+            }
+
+            // Populate the queue if a queue origin exists
+            let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+            if let Some(queue_origin) = queue.origin {
+                let config = lock_or_log(state.config.read(), "Config Read").unwrap();
+                queue.current_index = config.queue_idx;
+
+                match queue_origin {
+                    QueueOrigin::Album { id } => {
+                        let result = state.db.album_with_tracks(&id)?;
+                        let track_ids: Vec<u32> =
+                            result.tracks.iter().map(|track| track.id).collect();
+
+                        queue.set_global(track_ids);
+                    }
+                    QueueOrigin::Playlist { id } => {
+                        let result = state.db.get_playlist_with_tracks(&id)?;
+                        let track_ids: Vec<u32> =
+                            result.tracks.iter().map(|track| track.id).collect();
+
+                        queue.set_global(track_ids);
+                    }
+                }
             }
 
             Ok(())

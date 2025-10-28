@@ -1,8 +1,20 @@
 use std::collections::VecDeque;
 
+use serde::{Deserialize, Serialize};
+use specta::Type;
+
+#[derive(Serialize, Deserialize, Type, Copy, Clone)]
+#[serde(tag = "type", content = "data")]
+pub enum QueueOrigin {
+    Playlist { id: u32 },
+    Album { id: u32 },
+}
+
 pub struct QueueSystem {
     personal_queue: VecDeque<u32>,
     global_queue: Vec<u32>,
+    pub origin: Option<QueueOrigin>,
+
     pub shuffle: bool,
 
     /// Index into the global queue
@@ -30,14 +42,20 @@ pub struct QueueSystem {
 // is from playlist or album & how do we remember the current track --> store in config?
 
 impl QueueSystem {
-    pub fn new(rng_state: u32) -> Self {
+    pub fn new(rng_state: u32, origin: Option<QueueOrigin>) -> Self {
         Self {
             personal_queue: VecDeque::with_capacity(50),
             global_queue: Vec::with_capacity(50),
             shuffle: false,
             current_index: 0,
+            origin,
             rng_state,
         }
+    }
+
+    /// Set queue origin
+    pub fn set_origin(&mut self, origin: Option<QueueOrigin>) {
+        self.origin = origin;
     }
 
     /// Add a track to the personal queue
