@@ -10,11 +10,11 @@ use crate::{
         state::{MediaPayload, attach_media_controls_to_player, initialize_state},
     },
     commands,
-    config::SodapopConfig,
+    config::{SodapopConfig, SodapopConfigEvent},
     error::FrontendError,
-    events::{EventSystemHandler, PlayerEvent, QueueEvent, SodapopConfigEvent},
-    queue::QueueOrigin,
-    systems::utils::data_path,
+    events::EventSystemHandler,
+    queue::{QueueEvent, QueueOrigin},
+    systems::{player::PlayerEvent, utils::data_path},
 };
 
 pub fn make_specta_type_builder() -> Builder {

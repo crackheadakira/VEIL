@@ -9,8 +9,11 @@ use tauri::{AppHandle, Emitter, State};
 use tauri_specta::Event;
 
 use crate::{
-    config::SodapopConfig, discord::DiscordState, error::FrontendError, events::PlayerEvent,
-    queue::QueueSystem, systems::utils::data_path,
+    config::SodapopConfig,
+    discord::DiscordState,
+    error::FrontendError,
+    queue::QueueSystem,
+    systems::{player::PlayerEvent, utils::data_path},
 };
 
 pub struct SodapopState {

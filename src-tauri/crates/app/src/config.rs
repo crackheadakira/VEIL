@@ -2,10 +2,10 @@ use std::{fs, path::PathBuf};
 
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use tauri_specta::Event;
 
 use crate::{
     error::FrontendError,
-    events::SodapopConfigEvent,
     queue::{QueueOrigin, RepeatMode},
     systems::utils::data_path,
 };
@@ -43,6 +43,18 @@ pub enum ThemeMode {
     Dark,
     Light,
     System,
+}
+
+#[derive(Serialize, Deserialize, Type, Event, Clone, Default)]
+pub struct SodapopConfigEvent {
+    pub theme: Option<ThemeMode>,
+    pub discord_enabled: Option<bool>,
+    pub last_fm_enabled: Option<bool>,
+    pub music_dir: Option<String>,
+    pub last_fm_key: Option<String>,
+    pub queue_origin: Option<QueueOrigin>,
+    pub queue_idx: Option<usize>,
+    pub repeat_mode: Option<RepeatMode>,
 }
 
 impl SodapopConfig {

@@ -1,9 +1,9 @@
 use crate::{
     SodapopState, TauriState,
     error::FrontendError,
-    events::PlayerEvent,
     systems::player::{
-        next_track_status, send_player_progress_via_channel, try_preloading_next_sound_handle,
+        PlayerEvent, next_track_status, send_player_progress_via_channel,
+        try_preloading_next_sound_handle,
     },
 };
 

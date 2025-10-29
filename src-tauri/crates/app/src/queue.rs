@@ -1,7 +1,13 @@
 use std::collections::VecDeque;
 
+use logging::lock_or_log;
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use tauri::{AppHandle, Manager};
+
+use crate::{
+    SodapopState, config::SodapopConfigEvent, error::FrontendError, events::EventSystemHandler,
+};
 
 #[derive(Serialize, Deserialize, Type, Copy, Clone, Debug, PartialEq)]
 #[serde(tag = "type", content = "data")]
@@ -234,5 +240,81 @@ impl QueueSystem {
             .wrapping_mul(1664525)
             .wrapping_add(1013904223);
         (self.rng_state % 0xFFFFFFFF) as usize
+    }
+}
+
+#[derive(Serialize, Deserialize, Type, tauri_specta::Event, Clone)]
+#[serde(tag = "type", content = "data")]
+pub enum QueueEvent {
+    /// Add to personal queue via context menu
+    EnqueuePersonal { track_id: u32 },
+
+    SetGlobalQueue {
+        tracks: Vec<u32>,
+        queue_idx: usize,
+        origin: QueueOrigin,
+    },
+}
+
+impl EventSystemHandler for QueueEvent {
+    async fn handle(
+        event: tauri_specta::TypedEvent<QueueEvent>,
+        handle: &AppHandle,
+    ) -> Result<(), FrontendError> {
+        match event.payload {
+            QueueEvent::EnqueuePersonal { track_id } => {
+                Self::enqueue_personal_track(handle, track_id)?
+            }
+            QueueEvent::SetGlobalQueue {
+                tracks,
+                queue_idx,
+                origin,
+            } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
+        }
+
+        Ok(())
+    }
+}
+
+impl QueueEvent {
+    fn enqueue_personal_track(handle: &AppHandle, track_id: u32) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+
+        queue.enqueue_personal(track_id);
+        Ok(())
+    }
+
+    fn set_global_queue(
+        handle: &AppHandle,
+        tracks: Vec<u32>,
+        queue_idx: usize,
+        origin: QueueOrigin,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+        let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
+
+        if let Some(original_origin) = queue.origin
+            && original_origin != origin
+        {
+            queue.set_global(tracks);
+            queue.set_origin(origin);
+
+            config.update_config(SodapopConfigEvent {
+                queue_origin: Some(origin),
+                ..SodapopConfigEvent::default()
+            })?;
+        }
+
+        if queue.current_index() != queue_idx {
+            queue.set_current_index(queue_idx);
+            config.update_config(SodapopConfigEvent {
+                queue_idx: Some(queue_idx),
+                ..SodapopConfigEvent::default()
+            })?;
+        }
+
+        Ok(())
     }
 }
