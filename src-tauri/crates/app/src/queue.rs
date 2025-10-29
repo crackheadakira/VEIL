@@ -44,6 +44,11 @@ enum Mode {
 pub struct QueueSystem {
     personal_queue: VecDeque<u32>,
     global_queue: Vec<u32>,
+
+    /// Gets set to true when the personal queue is consumed
+    /// then immediately to false when going to global queue.
+    personal_consumed: bool,
+
     pub origin: Option<QueueOrigin>,
     pub shuffle: bool,
     pub repeat_mode: RepeatMode,
@@ -77,6 +82,7 @@ impl QueueSystem {
         Self {
             personal_queue: VecDeque::with_capacity(50),
             global_queue: Vec::with_capacity(50),
+            personal_consumed: false,
             shuffle: false,
             repeat_mode,
             current_index: 0,
@@ -113,7 +119,7 @@ impl QueueSystem {
     ///
     /// Handles the repeat methods as well
     fn get_previous_index(&self) -> usize {
-        (self.current_index + 1) % self.global_queue.len()
+        (self.current_index - 1) % self.global_queue.len()
     }
 
     /// Internal method to get the next index.
@@ -131,6 +137,11 @@ impl QueueSystem {
             Mode::Consume => {
                 if let Some(track) = self.personal_queue.pop_front() {
                     logging::debug!("Consuming next track from personal queue");
+
+                    if self.personal_queue.is_empty() {
+                        self.personal_consumed = true;
+                    }
+
                     return Some(track);
                 }
             }
@@ -146,6 +157,17 @@ impl QueueSystem {
         if self.global_queue.is_empty() {
             return None;
         };
+
+        if self.personal_consumed {
+            let idx = self.current_index;
+            let track = self.global_queue[idx];
+
+            if let Mode::Consume = mode {
+                self.personal_consumed = false;
+            }
+
+            return Some(track);
+        }
 
         let track = if self.shuffle {
             // Currently as we don't shuffle the global queue this regardless
@@ -200,6 +222,19 @@ impl QueueSystem {
         self.get_track(Direction::Next, Mode::Peek)
     }
 
+    /// Get the track at the current index
+    pub fn current(&self) -> Option<u32> {
+        if !self.personal_queue.is_empty() {
+            self.personal_queue.front().copied()
+        } else {
+            if self.global_queue.is_empty() {
+                return None;
+            }
+
+            Some(self.global_queue[self.current_index])
+        }
+    }
+
     /// Get the previous track
     pub fn previous(&mut self) -> Option<u32> {
         self.get_track(Direction::Previous, Mode::Consume)
@@ -216,7 +251,7 @@ impl QueueSystem {
 
     pub fn set_current_index(&mut self, new_index: usize) {
         logging::debug!("Setting index from {} to {new_index}", self.current_index);
-        self.current_index = new_index;
+        self.current_index = new_index % self.global_queue.len();
     }
 
     /// Check if the queues are empty
@@ -316,5 +351,177 @@ impl QueueEvent {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_queue_origin() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        assert_eq!(queue.origin, None);
+
+        queue.set_origin(QueueOrigin::Album { id: 5 });
+        assert_eq!(queue.origin, Some(QueueOrigin::Album { id: 5 }))
+    }
+
+    #[test]
+    fn consuming_personal_queue() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.enqueue_personal(50); // pushes to back [50]
+        queue.enqueue_personal(20); // pushes to back [50, 20]
+        queue.set_global(vec![0, 1, 2]);
+
+        assert_eq!(queue.current_index, 0);
+
+        //          ↓ idx after
+        // [50] <- [50, 20], [0, 1, 2]
+        //          ↑ idx before
+        assert_eq!(queue.peek_next(), Some(50));
+        assert_eq!(queue.current_index, 0);
+
+        //                ↓ idx after (consumed)
+        // [50] <- [(50), 20], [0, 1, 2]
+        //          ↑ idx before
+        assert_eq!(queue.next(), Some(50));
+        assert_eq!(queue.current_index, 0);
+
+        //                ↓ peeking after
+        // [20] <- [(50), 20], [0, 1, 2]
+        //                ↑ idx before
+        assert_eq!(queue.peek_next(), Some(20));
+        assert_eq!(queue.current_index, 0);
+
+        //          ↓ idx after(consumed)
+        // [20] <- [ ]->[0, 1, 2]
+        //          ↑ idx before
+        assert_eq!(queue.next(), Some(20));
+        assert_eq!(queue.current_index, 0);
+
+        //              ↓ peeking at
+        // [0] <- [ ]->[0, 1, 2]
+        //         ↑ idx
+        assert_eq!(queue.peek_next(), Some(0));
+        assert_eq!(queue.current_index, 0);
+
+        //              ↓ idx after
+        // [0] <- [ ]->[0, 1, 2]
+        //          ↑ idx before
+        assert_eq!(queue.next(), Some(0));
+        assert_eq!(queue.current_index, 0);
+
+        //                 ↓ peeking at
+        // [1] <- [ ]->[0, 1, 2]
+        //              ↑ idx
+        assert_eq!(queue.peek_next(), Some(1));
+        assert_eq!(queue.current_index, 0);
+
+        //                 ↓ idx after
+        // [1] <- [ ]->[0, 1, 2]
+        //              ↑ idx before
+        assert_eq!(queue.next(), Some(1));
+        assert_eq!(queue.current_index, 1);
+    }
+
+    #[test]
+    fn traversing_global_queue() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.set_global(vec![0, 1, 2]);
+
+        assert_eq!(queue.current_index, 0);
+
+        //            ↓ peeking at
+        // [1] <- [0, 1, 2]
+        //         ↑ idx
+        assert_eq!(queue.peek_next(), Some(1));
+        assert_eq!(queue.current_index, 0);
+
+        //            ↓ idx after
+        // [1] <- [0, 1, 2]
+        //         ↑ idx before
+        assert_eq!(queue.next(), Some(1));
+        assert_eq!(queue.current_index, 1);
+
+        //               ↓ peeking at
+        // [2] <- [0, 1, 2]
+        //            ↑ idx
+        assert_eq!(queue.peek_next(), Some(2));
+        assert_eq!(queue.current_index, 1);
+
+        //               ↓ idx after
+        // [2] <- [0, 1, 2]
+        //            ↑ idx before
+        assert_eq!(queue.next(), Some(2));
+        assert_eq!(queue.current_index, 2);
+    }
+
+    #[test]
+    fn wrapping_idx_set() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.set_global(vec![0, 1, 2]);
+        assert_eq!(queue.current_index, 0);
+
+        queue.set_current_index(3);
+        assert_eq!(queue.current(), Some(0));
+        assert_eq!(queue.current_index, 0);
+
+        queue.set_current_index(4);
+        assert_eq!(queue.current(), Some(1));
+        assert_eq!(queue.current_index, 1);
+    }
+
+    #[test]
+    fn empty_queue() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+
+        assert_eq!(queue.previous(), None);
+        assert_eq!(queue.current(), None);
+        assert_eq!(queue.next(), None);
+    }
+
+    #[test]
+    fn shuffle_global_changes_order() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.set_global(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+
+        let original = queue.global_queue.clone();
+        queue.shuffle_global();
+
+        assert_eq!(queue.global_queue.len(), original.len());
+        assert_ne!(
+            queue.global_queue, original,
+            "Expected shuffled order to differ"
+        );
+    }
+
+    #[test]
+    fn shuffled_next_updates_index_randomly() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.set_global(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        queue.shuffle = true;
+
+        queue.next();
+
+        assert!(queue.current_index < queue.global_queue.len());
+    }
+
+    #[test]
+    fn repeat_none_behaves_normally() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        queue.set_global(vec![0, 1, 2]);
+        assert_eq!(queue.next(), Some(1));
+        assert_eq!(queue.next(), Some(2));
+        assert_eq!(queue.next(), Some(0));
+    }
+
+    #[test]
+    fn repeat_track_keeps_current() {
+        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::Track);
+        queue.set_global(vec![0, 1, 2]);
+        let first = queue.current();
+        let next = queue.next();
+        assert_ne!(first, next, "RepeatMode::Track not implemented yet");
     }
 }
