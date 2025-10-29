@@ -8,8 +8,6 @@ mod builder;
 mod state;
 
 pub fn run() -> Result<(), anyhow::Error> {
-    logging::init();
-
     let specta_builder = make_specta_type_builder();
     mount_tauri_builder(&specta_builder)
         .setup(|app| handle_tauri_setup(app, specta_builder))

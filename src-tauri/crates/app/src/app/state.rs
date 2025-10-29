@@ -2,6 +2,7 @@ use logging::{lock_or_log, try_with_log};
 use serde::Serialize;
 use specta::Type;
 use std::{
+    env,
     fs::create_dir,
     sync::{Arc, Mutex, RwLock},
 };
@@ -57,12 +58,19 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
 
     let sodapop_config = try_with_log!("Sodapop Config", SodapopConfig::new)?;
 
+    let api_key = env::var("LASTFM_API_KEY").expect("Missing LASTFM_API_KEY environment variable");
+    let api_secret =
+        env::var("LASTFM_API_SECRET").expect("Missing LASTFM_API_SECRET environment variable");
+
     let mut lastfm = try_with_log!("LastFM API", || lastfm::LastFM::builder()
-        .api_key("abc01a1c2188ad44508b12229563de11")
-        .api_secret("e2cbf26c15d7cabc5e72d34bc6d7829c")
+        .api_key(&api_key)
+        .api_secret(&api_secret)
         .build())?;
 
-    let mut discord = try_with_log!("Discord RPC", || DiscordState::new("1339694314074275882"))?;
+    let discord_client_id =
+        env::var("DISCORD_CLIENT_ID").expect("Missing DISCORD_CLIENT_ID environment variable");
+
+    let mut discord = try_with_log!("Discord RPC", || DiscordState::new(&discord_client_id))?;
 
     lastfm.enable(sodapop_config.last_fm_enabled);
     discord.enable(sodapop_config.discord_enabled);

@@ -16,5 +16,8 @@ mod systems;
 pub use app::{SodapopState, TauriState};
 
 fn main() -> Result<(), anyhow::Error> {
+    dotenvy::dotenv().ok();
+    logging::init();
+
     app::run()
 }
