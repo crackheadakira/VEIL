@@ -4,10 +4,10 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 
 use crate::{
-    data_path,
     error::FrontendError,
     events::SodapopConfigEvent,
     queue::{QueueOrigin, RepeatMode},
+    systems::utils::data_path,
 };
 
 #[derive(Serialize, Deserialize, Type, Clone)]

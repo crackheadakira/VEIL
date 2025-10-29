@@ -1,7 +1,7 @@
 use crate::{
-    SodapopState, data_path,
+    SodapopState,
     error::FrontendError,
-    systems::utils::{get_handle_to_music_folder, sanitize_string},
+    systems::utils::{data_path, get_handle_to_music_folder, sanitize_string},
 };
 
 use common::{AlbumType, Albums, Artists, Tracks};

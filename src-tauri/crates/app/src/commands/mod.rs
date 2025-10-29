@@ -1,9 +1,7 @@
-use std::path::PathBuf;
-
 use crate::{
     config::{SodapopConfig, config_path},
-    data_path,
     error::FrontendError,
+    systems::utils::data_path,
 };
 
 pub(crate) mod db;
@@ -12,14 +10,10 @@ pub(crate) mod music_folder;
 pub(crate) mod player;
 pub(crate) mod plugins;
 
-fn custom_style_path() -> PathBuf {
-    data_path().join("custom.css")
-}
-
 #[tauri::command]
 #[specta::specta]
 pub fn read_custom_style() -> Result<String, FrontendError> {
-    let path = custom_style_path();
+    let path = data_path().join("custom.css");
     Ok(std::fs::read_to_string(&path)?)
 }
 

@@ -68,15 +68,12 @@ pub fn next_track_status(
     state: &TauriState,
     player: &RwLockWriteGuard<'_, Player>,
 ) -> Option<Tracks> {
-    let next_track = player
+    player
         .get_player_state()
         .filter(|&s| s == media_controls::PlaybackState::Stopped)
         .and_then(|_| {
-            let next_track_id = {
-                let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
-                queue.next()
-            };
-            next_track_id
+            let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+            queue.next()
         })
         .and_then(|id| match state.db.by_id::<Tracks>(&id) {
             Ok(track) => Some(track),
@@ -84,9 +81,7 @@ pub fn next_track_status(
                 logging::error!("Error fetching track from database in queue: {e}");
                 None
             }
-        });
-
-    return next_track;
+        })
 }
 
 pub fn send_player_progress_via_channel(

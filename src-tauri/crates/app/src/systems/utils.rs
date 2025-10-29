@@ -42,3 +42,8 @@ pub async fn get_handle_to_music_folder(
     let handle = open_folder_picker(music_dir.as_deref(), "Select your music folder").await;
     Ok(handle)
 }
+
+pub fn data_path() -> std::path::PathBuf {
+    let home_dir = dirs::data_local_dir().unwrap();
+    home_dir.join("com.sodapop.reimagined")
+}

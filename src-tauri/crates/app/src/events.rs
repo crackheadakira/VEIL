@@ -14,7 +14,7 @@ use crate::{
     systems::player::{try_scrobble_track_to_lastfm, try_update_now_playing_to_lastfm},
 };
 
-#[derive(Serialize, Deserialize, Type, Event, Clone)]
+#[derive(Serialize, Deserialize, Type, Event, Clone, Default)]
 pub struct SodapopConfigEvent {
     pub theme: Option<ThemeMode>,
     pub discord_enabled: Option<bool>,
@@ -24,21 +24,6 @@ pub struct SodapopConfigEvent {
     pub queue_origin: Option<QueueOrigin>,
     pub queue_idx: Option<usize>,
     pub repeat_mode: Option<RepeatMode>,
-}
-
-impl Default for SodapopConfigEvent {
-    fn default() -> Self {
-        Self {
-            theme: None,
-            discord_enabled: None,
-            last_fm_enabled: None,
-            music_dir: None,
-            last_fm_key: None,
-            queue_origin: None,
-            queue_idx: None,
-            repeat_mode: None,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
@@ -86,12 +71,13 @@ pub trait EventSystemHandler: Event + Sized + Send + Sync + 'static + Serialize 
     ) -> impl Future<Output = Result<(), FrontendError>> + Send;
 
     /// Attaches a listener to the given event on it's own async task.
-    fn attach_listener(handle: AppHandle)
+    fn attach_listener(handle: &AppHandle)
     where
         for<'de> Self: Deserialize<'de>,
     {
-        Self::listen(&handle.clone(), move |event| {
-            let handle = handle.clone();
+        let handle_clone = handle.clone();
+        Self::listen(&handle_clone.clone(), move |event| {
+            let handle = handle_clone.clone();
             tauri::async_runtime::spawn(async move {
                 if let Err(e) = Self::handle(event, &handle).await {
                     if let Err(e) = e.emit(&handle) {
