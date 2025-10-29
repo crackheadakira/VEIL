@@ -203,3 +203,44 @@ fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
     *offset += 4;
     length
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn u32_from_bytes_little_endian() {
+        let result = u32_from_bytes(Endian::Little, &[0x00, 0x00, 0x00, 0x00], &mut 0);
+        assert_eq!(result, 0x0000);
+
+        let result = u32_from_bytes(Endian::Little, &[0x01, 0x02, 0x03, 0x04], &mut 0);
+        assert_eq!(result, 0x04030201);
+
+        let result = u32_from_bytes(Endian::Little, &[0x4, 0x3, 0x2, 0x1], &mut 0);
+        assert_eq!(result, 0x01020304);
+
+        let result = u32_from_bytes(Endian::Little, &[0x10, 0x20, 0x30, 0x40], &mut 0);
+        assert_eq!(result, 0x40302010);
+
+        let result = u32_from_bytes(Endian::Little, &[0x10, 0x20, 0x40, 0x30], &mut 0);
+        assert_eq!(result, 0x30402010);
+    }
+
+    #[test]
+    fn u32_from_bytes_big_endian() {
+        let result = u32_from_bytes(Endian::Big, &[0x00, 0x00, 0x00, 0x00], &mut 0);
+        assert_eq!(result, 0x0000);
+
+        let result = u32_from_bytes(Endian::Big, &[0x01, 0x02, 0x03, 0x04], &mut 0);
+        assert_eq!(result, 0x01020304);
+
+        let result = u32_from_bytes(Endian::Big, &[0x4, 0x3, 0x2, 0x1], &mut 0);
+        assert_eq!(result, 0x04030201);
+
+        let result = u32_from_bytes(Endian::Big, &[0x10, 0x20, 0x30, 0x40], &mut 0);
+        assert_eq!(result, 0x10203040);
+
+        let result = u32_from_bytes(Endian::Big, &[0x10, 0x20, 0x40, 0x30], &mut 0);
+        assert_eq!(result, 0x10204030);
+    }
+}

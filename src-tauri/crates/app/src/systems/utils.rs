@@ -47,3 +47,17 @@ pub fn data_path() -> std::path::PathBuf {
     let home_dir = dirs::data_local_dir().unwrap();
     home_dir.join("com.sodapop.reimagined")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::sanitize_string;
+
+    #[test]
+    fn sanitize_strings() {
+        assert_eq!(sanitize_string("h/e/l/l/o"), "hello");
+
+        assert_eq!(sanitize_string("h//e/\\/l////l// //o"), "hell o");
+
+        assert_eq!(sanitize_string("h:*/e\\/*:ll?\"o"), "hello");
+    }
+}

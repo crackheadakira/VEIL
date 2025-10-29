@@ -363,7 +363,7 @@ impl Player {
     }
 
     fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {
-        let progress: Option<souvlaki::MediaPosition> = progress_as_position(self.progress);
+        let progress: Option<souvlaki::MediaPosition> = Self::progress_as_position(self.progress);
         let playback = match play {
             true => MediaPlayback::Playing { progress },
             false => MediaPlayback::Paused { progress },
@@ -373,10 +373,10 @@ impl Player {
 
         Ok(())
     }
-}
 
-fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
-    Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
-        progress,
-    )))
+    fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
+        Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
+            progress,
+        )))
+    }
 }
