@@ -33,7 +33,7 @@ impl Default for Metadata {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum MetadataError {
+pub enum Error {
     #[error("Invalid file path")]
     InvalidFilePath,
     #[error("Unsupported file type")]
@@ -52,6 +52,8 @@ pub enum MetadataError {
     #[error(transparent)]
     Str(#[from] std::str::Utf8Error),
 }
+
+pub(crate) type Result<T, U = Error> = std::result::Result<T, U>;
 
 impl Metadata {
     pub fn new() -> Metadata {
@@ -107,7 +109,7 @@ impl Metadata {
     }
 
     /// Create a `Metadata` struct from a valid audio file
-    pub fn from_file(path: &std::path::Path) -> Result<Metadata, MetadataError> {
+    pub fn from_file(path: &std::path::Path) -> Result<Metadata> {
         if let Some(os_ext) = path.extension()
             && let Some(ext) = os_ext.to_str()
         {
@@ -121,15 +123,15 @@ impl Metadata {
                     let file = id3::Id3::new(path)?;
                     Ok(Metadata::from_id3(file))
                 }
-                _ => Err(MetadataError::UnsupportedFileType),
+                _ => Err(Error::UnsupportedFileType),
             }
         } else {
-            Err(MetadataError::InvalidFilePath)
+            Err(Error::InvalidFilePath)
         }
     }
 
     /// Create a vec of `Metadata` structs from a list of audio files
-    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>, MetadataError> {
+    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
         let mut all_metadata = Vec::new();
         for path in file_paths {
             let metadata = Metadata::from_file(path);

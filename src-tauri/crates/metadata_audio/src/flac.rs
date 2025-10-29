@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{Endian, MetadataError, read_n_bits, u32_from_bytes};
+use crate::{Endian, Error, Result, read_n_bits, u32_from_bytes};
 
 #[derive(Clone, Copy, Debug)]
 #[repr(u8)]
@@ -36,7 +36,7 @@ pub enum Block {
 }
 
 impl Block {
-    pub fn read_from(reader: &mut dyn Read) -> Result<(bool, Block), MetadataError> {
+    pub fn read_from(reader: &mut dyn Read) -> Result<(bool, Block)> {
         let mut byte = 0u8;
         reader.read_exact(std::slice::from_mut(&mut byte))?;
 
@@ -240,7 +240,7 @@ pub struct Flac {
 }
 
 impl Flac {
-    pub fn new(file_path: &Path) -> Result<Flac, MetadataError> {
+    pub fn new(file_path: &Path) -> Result<Flac> {
         let file = File::open(file_path)?;
         let mut reader = BufReader::new(file);
 
@@ -248,7 +248,7 @@ impl Flac {
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
         if &signature != b"fLaC" {
-            return Err(MetadataError::InvalidFlacSignature);
+            return Err(Error::InvalidFlacSignature);
         }
 
         let mut stream_info = StreamInfo::new();

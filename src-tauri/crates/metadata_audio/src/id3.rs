@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{Endian, MetadataError, u32_from_bytes};
+use crate::{Endian, Error, Result, u32_from_bytes};
 
 pub enum FrameType {
     AttachedPicture,
@@ -31,7 +31,7 @@ pub enum Frame {
 }
 
 impl Frame {
-    pub fn read_from(reader: &mut dyn Read) -> Result<(u32, Frame), MetadataError> {
+    pub fn read_from(reader: &mut dyn Read) -> Result<(u32, Frame)> {
         let mut overview = [0u8; 10];
         reader.read_exact(&mut overview)?;
 
@@ -68,7 +68,7 @@ impl TextFrame {
         }
     }
 
-    pub fn from_bytes(data: Vec<u8>, string_type: String) -> Result<Self, MetadataError> {
+    pub fn from_bytes(data: Vec<u8>, string_type: String) -> Result<Self> {
         let mut text_frame = TextFrame::new();
         text_frame.text_type = string_type;
 
@@ -96,7 +96,7 @@ impl AttachedPicture {
         }
     }
 
-    pub fn from_bytes(data: Vec<u8>) -> Result<Self, MetadataError> {
+    pub fn from_bytes(data: Vec<u8>) -> Result<Self> {
         let mut ap = Self::new();
         let single_terminator = (data[0] != 0 || data[0] != 3) as usize;
         let mut i = 1; // skip text encoding
@@ -122,7 +122,7 @@ pub struct Id3 {
 }
 
 impl Id3 {
-    pub fn new(file_path: &Path) -> Result<Self, MetadataError> {
+    pub fn new(file_path: &Path) -> Result<Self> {
         let file = File::open(file_path)?;
         let mut reader = BufReader::new(file);
 
@@ -130,10 +130,10 @@ impl Id3 {
         let mut header = [0u8; 10];
         reader.read_exact(&mut header)?;
         if &header[0..3] != b"ID3" {
-            return Err(MetadataError::InvalidId3Signature);
+            return Err(Error::InvalidId3Signature);
         }
         if header[3] != 3 {
-            return Err(MetadataError::UnsupportedId3Version);
+            return Err(Error::UnsupportedId3Version);
         }
 
         let size_bytes: &[u8] = &header[6..10];

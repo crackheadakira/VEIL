@@ -14,7 +14,7 @@ pub use souvlaki::{MediaControlEvent, PlatformConfig, SeekDirection};
 use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
 
 #[derive(Debug, thiserror::Error)]
-pub enum PlayerError {
+pub enum Error {
     #[error(transparent)]
     Kira(#[from] kira::PlaySoundError<FromFileError>),
     #[error(transparent)]
@@ -26,6 +26,8 @@ pub enum PlayerError {
     #[error(transparent)]
     ResourceLimitReached(#[from] kira::ResourceLimitReached),
 }
+
+pub(crate) type Result<T, U = Error> = std::result::Result<T, U>;
 
 #[cfg(feature = "serialization")]
 use serde::Serialize;
@@ -86,7 +88,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(c: souvlaki::PlatformConfig) -> Result<Self, PlayerError> {
+    pub fn new(c: souvlaki::PlatformConfig) -> Result<Self> {
         let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
 
         // 1 tick per second
@@ -116,7 +118,7 @@ impl Player {
     }
 
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
-    pub fn set_volume(&mut self, volume: f32) -> Result<(), PlayerError> {
+    pub fn set_volume(&mut self, volume: f32) -> Result<()> {
         // https://www.desmos.com/calculator/cj1nmmamzb
         let converted_volume = -60.0 + 61.0 * volume.powf(0.44);
 
@@ -130,7 +132,7 @@ impl Player {
         Ok(())
     }
 
-    pub fn play(&mut self, track: &Tracks) -> Result<(), PlayerError> {
+    pub fn play(&mut self, track: &Tracks) -> Result<()> {
         self.track = Some(track.id);
 
         logging::debug!("Trying to play track {}", track.name);
@@ -175,7 +177,7 @@ impl Player {
     }
 
     /// Initialize the player with a track and a progress
-    pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<(), PlayerError> {
+    pub fn initialize_player(&mut self, track: Tracks, progress: f64) -> Result<()> {
         logging::debug!(
             "Initializing player with track {} and progress {progress}",
             track.name
@@ -189,10 +191,7 @@ impl Player {
         Ok(())
     }
 
-    fn load_sound(
-        &mut self,
-        track: &Tracks,
-    ) -> Result<StreamingSoundData<FromFileError>, PlayerError> {
+    fn load_sound(&mut self, track: &Tracks) -> Result<StreamingSoundData<FromFileError>> {
         let sound_data = StreamingSoundData::from_file(&track.path)?;
         self.duration = sound_data.duration().as_secs_f32();
 
@@ -209,7 +208,7 @@ impl Player {
         Ok(sound_data)
     }
 
-    pub fn maybe_queue_next(&mut self, next: &Tracks) -> Result<(), PlayerError> {
+    pub fn maybe_queue_next(&mut self, next: &Tracks) -> Result<()> {
         logging::debug!("Preloading next track for gapless playback.");
 
         let next_data = StreamingSoundData::from_file(&next.path)?;
@@ -234,7 +233,7 @@ impl Player {
     }
 
     /// Pause track if has sound_handle
-    pub fn pause(&mut self) -> Result<(), PlayerError> {
+    pub fn pause(&mut self) -> Result<()> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Pausing track");
             sound_handle.pause(self.tween);
@@ -249,7 +248,7 @@ impl Player {
     }
 
     /// Resume track if has sound_handle
-    pub fn resume(&mut self) -> Result<(), PlayerError> {
+    pub fn resume(&mut self) -> Result<()> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Resuming track");
             sound_handle.resume(self.tween);
@@ -263,7 +262,7 @@ impl Player {
     }
 
     /// Seek to a specific position in the track and resume playing if the player is paused and resume is true
-    pub fn seek(&mut self, position: f64, resume: bool) -> Result<(), PlayerError> {
+    pub fn seek(&mut self, position: f64, resume: bool) -> Result<()> {
         if let Some(ref mut sound_handle) = self.sound_handle {
             logging::debug!("Seeking track to {position}");
             match self.state {
@@ -289,7 +288,7 @@ impl Player {
     }
 
     /// Stop track if has sound_handle
-    pub fn stop(&mut self) -> Result<(), PlayerError> {
+    pub fn stop(&mut self) -> Result<()> {
         logging::debug!("Stopping track");
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(self.tween);
