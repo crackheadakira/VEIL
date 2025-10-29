@@ -1,4 +1,8 @@
-use crate::{SodapopState, commands::plugins::open_folder_picker, data_path, error::FrontendError};
+use crate::{
+    SodapopState, data_path,
+    error::FrontendError,
+    systems::utils::{get_handle_to_music_folder, sanitize_string},
+};
 
 use common::{AlbumType, Albums, Artists, Tracks};
 use metadata_audio::Metadata;
@@ -29,13 +33,7 @@ pub async fn select_music_folder(
 ) -> Result<String, FrontendError> {
     let state = app.state::<SodapopState>();
 
-    let music_dir = {
-        let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
-        config_path.music_dir.clone()
-    };
-
-    let handle = open_folder_picker(music_dir.as_deref(), "Select your music folder").await;
-    if let Some(handle) = handle {
+    if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();
         let mut all_paths = recursive_dir(path);
         all_paths.sort();
@@ -63,7 +61,7 @@ pub async fn select_music_folder(
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
 
-        for metadata in all_metadata {
+        for metadata in all_metadata.iter() {
             let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
 
             let artist_id = if artist_exists {
@@ -149,7 +147,7 @@ pub async fn select_music_folder(
         // Remove tracks that are no longer in the music folder
         let all_tracks = &state.db.all::<Tracks>()?;
 
-        for track in all_tracks {
+        for track in all_tracks.iter() {
             if !all_paths.contains(&PathBuf::from(&track.path)) {
                 state.db.delete::<Tracks>(track.id)?;
 
@@ -201,7 +199,7 @@ fn recursive_dir(path: &Path) -> Vec<PathBuf> {
 /// Singles are less than 3 tracks and 30 minutes,
 /// EPs are up to 6 tracks and 30 minutes,
 /// LPs/Albums are more than 6 tracks and 30 minutes.
-pub fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
+fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
     if duration == 0 || tracks == 0 {
         AlbumType::Unknown
     } else if tracks < 3 && duration < 1800 {
@@ -211,10 +209,6 @@ pub fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
     } else {
         AlbumType::Album
     }
-}
-
-fn sanitize_string(string: &str) -> String {
-    string.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
 }
 
 fn cover_path(artist: &str, album: &str) -> String {
