@@ -35,7 +35,7 @@ pub async fn try_scrobble_track_to_lastfm(
         .await;
 
     match res {
-        Err(lastfm::LastFMError::RequestWhenDisabled) => {}
+        Err(lastfm::Error::RequestWhenDisabled) => {}
         Err(e) => return Err(e.into()),
         Ok(_) => {}
     }
@@ -62,7 +62,7 @@ pub async fn try_update_now_playing_to_lastfm(
         .await;
 
     match res {
-        Err(lastfm::LastFMError::RequestWhenDisabled) => {}
+        Err(lastfm::Error::RequestWhenDisabled) => {}
         Err(e) => return Err(e.into()),
         Ok(_) => {}
     }

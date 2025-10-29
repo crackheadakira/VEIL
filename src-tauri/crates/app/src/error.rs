@@ -30,26 +30,26 @@ impl From<std::io::Error> for FrontendError {
     }
 }
 
-impl From<metadata_audio::MetadataError> for FrontendError {
-    fn from(error: metadata_audio::MetadataError) -> Self {
+impl From<metadata_audio::Error> for FrontendError {
+    fn from(error: metadata_audio::Error) -> Self {
         Self::Metadata(error.to_string())
     }
 }
 
-impl From<db::DatabaseError> for FrontendError {
-    fn from(error: db::DatabaseError) -> Self {
+impl From<db::Error> for FrontendError {
+    fn from(error: db::Error) -> Self {
         Self::Database(error.to_string())
     }
 }
 
-impl From<media_controls::PlayerError> for FrontendError {
-    fn from(error: media_controls::PlayerError) -> Self {
+impl From<media_controls::Error> for FrontendError {
+    fn from(error: media_controls::Error) -> Self {
         Self::Player(error.to_string())
     }
 }
 
-impl From<lastfm::LastFMError> for FrontendError {
-    fn from(error: lastfm::LastFMError) -> Self {
+impl From<lastfm::Error> for FrontendError {
+    fn from(error: lastfm::Error) -> Self {
         Self::LastFMError(error.to_string())
     }
 }
