@@ -22,12 +22,14 @@ use crate::error::FrontendError;
 use crate::events::{EventSystemHandler, PlayerEvent, QueueEvent, SodapopConfigEvent};
 use crate::queue::{QueueOrigin, QueueSystem};
 
+mod app;
 mod commands;
 mod config;
 mod discord;
 mod error;
 mod events;
 mod queue;
+mod systems;
 
 pub struct SodapopState {
     pub player: Arc<RwLock<media_controls::Player>>,
@@ -61,19 +63,19 @@ fn main() -> anyhow::Result<()> {
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::music_folder::select_music_folder,
-            commands::sqlite::get_album_with_tracks,
-            commands::sqlite::get_artist_with_albums,
-            commands::sqlite::get_all_albums,
-            commands::sqlite::track_by_id,
-            commands::sqlite::new_playlist,
-            commands::sqlite::get_all_playlists,
-            commands::sqlite::add_to_playlist,
-            commands::sqlite::get_playlist_tracks,
-            commands::sqlite::remove_from_playlist,
-            commands::sqlite::search_db,
-            commands::sqlite::get_albums_offset,
-            commands::sqlite::get_total_albums,
-            commands::sqlite::get_batch_track,
+            commands::db::get_album_with_tracks,
+            commands::db::get_artist_with_albums,
+            commands::db::get_all_albums,
+            commands::db::track_by_id,
+            commands::db::new_playlist,
+            commands::db::get_all_playlists,
+            commands::db::add_to_playlist,
+            commands::db::get_playlist_tracks,
+            commands::db::remove_from_playlist,
+            commands::db::search_db,
+            commands::db::get_albums_offset,
+            commands::db::get_total_albums,
+            commands::db::get_batch_track,
             commands::player::get_player_state,
             commands::player::player_has_track,
             commands::player::get_player_progress,

@@ -6,11 +6,11 @@ use crate::{
     error::FrontendError,
 };
 
+pub(crate) mod db;
 pub(crate) mod lastfm;
 pub(crate) mod music_folder;
 pub(crate) mod player;
 pub(crate) mod plugins;
-pub(crate) mod sqlite;
 
 fn custom_style_path() -> PathBuf {
     data_path().join("custom.css")
