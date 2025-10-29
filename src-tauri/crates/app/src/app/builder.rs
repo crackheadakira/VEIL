@@ -133,7 +133,7 @@ pub fn handle_tauri_setup(
         });
 
         let mut config = lock_or_log(state.config.write(), "Config Write").unwrap();
-        config.update_config(event.payload).unwrap();
+        config.update_config_and_write(event.payload).unwrap();
     });
 
     let app_handle = app.handle();

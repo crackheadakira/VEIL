@@ -6,20 +6,28 @@ use tauri_specta::Event;
 pub enum FrontendError {
     #[error("IO error: {0}")]
     Io(String),
+
     #[error("Metadata error: {0}")]
     Metadata(String),
+
     #[error("Database error: {0}")]
     Database(String),
+
     #[error("Player error: {0}")]
     Player(String),
+
     #[error("Standard error: {0}")]
     Standard(String),
+
     #[error("LastFM error: {0}")]
     LastFMError(String),
+
     #[error("Serde JSON: {0}")]
     SerdeJson(String),
+
     #[error("Tauri error: {0}")]
     TauriError(String),
+
     #[error("Anyhow error: {0}")]
     AnyhowError(String),
 }

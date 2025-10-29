@@ -16,7 +16,7 @@ pub enum QueueOrigin {
     Album { id: u32 },
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Type, Default, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Type, Default, Debug, PartialEq)]
 pub enum RepeatMode {
     /// Do not repeat anything when the end of the queue is hit.
     #[default]
@@ -369,7 +369,7 @@ impl QueueEvent {
             queue.set_global(tracks);
             queue.set_origin(origin);
 
-            config.update_config(SodapopConfigEvent {
+            config.update_config_and_write(SodapopConfigEvent {
                 queue_origin: Some(origin),
                 ..SodapopConfigEvent::default()
             })?;
@@ -377,7 +377,7 @@ impl QueueEvent {
 
         if queue.current_index() != queue_idx {
             queue.set_current_index(queue_idx);
-            config.update_config(SodapopConfigEvent {
+            config.update_config_and_write(SodapopConfigEvent {
                 queue_idx: Some(queue_idx),
                 ..SodapopConfigEvent::default()
             })?;

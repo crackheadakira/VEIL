@@ -62,6 +62,7 @@ pub struct LastFM {
 }
 
 impl<'a> LastFM {
+    #[must_use]
     pub fn builder() -> LastFMBuilder {
         LastFMBuilder {
             api_key: None,
@@ -165,6 +166,7 @@ impl<'a> LastFM {
         self.session_key = Some(session_key);
     }
 
+    #[must_use]
     pub fn session_key(&self) -> Option<String> {
         self.session_key.clone()
     }

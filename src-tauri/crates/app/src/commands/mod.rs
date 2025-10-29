@@ -1,8 +1,4 @@
-use crate::{
-    config::{SodapopConfig, config_path},
-    error::FrontendError,
-    systems::utils::data_path,
-};
+use crate::{config::SodapopConfig, error::FrontendError, systems::utils::data_path};
 
 pub(crate) mod db;
 pub(crate) mod lastfm;
@@ -20,7 +16,7 @@ pub fn read_custom_style() -> Result<String, FrontendError> {
 #[tauri::command]
 #[specta::specta]
 pub fn read_config() -> Result<SodapopConfig, FrontendError> {
-    let path = config_path();
+    let path = SodapopConfig::config_file_path();
     let json_reader = std::fs::File::open(path)?;
     Ok(serde_json::from_reader(json_reader)?)
 }

@@ -139,19 +139,6 @@ impl DiscordState {
         }
     }
 
-    /// Wraps around [`DiscordState::make_activity`] and logs upon an error
-    pub fn safe_make_activity(&mut self, new_payload: &PayloadData) -> bool {
-        let res = self.make_activity(new_payload);
-
-        match res {
-            Ok(_) => true,
-            Err(e) => {
-                logging::error!("Failed to make Discord activity: {e}");
-                false
-            }
-        }
-    }
-
     fn make_activity_from_payload(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let assets = if let Some(cover) = &self.payload.album_cover {
             Assets::new()
@@ -174,7 +161,7 @@ impl DiscordState {
             .assets(assets);
 
         if self.payload.show_timestamps && self.payload.duration != -1.0 {
-            let (timestamp, start) = make_timestamp();
+            let (timestamp, start) = Self::make_timestamp();
             activity = activity.timestamps(
                 timestamp
                     .start(start - self.payload.progress as i64 * 1000)
@@ -210,12 +197,12 @@ impl DiscordState {
 
         Ok(update_activity)
     }
-}
 
-fn make_timestamp() -> (Timestamps, i64) {
-    let start_time = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis() as i64;
-    (Timestamps::new(), start_time)
+    fn make_timestamp() -> (Timestamps, i64) {
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis() as i64;
+        (Timestamps::new(), start_time)
+    }
 }
