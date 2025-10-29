@@ -1,4 +1,4 @@
-use crate::{LastFM, LastFMError, LastFMParams, models::APIMethod};
+use crate::{LastFM, LastFMParams, Result, models::APIMethod};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap};
@@ -69,7 +69,7 @@ impl<'a> AuthGetSession<'a> {
         params
     }
 
-    pub async fn send(self) -> Result<AuthGetSessionResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetSessionResponse> {
         let mut session_params = self.params();
 
         let response = self
@@ -115,7 +115,7 @@ impl<'a> AuthGetToken<'a> {
         params
     }
 
-    pub async fn send(self) -> Result<AuthGetTokenResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetTokenResponse> {
         let mut token_params = self.params();
         let response = self
             .last_fm

@@ -4,7 +4,7 @@ use once_cell::sync::Lazy;
 use reqwest::Method;
 
 use crate::{
-    LastFM, LastFMError, LastFMParams,
+    Error, LastFM, LastFMParams, Result,
     models::{APIMethod, TrackData},
 };
 
@@ -45,7 +45,7 @@ impl<'a> UpdateNowPlaying<'a> {
         }
     }
 
-    fn params(&'a self) -> Result<LastFMParams<'a>, LastFMError> {
+    fn params(&'a self) -> Result<LastFMParams<'a>> {
         let mut params = HashMap::new();
 
         params.insert("artist", Cow::Borrowed(self.track.artist.as_str()));
@@ -54,7 +54,7 @@ impl<'a> UpdateNowPlaying<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<(), LastFMError> {
+    pub async fn send(self) -> Result<()> {
         let mut params = self.params()?;
 
         let result = self
@@ -67,14 +67,12 @@ impl<'a> UpdateNowPlaying<'a> {
 
             // ignore this specific error, as we're passing in `()` as type
             // so it'll always return this
-            Err(LastFMError::JsonError(ref e))
-                if e.to_string() == "invalid type: map, expected unit" =>
-            {
+            Err(Error::JsonError(ref e)) if e.to_string() == "invalid type: map, expected unit" => {
                 Ok(())
             }
 
-            Err(LastFMError::JsonError(e)) => {
-                Err(LastFMError::JsonError(e)) // Propagate the error
+            Err(Error::JsonError(e)) => {
+                Err(Error::JsonError(e)) // Propagate the error
             }
 
             Err(e) => Err(e), // Propagate all other non-JsonError errors
@@ -142,7 +140,7 @@ impl<'a> TrackScrobble<'a> {
         }
     }
 
-    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>> {
         let mut params = HashMap::new();
 
         let current_timestamp = UNIX_EPOCH.elapsed().expect("Time went backwards");
@@ -165,7 +163,7 @@ impl<'a> TrackScrobble<'a> {
             }
             ScrobbleBatch::Many(tracks) => {
                 if tracks.len() > 50 {
-                    return Err(LastFMError::BatchScrobble);
+                    return Err(Error::BatchScrobble);
                 }
 
                 for (index, track) in tracks.iter().enumerate() {
@@ -190,7 +188,7 @@ impl<'a> TrackScrobble<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<(), LastFMError> {
+    pub async fn send(self) -> Result<(), Error> {
         let mut params = self.params()?;
         let result = self
             .last_fm
@@ -202,14 +200,12 @@ impl<'a> TrackScrobble<'a> {
 
             // ignore this specific error, as we're passing in `()` as type
             // so it'll always return this
-            Err(LastFMError::JsonError(ref e))
-                if e.to_string() == "invalid type: map, expected unit" =>
-            {
+            Err(Error::JsonError(ref e)) if e.to_string() == "invalid type: map, expected unit" => {
                 Ok(())
             }
 
-            Err(LastFMError::JsonError(e)) => {
-                Err(LastFMError::JsonError(e)) // Propagate the error
+            Err(Error::JsonError(e)) => {
+                Err(Error::JsonError(e)) // Propagate the error
             }
 
             Err(e) => Err(e), // Propagate all other non-JsonError errors

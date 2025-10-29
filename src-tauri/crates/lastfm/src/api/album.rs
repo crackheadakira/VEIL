@@ -1,5 +1,5 @@
 use crate::{
-    LastFM, LastFMError, LastFMParams,
+    LastFM, LastFMParams, Result,
     models::{APIMethod, Image},
 };
 use reqwest::Method;
@@ -38,7 +38,7 @@ impl<'a> GetAlbumInfo<'a> {
         }
     }
 
-    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>> {
         let mut params = HashMap::new();
 
         params.insert("album", Cow::from(self.album));
@@ -47,7 +47,7 @@ impl<'a> GetAlbumInfo<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<AlbumSearch, LastFMError> {
+    pub async fn send(self) -> Result<AlbumSearch> {
         let mut params = self.params()?;
         let response: AlbumSearchResponse = self
             .last_fm
