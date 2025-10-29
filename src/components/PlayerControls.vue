@@ -2,13 +2,13 @@
   <div class="flex w-fit items-center justify-center gap-4">
     <span
       v-if="extra"
-      :class="playerStore.isShuffled ? 'text-accent-primary' : ''"
+      :class="shuffled ? 'text-accent-primary' : ''"
       class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
-      @click="queueStore.shuffleQueue()"
+      @click="shuffleQueue"
     ></span>
     <span
       class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
-      @click="playerStore.skipTrack('back')"
+      @click="previousTrack"
     ></span>
     <span
       @click="playerStore.handleResumeAndPause"
@@ -21,7 +21,7 @@
     ></span>
     <span
       class="i-fluent-next-20-filled cursor-pointer hover:opacity-90"
-      @click="playerStore.skipTrack('next')"
+      @click="nextTrack"
     ></span>
     <span
       v-if="extra"
@@ -36,12 +36,26 @@
 </template>
 
 <script setup lang="ts">
-import { usePlayerStore, useQueueStore } from "@/composables/";
+import { events, usePlayerStore } from "@/composables/";
+import { ref } from "vue";
 
 const playerStore = usePlayerStore();
-const queueStore = useQueueStore();
+const shuffled = ref(false);
 
 defineProps<{
   extra?: boolean;
 }>();
+
+async function previousTrack() {
+  await events.playerEvent.emit({ type: "PreviousTrackInQueue" });
+}
+
+async function nextTrack() {
+  await events.playerEvent.emit({ type: "NextTrackInQueue" });
+}
+
+async function shuffleQueue() {
+  await events.queueEvent.emit({ type: "ShuffleGlobalQueue" });
+  shuffled.value = !shuffled.value;
+}
 </script>

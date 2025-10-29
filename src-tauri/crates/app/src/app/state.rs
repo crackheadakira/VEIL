@@ -86,7 +86,6 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     Ok(SodapopState {
         player: Arc::new(RwLock::new(player)),
         queue: Arc::new(Mutex::new(QueueSystem::new(
-            0x12345678,
             sodapop_config.queue_origin,
             sodapop_config.repeat_mode,
         ))),

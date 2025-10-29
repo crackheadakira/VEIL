@@ -339,23 +339,7 @@ export type FrontendError =
   | { type: "SerdeJson"; data: string }
   | { type: "TauriError"; data: string }
   | { type: "AnyhowError"; data: string };
-export type MediaPayload =
-  | { Play: boolean }
-  | { Pause: boolean }
-  | { Next: boolean }
-  | { Previous: boolean }
-  /**
-   * Volume as f64 (0.0 - 1.0)
-   */
-  | { Volume: number }
-  /**
-   * Duration as f64
-   */
-  | { Seek: number }
-  /**
-   * Position in seconds
-   */
-  | { Position: number };
+export type MediaPayload = { Next: boolean } | { Previous: boolean };
 export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
@@ -369,6 +353,14 @@ export type PlayerEvent =
    * If a new track is to be played.
    */
   | { type: "NewTrack"; data: { track: Tracks } }
+  /**
+   * Play the previous track in the queue.
+   */
+  | { type: "PreviousTrackInQueue" }
+  /**
+   * Play the next track in the queue.
+   */
+  | { type: "NextTrackInQueue" }
   /**
    * If the current track is to be paused.
    */
@@ -424,10 +416,19 @@ export type QueueEvent =
    * Add to personal queue via context menu
    */
   | { type: "EnqueuePersonal"; data: { track_id: number } }
+  /**
+   * Sets global queue to a vec of tracks
+   */
   | {
       type: "SetGlobalQueue";
       data: { tracks: number[]; queue_idx: number; origin: QueueOrigin };
-    };
+    }
+  /**
+   * Flips the shuffle boolean So these happen:
+   * - shuffle: True  --> Talse
+   * - shuffle: False --> True
+   */
+  | { type: "ShuffleGlobalQueue" };
 export type QueueOrigin =
   | { type: "Playlist"; data: { id: number } }
   | { type: "Album"; data: { id: number } };

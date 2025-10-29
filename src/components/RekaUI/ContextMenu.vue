@@ -56,7 +56,7 @@
 
         <ContextMenuItem
           class="group context-menu-item"
-          @select="$emit('queue', props.track)"
+          @select="addToPersonalQueue"
         >
           <span class="i-fluent-add-square-multiple-24-regular"></span>
           <small>Add to Queue</small>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { Playlists, Tracks } from "@/composables/";
+import { events, Playlists, Tracks } from "@/composables/";
 import { Dialog } from "@/components/";
 import {
   ContextMenuRoot,
@@ -98,7 +98,6 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-  (e: "queue", payload: Tracks): void;
   (
     e: "playlist",
     type: "add" | "remove",
@@ -107,4 +106,11 @@ defineEmits<{
   ): void;
   (e: "create-playlist", name: string, trackId: number): void;
 }>();
+
+async function addToPersonalQueue() {
+  await events.queueEvent.emit({
+    type: "EnqueuePersonal",
+    data: { track_id: props.track.id },
+  });
+}
 </script>

@@ -63,7 +63,7 @@ pub fn make_specta_type_builder() -> Builder {
         use std::path::PathBuf;
 
         let bindings_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../..") // go up from crates/app
+            .join("../../..") // go up from crates/app
             .join("src")
             .join("bindings.ts");
 
@@ -153,8 +153,6 @@ pub fn handle_tauri_setup(
     let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
     if let Some(queue_origin) = queue.origin() {
         let config = lock_or_log(state.config.read(), "Config Read").unwrap();
-        queue.set_current_index(config.queue_idx);
-
         match queue_origin {
             QueueOrigin::Album { id } => {
                 let result = state.db.album_with_tracks(&id)?;
@@ -169,6 +167,8 @@ pub fn handle_tauri_setup(
                 queue.set_global(track_ids);
             }
         }
+
+        queue.set_current_index(config.queue_idx);
     }
 
     Ok(())

@@ -4,7 +4,6 @@
       :track="track"
       :playlists="playlistStore.playlists"
       :curr_playlist="playlist"
-      @queue="handleAddToQueue"
       @playlist="handlePlaylist"
       @create-playlist="
         async (playlist: string, trackId: number) => {
@@ -127,14 +126,5 @@ async function handlePlaylist(
 ) {
   if (type === "add") await playlistStore.addToPlaylist(playlistId, trackId);
   else await playlistStore.removeFromPlaylist(playlistId, trackId);
-}
-
-async function handleAddToQueue(track: Tracks) {
-  queueStore.personalQueue.push(track);
-
-  await events.queueEvent.emit({
-    type: "EnqueuePersonal",
-    data: { track_id: track.id },
-  });
 }
 </script>

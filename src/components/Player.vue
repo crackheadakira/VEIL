@@ -13,7 +13,6 @@
         <ContextMenu
           :track="playerStore.currentTrack"
           :playlists="playlistStore.playlists"
-          @queue="handleAddToQueue"
           @playlist="handlePlaylist"
         >
           <RouterLink
@@ -74,10 +73,8 @@ import {
   commands,
   events,
   formatTime,
-  Tracks,
   usePlayerStore,
   usePlaylistStore,
-  useQueueStore,
 } from "@/composables/";
 import {
   VolumeControls,
@@ -89,7 +86,6 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
-const queueStore = useQueueStore();
 const playlistStore = usePlaylistStore();
 const playerStore = usePlayerStore();
 
@@ -141,10 +137,6 @@ async function handlePlaylist(
 ) {
   if (type === "add") await playlistStore.addToPlaylist(playlistId, trackId);
   else await playlistStore.removeFromPlaylist(playlistId, trackId);
-}
-
-async function handleAddToQueue(track: Tracks) {
-  queueStore.personalQueue.push(track);
 }
 
 onMounted(async () => {

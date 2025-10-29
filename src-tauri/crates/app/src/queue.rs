@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use logging::lock_or_log;
+use rand::{RngCore, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager};
@@ -48,6 +49,9 @@ pub struct QueueSystem {
     /// Tracks in global queue, set by playing a playlist or album.
     global_queue: Vec<u32>,
 
+    /// This is used to unshuffle the queue
+    original_global_queue: Vec<u32>,
+
     /// Gets set to true when the personal queue is consumed
     /// then immediately to false when going to global queue.
     personal_consumed: bool,
@@ -56,7 +60,7 @@ pub struct QueueSystem {
     origin: Option<QueueOrigin>,
 
     /// If the queue is shuffled.
-    shuffle: bool,
+    shuffled: bool,
 
     /// What repeat mode the queue should use.
     repeat_mode: RepeatMode,
@@ -65,7 +69,7 @@ pub struct QueueSystem {
     current_index: usize,
 
     /// Internal state for PRNG.
-    rng_state: u32,
+    rng: SmallRng,
 }
 
 // TODO: Currently with preloading a track, how do we handle the
@@ -86,16 +90,19 @@ pub struct QueueSystem {
 // is from playlist or album & how do we remember the current track --> store in config?
 
 impl QueueSystem {
-    pub fn new(rng_state: u32, origin: Option<QueueOrigin>, repeat_mode: RepeatMode) -> Self {
+    pub fn new(origin: Option<QueueOrigin>, repeat_mode: RepeatMode) -> Self {
+        let rng = SmallRng::from_rng(&mut rand::rng());
+
         Self {
             personal_queue: VecDeque::with_capacity(50),
             global_queue: Vec::with_capacity(50),
+            original_global_queue: Vec::with_capacity(50),
             personal_consumed: false,
-            shuffle: false,
+            shuffled: false,
             repeat_mode,
             current_index: 0,
             origin,
-            rng_state,
+            rng,
         }
     }
 
@@ -181,44 +188,23 @@ impl QueueSystem {
             return Some(track);
         }
 
-        let track = if self.shuffle {
-            // Currently as we don't shuffle the global queue this regardless
-            // of direction will return a random track.
-            let idx = self.rand() % self.global_queue.len();
-            logging::debug!(
-                "{} next track from shuffled global queue at index {idx}",
-                match mode {
-                    Mode::Peek => "Peeking",
-                    Mode::Consume => "Consuming",
-                }
-            );
+        let idx = match dir {
+            Direction::Next => self.get_next_index(),
+            Direction::Previous => self.get_previous_index(),
+        };
 
-            if let Mode::Consume = mode {
-                self.set_current_index(idx);
-            };
+        logging::debug!(
+            "{} track from non-shuffled global queue at index {idx}",
+            match mode {
+                Mode::Peek => "Peeking",
+                Mode::Consume => "Consuming",
+            }
+        );
 
-            self.global_queue[idx]
-        } else {
-            let idx = match dir {
-                Direction::Next => self.get_next_index(),
-                Direction::Previous => self.get_previous_index(),
-            };
+        let track = self.global_queue[idx];
 
-            logging::debug!(
-                "{} track from non-shuffled global queue at index {idx}",
-                match mode {
-                    Mode::Peek => "Peeking",
-                    Mode::Consume => "Consuming",
-                }
-            );
-
-            let track = self.global_queue[idx];
-
-            if let Mode::Consume = mode {
-                self.set_current_index(idx);
-            };
-
-            track
+        if let Mode::Consume = mode {
+            self.set_current_index(idx);
         };
 
         Some(track)
@@ -263,16 +249,7 @@ impl QueueSystem {
 
     pub fn set_current_index(&mut self, new_index: usize) {
         logging::debug!("Setting index from {} to {new_index}", self.current_index);
-        self.current_index = new_index % self.global_queue.len();
-    }
-
-    pub fn shuffle(&self) -> bool {
-        self.shuffle
-    }
-
-    pub fn set_shuffle(&mut self, shuffle: bool) {
-        logging::debug!("Setting shuffle from {} to {shuffle}", self.shuffle);
-        self.shuffle = shuffle;
+        self.current_index = new_index % self.global_queue.len().max(1);
     }
 
     pub fn repeat_mode(&self) -> RepeatMode {
@@ -292,22 +269,37 @@ impl QueueSystem {
         self.personal_queue.is_empty() && self.global_queue.is_empty()
     }
 
+    /// Shuffle the queue using Fisher-Yates algorithm
     pub fn shuffle_global(&mut self) {
-        logging::debug!("Shuffling global queue");
-        let len = self.global_queue.len();
-        for i in (1..len).rev() {
-            let j = self.rand() % (i + 1);
-            self.global_queue.swap(i, j);
+        if !self.shuffled {
+            logging::debug!("Shuffling global queue");
+            self.original_global_queue = self.global_queue.clone();
+
+            let len = self.global_queue.len();
+            for i in (1..len).rev() {
+                let j = self.rng.next_u32() as usize % (i + 1);
+                self.global_queue.swap(i, j);
+            }
+
+            self.shuffled = true;
         }
     }
 
-    /// Simple pseudo-random function
-    fn rand(&mut self) -> usize {
-        self.rng_state = self
-            .rng_state
-            .wrapping_mul(1664525)
-            .wrapping_add(1013904223);
-        (self.rng_state % 0xFFFFFFFF) as usize
+    pub fn unshuffle_global(&mut self) {
+        if self.shuffled {
+            logging::debug!("Unshuffling global queue");
+
+            let current_track_id = self.global_queue[self.current_index];
+
+            std::mem::swap(&mut self.global_queue, &mut self.original_global_queue);
+            self.shuffled = false;
+
+            self.current_index = self
+                .global_queue
+                .iter()
+                .position(|&id| id == current_track_id)
+                .unwrap_or(0);
+        }
     }
 }
 
@@ -317,11 +309,17 @@ pub enum QueueEvent {
     /// Add to personal queue via context menu
     EnqueuePersonal { track_id: u32 },
 
+    /// Sets global queue to a vec of tracks
     SetGlobalQueue {
         tracks: Vec<u32>,
         queue_idx: usize,
         origin: QueueOrigin,
     },
+
+    /// Flips the shuffle boolean So these happen:
+    /// - shuffle: True  --> Talse
+    /// - shuffle: False --> True
+    ShuffleGlobalQueue,
 }
 
 impl EventSystemHandler for QueueEvent {
@@ -338,6 +336,7 @@ impl EventSystemHandler for QueueEvent {
                 queue_idx,
                 origin,
             } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
+            QueueEvent::ShuffleGlobalQueue {} => QueueEvent::shuffle_global_queue(handle)?,
         }
 
         Ok(())
@@ -385,6 +384,20 @@ impl QueueEvent {
 
         Ok(())
     }
+
+    fn shuffle_global_queue(handle: &AppHandle) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+
+        if queue.shuffled {
+            // As the queue is already shuffled, simply unshuffle it.
+            queue.unshuffle_global();
+        } else {
+            queue.shuffle_global();
+        }
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -393,7 +406,7 @@ mod tests {
 
     #[test]
     fn set_queue_origin() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         assert_eq!(queue.origin, None);
 
         queue.set_origin(QueueOrigin::Album { id: 5 });
@@ -402,7 +415,7 @@ mod tests {
 
     #[test]
     fn consuming_personal_queue() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.enqueue_personal(50); // pushes to back [50]
         queue.enqueue_personal(20); // pushes to back [50, 20]
         queue.set_global(vec![0, 1, 2]);
@@ -460,7 +473,7 @@ mod tests {
 
     #[test]
     fn traversing_global_queue() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.set_global(vec![0, 1, 2]);
 
         assert_eq!(queue.current_index, 0);
@@ -492,7 +505,7 @@ mod tests {
 
     #[test]
     fn wrapping_idx_set() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.set_global(vec![0, 1, 2]);
         assert_eq!(queue.current_index, 0);
 
@@ -507,7 +520,7 @@ mod tests {
 
     #[test]
     fn empty_queue() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
 
         assert_eq!(queue.previous(), None);
         assert_eq!(queue.current(), None);
@@ -516,7 +529,7 @@ mod tests {
 
     #[test]
     fn shuffle_global_changes_order() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.set_global(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
         let original = queue.global_queue.clone();
@@ -530,17 +543,8 @@ mod tests {
     }
 
     #[test]
-    fn shuffled_next_updates_index_randomly() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
-        queue.set_global(vec![10, 20, 30, 40]);
-        queue.shuffle = true;
-        let _ = queue.next();
-        assert!(queue.current_index < queue.global_queue.len());
-    }
-
-    #[test]
     fn repeat_none_behaves_normally() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.set_global(vec![0, 1, 2]);
         assert_eq!(queue.next(), Some(1));
         assert_eq!(queue.next(), Some(2));
@@ -549,7 +553,7 @@ mod tests {
 
     #[test]
     fn repeat_track_keeps_current() {
-        let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::Track);
+        let mut queue = QueueSystem::new(None, RepeatMode::Track);
         queue.set_global(vec![0, 1, 2]);
         let first = queue.current();
         let next = queue.next();

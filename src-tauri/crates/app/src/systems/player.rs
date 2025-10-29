@@ -142,6 +142,12 @@ pub enum PlayerEvent {
     /// If a new track is to be played.
     NewTrack { track: Tracks },
 
+    /// Play the previous track in the queue.
+    PreviousTrackInQueue,
+
+    /// Play the next track in the queue.
+    NextTrackInQueue,
+
     /// If the current track is to be paused.
     Pause,
 
@@ -194,6 +200,12 @@ impl EventSystemHandler for PlayerEvent {
                 Self::seek_current_track(handle, position, resume, online)?
             }
             PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
+            PlayerEvent::PreviousTrackInQueue => {
+                Self::play_previous_track_from_queue(handle, online).await?
+            }
+            PlayerEvent::NextTrackInQueue => {
+                Self::play_next_track_from_queue(handle, online).await?
+            }
         };
 
         // TODO: Implement frontend emits.
@@ -302,6 +314,48 @@ impl PlayerEvent {
         if online.last_fm_enabled {
             let lastfm = state.lastfm.lock().await;
             try_update_now_playing_to_lastfm(lastfm, track).await?;
+        }
+
+        Ok(())
+    }
+
+    /// Plays the next track in queue by passing it to [`PlayerEvent::set_new_track`]
+    ///
+    async fn play_next_track_from_queue(
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let track_id = {
+            let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+            queue.next()
+        };
+
+        if let Some(track_id) = track_id {
+            let track = state.db.by_id::<Tracks>(&track_id)?;
+
+            Self::set_new_track(handle, track, online).await?
+        }
+
+        Ok(())
+    }
+
+    /// Plays the previous track in queue by passing it to [`PlayerEvent::set_new_track`]
+    ///
+    async fn play_previous_track_from_queue(
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let track_id = {
+            let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+            queue.previous()
+        };
+
+        if let Some(track_id) = track_id {
+            let track = state.db.by_id::<Tracks>(&track_id)?;
+
+            Self::set_new_track(handle, track, online).await?
         }
 
         Ok(())
