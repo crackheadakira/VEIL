@@ -499,11 +499,9 @@ mod tests {
     #[test]
     fn shuffled_next_updates_index_randomly() {
         let mut queue = QueueSystem::new(0x12345678, None, RepeatMode::None);
-        queue.set_global(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        queue.set_global(vec![10, 20, 30, 40]);
         queue.shuffle = true;
-
-        queue.next();
-
+        let _ = queue.next();
         assert!(queue.current_index < queue.global_queue.len());
     }
 
