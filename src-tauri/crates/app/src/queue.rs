@@ -10,12 +10,37 @@ pub enum QueueOrigin {
     Album { id: u32 },
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize, Type, Default)]
+pub enum RepeatMode {
+    /// Do not repeat anything when the end of the queue is hit.
+    #[default]
+    None,
+
+    /// Repeat the queue when the end of the queue is hit.
+    Queue,
+
+    /// Repeat the track when the end of the track is hit.
+    Track,
+}
+
+#[derive(Copy, Clone)]
+enum Direction {
+    Next,
+    Previous,
+}
+
+#[derive(Copy, Clone)]
+enum Mode {
+    Peek,
+    Consume,
+}
+
 pub struct QueueSystem {
     personal_queue: VecDeque<u32>,
     global_queue: Vec<u32>,
     pub origin: Option<QueueOrigin>,
-
     pub shuffle: bool,
+    pub repeat_mode: RepeatMode,
 
     /// Index into the global queue
     current_index: usize,
@@ -42,11 +67,12 @@ pub struct QueueSystem {
 // is from playlist or album & how do we remember the current track --> store in config?
 
 impl QueueSystem {
-    pub fn new(rng_state: u32, origin: Option<QueueOrigin>) -> Self {
+    pub fn new(rng_state: u32, origin: Option<QueueOrigin>, repeat_mode: RepeatMode) -> Self {
         Self {
             personal_queue: VecDeque::with_capacity(50),
             global_queue: Vec::with_capacity(50),
             shuffle: false,
+            repeat_mode,
             current_index: 0,
             origin,
             rng_state,
@@ -77,62 +103,105 @@ impl QueueSystem {
         self.global_queue = new_global;
     }
 
+    /// Internal method to get the previous index.
+    ///
+    /// Handles the repeat methods as well
     fn get_previous_index(&self) -> usize {
         (self.current_index + 1) % self.global_queue.len()
     }
 
+    /// Internal method to get the next index.
+    ///
+    /// Handles the repeat methods as well.
     fn get_next_index(&self) -> usize {
         (self.current_index + 1) % self.global_queue.len()
     }
 
-    /// Get the next track
-    pub fn next(&mut self) -> Option<u32> {
-        if let Some(track) = self.personal_queue.pop_front() {
-            logging::debug!("Fetching next track from personal queue");
-            Some(track)
-        } else if !self.global_queue.is_empty() {
-            let track = if self.shuffle {
-                let idx = self.rand() % self.global_queue.len();
-                logging::debug!("Fetching next track from shuffled global queue at index {idx}");
-                self.global_queue[idx]
-            } else {
-                let idx = self.get_next_index();
-                logging::debug!(
-                    "Fetching next track from non-shuffled global queue at index {idx}"
-                );
+    /// Internal method to get a track from the queue.
+    fn get_track(&mut self, dir: Direction, mode: Mode) -> Option<u32> {
+        // As personal queue is meant to be consumed, it does not have a way
+        // of checking the previous direction.
+        match mode {
+            Mode::Consume => {
+                if let Some(track) = self.personal_queue.pop_front() {
+                    logging::debug!("Consuming next track from personal queue");
+                    return Some(track);
+                }
+            }
+            Mode::Peek => {
+                if let Some(track) = self.personal_queue.front() {
+                    logging::debug!("Peeking at next track from personal queue");
+                    return Some(*track);
+                }
+            }
+        };
 
-                let track = self.global_queue[idx];
+        // If there is no queue simply return.
+        if self.global_queue.is_empty() {
+            return None;
+        };
 
+        let track = if self.shuffle {
+            // Currently as we don't shuffle the global queue this regardless
+            // of direction will return a random track.
+            let idx = self.rand() % self.global_queue.len();
+            logging::debug!(
+                "{} next track from shuffled global queue at index {idx}",
+                match mode {
+                    Mode::Peek => "Peeking",
+                    Mode::Consume => "Consuming",
+                }
+            );
+
+            if let Mode::Consume = mode {
                 self.set_current_index(idx);
-                track
             };
 
-            Some(track)
+            self.global_queue[idx]
         } else {
-            None
-        }
+            let idx = match dir {
+                Direction::Next => self.get_next_index(),
+                Direction::Previous => self.get_previous_index(),
+            };
+
+            logging::debug!(
+                "{} track from non-shuffled global queue at index {idx}",
+                match mode {
+                    Mode::Peek => "Peeking",
+                    Mode::Consume => "Consuming",
+                }
+            );
+
+            let track = self.global_queue[idx];
+
+            if let Mode::Consume = mode {
+                self.set_current_index(idx);
+            };
+
+            track
+        };
+
+        Some(track)
+    }
+
+    /// Get the next track
+    pub fn next(&mut self) -> Option<u32> {
+        self.get_track(Direction::Next, Mode::Consume)
     }
 
     /// Peek at the next track
     pub fn peek_next(&mut self) -> Option<u32> {
-        if let Some(track) = self.personal_queue.front() {
-            logging::debug!("Peeking at next track from personal queue");
-            Some(*track)
-        } else if !self.global_queue.is_empty() {
-            if self.shuffle {
-                let idx = self.rand() % self.global_queue.len();
-                logging::debug!("Peeking at next track from shuffled global queue at index {idx}");
-                Some(self.global_queue[idx])
-            } else {
-                let idx = self.get_next_index();
-                logging::debug!(
-                    "Peeking at next track from non-shuffled global queue at index {idx}"
-                );
-                Some(self.global_queue[idx])
-            }
-        } else {
-            None
-        }
+        self.get_track(Direction::Next, Mode::Peek)
+    }
+
+    /// Get the previous track
+    pub fn previous(&mut self) -> Option<u32> {
+        self.get_track(Direction::Previous, Mode::Consume)
+    }
+
+    /// Peek at the previous track
+    pub fn peek_previous(&mut self) -> Option<u32> {
+        self.get_track(Direction::Previous, Mode::Peek)
     }
 
     pub fn current_index(&self) -> usize {

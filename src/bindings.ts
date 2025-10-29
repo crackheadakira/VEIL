@@ -431,6 +431,19 @@ export type QueueEvent =
 export type QueueOrigin =
   | { type: "Playlist"; data: { id: number } }
   | { type: "Album"; data: { id: number } };
+export type RepeatMode =
+  /**
+   * Do not repeat anything when the end of the queue is hit.
+   */
+  | "None"
+  /**
+   * Repeat the queue when the end of the queue is hit.
+   */
+  | "Queue"
+  /**
+   * Repeat the track when the end of the track is hit.
+   */
+  | "Track";
 export type Search = {
   /**
    * ID of the search item
@@ -446,13 +459,14 @@ export type Search = {
   search_type: string;
 };
 export type SodapopConfig = {
-  theme: ThemeMode;
-  music_dir: string | null;
-  discord_enabled: boolean;
-  last_fm_enabled: boolean;
-  last_fm_key: string | null;
-  queue_origin: QueueOrigin | null;
-  queue_idx: number;
+  theme?: ThemeMode;
+  music_dir?: string | null;
+  discord_enabled?: boolean;
+  last_fm_enabled?: boolean;
+  last_fm_key?: string | null;
+  queue_origin?: QueueOrigin | null;
+  queue_idx?: number;
+  repeat_mode?: RepeatMode;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
@@ -462,6 +476,7 @@ export type SodapopConfigEvent = {
   last_fm_key: string | null;
   queue_origin: QueueOrigin | null;
   queue_idx: number | null;
+  repeat_mode: RepeatMode | null;
 };
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {

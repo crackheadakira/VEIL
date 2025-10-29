@@ -168,6 +168,7 @@ fn main() -> anyhow::Result<()> {
                     queue: Arc::new(Mutex::new(QueueSystem::new(
                         0x12345678,
                         sodapop_config.queue_origin,
+                        sodapop_config.repeat_mode,
                     ))),
                     db: Arc::new(db::Database::new(path.clone())),
                     lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),

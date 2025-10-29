@@ -123,7 +123,8 @@ pub fn player_progress_channel(
             }
 
             if !player.has_next_sound_handle()
-                && (player.duration as f64 - player.get_progress()) <= 0.5
+                // Ends within a second
+                && (player.duration as f64 - player.get_progress()) <= 1.0
             {
                 drop(player);
                 let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();

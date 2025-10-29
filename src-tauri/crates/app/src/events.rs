@@ -11,7 +11,7 @@ use crate::{
     config::ThemeMode,
     discord,
     error::FrontendError,
-    queue::QueueOrigin,
+    queue::{QueueOrigin, RepeatMode},
 };
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
@@ -23,6 +23,7 @@ pub struct SodapopConfigEvent {
     pub last_fm_key: Option<String>,
     pub queue_origin: Option<QueueOrigin>,
     pub queue_idx: Option<usize>,
+    pub repeat_mode: Option<RepeatMode>,
 }
 
 impl Default for SodapopConfigEvent {
@@ -35,6 +36,7 @@ impl Default for SodapopConfigEvent {
             last_fm_key: None,
             queue_origin: None,
             queue_idx: None,
+            repeat_mode: None,
         }
     }
 }
