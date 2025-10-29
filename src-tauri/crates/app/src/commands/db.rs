@@ -65,7 +65,7 @@ pub fn new_playlist(name: String, state: TauriState) -> Result<u32, FrontendErro
     state.db.insert::<Playlists>(Playlists {
         id: 0,
         name,
-        description: String::from(""),
+        description: String::new(),
         cover_path: String::from("/placeholder.png"),
     })?;
 

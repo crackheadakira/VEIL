@@ -16,7 +16,7 @@ pub enum QueueOrigin {
     Album { id: u32 },
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Type, Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Type, Default, Debug)]
 pub enum RepeatMode {
     /// Do not repeat anything when the end of the queue is hit.
     #[default]
@@ -42,21 +42,29 @@ enum Mode {
 }
 
 pub struct QueueSystem {
+    /// Tracks in personal queue, by adding tracks via context menu to personal queue.
     personal_queue: VecDeque<u32>,
+
+    /// Tracks in global queue, set by playing a playlist or album.
     global_queue: Vec<u32>,
 
     /// Gets set to true when the personal queue is consumed
     /// then immediately to false when going to global queue.
     personal_consumed: bool,
 
-    pub origin: Option<QueueOrigin>,
-    pub shuffle: bool,
-    pub repeat_mode: RepeatMode,
+    /// Origin of the queue.
+    origin: Option<QueueOrigin>,
 
-    /// Index into the global queue
+    /// If the queue is shuffled.
+    shuffle: bool,
+
+    /// What repeat mode the queue should use.
+    repeat_mode: RepeatMode,
+
+    /// Index into the global queue.
     current_index: usize,
 
-    /// Internal state for PRNG
+    /// Internal state for PRNG.
     rng_state: u32,
 }
 
@@ -95,6 +103,10 @@ impl QueueSystem {
     pub fn set_origin(&mut self, origin: QueueOrigin) {
         logging::debug!("Setting queue origin to {origin:?}");
         self.origin = Some(origin);
+    }
+
+    pub fn origin(&self) -> Option<QueueOrigin> {
+        self.origin
     }
 
     /// Add a track to the personal queue
@@ -252,6 +264,27 @@ impl QueueSystem {
     pub fn set_current_index(&mut self, new_index: usize) {
         logging::debug!("Setting index from {} to {new_index}", self.current_index);
         self.current_index = new_index % self.global_queue.len();
+    }
+
+    pub fn shuffle(&self) -> bool {
+        self.shuffle
+    }
+
+    pub fn set_shuffle(&mut self, shuffle: bool) {
+        logging::debug!("Setting shuffle from {} to {shuffle}", self.shuffle);
+        self.shuffle = shuffle;
+    }
+
+    pub fn repeat_mode(&self) -> RepeatMode {
+        self.repeat_mode
+    }
+
+    pub fn set_repeat_mode(&mut self, repeat_mode: RepeatMode) {
+        logging::debug!(
+            "Setting repeat mode from {:?} to {repeat_mode:?}",
+            self.repeat_mode
+        );
+        self.repeat_mode = repeat_mode;
     }
 
     /// Check if the queues are empty

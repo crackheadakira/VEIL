@@ -73,7 +73,7 @@ impl<'a> LastFM {
     async fn http_request(
         &self,
         method: Method,
-        params: &mut LastFMParams<'a>,
+        params: &LastFMParams<'a>,
     ) -> Result<serde_json::Value> {
         let url = &self.base_url;
 
@@ -142,7 +142,7 @@ impl<'a> LastFM {
     /// This is needed by Last.FM to sign your API requests
     fn sign_api(&self, params: &mut LastFMParams) -> String {
         let mut sorted_keys = params.keys().copied().collect::<Vec<&str>>();
-        sorted_keys.sort();
+        sorted_keys.sort_unstable();
 
         let mut params_string = String::new();
 
@@ -173,18 +173,22 @@ impl<'a> LastFM {
         self.enabled = value;
     }
 
+    #[must_use]
     pub fn auth(&'_ self) -> auth::Auth<'_> {
         auth::Auth::new(self)
     }
 
+    #[must_use]
     pub fn user(&'_ self) -> user::User<'_> {
         user::User::new(self)
     }
 
+    #[must_use]
     pub fn track(&'_ self) -> track::Track<'_> {
         track::Track::new(self)
     }
 
+    #[must_use]
     pub fn album(&'_ self) -> album::Album<'_> {
         album::Album::new(self)
     }
@@ -214,24 +218,30 @@ pub struct LastFMBuilder {
 
 impl LastFMBuilder {
     /// Add `api_key` to builder
+    #[must_use]
     pub fn api_key(mut self, api_key: &str) -> Self {
-        self.api_key = Some(api_key.to_string());
+        self.api_key = Some(api_key.to_owned());
         self
     }
 
     /// Add `api_secret` to builder
+    #[must_use]
     pub fn api_secret(mut self, api_secret: &str) -> Self {
-        self.api_secret = Some(api_secret.to_string());
+        self.api_secret = Some(api_secret.to_owned());
         self
     }
 
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
+    ///
+    /// # Errors
+    /// Returns [`Error::MissingAPIKey`] or [`Error::MissingAPISecret`]
+    /// if the respective fields were not set on the builder.
     pub fn build(self) -> Result<LastFM> {
         Ok(LastFM {
             api_key: self.api_key.ok_or(Error::MissingAPIKey)?,
             api_secret: self.api_secret.ok_or(Error::MissingAPISecret)?,
             session_key: None,
-            base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
+            base_url: "http://ws.audioscrobbler.com/2.0/".to_owned(),
             client: reqwest::Client::new(),
             enabled: true,
         })

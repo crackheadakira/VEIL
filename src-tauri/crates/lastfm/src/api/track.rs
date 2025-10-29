@@ -1,6 +1,5 @@
-use std::{borrow::Cow, collections::HashMap, time::UNIX_EPOCH};
+use std::{borrow::Cow, collections::HashMap, sync::LazyLock, time::UNIX_EPOCH};
 
-use once_cell::sync::Lazy;
 use reqwest::Method;
 
 use crate::{
@@ -45,17 +44,17 @@ impl<'a> UpdateNowPlaying<'a> {
         }
     }
 
-    fn params(&'a self) -> Result<LastFMParams<'a>> {
+    fn params(&'a self) -> LastFMParams<'a> {
         let mut params = HashMap::new();
 
         params.insert("artist", Cow::Borrowed(self.track.artist.as_str()));
         params.insert("track", Cow::Borrowed(self.track.name.as_str()));
 
-        Ok(params)
+        params
     }
 
     pub async fn send(self) -> Result<()> {
-        let mut params = self.params()?;
+        let mut params = self.params();
 
         let result = self
             .last_fm
@@ -91,7 +90,7 @@ pub struct TrackScrobble<'a> {
     method: APIMethod,
 }
 
-static ARTIST_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static ARTIST_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("artist[{i}]");
@@ -101,7 +100,7 @@ static ARTIST_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static ALBUM_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static ALBUM_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("artist[{i}]");
@@ -111,7 +110,7 @@ static ALBUM_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static TRACK_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static TRACK_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("track[{i}]");
@@ -121,7 +120,7 @@ static TRACK_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static TIMESTAMP_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static TIMESTAMP_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("timestamp[{i}]");

@@ -13,9 +13,9 @@ pub fn run() -> Result<(), anyhow::Error> {
         .setup(|app| handle_tauri_setup(app, specta_builder))
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|_app, _event| {
-            if let RunEvent::ExitRequested { .. } = _event {
-                let state = _app.state::<SodapopState>();
+        .run(|app, event| {
+            if let RunEvent::ExitRequested { .. } = event {
+                let state = app.state::<SodapopState>();
                 let config = lock_or_log(state.config.read(), "Config Lock").unwrap();
                 let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
 

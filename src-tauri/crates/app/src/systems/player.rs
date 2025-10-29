@@ -15,7 +15,7 @@ use crate::{
     error::FrontendError, events::EventSystemHandler,
 };
 
-/// Try to scrobble the track to LastFM.
+/// Try to scrobble the track to `LastFM`.
 ///
 /// Spawns an async task, and upon an error logs it.
 pub async fn try_scrobble_track_to_lastfm(
@@ -35,15 +35,14 @@ pub async fn try_scrobble_track_to_lastfm(
         .await;
 
     match res {
-        Err(lastfm::Error::RequestWhenDisabled) => {}
+        Err(lastfm::Error::RequestWhenDisabled) | Ok(_) => {}
         Err(e) => return Err(e.into()),
-        Ok(_) => {}
     }
 
     Ok(())
 }
 
-/// Tries to set now playing to given track on LastFM.
+/// Tries to set now playing to given track on `LastFM`.
 ///
 /// Spawns an async task, and upon an error logs it.
 pub async fn try_update_now_playing_to_lastfm(
@@ -62,9 +61,8 @@ pub async fn try_update_now_playing_to_lastfm(
         .await;
 
     match res {
-        Err(lastfm::Error::RequestWhenDisabled) => {}
+        Err(lastfm::Error::RequestWhenDisabled) | Ok(_) => {}
         Err(e) => return Err(e.into()),
-        Ok(_) => {}
     }
 
     Ok(())

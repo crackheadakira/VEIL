@@ -51,14 +51,14 @@ pub trait NeedForDatabase: Sized {
     fn table_name() -> &'static str;
     /// Struct to parameters to insert into database
     fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
-    /// Return an Option<u32> of artist_id
+    /// Return an Option<u32> of `artist_id`
     fn get_artist_id(&self) -> Option<u32>;
 }
 
 #[cfg(feature = "rusqlite")]
 impl NeedForDatabase for Artists {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
-        Ok(Artists {
+        Ok(Self {
             id: row.get(0)?,
             name: row.get(1)?,
         })
@@ -80,7 +80,7 @@ impl NeedForDatabase for Artists {
 #[cfg(feature = "rusqlite")]
 impl NeedForDatabase for Albums {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
-        Ok(Albums {
+        Ok(Self {
             artist_id: row.get(0)?,
             artist_name: row.get(1)?,
             id: row.get(2)?,
@@ -119,7 +119,7 @@ impl NeedForDatabase for Albums {
 #[cfg(feature = "rusqlite")]
 impl NeedForDatabase for Tracks {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
-        Ok(Tracks {
+        Ok(Self {
             id: row.get(0)?,
             album_id: row.get(1)?,
             artist_id: row.get(2)?,
@@ -159,7 +159,7 @@ impl NeedForDatabase for Tracks {
 #[cfg(feature = "rusqlite")]
 impl NeedForDatabase for Playlists {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
-        Ok(Playlists {
+        Ok(Self {
             id: row.get(0)?,
             name: row.get(1)?,
             description: row.get(2)?,
@@ -183,7 +183,7 @@ impl NeedForDatabase for Playlists {
 #[cfg(feature = "rusqlite")]
 impl NeedForDatabase for Search {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
-        Ok(Search {
+        Ok(Self {
             title: row.get(0)?,
             search_type: row.get(1)?,
             search_id: row.get(2)?,

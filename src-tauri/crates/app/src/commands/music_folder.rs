@@ -61,7 +61,7 @@ pub async fn select_music_folder(
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
 
-        for metadata in all_metadata.iter() {
+        for metadata in &all_metadata {
             let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
 
             let artist_id = if artist_exists {

@@ -38,17 +38,17 @@ impl<'a> GetAlbumInfo<'a> {
         }
     }
 
-    fn params(&'_ self) -> Result<LastFMParams<'_>> {
+    fn params(&'_ self) -> LastFMParams<'_> {
         let mut params = HashMap::new();
 
         params.insert("album", Cow::from(self.album));
         params.insert("artist", Cow::from(self.artist));
 
-        Ok(params)
+        params
     }
 
     pub async fn send(self) -> Result<AlbumSearch> {
-        let mut params = self.params()?;
+        let mut params = self.params();
         let response: AlbumSearchResponse = self
             .last_fm
             .send_request(Method::GET, &self.method, &mut params)

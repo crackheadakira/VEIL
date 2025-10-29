@@ -48,15 +48,12 @@ impl DiscordState {
 
     pub fn connect(&mut self) -> bool {
         let res = logging::try_with_log!("Connect Discord RPC", || self.rpc.connect());
-        match res {
-            Ok(_) => {
-                self.enabled = true;
-                true
-            }
-            Err(_) => {
-                self.enabled = false;
-                false
-            }
+        if res.is_ok() {
+            self.enabled = true;
+            true
+        } else {
+            self.enabled = false;
+            false
         }
     }
 

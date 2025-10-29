@@ -24,7 +24,7 @@ impl<'a> Auth<'a> {
     /// // passed onto the session.
     /// let res = last_fm.auth().token().send()?;
     /// ```
-    pub fn token(&mut self) -> AuthGetToken<'_> {
+    pub fn token(&self) -> AuthGetToken<'_> {
         AuthGetToken::new(self.last_fm)
     }
 
@@ -40,7 +40,7 @@ impl<'a> Auth<'a> {
     /// let res = last_fm.auth().session(token).send()?;
     ///
     /// ```
-    pub fn session(&mut self, token: &'a str) -> AuthGetSession<'_> {
+    pub fn session(&self, token: &'a str) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }
 }
