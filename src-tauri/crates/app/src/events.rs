@@ -7,11 +7,11 @@ use tauri_specta::{Event, TypedEvent};
 
 use crate::{
     SodapopState,
-    commands::player::{try_scrobble_track_to_lastfm, try_update_now_playing_to_lastfm},
     config::ThemeMode,
     discord,
     error::FrontendError,
     queue::{QueueOrigin, RepeatMode},
+    systems::player::{try_scrobble_track_to_lastfm, try_update_now_playing_to_lastfm},
 };
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]
@@ -172,7 +172,9 @@ impl PlayerEvent {
         if let Some((track_id, track_timestamp)) = should_scrobble
             && online.last_fm_enabled
         {
-            try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
+            let track = state.db.by_id::<Tracks>(&track_id)?;
+            let lastfm = state.lastfm.lock().await;
+            try_scrobble_track_to_lastfm(lastfm, track, track_timestamp).await?;
         }
 
         let (duration, progress) = {
@@ -234,7 +236,8 @@ impl PlayerEvent {
 
         // Update Last.FM now playing to current track
         if online.last_fm_enabled {
-            try_update_now_playing_to_lastfm(handle.clone(), track).await?;
+            let lastfm = state.lastfm.lock().await;
+            try_update_now_playing_to_lastfm(lastfm, track).await?;
         }
 
         Ok(())
@@ -264,7 +267,9 @@ impl PlayerEvent {
 
         if online.last_fm_enabled {
             if let Some((track_id, track_timestamp)) = should_scrobble {
-                try_scrobble_track_to_lastfm(handle.clone(), track_id, track_timestamp).await?;
+                let track = state.db.by_id::<Tracks>(&track_id)?;
+                let lastfm = state.lastfm.lock().await;
+                try_scrobble_track_to_lastfm(lastfm, track, track_timestamp).await?;
             }
         }
 
