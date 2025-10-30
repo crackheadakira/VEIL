@@ -1,5 +1,4 @@
-import { commands, events, MediaPayload, useQueueStore, type Tracks } from "@/composables/";
-import { listen, Event } from "@tauri-apps/api/event";
+import { commands, events, type Tracks } from "@/composables/";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
 import { nextTick, ref, watch } from "vue";
@@ -26,8 +25,6 @@ export const usePlayerStore = defineStore("player", () => {
 
   const paused = ref(true);
 
-  const queueStore = useQueueStore();
-
   // Channel is for syncing pause state between main window & widget
   const channel = new BroadcastChannel("player_channel");
 
@@ -48,36 +45,6 @@ export const usePlayerStore = defineStore("player", () => {
   async function setPlayerProgress(progress: number): Promise<void> {
     await commands.setPlayerProgress(progress);
     playerProgress.value = progress;
-  }
-
-  /**
-   * Skips the current track and plays the next/previous track in the queue.
-   *
-   * Calls {@linkcode setPlayerTrack} to play the track.
-   *
-   * If `forward` is true, plays the next track in the queue.
-   *
-   * If `forward` is false, plays the previous track in the queue.
-   *
-   * Reads the `loop` value to determine the behavior if the track is the last/first in the queue. If `loop` is set to "track", loop is set to "queue".
-   *
-   * @example
-   * // playerStore.queue = [track1, track2, track3]
-   * // playerStore.queueIndex = 1 // track2
-   * // playerStore.loop = "none"
-   * await playerStore.skipTrack(true) // Plays track3
-   *
-   * @example
-   * // playerStore.queue = [track1, track2, track3]
-   * // playerStore.queueIndex = 2 // track3
-   * // playerStore.loop = "none"
-   * await playerStore.skipTrack(true) // Plays track1
-   */
-  async function skipTrack(direction: "back" | "next"): Promise<void> {
-    if (loop.value === "track") loop.value = "queue";
-
-    const nextTrack = await queueStore.getQueueTrack(direction);
-    if (nextTrack) await events.playerEvent.emit({ type: "NewTrack", data: { track: nextTrack } });
   }
 
   /**
@@ -157,28 +124,6 @@ export const usePlayerStore = defineStore("player", () => {
   };
 
   /**
-   * Handles the end of the song.
-   *
-   * If the player is in track loop, replay the same track.
-   *
-   * If the player is in queue loop, replay the queue.
-   *
-   * If the player is not in loop, pause the player.
-   */
-  async function handleSongEnd() {
-    if (!currentTrack.value) return;
-
-    if (loop.value === "track") {
-      // replay the same track
-      await events.playerEvent.emit({ type: "NewTrack", data: { track: currentTrack.value } });
-      return;
-    }
-
-    if (queueStore.queueHasTrack) return await skipTrack('next');
-    else return await handleResumeAndPause();
-  }
-
-  /**
    * Updates the volume of the player.
    */
   async function handleVolume() {
@@ -210,6 +155,7 @@ export const usePlayerStore = defineStore("player", () => {
 
   // LISTENERS
 
+  // will be updated in the future to use its own UIChangeEvent
   const listenNewTrack = events.playerEvent.listen((e) => {
     switch (e.payload.type) {
       case "NewTrack":
@@ -229,22 +175,6 @@ export const usePlayerStore = defineStore("player", () => {
     }
   });
 
-  const listenMediaControl = listen(
-    "media-control",
-    async (e: Event<MediaPayload>) => {
-      const payload = e.payload;
-
-      switch (true) {
-        case "Next" in payload:
-          skipTrack('next');
-          break;
-        case "Previous" in payload:
-          skipTrack('back');
-          break;
-      }
-    },
-  );
-
   return {
     paused,
     currentTrack,
@@ -254,14 +184,11 @@ export const usePlayerStore = defineStore("player", () => {
     isShuffled,
     listenNewTrack,
     setPlayerProgress,
-    skipTrack,
     loopQueue,
     $reset,
     handleProgress,
     handleResumeAndPause,
     handleVolume,
     initialLoad,
-    handleSongEnd,
-    listenMediaControl,
   };
 });

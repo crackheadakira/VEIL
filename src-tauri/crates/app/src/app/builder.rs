@@ -7,14 +7,14 @@ use tauri_specta::{Builder, Event, collect_commands, collect_events};
 use crate::{
     app::{
         SodapopState,
-        state::{MediaPayload, attach_media_controls_to_player, initialize_state},
+        state::{attach_media_controls_to_player, initialize_state},
     },
     commands,
     config::{SodapopConfig, SodapopConfigEvent},
     error::FrontendError,
     events::EventSystemHandler,
     queue::{QueueEvent, QueueOrigin},
-    systems::{player::PlayerEvent, utils::data_path},
+    systems::{player::PlayerEvent, ui::UIUpdateEvent, utils::data_path},
 };
 
 pub fn make_specta_type_builder() -> Builder {
@@ -52,9 +52,9 @@ pub fn make_specta_type_builder() -> Builder {
             SodapopConfigEvent,
             PlayerEvent,
             FrontendError,
-            QueueEvent
+            QueueEvent,
+            UIUpdateEvent,
         ])
-        .typ::<MediaPayload>()
         .typ::<SodapopConfig>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds

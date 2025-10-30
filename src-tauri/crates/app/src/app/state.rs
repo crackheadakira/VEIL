@@ -1,12 +1,10 @@
 use logging::{lock_or_log, try_with_log};
-use serde::Serialize;
-use specta::Type;
 use std::{
     env,
     fs::create_dir,
     sync::{Arc, Mutex, RwLock},
 };
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, State};
 use tauri_specta::Event;
 
 use crate::{
@@ -96,12 +94,6 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     })
 }
 
-#[derive(Type, Serialize, Clone)]
-pub enum MediaPayload {
-    Next(bool),
-    Previous(bool),
-}
-
 pub fn attach_media_controls_to_player(
     handle: &AppHandle,
     state: &TauriState,
@@ -115,9 +107,9 @@ pub fn attach_media_controls_to_player(
         let result = match event {
             MediaControlEvent::Play => PlayerEvent::emit(&PlayerEvent::Resume, &handle),
             MediaControlEvent::Pause => PlayerEvent::emit(&PlayerEvent::Pause, &handle),
-            MediaControlEvent::Next => handle.emit("media-control", MediaPayload::Next(false)),
+            MediaControlEvent::Next => PlayerEvent::emit(&PlayerEvent::NextTrackInQueue, &handle),
             MediaControlEvent::Previous => {
-                handle.emit("media-control", MediaPayload::Previous(false))
+                PlayerEvent::emit(&PlayerEvent::PreviousTrackInQueue, &handle)
             }
             MediaControlEvent::SetVolume(volume) => PlayerEvent::emit(
                 &PlayerEvent::SetVolume {

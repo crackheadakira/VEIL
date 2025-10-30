@@ -251,11 +251,13 @@ export const events = __makeEvents__<{
   playerEvent: PlayerEvent;
   queueEvent: QueueEvent;
   sodapopConfigEvent: SodapopConfigEvent;
+  uiUpdateEvent: UIUpdateEvent;
 }>({
   frontendError: "frontend-error",
   playerEvent: "player-event",
   queueEvent: "queue-event",
   sodapopConfigEvent: "sodapop-config-event",
+  uiUpdateEvent: "ui-update-event",
 });
 
 /** user-defined constants **/
@@ -339,11 +341,11 @@ export type FrontendError =
   | { type: "SerdeJson"; data: string }
   | { type: "TauriError"; data: string }
   | { type: "AnyhowError"; data: string };
-export type MediaPayload = { Next: boolean } | { Previous: boolean };
 export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
+export type PlayButtonState = "Playing" | "Paused";
 export type PlayerEvent =
   /**
    * Initialize the player to load in this track, seeked to the specified position.
@@ -522,6 +524,13 @@ export type Tracks = {
    */
   path: string;
 };
+export type UIUpdateEvent =
+  /**
+   * Updates the state of the shuffle button
+   */
+  | { type: "ShuffleButton"; data: { enabled: boolean } }
+  | { type: "LoopButton"; data: { mode: RepeatMode } }
+  | { type: "PlayButton"; data: { state: PlayButtonState } };
 
 /** tauri-specta globals **/
 

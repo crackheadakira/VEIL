@@ -11,8 +11,12 @@ use tauri_specta::{Event, TypedEvent};
 use tokio::sync::MutexGuard;
 
 use crate::{
-    SodapopState, TauriState, commands::player::PlayerProgressEvent, discord::PayloadData,
-    error::FrontendError, events::EventSystemHandler,
+    SodapopState, TauriState,
+    commands::player::PlayerProgressEvent,
+    discord::PayloadData,
+    error::FrontendError,
+    events::EventSystemHandler,
+    systems::ui::{PlayButtonState, UIUpdateEvent},
 };
 
 /// Try to scrobble the track to `LastFM`.
@@ -269,6 +273,13 @@ impl PlayerEvent {
             (player.duration, player.progress)
         };
 
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::PlayButton {
+                state: PlayButtonState::Playing,
+            },
+            handle,
+        )?;
+
         if online.discord_enabled {
             // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
             let album_cover = if online.last_fm_enabled {
@@ -383,6 +394,13 @@ impl PlayerEvent {
             player.should_scrobble()
         };
 
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::PlayButton {
+                state: PlayButtonState::Paused,
+            },
+            handle,
+        )?;
+
         if online.last_fm_enabled {
             if let Some((track_id, track_timestamp)) = should_scrobble {
                 let track = state.db.by_id::<Tracks>(&track_id)?;
@@ -405,6 +423,13 @@ impl PlayerEvent {
 
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.resume()?;
+
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::PlayButton {
+                state: PlayButtonState::Playing,
+            },
+            handle,
+        )?;
 
         if online.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;

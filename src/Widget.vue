@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-bg-primary border-border-secondary flex h-screen flex-col gap-4 overflow-clip border-1 p-4 *:select-none"
+    class="bg-bg-primary border-border-secondary flex h-screen flex-col gap-4 overflow-clip border p-4 *:select-none"
   >
     <div
       @mouseover="imageHovered = true"
@@ -49,9 +49,9 @@
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
-import { ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-import { usePlayerStore } from "@/composables/";
+import { commands, useConfigStore, usePlayerStore } from "@/composables/";
 import { PlayerControls, VolumeControls } from "@/components/";
 
 const playerStore = usePlayerStore();
@@ -67,4 +67,40 @@ async function hideWidget() {
     await mainWindow.show();
   }
 }
+
+const configStore = useConfigStore();
+const theme = configStore.config?.theme || "Dark";
+
+watch(
+  () => configStore.config?.theme,
+  (newTheme) => {
+    if (newTheme === "Dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(async () => {
+  if (theme === "Dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
+  const css = await commands.readCustomStyle();
+  let styleElement = document.getElementById("custom-style");
+
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "custom-style";
+    document.head.appendChild(styleElement);
+  }
+
+  if (css.status === "ok" && styleElement) {
+    styleElement.innerText = css.data;
+  }
+});
 </script>

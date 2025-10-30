@@ -12,11 +12,7 @@
     ></span>
     <span
       @click="playerStore.handleResumeAndPause"
-      :class="
-        !playerStore.paused
-          ? 'i-fluent-pause-24-filled'
-          : 'i-fluent-play-24-filled'
-      "
+      :class="playing ? 'i-fluent-pause-24-filled' : 'i-fluent-play-24-filled'"
       class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"
     ></span>
     <span
@@ -37,14 +33,17 @@
 
 <script setup lang="ts">
 import { events, usePlayerStore } from "@/composables/";
-import { ref } from "vue";
+import { onMounted, onUnmounted, ref } from "vue";
 
 const playerStore = usePlayerStore();
 const shuffled = ref(false);
+const playing = ref(false);
 
 defineProps<{
   extra?: boolean;
 }>();
+
+let unlistenUIUpdateEvent: () => void = () => {};
 
 async function previousTrack() {
   await events.playerEvent.emit({ type: "PreviousTrackInQueue" });
@@ -58,4 +57,20 @@ async function shuffleQueue() {
   await events.queueEvent.emit({ type: "ShuffleGlobalQueue" });
   shuffled.value = !shuffled.value;
 }
+
+onMounted(async () => {
+  unlistenUIUpdateEvent = await events.uiUpdateEvent.listen((event) => {
+    if (event.payload.type === "PlayButton") {
+      if (event.payload.data.state === "Paused") {
+        playing.value = false;
+      } else {
+        playing.value = true;
+      }
+    }
+  });
+});
+
+onUnmounted(() => {
+  unlistenUIUpdateEvent();
+});
 </script>
