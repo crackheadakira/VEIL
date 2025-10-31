@@ -6,6 +6,7 @@ use std::{
 };
 use tauri::{AppHandle, State};
 use tauri_specta::Event;
+use tokio::sync::Notify;
 
 use crate::{
     config::SodapopConfig,
@@ -22,6 +23,7 @@ pub struct SodapopState {
     pub discord: Mutex<DiscordState>,
     pub config: Arc<RwLock<SodapopConfig>>,
     pub lastfm: Arc<tokio::sync::Mutex<lastfm::LastFM>>,
+    pub resume_notify: Arc<Notify>,
 }
 
 pub type TauriState<'a> = State<'a, SodapopState>;
@@ -91,6 +93,7 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
         lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
         config: Arc::new(RwLock::new(sodapop_config)),
         discord: Mutex::new(discord),
+        resume_notify: Arc::new(Notify::new()),
     })
 }
 

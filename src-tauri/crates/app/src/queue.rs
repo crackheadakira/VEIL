@@ -5,9 +5,11 @@ use rand::{RngCore, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager};
+use tauri_specta::Event;
 
 use crate::{
     SodapopState, config::SodapopConfigEvent, error::FrontendError, events::EventSystemHandler,
+    systems::ui::UIUpdateEvent,
 };
 
 #[derive(Serialize, Deserialize, Type, Copy, Clone, Debug, PartialEq)]
@@ -70,6 +72,9 @@ pub struct QueueSystem {
 
     /// Internal state for PRNG.
     rng: SmallRng,
+
+    /// If the queue has reached the end.
+    pub reached_end: bool,
 }
 
 // TODO: Currently with preloading a track, how do we handle the
@@ -103,6 +108,7 @@ impl QueueSystem {
             current_index: 0,
             origin,
             rng,
+            reached_end: false,
         }
     }
 
@@ -136,16 +142,36 @@ impl QueueSystem {
 
     /// Internal method to get the previous index.
     ///
-    /// Handles the repeat methods as well
+    /// Ignores repeat modes.
     fn get_previous_index(&self) -> usize {
         (self.current_index - 1) % self.global_queue.len()
     }
 
     /// Internal method to get the next index.
     ///
-    /// Handles the repeat methods as well.
-    fn get_next_index(&self) -> usize {
-        (self.current_index + 1) % self.global_queue.len()
+    /// Handles the repeat mode as well.
+    fn get_next_index(&mut self) -> Option<usize> {
+        logging::debug!(
+            "Getting next index with repeat mode: {:?}",
+            self.repeat_mode
+        );
+
+        self.reached_end = false;
+
+        let idx = self.current_index + 1;
+        match self.repeat_mode {
+            RepeatMode::None => {
+                if idx >= self.global_queue.len() {
+                    logging::debug!("End of queue has been reached");
+                    self.reached_end = true;
+                    None
+                } else {
+                    Some(idx)
+                }
+            }
+            RepeatMode::Queue => Some(idx % self.global_queue.len()),
+            RepeatMode::Track => Some(self.current_index),
+        }
     }
 
     /// Internal method to get a track from the queue.
@@ -190,24 +216,28 @@ impl QueueSystem {
 
         let idx = match dir {
             Direction::Next => self.get_next_index(),
-            Direction::Previous => self.get_previous_index(),
+            Direction::Previous => Some(self.get_previous_index()),
         };
 
         logging::debug!(
-            "{} track from non-shuffled global queue at index {idx}",
+            "{} track from non-shuffled global queue at index {idx:?}",
             match mode {
                 Mode::Peek => "Peeking",
                 Mode::Consume => "Consuming",
             }
         );
 
-        let track = self.global_queue[idx];
+        if let Some(idx) = idx {
+            let track = self.global_queue[idx];
 
-        if let Mode::Consume = mode {
-            self.set_current_index(idx);
-        };
+            if let Mode::Consume = mode {
+                self.set_current_index(idx);
+            };
 
-        Some(track)
+            Some(track)
+        } else {
+            None
+        }
     }
 
     /// Get the next track
@@ -307,7 +337,9 @@ impl QueueSystem {
 #[serde(tag = "type", content = "data")]
 pub enum QueueEvent {
     /// Add to personal queue via context menu
-    EnqueuePersonal { track_id: u32 },
+    EnqueuePersonal {
+        track_id: u32,
+    },
 
     /// Sets global queue to a vec of tracks
     SetGlobalQueue {
@@ -320,6 +352,8 @@ pub enum QueueEvent {
     /// - shuffle: True  --> Talse
     /// - shuffle: False --> True
     ShuffleGlobalQueue,
+
+    UpdateRepeatMode,
 }
 
 impl EventSystemHandler for QueueEvent {
@@ -337,6 +371,7 @@ impl EventSystemHandler for QueueEvent {
                 origin,
             } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
             QueueEvent::ShuffleGlobalQueue {} => QueueEvent::shuffle_global_queue(handle)?,
+            QueueEvent::UpdateRepeatMode => QueueEvent::update_repeat_mode(handle)?,
         }
 
         Ok(())
@@ -395,6 +430,26 @@ impl QueueEvent {
         } else {
             queue.shuffle_global();
         }
+
+        Ok(())
+    }
+
+    fn update_repeat_mode(handle: &AppHandle) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
+
+        match queue.repeat_mode {
+            RepeatMode::None => queue.set_repeat_mode(RepeatMode::Queue),
+            RepeatMode::Queue => queue.set_repeat_mode(RepeatMode::Track),
+            RepeatMode::Track => queue.set_repeat_mode(RepeatMode::None),
+        }
+
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::LoopButton {
+                mode: queue.repeat_mode,
+            },
+            handle,
+        )?;
 
         Ok(())
     }
@@ -543,12 +598,12 @@ mod tests {
     }
 
     #[test]
-    fn repeat_none_behaves_normally() {
+    fn repeat_none_returns_none() {
         let mut queue = QueueSystem::new(None, RepeatMode::None);
         queue.set_global(vec![0, 1, 2]);
         assert_eq!(queue.next(), Some(1));
         assert_eq!(queue.next(), Some(2));
-        assert_eq!(queue.next(), Some(0));
+        assert_eq!(queue.next(), None);
     }
 
     #[test]
@@ -557,6 +612,16 @@ mod tests {
         queue.set_global(vec![0, 1, 2]);
         let first = queue.current();
         let next = queue.next();
-        assert_ne!(first, next, "RepeatMode::Track not implemented yet");
+        assert_eq!(first, next);
+    }
+
+    #[test]
+    fn repeat_queue_loops() {
+        let mut queue = QueueSystem::new(None, RepeatMode::Queue);
+        queue.set_global(vec![0, 1, 2]);
+        let first = queue.current();
+        queue.next();
+        queue.next();
+        assert_eq!(first, queue.next());
     }
 }

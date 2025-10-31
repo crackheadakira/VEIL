@@ -88,21 +88,43 @@ pub fn player_progress_channel(
                 continue;
             }
 
-            let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
+            // Workaround due to RwLock not being thread-safe (using std::sync)
+            {
+                let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
 
-            try_preloading_next_sound_handle(&state, &mut player);
+                try_preloading_next_sound_handle(&state, &mut player);
 
-            if last_track_end_check.elapsed() >= track_end_interval {
-                if let Some(track) = next_track_status(&state, &player) {
-                    match PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            logging::error!("Error emitting new track from queue system: {e}");
-                        }
+                if last_track_end_check.elapsed() >= track_end_interval {
+                    if let Some(track) = next_track_status(&state, &player) {
+                        match PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle) {
+                            Ok(_) => {}
+                            Err(e) => {
+                                logging::error!("Error emitting new track from queue system: {e}");
+                            }
+                        };
                     };
-                };
 
-                last_track_end_check = tokio::time::Instant::now();
+                    last_track_end_check = tokio::time::Instant::now();
+                }
+            };
+
+            let queue_has_ended = {
+                let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+                queue.reached_end
+            };
+
+            if queue_has_ended {
+                // Wait until a notificaton to resume this loop
+                match PlayerEvent::emit(&PlayerEvent::Stop, &handle) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        logging::error!("Error emitting stop player event: {e}");
+                    }
+                }
+
+                state.resume_notify.notified().await;
+                logging::debug!("New track added, resuming loop.");
+                continue;
             }
         }
     });

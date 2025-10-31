@@ -289,6 +289,8 @@ impl PlayerEvent {
             player.play(&track, None)?
         };
 
+        state.resume_notify.notify_waiters();
+
         UIUpdateEvent::emit(
             &UIUpdateEvent::PlayButton {
                 state: PlayButtonState::Playing,
@@ -461,6 +463,13 @@ impl PlayerEvent {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.stop()?;
+
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::PlayButton {
+                state: PlayButtonState::Paused,
+            },
+            handle,
+        )?;
 
         Ok(())
     }

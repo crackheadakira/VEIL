@@ -1,7 +1,7 @@
 import { commands, events, type Tracks } from "@/composables/";
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { nextTick, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 /**
  * The player store composable.
@@ -70,60 +70,6 @@ export const usePlayerStore = defineStore("player", () => {
   }
 
   /**
-   * Handles the play and pause button.
-   *
-   * If player is paused and has a track, resume the track.
-   *
-   * If player is paused and does not have a track, play the current track.
-   *
-   * If player is playing, pause the track.
-   *
-   * Updates `$paused` with the current state, and calls {@linkcode commands.playTrack}.
-   *
-   * @example
-   * ```ts
-   * // Track is currently paused
-   * await handleResumeAndPause(); // Track is now playing
-   * await handleResumeAndPause(); // Track is now paused
-   */
-  async function handleResumeAndPause() {
-    const hasTrack = await commands.playerHasTrack();
-
-    // If the backend player has no track and the frontend
-    // does, play a new track.
-    if (!hasTrack && currentTrack.value) {
-      paused.value = false;
-      await events.playerEvent.emit({
-        type: "NewTrack",
-        data: { track: currentTrack.value },
-      });
-
-      return;
-    } else if (!hasTrack) {
-      paused.value = true;
-      return;
-    }
-
-    if (paused.value === true)
-      await events.playerEvent.emit({ type: "Resume" });
-    else await events.playerEvent.emit({ type: "Pause" });
-
-    paused.value = !paused.value;
-  }
-
-  /**
-   * Updates the volume of the player.
-   */
-  async function handleVolume() {
-    nextTick(async () => {
-      await events.playerEvent.emit({
-        type: "SetVolume",
-        data: { volume: playerVolume.value },
-      });
-    });
-  }
-
-  /**
    * Initializes required values for the player.
    *
    * Pauses the player, gets the current progress, volume, and duration of the player.
@@ -184,8 +130,6 @@ export const usePlayerStore = defineStore("player", () => {
     loopQueue,
     $reset,
     handleProgress,
-    handleResumeAndPause,
-    handleVolume,
     initialLoad,
   };
 });

@@ -21,10 +21,10 @@
     ></span>
     <span
       v-if="extra"
-      @click="playerStore.loopQueue()"
+      @click="updateRepeatMode"
       :class="
-        (playerStore.loop === 'queue' ? 'text-accent-primary' : '') ||
-        (playerStore.loop === 'track' ? 'text-accent-primary opacity-75' : '')
+        (repeatMode === 'Queue' ? 'text-accent-primary' : '') ||
+        (repeatMode === 'Track' ? 'text-accent-primary opacity-75' : '')
       "
       class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"
     ></span>
@@ -32,12 +32,12 @@
 </template>
 
 <script setup lang="ts">
-import { events, usePlayerStore } from "@/composables/";
+import { events, RepeatMode } from "@/composables/";
 import { onMounted, onUnmounted, ref } from "vue";
 
-const playerStore = usePlayerStore();
 const shuffled = ref(false);
 const playing = ref(false);
+const repeatMode = ref<RepeatMode>("None");
 
 defineProps<{
   extra?: boolean;
@@ -62,6 +62,10 @@ async function updatePlayerState() {
   await events.playerEvent.emit({ type: "UpdatePlayerState" });
 }
 
+async function updateRepeatMode() {
+  await events.queueEvent.emit({ type: "UpdateRepeatMode" });
+}
+
 onMounted(async () => {
   unlistenUIUpdateEvent = await events.uiUpdateEvent.listen((event) => {
     if (event.payload.type === "PlayButton") {
@@ -70,6 +74,8 @@ onMounted(async () => {
       } else {
         playing.value = true;
       }
+    } else if (event.payload.type === "LoopButton") {
+      repeatMode.value = event.payload.data.mode;
     }
   });
 });

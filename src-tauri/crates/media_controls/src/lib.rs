@@ -189,7 +189,7 @@ impl Player {
                 (progress, duration)
             } else {
                 logging::debug!("Creating new player track for {}", track.name);
-                let mut player_track = self.make_player_track(track, start_position)?;
+                let mut player_track = self.create_player_track(track, start_position)?;
                 player_track.sound_handle.resume(self.tween);
 
                 let duration = player_track.duration;
@@ -225,13 +225,13 @@ impl Player {
             track.name
         );
 
-        let player_track = self.make_player_track(&track, Some(progress))?;
+        let player_track = self.create_player_track(&track, Some(progress))?;
         self.track = Some(player_track);
 
         Ok(())
     }
 
-    fn make_player_track(
+    fn create_player_track(
         &mut self,
         track: &Tracks,
         start_position: Option<f64>,
@@ -254,7 +254,7 @@ impl Player {
     pub fn maybe_queue_next(&mut self, track: &Tracks) -> Result<()> {
         logging::debug!("Preloading next track for gapless playback.");
 
-        let player_track = self.make_player_track(&track, None)?;
+        let player_track = self.create_player_track(&track, None)?;
         self.preloaded_track = Some(player_track);
 
         Ok(())

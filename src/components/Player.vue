@@ -145,7 +145,5 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   await events.playerEvent.emit({ type: "Stop" });
-
-  (await playerStore.listenMediaControl)();
 });
 </script>

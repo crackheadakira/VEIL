@@ -431,7 +431,8 @@ export type QueueEvent =
    * - shuffle: True  --> Talse
    * - shuffle: False --> True
    */
-  | { type: "ShuffleGlobalQueue" };
+  | { type: "ShuffleGlobalQueue" }
+  | { type: "UpdateRepeatMode" };
 export type QueueOrigin =
   | { type: "Playlist"; data: { id: number } }
   | { type: "Album"; data: { id: number } };
