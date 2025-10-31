@@ -17,12 +17,16 @@ use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
 pub enum Error {
     #[error(transparent)]
     Kira(#[from] kira::PlaySoundError<FromFileError>),
+
     #[error(transparent)]
     FromFile(#[from] FromFileError),
+
     #[error(transparent)]
     Souvlaki(#[from] souvlaki::Error),
+
     #[error(transparent)]
     Cpal(#[from] kira::backend::cpal::Error),
+
     #[error(transparent)]
     ResourceLimitReached(#[from] kira::ResourceLimitReached),
 }
@@ -133,12 +137,10 @@ impl Player {
     }
 
     pub fn play(&mut self, track: &Tracks) -> Result<()> {
-        self.track = Some(track.id);
-
         logging::debug!("Trying to play track {}", track.name);
 
-        let mut sh = if let Some(mut sound_handle) = self.next_sound_handle.take() {
-            logging::debug!("Found preloaded sound_handle for track {}", track.name);
+        let mut sound_handle = if let Some(mut sound_handle) = self.next_sound_handle.take() {
+            logging::debug!("Found preloaded sound handle for track {}", track.name);
 
             self.duration = self.next_duration;
             self.set_scrobble_condition();
@@ -155,13 +157,40 @@ impl Player {
 
             sound_handle
         } else {
-            let sound_data = self.load_sound(track)?.start_position(self.progress);
-            self.manager.play(sound_data)?
+            if let Some(mut sound_handle) = self.sound_handle.take() {
+                let same_track = self.track == Some(track.id);
+                let still_alive = sound_handle.state() != PlaybackState::Stopped;
+
+                if same_track && still_alive {
+                    logging::debug!("Reusing existing sound handle for track {}", track.name);
+                    sound_handle.resume(self.tween);
+                    sound_handle
+                } else {
+                    logging::debug!(
+                        "Discarding old sound handle; creating a new one for {}",
+                        track.name
+                    );
+                    let sound_data = self
+                        .prepare_sound_data(track)?
+                        .start_position(self.progress);
+                    self.manager.play(sound_data)?
+                }
+            } else {
+                logging::debug!(
+                    "No existing sound handle; creating new one for {}",
+                    track.name
+                );
+                let sound_data = self
+                    .prepare_sound_data(track)?
+                    .start_position(self.progress);
+                self.manager.play(sound_data)?
+            }
         };
 
-        sh.set_volume(self.volume, self.tween);
+        sound_handle.set_volume(self.volume, self.tween);
 
-        self.sound_handle = Some(sh);
+        self.track = Some(track.id);
+        self.sound_handle = Some(sound_handle);
         self.state = PlayerState::Playing;
         self.timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -183,15 +212,28 @@ impl Player {
             track.name
         );
 
-        self.load_sound(&track)?;
+        let sound_data = self.prepare_sound_data(&track)?.start_position(progress);
         self.progress = progress;
-
         self.set_playback(false)?;
+
+        let sound_handle = self.prepare_sound_handle(sound_data)?;
+        self.sound_handle = Some(sound_handle);
 
         Ok(())
     }
 
-    fn load_sound(&mut self, track: &Tracks) -> Result<StreamingSoundData<FromFileError>> {
+    fn prepare_sound_handle(
+        &mut self,
+        sound_data: StreamingSoundData<FromFileError>,
+    ) -> Result<StreamingSoundHandle<FromFileError>> {
+        let mut sound_handle = self.manager.play(sound_data)?;
+        sound_handle.pause(self.tween);
+        sound_handle.set_volume(self.volume, self.tween);
+
+        Ok(sound_handle)
+    }
+
+    fn prepare_sound_data(&mut self, track: &Tracks) -> Result<StreamingSoundData<FromFileError>> {
         let sound_data = StreamingSoundData::from_file(&track.path)?;
         self.duration = sound_data.duration().as_secs_f32();
 
@@ -214,11 +256,8 @@ impl Player {
         let next_data = StreamingSoundData::from_file(&next.path)?;
         self.next_duration = next_data.duration().as_secs_f32();
 
-        let mut next_handle = self.manager.play(next_data)?;
-        next_handle.set_volume(self.volume, self.tween);
-        next_handle.pause(self.tween);
-
-        self.next_sound_handle = Some(next_handle);
+        let sound_handle = self.prepare_sound_handle(next_data)?;
+        self.next_sound_handle = Some(sound_handle);
 
         Ok(())
     }
@@ -293,9 +332,11 @@ impl Player {
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(self.tween);
         }
+
         self.state = PlayerState::Paused;
         self.progress = 0.0;
         self.track = None;
+        self.sound_handle = None;
 
         self.clock.stop();
         self.controls.set_playback(MediaPlayback::Stopped)?;

@@ -372,6 +372,10 @@ export type PlayerEvent =
    */
   | { type: "Resume" }
   /**
+   * Depdenent on the state of the player either pause or resumme the track.
+   */
+  | { type: "UpdatePlayerState" }
+  /**
    * If the current track is to be stopped.
    */
   | { type: "Stop" }

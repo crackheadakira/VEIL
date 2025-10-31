@@ -3,7 +3,7 @@ use std::sync::RwLockWriteGuard;
 use common::Tracks;
 use lastfm::TrackData;
 use logging::lock_or_log;
-use media_controls::Player;
+use media_controls::{PlaybackState, Player};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, ipc::Channel};
@@ -158,6 +158,9 @@ pub enum PlayerEvent {
     /// If the current track is to be resumed.
     Resume,
 
+    /// Depdenent on the state of the player either pause or resumme the track.
+    UpdatePlayerState,
+
     /// If the current track is to be stopped.
     Stop,
 
@@ -192,6 +195,8 @@ impl EventSystemHandler for PlayerEvent {
             }
         };
 
+        // TODO: Implement frontend emits.
+        // These emits would then sync the frontend to the backend, with the backend being the source of truth.
         match event.payload {
             PlayerEvent::Initialize { track, progress } => {
                 Self::initialize_player_with_track(handle, track, progress)?
@@ -199,6 +204,25 @@ impl EventSystemHandler for PlayerEvent {
             PlayerEvent::NewTrack { track } => Self::set_new_track(handle, track, online).await?,
             PlayerEvent::Pause => Self::pause_current_track(handle, online).await?,
             PlayerEvent::Resume => Self::resume_current_track(handle, online)?,
+            PlayerEvent::UpdatePlayerState => {
+                let playback_state = {
+                    let player = lock_or_log(state.player.read(), "Player Read Lock")?;
+                    player.get_player_state()
+                };
+
+                if let Some(playback_state) = playback_state {
+                    if playback_state == PlaybackState::Playing {
+                        Self::pause_current_track(handle, online).await?
+                    } else if playback_state == PlaybackState::Paused {
+                        Self::resume_current_track(handle, online)?
+                    }
+                } else {
+                    // We have to load in the track as there is no playback state yet
+                    logging::debug!(
+                        "Player does not have a track, but attempted to update it's state"
+                    );
+                }
+            }
             PlayerEvent::Stop => Self::stop_current_track(handle)?,
             PlayerEvent::Seek { position, resume } => {
                 Self::seek_current_track(handle, position, resume, online)?
@@ -211,9 +235,6 @@ impl EventSystemHandler for PlayerEvent {
                 Self::play_next_track_from_queue(handle, online).await?
             }
         };
-
-        // TODO: Implement frontend emits.
-        // These emits would then sync the frontend to the backend, with the backend being the source of truth.
 
         Ok(())
     }

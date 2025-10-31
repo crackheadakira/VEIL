@@ -11,7 +11,7 @@
       @click="previousTrack"
     ></span>
     <span
-      @click="playerStore.handleResumeAndPause"
+      @click="updatePlayerState"
       :class="playing ? 'i-fluent-pause-24-filled' : 'i-fluent-play-24-filled'"
       class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"
     ></span>
@@ -56,6 +56,10 @@ async function nextTrack() {
 async function shuffleQueue() {
   await events.queueEvent.emit({ type: "ShuffleGlobalQueue" });
   shuffled.value = !shuffled.value;
+}
+
+async function updatePlayerState() {
+  await events.playerEvent.emit({ type: "UpdatePlayerState" });
 }
 
 onMounted(async () => {

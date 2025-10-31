@@ -36,6 +36,8 @@
   - [ ] Allow user to view their liked songs for given artist
   - [ ] Play random track from artist
 - [x] Settings page
+- [ ] Enabling Discord RPC mid-track without changing anything doesn't send RPC
+  - [ ] Then when pausing & resuming gives a basic "Browsing" status
 
 ## Low Priority
 

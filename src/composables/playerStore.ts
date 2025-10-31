@@ -109,7 +109,10 @@ export const usePlayerStore = defineStore("player", () => {
     // does, play a new track.
     if (!hasTrack && currentTrack.value) {
       paused.value = false;
-      await events.playerEvent.emit({ type: "NewTrack", data: { track: currentTrack.value } });
+      await events.playerEvent.emit({
+        type: "NewTrack",
+        data: { track: currentTrack.value },
+      });
 
       return;
     } else if (!hasTrack) {
@@ -117,18 +120,22 @@ export const usePlayerStore = defineStore("player", () => {
       return;
     }
 
-    if (paused.value === true) await events.playerEvent.emit({ type: "Resume" });
+    if (paused.value === true)
+      await events.playerEvent.emit({ type: "Resume" });
     else await events.playerEvent.emit({ type: "Pause" });
 
     paused.value = !paused.value;
-  };
+  }
 
   /**
    * Updates the volume of the player.
    */
   async function handleVolume() {
     nextTick(async () => {
-      await events.playerEvent.emit({ type: "SetVolume", data: { volume: playerVolume.value } });
+      await events.playerEvent.emit({
+        type: "SetVolume",
+        data: { volume: playerVolume.value },
+      });
     });
   }
 
@@ -148,9 +155,16 @@ export const usePlayerStore = defineStore("player", () => {
     // await events.playerEvent.emit({ type: "Pause" });
     const duration = await commands.getPlayerDuration();
 
-    if (duration !== 0) await events.playerEvent.emit({ type: "Seek", data: { position: playerProgress.value, resume: false } });
+    if (duration !== 0)
+      await events.playerEvent.emit({
+        type: "Seek",
+        data: { position: playerProgress.value, resume: false },
+      });
 
-    await events.playerEvent.emit({ type: "SetVolume", data: { volume: playerVolume.value } });
+    await events.playerEvent.emit({
+      type: "SetVolume",
+      data: { volume: playerVolume.value },
+    });
   }
 
   // LISTENERS
