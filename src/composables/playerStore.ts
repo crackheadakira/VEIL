@@ -8,11 +8,6 @@ import { nextTick, ref, watch } from "vue";
  *
  * Manages the player state, including the current track, queue, player progress, and loop settings.
  *
- * @example
- * const playerStore = usePlayerStore();
- *
- * // Set the player progress
- * playerStore.setPlayerProgress(50);
  */
 export const usePlayerStore = defineStore("player", () => {
   const currentTrack = useStorage<Tracks>("currentTrack", null, undefined, {
@@ -35,17 +30,6 @@ export const usePlayerStore = defineStore("player", () => {
   channel.onmessage = (event) => {
     paused.value = event.data.paused;
   };
-
-  /**
-   * Sets the player progress to the given value.
-   *
-   * Calls Rust backend, and updates store `playerProgress` value.
-   * @param {number} progress - The progress to set
-   */
-  async function setPlayerProgress(progress: number): Promise<void> {
-    await commands.setPlayerProgress(progress);
-    playerProgress.value = progress;
-  }
 
   /**
    * Toggles the loop value between "none", "track", and "queue".
@@ -197,7 +181,6 @@ export const usePlayerStore = defineStore("player", () => {
     playerVolume,
     isShuffled,
     listenNewTrack,
-    setPlayerProgress,
     loopQueue,
     $reset,
     handleProgress,

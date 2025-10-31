@@ -25,7 +25,7 @@ pub fn get_player_state(state: TauriState) -> PlayerState {
 #[specta::specta]
 pub fn get_player_progress(state: TauriState) -> f64 {
     let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
-    player.progress
+    player.get_progress()
 }
 
 #[tauri::command]
@@ -44,16 +44,9 @@ pub fn player_has_track(state: TauriState) -> bool {
 
 #[tauri::command]
 #[specta::specta]
-pub fn get_player_duration(state: TauriState) -> f32 {
+pub fn get_player_duration(state: TauriState) -> f64 {
     let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
-    player.duration
-}
-
-#[tauri::command]
-#[specta::specta]
-pub fn set_player_progress(progress: f64, state: TauriState) {
-    let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
-    player.set_progress(progress);
+    player.get_duration()
 }
 
 #[derive(Clone, Serialize, Type)]
@@ -83,7 +76,7 @@ pub fn player_progress_channel(
             tokio::time::sleep(sleep_duration).await;
             let ends_soon = {
                 let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
-                (player.duration as f64 - player.get_progress()) <= 1.0
+                (player.get_duration() - player.get_progress()) <= 0.5
             };
 
             if !ends_soon {

@@ -39,7 +39,6 @@ pub fn make_specta_type_builder() -> Builder {
             commands::player::player_has_track,
             commands::player::get_player_progress,
             commands::player::get_player_duration,
-            commands::player::set_player_progress,
             commands::player::player_has_ended,
             commands::player::player_progress_channel,
             commands::lastfm::get_token,
@@ -116,7 +115,8 @@ pub fn handle_tauri_setup(
 
             if discord_enabled {
                 if discord.connect() {
-                    discord.update_activity_progress(player.progress);
+                    let progress = player.get_progress();
+                    discord.update_activity_progress(progress);
                 }
             } else {
                 discord.close();

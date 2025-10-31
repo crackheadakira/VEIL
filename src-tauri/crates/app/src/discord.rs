@@ -19,7 +19,7 @@ pub struct PayloadData {
     pub album_cover: Option<String>,
     pub show_timestamps: bool,
     pub progress: f64,
-    pub duration: f32,
+    pub duration: f64,
 }
 
 impl DiscordState {

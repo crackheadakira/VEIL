@@ -114,7 +114,7 @@ pub fn try_preloading_next_sound_handle(
     player: &mut RwLockWriteGuard<'_, Player>,
 ) {
     // We already check if the track ends soon outside the call
-    if !player.has_next_sound_handle() {
+    if !player.has_preloaded_track() {
         let next_track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.peek_next()
@@ -278,20 +278,15 @@ impl PlayerEvent {
             try_scrobble_track_to_lastfm(lastfm, track, track_timestamp).await?;
         }
 
-        let (duration, progress) = {
+        let (progress, duration) = {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
-
-            // Reset the player's internal progress to 0
-            player.set_progress(0.0);
 
             // Reset the player state to as if no track had been playing.
             if player.track.is_some() {
                 player.stop()?;
             };
 
-            player.play(&track)?;
-
-            (player.duration, player.progress)
+            player.play(&track, None)?
         };
 
         UIUpdateEvent::emit(

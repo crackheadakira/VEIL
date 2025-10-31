@@ -180,9 +180,6 @@ export const commands = {
   async getPlayerDuration(): Promise<number> {
     return await TAURI_INVOKE("get_player_duration");
   },
-  async setPlayerProgress(progress: number): Promise<void> {
-    await TAURI_INVOKE("set_player_progress", { progress });
-  },
   async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
   },

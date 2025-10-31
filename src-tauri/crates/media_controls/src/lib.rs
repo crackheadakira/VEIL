@@ -46,15 +46,66 @@ pub enum PlayerState {
     Paused,
 }
 
+pub struct PlayerTrack {
+    /// Handle for the tracks [`StreamingSoundData`]
+    sound_handle: StreamingSoundHandle<FromFileError>,
+
+    /// Database ID of the track
+    pub id: u32,
+
+    /// How far along the track the player has progressed
+    pub progress: f64,
+
+    /// Duration of the track
+    pub duration: f64,
+
+    /// At what time did the user start listening to the track
+    pub timestamp: u64,
+
+    /// If the track has already been scrobbled
+    pub scrobbled: bool,
+
+    /// How many seconds does the user need to listen to to be able to scrobble the track
+    scrobble_condition: Option<f64>,
+}
+
+impl PlayerTrack {
+    pub fn new(
+        track_id: u32,
+        duration: f64,
+        sound_handle: StreamingSoundHandle<FromFileError>,
+    ) -> Self {
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_secs();
+
+        Self {
+            id: track_id,
+            progress: sound_handle.position(),
+            sound_handle,
+            duration,
+            timestamp,
+            scrobbled: false,
+            scrobble_condition: Self::get_scrobble_condition(duration),
+        }
+    }
+
+    // https://www.last.fm/api/scrobbling#when-is-a-scrobble-a-scrobble
+    /// If duration is greater than 4 mins, set condition to 4 mins,
+    /// otherwise half of the duration as long as it's above 30 seconds.
+    fn get_scrobble_condition(duration: f64) -> Option<f64> {
+        if duration > 240.0 {
+            Some(240.0)
+        } else if duration > 30.0 {
+            Some(duration / 2.0)
+        } else {
+            None
+        }
+    }
+}
+
 pub struct Player {
-    /// Handler for current [`StreamingSoundData`]
-    sound_handle: Option<StreamingSoundHandle<FromFileError>>,
-
-    /// Handler for next song [`StreamingSoundData`], allows for preloading.
-    next_sound_handle: Option<StreamingSoundHandle<FromFileError>>,
-
-    next_duration: f32,
-
     manager: AudioManager<DefaultBackend>,
 
     /// To use for playback & volume
@@ -62,21 +113,6 @@ pub struct Player {
 
     /// Clock to keep track of user's progress, can't use [`Player::progress`] as the user can manipulate that
     clock: ClockHandle,
-
-    /// How many seconds does the user need to listen to to scrobble
-    scrobble_condition: f64,
-
-    /// If it has already scrobbled this track
-    pub scrobbled: bool,
-
-    /// ID of the track
-    pub track: Option<u32>,
-
-    /// Progress of the player
-    pub progress: f64,
-
-    /// Duration of the track
-    pub duration: f32,
 
     /// Volume that ranges from -60 to 1.0
     pub volume: f32,
@@ -87,8 +123,8 @@ pub struct Player {
     /// Souvlaki Controls
     pub controls: MediaControls,
 
-    // When the user started listening to track
-    pub timestamp: i64,
+    pub track: Option<PlayerTrack>,
+    preloaded_track: Option<PlayerTrack>,
 }
 
 impl Player {
@@ -99,22 +135,15 @@ impl Player {
         let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0))?;
 
         Ok(Player {
-            sound_handle: None,
-            next_sound_handle: None,
-            next_duration: -1.0,
             manager,
             clock,
-            scrobble_condition: -1.0,
-            scrobbled: false,
             tween: Tween {
                 start_time: StartTime::Immediate,
                 duration: Duration::from_millis(0),
                 easing: kira::Easing::Linear,
             },
             track: None,
-            timestamp: 0,
-            progress: 0.0,
-            duration: 0.0,
+            preloaded_track: None,
             volume: -6.0, // externally 0.0 - 1.0
             state: PlayerState::Paused,
             controls: MediaControls::new(c)?,
@@ -126,8 +155,10 @@ impl Player {
         // https://www.desmos.com/calculator/cj1nmmamzb
         let converted_volume = -60.0 + 61.0 * volume.powf(0.44);
 
-        if let Some(ref mut sound_handle) = self.sound_handle {
-            sound_handle.set_volume(converted_volume, self.tween);
+        if let Some(ref mut player_track) = self.track {
+            player_track
+                .sound_handle
+                .set_volume(converted_volume, self.tween);
             self.controls.set_volume(volume as f64)?;
         }
 
@@ -136,73 +167,55 @@ impl Player {
         Ok(())
     }
 
-    pub fn play(&mut self, track: &Tracks) -> Result<()> {
+    pub fn play(&mut self, track: &Tracks, start_position: Option<f64>) -> Result<(f64, f64)> {
         logging::debug!("Trying to play track {}", track.name);
 
-        let mut sound_handle = if let Some(mut sound_handle) = self.next_sound_handle.take() {
-            logging::debug!("Found preloaded sound handle for track {}", track.name);
+        let (progress, track_duration) = {
+            if let Some(mut player_track) =
+                self.preloaded_track.take().or_else(|| self.track.take())
+            {
+                logging::debug!("Found existing player track for track {}", track.name);
+                player_track
+                    .sound_handle
+                    .set_volume(self.volume, self.tween);
 
-            self.duration = self.next_duration;
-            self.set_scrobble_condition();
+                player_track.sound_handle.resume(self.tween);
 
-            self.controls.set_metadata(MediaMetadata {
-                title: Some(&track.name),
-                album: Some(&track.album_name),
-                artist: Some(&track.artist_name),
-                cover_url: Some(&track.cover_path),
-                duration: Some(std::time::Duration::from_secs(self.duration as u64)),
-            })?;
+                let duration = player_track.duration;
+                let progress = player_track.progress;
 
-            sound_handle.resume(self.tween);
+                self.track = Some(player_track);
 
-            sound_handle
-        } else {
-            if let Some(mut sound_handle) = self.sound_handle.take() {
-                let same_track = self.track == Some(track.id);
-                let still_alive = sound_handle.state() != PlaybackState::Stopped;
-
-                if same_track && still_alive {
-                    logging::debug!("Reusing existing sound handle for track {}", track.name);
-                    sound_handle.resume(self.tween);
-                    sound_handle
-                } else {
-                    logging::debug!(
-                        "Discarding old sound handle; creating a new one for {}",
-                        track.name
-                    );
-                    let sound_data = self
-                        .prepare_sound_data(track)?
-                        .start_position(self.progress);
-                    self.manager.play(sound_data)?
-                }
+                (progress, duration)
             } else {
-                logging::debug!(
-                    "No existing sound handle; creating new one for {}",
-                    track.name
-                );
-                let sound_data = self
-                    .prepare_sound_data(track)?
-                    .start_position(self.progress);
-                self.manager.play(sound_data)?
+                logging::debug!("Creating new player track for {}", track.name);
+                let mut player_track = self.make_player_track(track, start_position)?;
+                player_track.sound_handle.resume(self.tween);
+
+                let duration = player_track.duration;
+                let progress = player_track.progress;
+
+                self.track = Some(player_track);
+
+                (progress, duration)
             }
         };
 
-        sound_handle.set_volume(self.volume, self.tween);
-
-        self.track = Some(track.id);
-        self.sound_handle = Some(sound_handle);
         self.state = PlayerState::Playing;
-        self.timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards")
-            .as_secs() as i64;
-
-        self.scrobbled = false;
         self.clock.start();
-        self.set_playback(true)?;
+
+        self.controls.set_metadata(MediaMetadata {
+            title: Some(&track.name),
+            album: Some(&track.album_name),
+            artist: Some(&track.artist_name),
+            cover_url: Some(&track.cover_path),
+            duration: Some(Duration::from_secs_f64(track_duration)),
+        })?;
+        self.set_media_controls_playing(progress)?;
+
         logging::debug!("Succesfully playing track {}", track.name);
 
-        Ok(())
+        Ok((progress, track_duration))
     }
 
     /// Initialize the player with a track and a progress
@@ -212,75 +225,63 @@ impl Player {
             track.name
         );
 
-        let sound_data = self.prepare_sound_data(&track)?.start_position(progress);
-        self.progress = progress;
-        self.set_playback(false)?;
-
-        let sound_handle = self.prepare_sound_handle(sound_data)?;
-        self.sound_handle = Some(sound_handle);
+        let player_track = self.make_player_track(&track, Some(progress))?;
+        self.track = Some(player_track);
 
         Ok(())
     }
 
-    fn prepare_sound_handle(
+    fn make_player_track(
         &mut self,
-        sound_data: StreamingSoundData<FromFileError>,
-    ) -> Result<StreamingSoundHandle<FromFileError>> {
+        track: &Tracks,
+        start_position: Option<f64>,
+    ) -> Result<PlayerTrack> {
+        let progress = start_position.unwrap_or(0.0);
+        let sound_data = StreamingSoundData::from_file(&track.path)?.start_position(progress);
+        let track_duration = sound_data.duration();
+
         let mut sound_handle = self.manager.play(sound_data)?;
-        sound_handle.pause(self.tween);
         sound_handle.set_volume(self.volume, self.tween);
+        sound_handle.pause(self.tween);
 
-        Ok(sound_handle)
+        Ok(PlayerTrack::new(
+            track.id,
+            track_duration.as_secs_f64(),
+            sound_handle,
+        ))
     }
 
-    fn prepare_sound_data(&mut self, track: &Tracks) -> Result<StreamingSoundData<FromFileError>> {
-        let sound_data = StreamingSoundData::from_file(&track.path)?;
-        self.duration = sound_data.duration().as_secs_f32();
-
-        self.set_scrobble_condition();
-
-        self.controls.set_metadata(MediaMetadata {
-            title: Some(&track.name),
-            album: Some(&track.album_name),
-            artist: Some(&track.artist_name),
-            cover_url: Some(&track.cover_path),
-            duration: Some(std::time::Duration::from_secs(self.duration as u64)),
-        })?;
-
-        Ok(sound_data)
-    }
-
-    pub fn maybe_queue_next(&mut self, next: &Tracks) -> Result<()> {
+    pub fn maybe_queue_next(&mut self, track: &Tracks) -> Result<()> {
         logging::debug!("Preloading next track for gapless playback.");
 
-        let next_data = StreamingSoundData::from_file(&next.path)?;
-        self.next_duration = next_data.duration().as_secs_f32();
-
-        let sound_handle = self.prepare_sound_handle(next_data)?;
-        self.next_sound_handle = Some(sound_handle);
+        let player_track = self.make_player_track(&track, None)?;
+        self.preloaded_track = Some(player_track);
 
         Ok(())
     }
 
     /// Check if the track has ended
     pub fn has_ended(&self) -> bool {
-        if let Some(ref sound_handle) = self.sound_handle {
-            sound_handle.state() == PlaybackState::Stopped
+        if let Some(ref player_track) = self.track {
+            player_track.sound_handle.state() == PlaybackState::Stopped
         } else {
-            false
+            true
         }
     }
 
     /// Pause track if has sound_handle
     pub fn pause(&mut self) -> Result<()> {
-        if let Some(ref mut sound_handle) = self.sound_handle {
+        if let Some(ref mut player_track) = self.track {
             logging::debug!("Pausing track");
-            sound_handle.pause(self.tween);
+
+            let progress = player_track.sound_handle.position();
+            player_track.sound_handle.pause(self.tween);
+            player_track.progress = progress;
+
             self.state = PlayerState::Paused;
-            self.progress = sound_handle.position();
 
             self.clock.pause();
-            self.set_playback(false)?;
+            self.set_media_controls_paused(progress)?;
         }
 
         Ok(())
@@ -288,13 +289,16 @@ impl Player {
 
     /// Resume track if has sound_handle
     pub fn resume(&mut self) -> Result<()> {
-        if let Some(ref mut sound_handle) = self.sound_handle {
+        if let Some(ref mut player_track) = self.track {
             logging::debug!("Resuming track");
-            sound_handle.resume(self.tween);
+
+            player_track.sound_handle.resume(self.tween);
             self.state = PlayerState::Playing;
 
+            let progress = player_track.progress;
+            self.set_media_controls_playing(progress)?;
+
             self.clock.start();
-            self.set_playback(true)?;
         }
 
         Ok(())
@@ -302,22 +306,23 @@ impl Player {
 
     /// Seek to a specific position in the track and resume playing if the player is paused and resume is true
     pub fn seek(&mut self, position: f64, resume: bool) -> Result<()> {
-        if let Some(ref mut sound_handle) = self.sound_handle {
+        if let Some(ref mut player_track) = self.track {
             logging::debug!("Seeking track to {position}");
+
             match self.state {
                 PlayerState::Playing => {
-                    sound_handle.seek_to(position);
-                    self.progress = position;
-                    self.set_playback(true)?;
+                    player_track.sound_handle.seek_to(position);
+                    player_track.progress = position;
+                    self.set_media_controls_playing(position)?;
                 }
                 _ => {
-                    sound_handle.seek_to(position);
-                    self.progress = position;
+                    player_track.sound_handle.seek_to(position);
+                    player_track.progress = position;
 
                     if resume {
                         self.resume()?
                     } else {
-                        self.set_playback(false)?
+                        self.set_media_controls_paused(position)?;
                     }
                 }
             }
@@ -329,14 +334,12 @@ impl Player {
     /// Stop track if has sound_handle
     pub fn stop(&mut self) -> Result<()> {
         logging::debug!("Stopping track");
-        if let Some(ref mut sound_handle) = self.sound_handle {
-            sound_handle.stop(self.tween);
+
+        if let Some(mut player_track) = self.track.take() {
+            player_track.sound_handle.stop(self.tween);
         }
 
         self.state = PlayerState::Paused;
-        self.progress = 0.0;
-        self.track = None;
-        self.sound_handle = None;
 
         self.clock.stop();
         self.controls.set_playback(MediaPlayback::Stopped)?;
@@ -344,16 +347,19 @@ impl Player {
         Ok(())
     }
 
-    /// Set the progress of the player
-    pub fn set_progress(&mut self, progress: f64) {
-        logging::debug!("Setting track progress");
-        self.progress = progress;
-    }
-
     /// Gets player progress from `sound_handle`
     pub fn get_progress(&self) -> f64 {
-        if let Some(ref sound_handle) = self.sound_handle {
-            sound_handle.position()
+        if let Some(ref player_track) = self.track {
+            player_track.sound_handle.position()
+        } else {
+            -1.0
+        }
+    }
+
+    /// Gets player progress from `track`
+    pub fn get_duration(&self) -> f64 {
+        if let Some(ref player_track) = self.track {
+            player_track.duration
         } else {
             -1.0
         }
@@ -361,9 +367,15 @@ impl Player {
 
     /// Whether or not the clock progress has passsed `scrobble_condition`
     fn scrobble(&self) -> bool {
-        let clock_time = self.clock.time();
-        let ticks = clock_time.ticks;
-        ticks as f64 >= self.scrobble_condition
+        self.track
+            .as_ref()
+            .and_then(|track| {
+                track.scrobble_condition.map(|cond| {
+                    let ticks = self.clock.time().ticks as f64;
+                    ticks >= cond
+                })
+            })
+            .unwrap_or(false)
     }
 
     /// Whether or not the track should be scrobbled depending on three factors.
@@ -372,13 +384,15 @@ impl Player {
     /// 2. The track hasn't already been scrobbled.
     /// 3. `track` contains Some(id)
     pub fn should_scrobble(&mut self) -> Option<(u32, i64)> {
-        let should_scrobble = self.track.is_some() && self.scrobble() && !self.scrobbled;
+        let can_scrobble = self.scrobble();
 
-        if let Some(track_id) = self.track
-            && should_scrobble
-        {
-            self.scrobbled = true;
-            Some((track_id, self.timestamp))
+        if let Some(track) = self.track.as_mut() {
+            if !can_scrobble || track.scrobbled {
+                return None;
+            }
+
+            track.scrobbled = true;
+            Some((track.id, track.timestamp as i64))
         } else {
             None
         }
@@ -386,33 +400,25 @@ impl Player {
 
     /// Gets players state from sound handle if exists.
     pub fn get_player_state(&self) -> Option<PlaybackState> {
-        self.sound_handle.as_ref().map(|handle| handle.state())
+        self.track
+            .as_ref()
+            .map(|player_track| player_track.sound_handle.state())
     }
 
-    pub fn has_next_sound_handle(&self) -> bool {
-        self.next_sound_handle.is_some()
+    pub fn has_preloaded_track(&self) -> bool {
+        self.preloaded_track.is_some()
     }
 
-    fn set_scrobble_condition(&mut self) {
-        // if duration is greater than 4 mins, set to 4 min,
-        // otherwise half of the duration.
-        if self.duration > 240.0 {
-            self.scrobble_condition = 240.0;
-        } else if self.duration > 30.0 {
-            self.scrobble_condition = (self.duration as f64) / 2.0;
-        };
+    fn set_media_controls_playing(&mut self, progress: f64) -> Result<(), souvlaki::Error> {
+        let progress = Self::progress_as_position(progress);
+        self.controls
+            .set_playback(MediaPlayback::Playing { progress })
     }
 
-    fn set_playback(&mut self, play: bool) -> Result<(), souvlaki::Error> {
-        let progress: Option<souvlaki::MediaPosition> = Self::progress_as_position(self.progress);
-        let playback = match play {
-            true => MediaPlayback::Playing { progress },
-            false => MediaPlayback::Paused { progress },
-        };
-
-        self.controls.set_playback(playback)?;
-
-        Ok(())
+    fn set_media_controls_paused(&mut self, progress: f64) -> Result<(), souvlaki::Error> {
+        let progress = Self::progress_as_position(progress);
+        self.controls
+            .set_playback(MediaPlayback::Paused { progress })
     }
 
     fn progress_as_position(progress: f64) -> Option<souvlaki::MediaPosition> {
