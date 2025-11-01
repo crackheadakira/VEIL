@@ -23,7 +23,7 @@
             <input
               v-model="inputValue"
               type="text"
-              class="text-text-primary placeholder-text-secondary sodapop-card bg-bg-primary w-full font-medium focus:outline-hidden"
+              class="text-text-primary placeholder-text-secondary sodapop-card bg-bg-primary w-full focus:outline-hidden"
               :placeholder="placeholder"
             />
             <div class="flex w-full justify-end gap-2">

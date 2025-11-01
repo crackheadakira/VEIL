@@ -36,11 +36,11 @@
             params: { id: playerStore.currentTrack.artist_id },
           }"
         >
-          <p
-            class="text-text-secondary hover:text-text-secondary-hovered cursor-pointer truncate font-normal"
+          <small
+            class="text-text-secondary hover:text-text-secondary-hovered cursor-pointer truncate"
           >
             {{ playerStore.currentTrack.artist_name }}
-          </p>
+          </small>
         </RouterLink>
       </div>
     </div>

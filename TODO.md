@@ -44,3 +44,4 @@
   - [ ] Read .LRC files
   - [ ] Lyric View
 - [ ] Adding back / forward arrows
+- [ ] Make slider tracker only appear on hover

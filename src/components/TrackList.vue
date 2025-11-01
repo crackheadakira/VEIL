@@ -16,7 +16,12 @@
       v-for="(track, idx) of tracks"
     >
       <div
-        class="hover:bg-bg-hovered group flex cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+        class="hover:bg-bg-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+        :class="
+          playlist
+            ? 'grid-cols-[auto_2fr_1fr_auto]'
+            : 'grid-cols-[auto_1fr_auto]'
+        "
         @dblclick="() => emitNewTrack(track, idx)"
       >
         <div class="flex shrink-0 items-center gap-4">
@@ -39,11 +44,11 @@
           >
             {{ track.name }}
           </p>
-          <p
+          <small
             class="text-text-secondary group-hover:text-text-secondary-hovered"
           >
             {{ track.artist_name }}
-          </p>
+          </small>
         </div>
         <RouterLink
           class="grow basis-0 truncate"
@@ -53,13 +58,22 @@
             params: { id: track.album_id },
           }"
         >
-          <p class="text-text-secondary hover:text-accent-primary truncate">
+          <small
+            class="text-text-secondary hover:text-accent-secondary truncate"
+          >
             {{ track.album_name }}
-          </p>
+          </small>
         </RouterLink>
-        <p class="text-text-primary text-right">
-          {{ formatTime("mm:ss", track.duration) }}
-        </p>
+        <div class="grid grid-cols-[1rem_auto] items-center justify-end gap-2">
+          <span
+            class="i-fluent-clock-12-regular text-text-secondary size-4"
+          ></span>
+          <p
+            class="text-text-primary group-hover:text-text-primary-hovered text-right tabular-nums"
+          >
+            {{ formatTime("mm:ss", track.duration) }}
+          </p>
+        </div>
       </div>
     </ContextMenu>
   </div>

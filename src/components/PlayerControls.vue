@@ -1,32 +1,43 @@
 <template>
-  <div class="flex w-fit items-center justify-center gap-4">
+  <div class="flex w-fit items-center justify-center gap-8">
     <span
       v-if="extra"
-      :class="shuffled ? 'text-accent-primary' : ''"
-      class="i-fluent-arrow-shuffle-20-filled cursor-pointer hover:opacity-90"
+      :class="
+        shuffled
+          ? 'text-accent-primary hover:text-accent-primary-hovered'
+          : 'text-text-secondary hover:text-text-primary'
+      "
+      class="i-fluent-arrow-shuffle-16-filled size-5 cursor-pointer transition-colors duration-150"
       @click="shuffleQueue"
     ></span>
     <span
-      class="i-fluent-previous-20-filled w-6 cursor-pointer hover:opacity-90"
+      class="i-fluent-previous-16-filled text-text-secondary hover:text-text-primary size-5 cursor-pointer transition-colors duration-150"
       @click="previousTrack"
     ></span>
     <span
       @click="updatePlayerState"
-      :class="playing ? 'i-fluent-pause-24-filled' : 'i-fluent-play-24-filled'"
-      class="i-fluent-pause-20-filled cursor-pointer hover:opacity-90"
+      :class="playing ? 'i-fluent-pause-16-filled' : 'i-fluent-play-16-filled'"
+      class="i-fluent-pause-16-filled text-text-secondary hover:text-text-primary size-6 cursor-pointer transition-colors duration-150"
     ></span>
     <span
-      class="i-fluent-next-20-filled cursor-pointer hover:opacity-90"
+      class="i-fluent-next-16-filled text-text-secondary hover:text-text-primary size-5 cursor-pointer transition-colors duration-150"
       @click="nextTrack"
     ></span>
     <span
       v-if="extra"
       @click="updateRepeatMode"
       :class="
-        (repeatMode === 'Queue' ? 'text-accent-primary' : '') ||
-        (repeatMode === 'Track' ? 'text-accent-primary opacity-75' : '')
+        (repeatMode === 'None'
+          ? 'text-text-secondary hover:text-text-primary'
+          : '') ||
+        (repeatMode === 'Queue'
+          ? 'text-accent-primary hover:text-accent-primary-hovered'
+          : '') ||
+        (repeatMode === 'Track'
+          ? 'text-accent-secondary hover:text-accent-secondary-hovered'
+          : '')
       "
-      class="i-fluent-arrow-repeat-all-20-filled cursor-pointer hover:opacity-90"
+      class="i-fluent-arrow-repeat-all-16-filled size-5 cursor-pointer transition-colors duration-150"
     ></span>
   </div>
 </template>

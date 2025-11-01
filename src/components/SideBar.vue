@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="border-border-secondary bg-bg-primary text-text-secondary flex min-h-fit w-full flex-col gap-8 border-r p-8 font-medium"
+    class="border-border-secondary bg-bg-primary text-text-secondary flex min-h-fit w-full flex-col gap-8 border-r p-8"
   >
     <SearchBar />
 
@@ -9,25 +9,25 @@
       <hr class="border-border-secondary border-t-2" />
 
       <div
-        class="*:hover:text-text-primary flex flex-col gap-4 *:inline-flex *:items-center *:gap-4"
+        class="*:hover:text-text-primary flex flex-col gap-6 *:inline-flex *:items-center *:gap-3"
       >
         <RouterLink to="/">
-          <span class="i-fluent-home-16-filled h-8"></span>
+          <span class="i-fluent-home-16-filled size-6"></span>
           <p>Home</p>
         </RouterLink>
 
         <div>
-          <span class="i-fluent-heart-16-filled h-8"></span>
+          <span class="i-fluent-heart-16-filled size-6"></span>
           <p>Liked Songs</p>
         </div>
 
         <RouterLink to="/all_albums">
-          <span class="i-fluent-music-note-2-16-filled h-8"></span>
+          <span class="i-fluent-music-note-2-16-filled size-6"></span>
           <p>Albums</p>
         </RouterLink>
 
         <RouterLink to="/settings">
-          <span class="i-fluent-settings-16-filled h-8"></span>
+          <span class="i-fluent-settings-16-filled size-6"></span>
           <p>Settings</p>
         </RouterLink>
       </div>

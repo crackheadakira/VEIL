@@ -8,10 +8,10 @@
 
       <div class="flex flex-col gap-4">
         <div class="flex cursor-default flex-col gap-1 select-none">
-          <h6 class="text-text-secondary font-medium">
+          <h6 class="text-text-secondary">
             {{ data.album.album_type }}
           </h6>
-          <h4 class="text-text-primary">{{ data.album.name }}</h4>
+          <h2 class="text-text-primary">{{ data.album.name }}</h2>
           <p class="text-text-secondary">{{ data.album.artist_name }}</p>
           <small class="text-text-secondary">
             {{ formatTime("hh:mm:ss", data.album.duration) }},

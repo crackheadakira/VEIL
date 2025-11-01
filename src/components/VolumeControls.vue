@@ -1,7 +1,7 @@
 <template>
-  <div class="flex items-center gap-4 justify-self-end">
+  <div class="flex items-center gap-3 justify-self-end">
     <span
-      class="i-fluent-speaker-24-filled hover:text-accent-secondary cursor-pointer"
+      class="i-fluent-speaker-16-regular text-text-secondary size-6 cursor-pointer"
     ></span>
     <Slider
       @update:model-value="updateVolume"

@@ -37,41 +37,41 @@ svg {
   -webkit-text-size-adjust: 100%;
 
   /* Accent Colors */
-  --color-accent-primary: #F8612A;
-  --color-accent-secondary: #F66935;
-  --color-accent-primary-hovered: hsl(16, 79%, 52%);
+  --color-accent-primary: #f8612a;
+  --color-accent-secondary: #f66935;
+  --color-accent-primary-hovered: #e55724;
 
   /* Text Colors */
   --color-text-primary: #333333;
   --color-text-secondary: #777777;
-  --color-text-primary-hovered: #2D2D2d;
+  --color-text-primary-hovered: #2d2d2d;
   --color-text-secondary-hovered: #616161;
 
   /* Backgrounds */
-  --color-bg-primary: #FCFCFC;
-  --color-bg-secondary: #F5F5F5;
-  --color-bg-hovered: #E7E7E7;
+  --color-bg-primary: #fcfcfc;
+  --color-bg-secondary: #f5f5f5;
+  --color-bg-hovered: #e7e7e7;
 
   /* Borders */
-  --color-border-primary: #DDDDDD;
-  --color-border-secondary: #DADADA;
+  --color-border-primary: #dddddd;
+  --color-border-secondary: #dadada;
 }
 
 html[data-theme="dark"] {
   /* Text Colors */
-  --color-text-primary: #C5C5C5;
-  --color-text-secondary: #777777;
-  --color-text-primary-hovered: #B5B5B5;
-  --color-text-secondary-hovered: #6A6A6A;
+  --color-text-primary: #dddddd;
+  --color-text-secondary: #9a9a9a;
+  --color-text-primary-hovered: #b5b5b5;
+  --color-text-secondary-hovered: #8d8c8c;
 
   /* Backgrounds */
-  --color-bg-primary: #121212;
-  --color-bg-secondary: #131212;
-  --color-bg-hovered: #101010;
+  --color-bg-primary: #010101;
+  --color-bg-secondary: #020202;
+  --color-bg-hovered: #040404;
 
   /* Borders */
-  --color-border-primary: #303030;
-  --color-border-secondary: #222222;
+  --color-border-primary: #222222;
+  --color-border-secondary: #191919;
 }
 
 @theme {
@@ -196,38 +196,38 @@ html[data-theme="dark"] {
 }
 
 @utility context-menu-item {
-  @apply text-text-primary data-[disabled]:text-text-secondary data-[highlighted]:bg-accent-primary data-[highlighted]:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-[disabled]:pointer-events-none;
+  @apply text-text-primary data-disabled:text-text-secondary data-highlighted:bg-accent-primary data-highlighted:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-disabled:pointer-events-none;
 }
 
 @layer base {
   h1 {
-    font-size: 3.815rem;
-    font-weight: 800;
+    font-size: 2.15rem;
+    font-weight: 700;
   }
 
   h2 {
-    font-size: 3.052rem;
-    font-weight: 800;
+    font-size: 1.925rem;
+    font-weight: 700;
   }
 
   h3 {
-    font-size: 2.441rem;
-    font-weight: 800;
+    font-size: 1.725rem;
+    font-weight: 700;
   }
 
   h4 {
-    font-size: 1.953rem;
-    font-weight: 700;
+    font-size: 1.55rem;
+    font-weight: 600;
   }
 
   h5 {
-    font-size: 1.563rem;
-    font-weight: 700;
+    font-size: 1.39375rem;
+    font-weight: 600;
   }
 
   h6 {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   p,
@@ -238,7 +238,7 @@ html[data-theme="dark"] {
   }
 
   small {
-    font-size: 0.833rem;
+    font-size: 0.8875rem;
     font-weight: 500;
   }
 }

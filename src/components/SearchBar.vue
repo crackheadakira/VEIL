@@ -22,7 +22,7 @@
         >
           <div class="text-text-primary flex h-72 w-96 flex-col">
             <div
-              class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2 font-medium"
+              class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2"
             >
               <span
                 class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
@@ -53,12 +53,22 @@
                     router.push(`/${result.search_type}/${result.search_id}`))
                   "
                   v-for="(result, idx) of searchResults"
-                  :class="idx === selected ? 'bg-bg-primary' : ''"
+                  :class="idx === selected ? 'bg-bg-hovered' : ''"
                   ref="resultElements"
-                  class="hover:bg-bg-primary transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+                  class="hover:bg-bg-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
                 >
-                  <p class="truncate">{{ result.title }}</p>
-                  <p class="text-text-secondary shrink-0">
+                  <p
+                    :class="idx === selected ? 'text-text-primary-hovered' : ''"
+                    class="group-hover:text-text-primary-hovered truncate"
+                  >
+                    {{ result.title }}
+                  </p>
+                  <p
+                    :class="
+                      idx === selected ? 'text-text-secondary-hovered' : ''
+                    "
+                    class="text-text-secondary group-hover:text-text-secondary-hovered shrink-0"
+                  >
                     {{ readableCapitalization(result.search_type) }}
                   </p>
                 </div>
@@ -138,13 +148,19 @@ function handleKeyDown(e: KeyboardEvent) {
   } else if (e.key === "ArrowUp") {
     if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value - 1);
-    resultElements.value[selected.value].scrollIntoView({
+    const element = resultElements.value[selected.value];
+    element.scrollIntoView({
       behavior: "smooth",
+      block: "nearest",
     });
   } else if (e.key === "ArrowDown") {
     if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value + 1);
-    resultElements.value[selected.value].scrollIntoView({ behavior: "smooth" });
+    const element = resultElements.value[selected.value];
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   } else if (e.key === "Enter") {
     if (!searchResults.value) return;
     const result = searchResults.value[selected.value];
