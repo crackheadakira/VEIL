@@ -353,6 +353,10 @@ pub enum QueueEvent {
     /// - shuffle: False --> True
     ShuffleGlobalQueue,
 
+    SetGlobalQueueShuffle {
+        shuffle: bool,
+    },
+
     UpdateRepeatMode,
 }
 
@@ -370,7 +374,10 @@ impl EventSystemHandler for QueueEvent {
                 queue_idx,
                 origin,
             } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
-            QueueEvent::ShuffleGlobalQueue {} => QueueEvent::shuffle_global_queue(handle)?,
+            QueueEvent::ShuffleGlobalQueue {} => QueueEvent::shuffle_global_queue(handle, None)?,
+            QueueEvent::SetGlobalQueueShuffle { shuffle } => {
+                QueueEvent::shuffle_global_queue(handle, Some(shuffle))?
+            }
             QueueEvent::UpdateRepeatMode => QueueEvent::update_repeat_mode(handle)?,
         }
 
@@ -420,16 +427,34 @@ impl QueueEvent {
         Ok(())
     }
 
-    fn shuffle_global_queue(handle: &AppHandle) -> Result<(), FrontendError> {
+    fn shuffle_global_queue(
+        handle: &AppHandle,
+        shuffle: Option<bool>,
+    ) -> Result<(), FrontendError> {
         let state = handle.state::<SodapopState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
-        if queue.shuffled {
-            // As the queue is already shuffled, simply unshuffle it.
-            queue.unshuffle_global();
+        if let Some(shuffle) = shuffle {
+            if shuffle {
+                queue.shuffle_global();
+            } else {
+                queue.unshuffle_global();
+            }
         } else {
-            queue.shuffle_global();
+            if queue.shuffled {
+                // As the queue is already shuffled, simply unshuffle it.
+                queue.unshuffle_global();
+            } else {
+                queue.shuffle_global();
+            }
         }
+
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::ShuffleButton {
+                enabled: queue.shuffled,
+            },
+            handle,
+        )?;
 
         Ok(())
     }

@@ -13,10 +13,8 @@ export const usePlayerStore = defineStore("player", () => {
   const currentTrack = useStorage<Tracks>("currentTrack", null, undefined, {
     serializer: StorageSerializers.object,
   });
-  const loop = useStorage<"none" | "track" | "queue">("loop", "none");
   const playerProgress = useStorage("playerProgress", 0);
   const playerVolume = useStorage("playerVolume", 0.5);
-  const isShuffled = useStorage("isShuffled", false);
 
   const paused = ref(true);
 
@@ -31,26 +29,10 @@ export const usePlayerStore = defineStore("player", () => {
     paused.value = event.data.paused;
   };
 
-  /**
-   * Toggles the loop value between "none", "track", and "queue".
-   * @example
-   * // playerStore.loop = "none"
-   * playerStore.loopQueue() // playerStore.loop = "queue"
-   * playerStore.loopQueue() // playerStore.loop = "track"
-   * playerStore.loopQueue() // playerStore.loop = "none"
-   */
-  function loopQueue(): void {
-    if (loop.value === "none") loop.value = "queue";
-    else if (loop.value === "queue") loop.value = "track";
-    else loop.value = "none";
-  }
-
   function $reset() {
     currentTrack.value = null;
-    loop.value = "none";
     playerProgress.value = 0;
     playerVolume.value = 0.5;
-    isShuffled.value = false;
   }
 
   // PLAYER LOGIC
@@ -123,11 +105,8 @@ export const usePlayerStore = defineStore("player", () => {
     paused,
     currentTrack,
     playerProgress,
-    loop,
     playerVolume,
-    isShuffled,
     listenNewTrack,
-    loopQueue,
     $reset,
     handleProgress,
     initialLoad,

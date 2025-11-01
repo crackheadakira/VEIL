@@ -353,6 +353,10 @@ export type PlayerEvent =
    */
   | { type: "NewTrack"; data: { track: Tracks } }
   /**
+   * Plays the track at the current index in the queue.
+   */
+  | { type: "CurrentTrackInQueue" }
+  /**
    * Play the previous track in the queue.
    */
   | { type: "PreviousTrackInQueue" }
@@ -432,6 +436,7 @@ export type QueueEvent =
    * - shuffle: False --> True
    */
   | { type: "ShuffleGlobalQueue" }
+  | { type: "SetGlobalQueueShuffle"; data: { shuffle: boolean } }
   | { type: "UpdateRepeatMode" };
 export type QueueOrigin =
   | { type: "Playlist"; data: { id: number } }

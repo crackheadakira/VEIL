@@ -146,6 +146,9 @@ pub enum PlayerEvent {
     /// If a new track is to be played.
     NewTrack { track: Tracks },
 
+    /// Plays the track at the current index in the queue.
+    CurrentTrackInQueue,
+
     /// Play the previous track in the queue.
     PreviousTrackInQueue,
 
@@ -233,6 +236,9 @@ impl EventSystemHandler for PlayerEvent {
             }
             PlayerEvent::NextTrackInQueue => {
                 Self::play_next_track_from_queue(handle, online).await?
+            }
+            PlayerEvent::CurrentTrackInQueue => {
+                Self::play_current_track_from_queue(handle, online).await?
             }
         };
 
@@ -343,6 +349,27 @@ impl PlayerEvent {
         if online.last_fm_enabled {
             let lastfm = state.lastfm.lock().await;
             try_update_now_playing_to_lastfm(lastfm, track).await?;
+        }
+
+        Ok(())
+    }
+
+    /// Plays the current track in queue by passing it to [`PlayerEvent::set_new_track`]
+    ///
+    async fn play_current_track_from_queue(
+        handle: &AppHandle,
+        online: OnlineFeatures,
+    ) -> Result<(), FrontendError> {
+        let state = handle.state::<SodapopState>();
+        let track_id = {
+            let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+            queue.current()
+        };
+
+        if let Some(track_id) = track_id {
+            let track = state.db.by_id::<Tracks>(&track_id)?;
+
+            Self::set_new_track(handle, track, online).await?
         }
 
         Ok(())

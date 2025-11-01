@@ -73,13 +73,11 @@ import {
   Playlists,
   type Tracks,
   usePlaylistStore,
-  useQueueStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, ref } from "vue";
 
 const playlistStore = usePlaylistStore();
-const queueStore = useQueueStore();
 
 const trackList = ref<HTMLDivElement | null>(null);
 const idxWidth = computed(() => props.tracks.length.toString().length); // number of digits
@@ -93,14 +91,6 @@ const props = defineProps<{
 // Make the backend set the track and do everything related to it.
 async function emitNewTrack(track: Tracks, trackIdx: number) {
   await events.playerEvent.emit({ type: "NewTrack", data: { track } });
-
-  // Might move queue to backend & instead of persisting
-  // queue across runs, make a new queue every time
-  // dependent on shuffle state and playlist / album.
-  // In backend could simply store a Vec of track IDs.
-  // Would allow for pre-fetching the next track in
-  // the audio player.
-
   const trackIds = props.tracks.map((track) => track.id);
 
   await events.queueEvent.emit({
@@ -114,9 +104,6 @@ async function emitNewTrack(track: Tracks, trackIdx: number) {
       },
     },
   });
-
-  queueStore.setGlobalQueue(props.tracks);
-  queueStore.setQueueIdx(trackIdx);
 }
 
 async function handlePlaylist(

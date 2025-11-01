@@ -53,18 +53,14 @@ import {
   events,
   placeholderIfEmpty,
   useConfigStore,
-  usePlayerStore,
   usePlaylistStore,
-  useQueueStore,
   type PlaylistWithTracks,
 } from "@/composables/";
 import { onBeforeMount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const configStore = useConfigStore();
-const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
-const queueStore = useQueueStore();
 
 const route = useRoute();
 const playlist_id = ref(route.params.id as string);
@@ -97,20 +93,36 @@ playlistStore.$onAction(({ name, args, after }) => {
   }
 });
 
+/**
+ * Handles the big play/shuffle button.
+ * @param {boolean} shuffle - Whether the button was play or shuffle
+ */
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
+  const trackIds = data.value.tracks.map((track) => track.id);
 
-  queueStore.setGlobalQueue(data.value.tracks);
+  await events.queueEvent.emit({
+    type: "SetGlobalQueue",
+    data: {
+      tracks: trackIds,
+      queue_idx: 0,
+      origin: {
+        type: "Playlist",
+        data: {
+          id: data.value.playlist.id,
+        },
+      },
+    },
+  });
 
   if (shuffle) {
-    playerStore.isShuffled = false; // To trigger the shuffle no matter current state
-    queueStore.shuffleQueue();
+    await events.queueEvent.emit({
+      type: "SetGlobalQueueShuffle",
+      data: { shuffle },
+    });
   }
 
-  queueStore.setQueueIdx(0);
-  const track = await queueStore.getTrackAtIdx(0);
-  if (track)
-    await events.playerEvent.emit({ type: "NewTrack", data: { track } });
+  await events.playerEvent.emit({ type: "CurrentTrackInQueue" });
 }
 
 async function updateData() {

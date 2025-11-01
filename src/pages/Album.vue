@@ -53,9 +53,7 @@ import {
   commands,
   handleBackendError,
   formatTime,
-  usePlayerStore,
   useConfigStore,
-  useQueueStore,
   events,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
@@ -63,8 +61,6 @@ import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
 
 const configStore = useConfigStore();
-const playerStore = usePlayerStore();
-const queueStore = useQueueStore();
 
 const route = useRoute();
 const album_id = ref(route.params.id as string);
@@ -77,23 +73,36 @@ const data = ref<AlbumWithTracks | null>(null);
  */
 async function handlePlayButton(shuffle: boolean) {
   if (!data.value) return;
-  queueStore.setGlobalQueue(data.value.tracks);
+  const trackIds = data.value.tracks.map((track) => track.id);
+
+  await events.queueEvent.emit({
+    type: "SetGlobalQueue",
+    data: {
+      tracks: trackIds,
+      queue_idx: 0,
+      origin: {
+        type: "Album",
+        data: {
+          id: data.value.album.id,
+        },
+      },
+    },
+  });
+
   if (shuffle) {
-    playerStore.isShuffled = false;
-    queueStore.shuffleQueue();
+    await events.queueEvent.emit({
+      type: "SetGlobalQueueShuffle",
+      data: { shuffle },
+    });
   }
 
-  queueStore.setQueueIdx(0);
-  const track = await queueStore.getTrackAtIdx(0);
-  if (track)
-    await events.playerEvent.emit({ type: "NewTrack", data: { track } });
+  await events.playerEvent.emit({ type: "CurrentTrackInQueue" });
 }
 
 async function updateData() {
   const result = await commands.getAlbumWithTracks(parseInt(album_id.value));
 
-  if (result.status === "error")
-    if (result.status === "error") return handleBackendError(result.error);
+  if (result.status === "error") return handleBackendError(result.error);
 
   data.value = result.data;
 }

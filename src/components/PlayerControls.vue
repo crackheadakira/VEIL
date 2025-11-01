@@ -55,7 +55,6 @@ async function nextTrack() {
 
 async function shuffleQueue() {
   await events.queueEvent.emit({ type: "ShuffleGlobalQueue" });
-  shuffled.value = !shuffled.value;
 }
 
 async function updatePlayerState() {
@@ -68,14 +67,22 @@ async function updateRepeatMode() {
 
 onMounted(async () => {
   unlistenUIUpdateEvent = await events.uiUpdateEvent.listen((event) => {
-    if (event.payload.type === "PlayButton") {
-      if (event.payload.data.state === "Paused") {
-        playing.value = false;
-      } else {
-        playing.value = true;
-      }
-    } else if (event.payload.type === "LoopButton") {
-      repeatMode.value = event.payload.data.mode;
+    switch (event.payload.type) {
+      case "PlayButton":
+        if (event.payload.data.state === "Paused") {
+          playing.value = false;
+        } else {
+          playing.value = true;
+        }
+        break;
+
+      case "LoopButton":
+        repeatMode.value = event.payload.data.mode;
+        break;
+
+      case "ShuffleButton":
+        shuffled.value = event.payload.data.enabled;
+        break;
     }
   });
 });
