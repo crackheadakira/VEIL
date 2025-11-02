@@ -29,9 +29,10 @@ import {
   PlayerProgressEvent,
   events,
   toastBus,
+  ThemeMode,
 } from "@/composables/";
 import { Channel } from "@tauri-apps/api/core";
-import { onMounted, watch } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -40,28 +41,27 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
-watch(
-  () => configStore.config?.ui?.theme,
-  (newTheme) => {
-    if (!newTheme) return;
-    if (newTheme === "Dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
-  },
-  { immediate: true },
-);
+let unlistenConfigEvent: () => void = () => {};
 
-onMounted(async () => {
-  await configStore.initialize();
-  const theme = configStore.config?.ui.theme || "Dark";
-
+function updateDocumentTheme(theme: ThemeMode) {
   if (theme === "Dark") {
     document.documentElement.setAttribute("data-theme", "dark");
   } else {
     document.documentElement.setAttribute("data-theme", "light");
   }
+}
+
+onMounted(async () => {
+  unlistenConfigEvent = await events.sodapopConfigEvent.listen((event) => {
+    if (!event.payload.theme) return;
+
+    updateDocumentTheme(event.payload.theme);
+  });
+
+  await configStore.initialize();
+  const theme = configStore.config?.ui.theme || "Dark";
+
+  updateDocumentTheme(theme);
 
   const css = await commands.readCustomStyle();
   let styleElement = document.getElementById("custom-style");
@@ -107,5 +107,9 @@ onMounted(async () => {
 
   const res = await commands.playerProgressChannel(channel);
   if (res.status === "error") console.error(res.error);
+});
+
+onUnmounted(() => {
+  unlistenConfigEvent();
 });
 </script>

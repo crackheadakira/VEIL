@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="h-fit w-fit" @click="showDialog = true">
-      <slot></slot>
+      <slot name="trigger"></slot>
     </div>
     <Transition
       enter-active-class="animate-zoomIn"
