@@ -44,4 +44,5 @@
   - [ ] Read .LRC files
   - [ ] Lyric View
 - [ ] Adding back / forward arrows
-- [ ] Make slider tracker only appear on hover
+- [x] Make slider tracker only appear on hover
+- [ ] Add environment variables to `config.json`

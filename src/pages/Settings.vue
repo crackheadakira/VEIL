@@ -69,8 +69,8 @@ const currentDirectory = ref(
   configStore.config?.music_dir || "No Folder Selected",
 );
 const lastFMKey = ref(configStore.config?.last_fm_key || "No Key Set");
-const discordRPC = ref(configStore.config.discord_enabled);
-const lastFM = ref(configStore.config.last_fm_enabled);
+const discordRPC = ref(configStore.config.discord_enabled ?? false);
+const lastFM = ref(configStore.config.last_fm_enabled ?? false);
 
 const lastFMURL = ref<[string, string] | null>(null);
 
@@ -120,6 +120,9 @@ function updateConfig(setting: number, value: any) {
     last_fm_key: null,
     discord_enabled: null,
     last_fm_enabled: null,
+    queue_origin: null,
+    queue_idx: null,
+    repeat_mode: null,
   } satisfies SodapopConfigEvent;
 
   switch (setting) {

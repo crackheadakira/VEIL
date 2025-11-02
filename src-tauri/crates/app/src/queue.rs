@@ -404,9 +404,7 @@ impl QueueEvent {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
         let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
 
-        if let Some(original_origin) = queue.origin
-            && original_origin != origin
-        {
+        if queue.origin.is_none() || queue.origin != Some(origin) {
             queue.set_global(tracks);
             queue.set_origin(origin);
 

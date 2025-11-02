@@ -103,7 +103,10 @@ impl SodapopConfig {
     }
 
     pub fn write_config(&self) -> Result<(), FrontendError> {
-        fs::write(Self::config_file_path(), serde_json::to_string(&self)?)?;
+        fs::write(
+            Self::config_file_path(),
+            serde_json::to_string_pretty(&self)?,
+        )?;
         Ok(())
     }
 
