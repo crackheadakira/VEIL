@@ -473,7 +473,7 @@ export type SodapopConfig = {
   music_dir?: string | null;
   discord_enabled?: boolean;
   last_fm_enabled?: boolean;
-  last_fm_key?: string | null;
+  last_fm_session_key?: string | null;
   queue_origin?: QueueOrigin | null;
   queue_idx?: number;
   repeat_mode?: RepeatMode;
@@ -483,7 +483,7 @@ export type SodapopConfigEvent = {
   discord_enabled: boolean | null;
   last_fm_enabled: boolean | null;
   music_dir: string | null;
-  last_fm_key: string | null;
+  last_fm_session_key: string | null;
   queue_origin: QueueOrigin | null;
   queue_idx: number | null;
   repeat_mode: RepeatMode | null;

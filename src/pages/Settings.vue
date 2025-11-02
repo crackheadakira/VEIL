@@ -68,7 +68,7 @@ const theme = ref(configStore.config.theme);
 const currentDirectory = ref(
   configStore.config?.music_dir || "No Folder Selected",
 );
-const lastFMKey = ref(configStore.config?.last_fm_key || "No Key Set");
+const lastFMKey = ref(configStore.config?.last_fm_session_key || "No Key Set");
 const discordRPC = ref(configStore.config.discord_enabled ?? false);
 const lastFM = ref(configStore.config.last_fm_enabled ?? false);
 
@@ -82,7 +82,7 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
     buttons: [
       {
         name: "revoke",
-        condition: configStore.config.last_fm_key?.length !== 0,
+        condition: configStore.config.last_fm_session_key?.length !== 0,
         close: true,
         click: async () => {
           updateConfig(3, "");
@@ -94,7 +94,7 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
       },
       {
         name: "start",
-        condition: configStore.config.last_fm_key?.length === 0,
+        condition: configStore.config.last_fm_session_key?.length === 0,
         click: getToken,
       },
     ],
@@ -117,7 +117,7 @@ function updateConfig(setting: number, value: any) {
   const updatedConfig = {
     theme: null,
     music_dir: null,
-    last_fm_key: null,
+    last_fm_session_key: null,
     discord_enabled: null,
     last_fm_enabled: null,
     queue_origin: null,
@@ -135,8 +135,8 @@ function updateConfig(setting: number, value: any) {
       configStore.config.music_dir = value;
       break;
     case 3:
-      updatedConfig.last_fm_key = value;
-      configStore.config.last_fm_key = value;
+      updatedConfig.last_fm_session_key = value;
+      configStore.config.last_fm_session_key = value;
       break;
     case 4:
       updatedConfig.discord_enabled = value;
@@ -170,7 +170,7 @@ async function registerSession() {
   await configStore.initialize();
 
   nextTick(() => {
-    lastFMKey.value = configStore.config.last_fm_key!;
+    lastFMKey.value = configStore.config.last_fm_session_key!;
   });
 }
 

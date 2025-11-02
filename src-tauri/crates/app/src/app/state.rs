@@ -75,8 +75,8 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     lastfm.enable(sodapop_config.last_fm_enabled);
     discord.enable(sodapop_config.discord_enabled);
 
-    if let Some(sk) = sodapop_config.last_fm_key.clone() {
-        lastfm.set_session_key(sk);
+    if let Some(session_key) = sodapop_config.last_fm_session_key.clone() {
+        lastfm.set_session_key(session_key);
     }
 
     let player = try_with_log!("Music Player", || media_controls::Player::new(

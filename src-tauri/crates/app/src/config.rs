@@ -25,7 +25,7 @@ pub struct SodapopConfig {
     pub last_fm_enabled: bool,
 
     #[serde(default)]
-    pub last_fm_key: Option<String>,
+    pub last_fm_session_key: Option<String>,
 
     #[serde(default)]
     pub queue_origin: Option<QueueOrigin>,
@@ -51,7 +51,7 @@ pub struct SodapopConfigEvent {
     pub discord_enabled: Option<bool>,
     pub last_fm_enabled: Option<bool>,
     pub music_dir: Option<String>,
-    pub last_fm_key: Option<String>,
+    pub last_fm_session_key: Option<String>,
     pub queue_origin: Option<QueueOrigin>,
     pub queue_idx: Option<usize>,
     pub repeat_mode: Option<RepeatMode>,
@@ -67,7 +67,7 @@ impl SodapopConfig {
             let config = Self {
                 theme: ThemeMode::Dark,
                 music_dir: None,
-                last_fm_key: None,
+                last_fm_session_key: None,
                 discord_enabled: false,
                 last_fm_enabled: false,
                 queue_origin: None,
@@ -83,7 +83,9 @@ impl SodapopConfig {
     fn update_config(&mut self, config: SodapopConfigEvent) {
         self.theme = config.theme.unwrap_or(self.theme);
         self.music_dir = config.music_dir.or(self.music_dir.take());
-        self.last_fm_key = config.last_fm_key.or(self.last_fm_key.take());
+        self.last_fm_session_key = config
+            .last_fm_session_key
+            .or(self.last_fm_session_key.take());
         self.discord_enabled = config.discord_enabled.unwrap_or(self.discord_enabled);
         self.last_fm_enabled = config.last_fm_enabled.unwrap_or(self.last_fm_enabled);
         self.queue_origin = config.queue_origin.or(self.queue_origin.take());
@@ -187,16 +189,16 @@ mod tests {
     fn update_last_fm_key() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.last_fm_key, None);
+        assert_eq!(config.last_fm_session_key, None);
 
         config.update_config({
             SodapopConfigEvent {
-                last_fm_key: Some("hello".to_owned()),
+                last_fm_session_key: Some("hello".to_owned()),
                 ..SodapopConfigEvent::default()
             }
         });
 
-        assert_eq!(config.last_fm_key, Some("hello".to_owned()));
+        assert_eq!(config.last_fm_session_key, Some("hello".to_owned()));
     }
 
     #[test]

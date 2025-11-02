@@ -31,7 +31,7 @@ pub fn write_session_to_config(
     mut config: RwLockWriteGuard<'_, SodapopConfig>,
     session_key: String,
 ) -> Result<(), FrontendError> {
-    config.last_fm_key = Some(session_key);
+    config.last_fm_session_key = Some(session_key);
     config.write_config()?;
 
     Ok(())
