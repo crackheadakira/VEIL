@@ -193,8 +193,8 @@ impl EventSystemHandler for PlayerEvent {
             let config: std::sync::RwLockReadGuard<'_, crate::config::SodapopConfig> =
                 lock_or_log(state.config.read(), "Config Read")?;
             OnlineFeatures {
-                last_fm_enabled: config.last_fm_enabled,
-                discord_enabled: config.discord_enabled,
+                last_fm_enabled: config.integrations.last_fm_enabled,
+                discord_enabled: config.integrations.discord_enabled,
             }
         };
 

@@ -72,10 +72,10 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
 
     let mut discord = try_with_log!("Discord RPC", || DiscordState::new(&discord_client_id))?;
 
-    lastfm.enable(sodapop_config.last_fm_enabled);
-    discord.enable(sodapop_config.discord_enabled);
+    lastfm.enable(sodapop_config.integrations.last_fm_enabled);
+    discord.enable(sodapop_config.integrations.discord_enabled);
 
-    if let Some(session_key) = sodapop_config.last_fm_session_key.clone() {
+    if let Some(session_key) = sodapop_config.integrations.last_fm_session_key.clone() {
         lastfm.set_session_key(session_key);
     }
 
@@ -86,8 +86,8 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     Ok(SodapopState {
         player: Arc::new(RwLock::new(player)),
         queue: Arc::new(Mutex::new(QueueSystem::new(
-            sodapop_config.queue_origin,
-            sodapop_config.repeat_mode,
+            sodapop_config.playback.queue_origin,
+            sodapop_config.playback.repeat_mode,
         ))),
         db: Arc::new(db::Database::new(path.clone())),
         lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),

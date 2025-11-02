@@ -19,7 +19,7 @@ pub fn run() -> Result<(), anyhow::Error> {
                 let config = lock_or_log(state.config.read(), "Config Lock").unwrap();
                 let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
 
-                if config.discord_enabled {
+                if config.integrations.discord_enabled {
                     discord.close();
                 };
 

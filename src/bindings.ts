@@ -338,11 +338,54 @@ export type FrontendError =
   | { type: "SerdeJson"; data: string }
   | { type: "TauriError"; data: string }
   | { type: "AnyhowError"; data: string };
+/**
+ * Integrations like Discord RPC or Last.FM
+ */
+export type IntegrationsConfig = {
+  /**
+   * If Discord RPC should be enabled
+   */
+  discord_enabled: boolean;
+  /**
+   * If Last.FM should be enabled
+   */
+  last_fm_enabled: boolean;
+  /**
+   * The session key from Last.FM, used for API communication
+   */
+  last_fm_session_key: string | null;
+};
+/**
+ * Music library settings
+ */
+export type LibraryConfig = {
+  /**
+   * The directory where all the music files are
+   */
+  music_dir: string | null;
+};
 export type MetadataEvent =
   | { event: "Started"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
 export type PlayButtonState = "Playing" | "Paused";
+/**
+ * Playback behavior and queue state
+ */
+export type PlaybackConfig = {
+  /**
+   * Where the queue originated from
+   */
+  queue_origin: QueueOrigin | null;
+  /**
+   * What index the queue is at
+   */
+  queue_idx: number;
+  /**
+   * What repeat mode the queue should be at
+   */
+  repeat_mode: RepeatMode;
+};
 export type PlayerEvent =
   /**
    * Initialize the player to load in this track, seeked to the specified position.
@@ -469,14 +512,22 @@ export type Search = {
   search_type: string;
 };
 export type SodapopConfig = {
-  theme?: ThemeMode;
-  music_dir?: string | null;
-  discord_enabled?: boolean;
-  last_fm_enabled?: boolean;
-  last_fm_session_key?: string | null;
-  queue_origin?: QueueOrigin | null;
-  queue_idx?: number;
-  repeat_mode?: RepeatMode;
+  /**
+   * User interface–related preferences
+   */
+  ui: UiConfig;
+  /**
+   * Integration & connectivity settings
+   */
+  integrations: IntegrationsConfig;
+  /**
+   * Music library settings
+   */
+  library: LibraryConfig;
+  /**
+   * Playback behavior and queue info
+   */
+  playback: PlaybackConfig;
 };
 export type SodapopConfigEvent = {
   theme: ThemeMode | null;
@@ -538,6 +589,15 @@ export type UIUpdateEvent =
   | { type: "ShuffleButton"; data: { enabled: boolean } }
   | { type: "LoopButton"; data: { mode: RepeatMode } }
   | { type: "PlayButton"; data: { state: PlayButtonState } };
+/**
+ * UI configuration such as theme or other future endeavors
+ */
+export type UiConfig = {
+  /**
+   * What theme the user has selected
+   */
+  theme: ThemeMode;
+};
 
 /** tauri-specta globals **/
 

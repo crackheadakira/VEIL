@@ -36,7 +36,7 @@ pub async fn get_handle_to_music_folder(
 ) -> Result<Option<FileHandle>, FrontendError> {
     let music_dir = {
         let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
-        config_path.music_dir.clone()
+        config_path.library.music_dir.clone()
     };
 
     let handle = open_folder_picker(music_dir.as_deref(), "Select your music folder").await;

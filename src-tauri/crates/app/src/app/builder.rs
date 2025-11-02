@@ -97,7 +97,7 @@ pub fn handle_tauri_setup(
 
     {
         let config = lock_or_log(state.config.read(), "Config RwLock")?;
-        if config.discord_enabled {
+        if config.integrations.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
             discord.connect();
         }
@@ -168,7 +168,7 @@ pub fn handle_tauri_setup(
             }
         }
 
-        queue.set_current_index(config.queue_idx);
+        queue.set_current_index(config.playback.queue_idx);
     }
 
     Ok(())

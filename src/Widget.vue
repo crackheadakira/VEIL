@@ -69,10 +69,10 @@ async function hideWidget() {
 }
 
 const configStore = useConfigStore();
-const theme = configStore.config?.theme || "Dark";
+const theme = configStore.config.ui.theme || "Dark";
 
 watch(
-  () => configStore.config?.theme,
+  () => configStore.config.ui.theme,
   (newTheme) => {
     if (newTheme === "Dark") {
       document.documentElement.setAttribute("data-theme", "dark");

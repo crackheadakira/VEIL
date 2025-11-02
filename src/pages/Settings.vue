@@ -64,13 +64,17 @@ import { Channel } from "@tauri-apps/api/core";
 const onEvent = new Channel<MetadataEvent>();
 const configStore = useConfigStore();
 
-const theme = ref(configStore.config.theme);
+const theme = ref(configStore.config.ui.theme);
 const currentDirectory = ref(
-  configStore.config?.music_dir || "No Folder Selected",
+  configStore.config.library.music_dir || "No Folder Selected",
 );
-const lastFMKey = ref(configStore.config?.last_fm_session_key || "No Key Set");
-const discordRPC = ref(configStore.config.discord_enabled ?? false);
-const lastFM = ref(configStore.config.last_fm_enabled ?? false);
+const lastFMKey = ref(
+  configStore.config.integrations.last_fm_session_key || "No Key Set",
+);
+const discordRPC = ref(
+  configStore.config.integrations.discord_enabled ?? false,
+);
+const lastFM = ref(configStore.config.integrations.last_fm_enabled ?? false);
 
 const lastFMURL = ref<[string, string] | null>(null);
 
@@ -82,7 +86,8 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
     buttons: [
       {
         name: "revoke",
-        condition: configStore.config.last_fm_session_key?.length !== 0,
+        condition:
+          configStore.config.integrations.last_fm_session_key?.length !== 0,
         close: true,
         click: async () => {
           updateConfig(3, "");
@@ -94,7 +99,8 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
       },
       {
         name: "start",
-        condition: configStore.config.last_fm_session_key?.length === 0,
+        condition:
+          configStore.config.integrations.last_fm_session_key?.length === 0,
         click: getToken,
       },
     ],
@@ -128,23 +134,23 @@ function updateConfig(setting: number, value: any) {
   switch (setting) {
     case 1:
       updatedConfig.theme = value;
-      configStore.config.theme = value;
+      configStore.config.ui.theme = value;
       break;
     case 2:
       updatedConfig.music_dir = value;
-      configStore.config.music_dir = value;
+      configStore.config.library.music_dir = value;
       break;
     case 3:
       updatedConfig.last_fm_session_key = value;
-      configStore.config.last_fm_session_key = value;
+      configStore.config.integrations.last_fm_session_key = value;
       break;
     case 4:
       updatedConfig.discord_enabled = value;
-      configStore.config.discord_enabled = value;
+      configStore.config.integrations.discord_enabled = value;
       break;
     case 5:
       updatedConfig.last_fm_enabled = value;
-      configStore.config.last_fm_enabled = value;
+      configStore.config.integrations.last_fm_enabled = value;
       break;
   }
 
@@ -170,7 +176,7 @@ async function registerSession() {
   await configStore.initialize();
 
   nextTick(() => {
-    lastFMKey.value = configStore.config.last_fm_session_key!;
+    lastFMKey.value = configStore.config.integrations.last_fm_session_key!;
   });
 }
 

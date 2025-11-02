@@ -12,28 +12,56 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Type, Clone, Default)]
 pub struct SodapopConfig {
-    #[serde(default)]
+    /// User interface–related preferences
+    pub ui: UiConfig,
+
+    /// Integration & connectivity settings
+    pub integrations: IntegrationsConfig,
+
+    /// Music library settings
+    pub library: LibraryConfig,
+
+    /// Playback behavior and queue info
+    pub playback: PlaybackConfig,
+}
+
+/// UI configuration such as theme or other future endeavors
+#[derive(Serialize, Deserialize, Type, Clone, Default)]
+pub struct UiConfig {
+    /// What theme the user has selected
     pub theme: ThemeMode,
+}
 
-    #[serde(default)]
-    pub music_dir: Option<String>,
-
-    #[serde(default)]
+/// Integrations like Discord RPC or Last.FM
+#[derive(Serialize, Deserialize, Type, Clone, Default)]
+pub struct IntegrationsConfig {
+    /// If Discord RPC should be enabled
     pub discord_enabled: bool,
 
-    #[serde(default)]
+    /// If Last.FM should be enabled
     pub last_fm_enabled: bool,
 
-    #[serde(default)]
+    /// The session key from Last.FM, used for API communication
     pub last_fm_session_key: Option<String>,
+}
 
-    #[serde(default)]
+/// Music library settings
+#[derive(Serialize, Deserialize, Type, Clone, Default)]
+pub struct LibraryConfig {
+    /// The directory where all the music files are
+    pub music_dir: Option<String>,
+}
+
+/// Playback behavior and queue state
+#[derive(Serialize, Deserialize, Type, Clone, Default)]
+pub struct PlaybackConfig {
+    /// Where the queue originated from
     pub queue_origin: Option<QueueOrigin>,
 
-    #[serde(default)]
+    /// What index the queue is at
     pub queue_idx: usize,
 
-    #[serde(default)]
+    /// What repeat mode the queue should be at
     pub repeat_mode: RepeatMode,
 }
 
@@ -41,19 +69,28 @@ pub struct SodapopConfig {
 pub enum ThemeMode {
     #[default]
     Dark,
+
     Light,
+
     System,
 }
 
 #[derive(Serialize, Deserialize, Type, Event, Clone, Default)]
 pub struct SodapopConfigEvent {
     pub theme: Option<ThemeMode>,
+
     pub discord_enabled: Option<bool>,
+
     pub last_fm_enabled: Option<bool>,
+
     pub music_dir: Option<String>,
+
     pub last_fm_session_key: Option<String>,
+
     pub queue_origin: Option<QueueOrigin>,
+
     pub queue_idx: Option<usize>,
+
     pub repeat_mode: Option<RepeatMode>,
 }
 
@@ -65,14 +102,20 @@ impl SodapopConfig {
             Ok(serde_json::from_reader(json_reader)?)
         } else {
             let config = Self {
-                theme: ThemeMode::Dark,
-                music_dir: None,
-                last_fm_session_key: None,
-                discord_enabled: false,
-                last_fm_enabled: false,
-                queue_origin: None,
-                queue_idx: 0,
-                repeat_mode: RepeatMode::None,
+                ui: UiConfig {
+                    theme: ThemeMode::Dark,
+                },
+                library: LibraryConfig { music_dir: None },
+                integrations: IntegrationsConfig {
+                    discord_enabled: false,
+                    last_fm_enabled: false,
+                    last_fm_session_key: None,
+                },
+                playback: PlaybackConfig {
+                    queue_origin: None,
+                    queue_idx: 0,
+                    repeat_mode: RepeatMode::None,
+                },
             };
             config.write_config()?;
             Ok(config)
@@ -81,16 +124,29 @@ impl SodapopConfig {
 
     /// Update config field values
     fn update_config(&mut self, config: SodapopConfigEvent) {
-        self.theme = config.theme.unwrap_or(self.theme);
-        self.music_dir = config.music_dir.or(self.music_dir.take());
-        self.last_fm_session_key = config
+        // Update UI related preferences
+        self.ui.theme = config.theme.unwrap_or(self.ui.theme);
+
+        // Update library related preferences
+        self.library.music_dir = config.music_dir.or(self.library.music_dir.take());
+
+        // Update integration related preferences
+        self.integrations.last_fm_session_key = config
             .last_fm_session_key
-            .or(self.last_fm_session_key.take());
-        self.discord_enabled = config.discord_enabled.unwrap_or(self.discord_enabled);
-        self.last_fm_enabled = config.last_fm_enabled.unwrap_or(self.last_fm_enabled);
-        self.queue_origin = config.queue_origin.or(self.queue_origin.take());
-        self.queue_idx = config.queue_idx.unwrap_or(self.queue_idx);
-        self.repeat_mode = config.repeat_mode.unwrap_or(self.repeat_mode);
+            .or(self.integrations.last_fm_session_key.take());
+
+        self.integrations.discord_enabled = config
+            .discord_enabled
+            .unwrap_or(self.integrations.discord_enabled);
+
+        self.integrations.last_fm_enabled = config
+            .last_fm_enabled
+            .unwrap_or(self.integrations.last_fm_enabled);
+
+        // Update playback related preferences
+        self.playback.queue_origin = config.queue_origin.or(self.playback.queue_origin.take());
+        self.playback.queue_idx = config.queue_idx.unwrap_or(self.playback.queue_idx);
+        self.playback.repeat_mode = config.repeat_mode.unwrap_or(self.playback.repeat_mode);
     }
 
     /// Update config field values and writes it to disk
@@ -125,7 +181,7 @@ mod tests {
     fn update_theme() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.theme, ThemeMode::Dark);
+        assert_eq!(config.ui.theme, ThemeMode::Dark);
 
         config.update_config({
             SodapopConfigEvent {
@@ -134,14 +190,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.theme, ThemeMode::Light);
+        assert_eq!(config.ui.theme, ThemeMode::Light);
     }
 
     #[test]
     fn update_music_dir() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.music_dir, None);
+        assert_eq!(config.library.music_dir, None);
 
         config.update_config({
             SodapopConfigEvent {
@@ -150,14 +206,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.music_dir, Some("hello".to_owned()));
+        assert_eq!(config.library.music_dir, Some("hello".to_owned()));
     }
 
     #[test]
     fn update_discord_enabled() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.discord_enabled, false);
+        assert_eq!(config.integrations.discord_enabled, false);
 
         config.update_config({
             SodapopConfigEvent {
@@ -166,14 +222,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.discord_enabled, true);
+        assert_eq!(config.integrations.discord_enabled, true);
     }
 
     #[test]
     fn update_last_fm_enabled() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.last_fm_enabled, false);
+        assert_eq!(config.integrations.last_fm_enabled, false);
 
         config.update_config({
             SodapopConfigEvent {
@@ -182,14 +238,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.last_fm_enabled, true);
+        assert_eq!(config.integrations.last_fm_enabled, true);
     }
 
     #[test]
     fn update_last_fm_key() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.last_fm_session_key, None);
+        assert_eq!(config.integrations.last_fm_session_key, None);
 
         config.update_config({
             SodapopConfigEvent {
@@ -198,7 +254,10 @@ mod tests {
             }
         });
 
-        assert_eq!(config.last_fm_session_key, Some("hello".to_owned()));
+        assert_eq!(
+            config.integrations.last_fm_session_key,
+            Some("hello".to_owned())
+        );
     }
 
     #[test]
@@ -206,7 +265,7 @@ mod tests {
         let mut config = SodapopConfig::default();
         let origin = QueueOrigin::Album { id: 0 };
 
-        assert_eq!(config.queue_origin, None);
+        assert_eq!(config.playback.queue_origin, None);
 
         config.update_config({
             SodapopConfigEvent {
@@ -215,14 +274,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.queue_origin, Some(origin));
+        assert_eq!(config.playback.queue_origin, Some(origin));
     }
 
     #[test]
     fn update_queue_idx() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.queue_idx, usize::MIN);
+        assert_eq!(config.playback.queue_idx, usize::MIN);
 
         config.update_config({
             SodapopConfigEvent {
@@ -231,14 +290,14 @@ mod tests {
             }
         });
 
-        assert_eq!(config.queue_idx, usize::MAX);
+        assert_eq!(config.playback.queue_idx, usize::MAX);
     }
 
     #[test]
     fn update_repeat_mode() {
         let mut config = SodapopConfig::default();
 
-        assert_eq!(config.repeat_mode, RepeatMode::None);
+        assert_eq!(config.playback.repeat_mode, RepeatMode::None);
 
         config.update_config({
             SodapopConfigEvent {
@@ -247,6 +306,6 @@ mod tests {
             }
         });
 
-        assert_eq!(config.repeat_mode, RepeatMode::Track);
+        assert_eq!(config.playback.repeat_mode, RepeatMode::Track);
     }
 }

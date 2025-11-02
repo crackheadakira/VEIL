@@ -40,11 +40,10 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
-const theme = configStore.config?.theme || "Dark";
-
 watch(
-  () => configStore.config?.theme,
+  () => configStore.config?.ui?.theme,
   (newTheme) => {
+    if (!newTheme) return;
     if (newTheme === "Dark") {
       document.documentElement.setAttribute("data-theme", "dark");
     } else {
@@ -55,6 +54,9 @@ watch(
 );
 
 onMounted(async () => {
+  await configStore.initialize();
+  const theme = configStore.config?.ui.theme || "Dark";
+
   if (theme === "Dark") {
     document.documentElement.setAttribute("data-theme", "dark");
   } else {
@@ -73,8 +75,6 @@ onMounted(async () => {
   if (css.status === "ok" && styleElement) {
     styleElement.innerText = css.data;
   }
-
-  await configStore.initialize();
 
   const result = await commands.getAllAlbums();
   if (result.status === "error") return handleBackendError(result.error);
