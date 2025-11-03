@@ -35,28 +35,42 @@ pub async fn select_music_folder(
 
     if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();
-        let mut all_paths = recursive_dir(path);
-        all_paths.sort();
+        let all_track_files = collect_album_tracks(path);
+        let total_files = all_track_files.iter().map(|album| album.len()).sum();
 
         let event_id = 1;
         on_event.send(MetadataEvent::Started {
             id: event_id,
-            total: all_paths.len(),
+            total: total_files,
         })?;
 
-        let mut all_metadata = Vec::new();
-        for (idx, path) in all_paths.iter().enumerate() {
-            let metadata = Metadata::from_file(path);
-            match metadata {
-                Ok(m) => {
-                    all_metadata.push(m);
-                    on_event.send(MetadataEvent::Progress {
-                        id: event_id,
-                        current: idx,
-                    })?;
+        let mut all_metadata = Vec::with_capacity(total_files);
+        for album_tracks in all_track_files.iter() {
+            let first_track = &album_tracks[0];
+            let first_metadata = Metadata::from_file(first_track, false)?;
+
+            for (idx, track) in album_tracks[1..].iter().enumerate() {
+                let metadata = Metadata::from_file(track, true);
+
+                match metadata {
+                    Ok(mut metadata) => {
+                        if metadata.picture_data.is_none() {
+                            metadata.picture_data = first_metadata.picture_data.clone();
+                        }
+
+                        all_metadata.push(metadata);
+
+                        on_event.send(MetadataEvent::Progress {
+                            id: event_id,
+                            current: idx,
+                        })?;
+                    }
+
+                    Err(_) => continue,
                 }
-                Err(_) => continue,
             }
+
+            all_metadata.push(first_metadata);
         }
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
@@ -84,8 +98,8 @@ pub async fn select_music_folder(
                     let mut cover_path = cover_path;
 
                     if !Path::new(&cover_path).exists() {
-                        if !metadata.picture_data.is_empty() {
-                            fs::write(&cover_path, &*metadata.picture_data)?;
+                        if let Some(picture_data) = &metadata.picture_data {
+                            fs::write(&cover_path, &**picture_data)?;
                         } else {
                             let album_path = Path::new(&album_path);
 
@@ -145,7 +159,12 @@ pub async fn select_music_folder(
         let all_tracks = &state.db.all::<Tracks>()?;
 
         for track in all_tracks.iter() {
-            if !all_paths.contains(&PathBuf::from(&track.path)) {
+            let exists_on_disk = all_track_files
+                .iter()
+                .flatten()
+                .any(|p| p == &PathBuf::from(&track.path));
+
+            if !exists_on_disk {
                 state.db.delete::<Tracks>(track.id)?;
 
                 let album_tracks = state.db.count::<Tracks>(track.album_id, "album_id")?;
@@ -172,25 +191,29 @@ pub async fn select_music_folder(
     }
 }
 
-fn recursive_dir(path: &Path) -> Vec<PathBuf> {
-    let paths = fs::read_dir(path).unwrap();
-    let mut tracks = Vec::new();
+fn collect_album_tracks(path: &Path) -> Vec<Vec<PathBuf>> {
+    let mut albums = Vec::new();
 
-    for path in paths {
-        let path = path.unwrap().path();
+    for entry in fs::read_dir(path).unwrap() {
+        let entry = entry.unwrap();
+        let path = entry.path();
+
         if path.is_dir() {
-            tracks.extend(recursive_dir(&path));
-        } else {
-            let extension = path.extension().unwrap();
-            if extension != "mp3" && extension != "flac" {
-                continue;
+            albums.extend(collect_album_tracks(&path));
+        } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+            if ext.eq_ignore_ascii_case("mp3") || ext.eq_ignore_ascii_case("flac") {
+                // Find album by parent
+                if let Some(album_idx) = albums.iter().position(|a| a[0].parent() == path.parent())
+                {
+                    albums[album_idx].push(path);
+                } else {
+                    albums.push(vec![path]);
+                }
             }
-
-            tracks.push(path); // Return PathBuf directly
         }
     }
 
-    tracks
+    albums
 }
 
 /// Singles are less than 3 tracks and 30 minutes,

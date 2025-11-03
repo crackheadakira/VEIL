@@ -35,7 +35,7 @@ pub enum Block {
 }
 
 impl Block {
-    pub fn read_from(reader: &mut dyn Read) -> Result<(bool, Block)> {
+    pub fn read_from<R: Read + Seek>(reader: &mut R, skip_picture: bool) -> Result<(bool, Block)> {
         let mut byte = 0u8;
         reader.read_exact(std::slice::from_mut(&mut byte))?;
 
@@ -45,6 +45,13 @@ impl Block {
         let mut len_bytes = [0u8; 3];
         reader.read_exact(&mut len_bytes)?;
         let length = u32::from_be_bytes([0, len_bytes[0], len_bytes[1], len_bytes[2]]);
+
+        if let BlockType::Picture = block_type
+            && skip_picture
+        {
+            reader.seek_relative(length as i64)?;
+            return Ok((is_last, Block::Unknown));
+        }
 
         let mut data = vec![0u8; length as usize];
         reader.read_exact(&mut data)?;
@@ -256,18 +263,22 @@ pub struct Flac {
 }
 
 impl Flac {
-    pub fn new(file_path: &Path) -> Result<Flac> {
+    pub fn new(file_path: &Path, skip_picture: bool) -> Result<Flac> {
         let file = File::open(file_path)?;
         let mut reader = BufReader::with_capacity(4 * 1024, file);
-        Self::from_reader(&mut reader, Some(file_path))
+        Self::from_reader(&mut reader, Some(file_path), skip_picture)
     }
 
-    pub fn from_bytes(data: &[u8]) -> Result<Flac> {
+    pub fn from_bytes(data: &[u8], skip_picture: bool) -> Result<Flac> {
         let mut reader = Cursor::new(data);
-        Self::from_reader(&mut reader, None)
+        Self::from_reader(&mut reader, None, skip_picture)
     }
 
-    fn from_reader<R: Read + Seek>(reader: &mut R, file_path: Option<&Path>) -> Result<Flac> {
+    fn from_reader<R: Read + Seek>(
+        reader: &mut R,
+        file_path: Option<&Path>,
+        skip_picture: bool,
+    ) -> Result<Flac> {
         // Check the FLAC signature (fLaC)
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
@@ -283,7 +294,7 @@ impl Flac {
         let mut picture = None;
 
         loop {
-            let result = Block::read_from(reader)?;
+            let result = Block::read_from(reader, skip_picture)?;
             let (flag, block) = result;
 
             match block {
@@ -301,7 +312,7 @@ impl Flac {
 
             if flag
                 || (vorbis_comment.vendor_string.is_some()
-                    && picture.is_some()
+                    && (picture.is_some() || skip_picture)
                     && stream_info.total_samples > 0)
             {
                 break;

@@ -1,7 +1,7 @@
 mod flac;
 mod id3;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone)]
 /// Metadata struct that holds information about an audio file
@@ -31,7 +31,7 @@ pub struct Metadata {
     pub year: u16,
 
     /// Picture data
-    pub picture_data: Vec<u8>,
+    pub picture_data: Option<Rc<Vec<u8>>>,
 }
 
 pub enum SupportedFormats {
@@ -79,7 +79,7 @@ impl Metadata {
             album_type: String::new(),
             year: 0,
             track_number: 0,
-            picture_data: Vec::new(),
+            picture_data: None,
         }
     }
 
@@ -97,7 +97,7 @@ impl Metadata {
             album_type: String::from("Unknown"),
             year: vorbis_comment.year.unwrap_or(0),
             track_number: vorbis_comment.track_number.unwrap_or(-1),
-            picture_data: file.picture.unwrap_or_default().data,
+            picture_data: file.picture.map(|pic| Rc::new(pic.data)),
         }
     }
 
@@ -117,19 +117,18 @@ impl Metadata {
                 .next()
                 .and_then(|s| s.parse().ok())
                 .unwrap_or(-1),
-            picture_data: file.attached_picture.unwrap_or_default().picture_data,
+            picture_data: file.attached_picture.map(|pic| Rc::new(pic.picture_data)),
         }
     }
 
     /// Create a `Metadata` struct from a valid audio file
-    pub fn from_file(path: &std::path::Path) -> Result<Metadata> {
+    pub fn from_file(path: &std::path::Path, skip_picture: bool) -> Result<Metadata> {
         if let Some(os_ext) = path.extension()
             && let Some(ext) = os_ext.to_str()
         {
-            logging::debug!("Reading audio file: {path:?}");
             match ext {
                 "flac" => {
-                    let file = flac::Flac::new(path)?;
+                    let file = flac::Flac::new(path, skip_picture)?;
                     Ok(Metadata::from_flac(file))
                 }
                 "mp3" => {
@@ -143,10 +142,14 @@ impl Metadata {
         }
     }
 
-    pub fn from_bytes(data: &[u8], format: SupportedFormats) -> Result<Metadata> {
+    pub fn from_bytes(
+        data: &[u8],
+        format: SupportedFormats,
+        skip_picture: bool,
+    ) -> Result<Metadata> {
         match format {
             SupportedFormats::Flac => {
-                let file = flac::Flac::from_bytes(data)?;
+                let file = flac::Flac::from_bytes(data, skip_picture)?;
                 Ok(Metadata::from_flac(file))
             }
             SupportedFormats::ID3 => Err(Error::UnsupportedId3Version),
@@ -154,11 +157,14 @@ impl Metadata {
     }
 
     /// Create a vec of `Metadata` structs from a list of audio files
-    pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
+    pub fn from_files(
+        file_paths: &[std::path::PathBuf],
+        skip_picture: bool,
+    ) -> Result<Vec<Metadata>> {
         let mut all_metadata = Vec::with_capacity(file_paths.len());
 
         for path in file_paths {
-            let metadata = Metadata::from_file(path);
+            let metadata = Metadata::from_file(path, skip_picture);
             match metadata {
                 Ok(m) => all_metadata.push(m),
                 Err(e) => {
