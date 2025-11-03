@@ -94,7 +94,7 @@ impl Database {
     }
 
     /// Get all values from table for `T`
-    pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>> {
+    pub fn all<T: Queryable>(&self) -> Result<Vec<T>> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_all"),
@@ -113,7 +113,7 @@ impl Database {
     }
 
     /// Get total length of rows in `T`
-    pub fn rows<T: NeedForDatabase>(&self) -> Result<u32> {
+    pub fn rows<T: Queryable>(&self) -> Result<u32> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("SELECT COUNT(*) FROM {}", T::table_name());
         let mut stmt = conn.prepare(&stmt_to_call)?;
@@ -123,7 +123,7 @@ impl Database {
     }
 
     /// Get value from `T` table where id is same
-    pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T> {
+    pub fn by_id<T: Queryable>(&self, id: &u32) -> Result<T> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_id"),
@@ -140,14 +140,33 @@ impl Database {
     }
 
     /// Insert value to `T` table
-    pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<()> {
+    pub fn insert<T: Insertable>(&self, data_to_pass: T) -> Result<()> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_insert"),
-            "albums" => query("albums_insert"),
             "tracks" => query("tracks_insert"),
             "playlists" => query("playlists_insert"),
+            _ => unreachable!("Invalid table name"),
+        };
+
+        {
+            let mut stmt = tx.prepare_cached(stmt_to_call)?;
+            let params = data_to_pass.to_params();
+            stmt.execute(rusqlite::params_from_iter(params))?;
+        }
+
+        tx.commit()?;
+
+        Ok(())
+    }
+
+    /// Insert album`T` table
+    pub fn insert_album<T: Insertable + HasArtists>(&self, data_to_pass: T) -> Result<()> {
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
+        let stmt_to_call = match T::table_name() {
+            "albums" => query("albums_insert"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -159,7 +178,7 @@ impl Database {
             tx.last_insert_rowid()
         };
 
-        if T::table_name() == "albums" {
+        {
             let mut stmt = tx.prepare_cached(query("album_artists_insert"))?;
             stmt.execute((album_id, data_to_pass.get_artist_id()))?;
         }
@@ -170,7 +189,7 @@ impl Database {
     }
 
     /// Delete value from `T` table where id is same
-    pub fn delete<T: NeedForDatabase>(&self, id: u32) -> Result<()> {
+    pub fn delete<T: Queryable>(&self, id: u32) -> Result<()> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
@@ -180,7 +199,7 @@ impl Database {
     }
 
     /// Return latest record from `T` table
-    pub fn latest<T: NeedForDatabase>(&self) -> Result<T> {
+    pub fn latest<T: Queryable>(&self) -> Result<T> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_latest"),
@@ -197,7 +216,7 @@ impl Database {
     }
 
     /// Counts how many values `T` table has
-    pub fn count<T: NeedForDatabase>(&self, id: u32, call_where: &str) -> Result<u32> {
+    pub fn count<T: Queryable>(&self, id: u32, call_where: &str) -> Result<u32> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT COUNT(*) FROM {} WHERE {} = ?1",
@@ -211,11 +230,7 @@ impl Database {
     }
 
     /// Checks if value exists in `T` table
-    pub fn exists<T: NeedForDatabase>(
-        &self,
-        field_to_view: &str,
-        field_data: &str,
-    ) -> Result<bool> {
+    pub fn exists<T: Queryable>(&self, field_to_view: &str, field_data: &str) -> Result<bool> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT 1 FROM {} WHERE {} = ?1",
@@ -229,7 +244,7 @@ impl Database {
     }
 
     /// Batch fetch `T` from DB using a `Vec<u32>` of IDs
-    pub fn batch_id<T: NeedForDatabase>(&self, ids: &[u32]) -> Result<Vec<Option<T>>> {
+    pub fn batch_id<T: Queryable>(&self, ids: &[u32]) -> Result<Vec<Option<T>>> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let mut results = Vec::with_capacity(ids.len());
@@ -389,7 +404,7 @@ impl Database {
         Ok(PlaylistWithTracks { playlist, tracks })
     }
 
-    pub fn update_playlist(&self, playlist: &Playlists) -> Result<()> {
+    pub fn update_playlist(&self, playlist: &NewPlaylist) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute(query("playlists_update"), playlist.to_params().as_slice())?;
 

@@ -1,13 +1,19 @@
 use crate::*;
 
-impl From<String> for AlbumType {
-    fn from(value: String) -> Self {
-        match value.as_str() {
+impl From<&str> for AlbumType {
+    fn from(value: &str) -> Self {
+        match value {
             "Single" => AlbumType::Single,
             "EP" => AlbumType::EP,
             "Album" => AlbumType::Album,
             _ => AlbumType::Unknown,
         }
+    }
+}
+
+impl From<String> for AlbumType {
+    fn from(value: String) -> Self {
+        Self::from(value.as_str())
     }
 }
 
@@ -44,19 +50,93 @@ impl ToSql for AlbumType {
 }
 
 #[cfg(feature = "rusqlite")]
-pub trait NeedForDatabase: Sized {
+pub trait Queryable: Sized {
     /// Turn rusqlite row into given struct
     fn from_row(row: &rusqlite::Row) -> Result<Self>;
+
     /// Name of struct in database
     fn table_name() -> &'static str;
-    /// Struct to parameters to insert into database
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
+}
+
+pub trait HasArtists {
     /// Return an Option<u32> of `artist_id`
     fn get_artist_id(&self) -> Option<u32>;
 }
 
 #[cfg(feature = "rusqlite")]
-impl NeedForDatabase for Artists {
+pub trait Insertable {
+    /// Name of struct in database
+    fn table_name() -> &'static str;
+
+    /// Struct to parameters to insert into database
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql>;
+}
+
+#[cfg(feature = "rusqlite")]
+impl<'a> Insertable for NewArtist<'a> {
+    fn table_name() -> &'static str {
+        "artists"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.name]
+    }
+}
+
+#[cfg(feature = "rusqlite")]
+impl<'a> Insertable for NewAlbum<'a> {
+    fn table_name() -> &'static str {
+        "albums"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![
+            &self.artist_id,
+            &self.name,
+            &self.year,
+            &self.album_type,
+            &self.track_count,
+            &self.duration,
+            &self.cover_path,
+            &self.path,
+        ]
+    }
+}
+
+#[cfg(feature = "rusqlite")]
+impl<'a> Insertable for NewTrack<'a> {
+    fn table_name() -> &'static str {
+        "tracks"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![
+            &self.album_id,
+            &self.artist_id,
+            &self.album_name,
+            &self.artist_name,
+            &self.name,
+            &self.number,
+            &self.duration,
+            &self.cover_path,
+            &self.path,
+        ]
+    }
+}
+
+#[cfg(feature = "rusqlite")]
+impl<'a> Insertable for NewPlaylist<'a> {
+    fn table_name() -> &'static str {
+        "playlists"
+    }
+
+    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
+        vec![&self.name, &self.description, &self.cover_path]
+    }
+}
+
+#[cfg(feature = "rusqlite")]
+impl Queryable for Artists {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Self {
             id: row.get(0)?,
@@ -67,18 +147,10 @@ impl NeedForDatabase for Artists {
     fn table_name() -> &'static str {
         "artists"
     }
-
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![&self.name]
-    }
-
-    fn get_artist_id(&self) -> Option<u32> {
-        Some(self.id)
-    }
 }
 
 #[cfg(feature = "rusqlite")]
-impl NeedForDatabase for Albums {
+impl Queryable for Albums {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Self {
             artist_id: row.get(0)?,
@@ -97,27 +169,17 @@ impl NeedForDatabase for Albums {
     fn table_name() -> &'static str {
         "albums"
     }
+}
 
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![
-            &self.artist_id,
-            &self.name,
-            &self.year,
-            &self.album_type,
-            &self.track_count,
-            &self.duration,
-            &self.cover_path,
-            &self.path,
-        ]
-    }
-
+#[cfg(feature = "rusqlite")]
+impl<'a> HasArtists for NewAlbum<'a> {
     fn get_artist_id(&self) -> Option<u32> {
         Some(self.artist_id)
     }
 }
 
 #[cfg(feature = "rusqlite")]
-impl NeedForDatabase for Tracks {
+impl Queryable for Tracks {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Self {
             id: row.get(0)?,
@@ -136,28 +198,10 @@ impl NeedForDatabase for Tracks {
     fn table_name() -> &'static str {
         "tracks"
     }
-
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![
-            &self.album_id,
-            &self.artist_id,
-            &self.album_name,
-            &self.artist_name,
-            &self.name,
-            &self.number,
-            &self.duration,
-            &self.cover_path,
-            &self.path,
-        ]
-    }
-
-    fn get_artist_id(&self) -> Option<u32> {
-        Some(self.artist_id)
-    }
 }
 
 #[cfg(feature = "rusqlite")]
-impl NeedForDatabase for Playlists {
+impl Queryable for Playlists {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Self {
             id: row.get(0)?,
@@ -170,18 +214,10 @@ impl NeedForDatabase for Playlists {
     fn table_name() -> &'static str {
         "playlists"
     }
-
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![&self.name, &self.description, &self.cover_path]
-    }
-
-    fn get_artist_id(&self) -> Option<u32> {
-        None
-    }
 }
 
 #[cfg(feature = "rusqlite")]
-impl NeedForDatabase for Search {
+impl Queryable for Search {
     fn from_row(row: &rusqlite::Row) -> Result<Self> {
         Ok(Self {
             title: row.get(0)?,
@@ -192,13 +228,5 @@ impl NeedForDatabase for Search {
 
     fn table_name() -> &'static str {
         "search"
-    }
-
-    fn to_params(&self) -> Vec<&dyn rusqlite::ToSql> {
-        vec![&self.title, &self.search_type, &self.search_id]
-    }
-
-    fn get_artist_id(&self) -> Option<u32> {
-        None
     }
 }

@@ -62,11 +62,10 @@ pub fn search_db(search_str: &str, state: TauriState) -> Result<Vec<Search>, Fro
 #[tauri::command]
 #[specta::specta]
 pub fn new_playlist(name: String, state: TauriState) -> Result<u32, FrontendError> {
-    state.db.insert::<Playlists>(Playlists {
-        id: 0,
-        name,
-        description: String::new(),
-        cover_path: String::from("/placeholder.png"),
+    state.db.insert::<NewPlaylist>(NewPlaylist {
+        name: &name,
+        description: "",
+        cover_path: "/placeholder.png",
     })?;
 
     let latest = state.db.latest::<Playlists>()?;

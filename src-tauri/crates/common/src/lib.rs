@@ -42,22 +42,31 @@ pub struct Artists {
 pub struct Albums {
     /// ID of album in database
     pub id: u32,
+
     /// ID of artist in database
     pub artist_id: u32,
+
     /// Name of artist
     pub artist_name: String,
+
     /// Name of album
     pub name: String,
+
     /// Year album was published
     pub year: u16,
+
     /// Album type
     pub album_type: AlbumType,
+
     /// Amount of tracks in album
     pub track_count: u32,
+
     /// Album duration
     pub duration: u32,
+
     /// Path to album cover in Sodapop local app data
     pub cover_path: String,
+
     /// Path to album folder from where it was imported
     pub path: String,
 }
@@ -101,10 +110,13 @@ pub struct Tracks {
 pub struct Playlists {
     /// ID of playlist in database
     pub id: u32,
+
     /// Playlist name
     pub name: String,
+
     /// Playlist description
     pub description: String,
+
     /// Path to playlist cover in Sodapop local app data
     pub cover_path: String,
 }
@@ -114,8 +126,10 @@ pub struct Playlists {
 pub struct Search {
     /// ID of the search item
     pub search_id: u32,
+
     /// Name of the search item
     pub title: String,
+
     /// Type of the search item
     pub search_type: String,
 }
@@ -124,6 +138,7 @@ pub struct Search {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
 pub struct PlaylistWithTracks {
     pub playlist: Playlists,
+
     /// All tracks belonging to playlist
     pub tracks: Vec<Tracks>,
 }
@@ -132,6 +147,7 @@ pub struct PlaylistWithTracks {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
 pub struct AlbumWithTracks {
     pub album: Albums,
+
     /// All tracks belonging to album
     pub tracks: Vec<Tracks>,
 }
@@ -140,6 +156,80 @@ pub struct AlbumWithTracks {
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
 pub struct ArtistWithAlbums {
     pub artist: Artists,
+
     /// All albums belonging to artist
     pub albums: Vec<AlbumWithTracks>,
+}
+
+pub struct NewArtist<'a> {
+    pub name: &'a str,
+}
+
+pub struct NewAlbum<'a> {
+    /// ID of artist in database
+    pub artist_id: u32,
+
+    /// Name of artist
+    pub artist_name: &'a str,
+
+    /// Name of album
+    pub name: &'a str,
+
+    /// Year album was published
+    pub year: u16,
+
+    /// Album type
+    pub album_type: &'a AlbumType,
+
+    /// Amount of tracks in album
+    pub track_count: u32,
+
+    /// Album duration
+    pub duration: u32,
+
+    /// Path to album cover in Sodapop local app data
+    pub cover_path: &'a str,
+
+    /// Path to album folder from where it was imported
+    pub path: &'a str,
+}
+
+pub struct NewTrack<'a> {
+    /// ID of album in database
+    pub album_id: u32,
+
+    /// ID of artist in database
+    pub artist_id: u32,
+
+    /// Album name
+    pub album_name: &'a str,
+
+    /// Artist name
+    pub artist_name: &'a str,
+
+    /// Track name
+    pub name: &'a str,
+
+    /// Track number in album
+    pub number: i32,
+
+    /// Track duration
+    pub duration: u32,
+
+    /// Path to album cover in Sodapop local app data
+    pub cover_path: &'a str,
+
+    /// Path to track file
+    pub path: &'a str,
+}
+
+pub struct NewPlaylist<'a> {
+    /// Playlist name
+    pub name: &'a str,
+
+    /// Playlist description
+    pub description: &'a str,
+
+    /// Path to playlist cover in Sodapop local app data
+    pub cover_path: &'a str,
 }

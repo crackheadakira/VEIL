@@ -4,7 +4,7 @@ use crate::{
     systems::utils::{data_path, get_handle_to_music_folder, sanitize_string},
 };
 
-use common::{AlbumType, Albums, Artists, Tracks};
+use common::{AlbumType, Albums, Artists, NewAlbum, NewArtist, NewTrack, Tracks};
 use metadata_audio::Metadata;
 use serde::Serialize;
 use specta::Type;
@@ -67,9 +67,8 @@ pub async fn select_music_folder(
             let artist_id = if artist_exists {
                 state.db.artist_by_name(&metadata.artist)?.id
             } else {
-                state.db.insert::<Artists>(Artists {
-                    id: 0,
-                    name: metadata.artist.clone(),
+                state.db.insert::<NewArtist>(NewArtist {
+                    name: &metadata.artist,
                 })?;
 
                 state.db.latest::<Artists>()?.id
@@ -108,17 +107,16 @@ pub async fn select_music_folder(
                         }
                     }
 
-                    state.db.insert::<Albums>(Albums {
-                        id: 0,
+                    state.db.insert_album::<NewAlbum>(NewAlbum {
                         artist_id,
-                        artist_name: metadata.artist.clone(),
-                        name: metadata.album.clone(),
-                        cover_path: cover_path.clone(),
+                        artist_name: &metadata.artist,
+                        name: &metadata.album,
+                        cover_path: &cover_path,
                         year: metadata.year,
-                        album_type: metadata.album_type.clone().into(),
+                        album_type: &metadata.album_type.as_str().into(),
                         track_count: 0,
                         duration: 0,
-                        path: album_path,
+                        path: &album_path,
                     })?;
 
                     let a_id = state.db.latest::<Albums>()?.id;
@@ -129,17 +127,16 @@ pub async fn select_music_folder(
             let track_exists = state.db.exists::<Tracks>("name", &metadata.name)?;
 
             if !track_exists {
-                state.db.insert::<Tracks>(Tracks {
-                    id: 0,
+                state.db.insert::<NewTrack>(NewTrack {
                     duration: metadata.duration.round() as u32,
-                    album_name: metadata.album.clone(),
+                    album_name: &metadata.album,
                     album_id,
-                    artist_name: metadata.artist.clone(),
+                    artist_name: &metadata.artist,
                     artist_id,
-                    name: metadata.name.clone(),
+                    name: &metadata.name,
                     number: metadata.track_number,
-                    path: metadata.file_path.clone(),
-                    cover_path,
+                    path: &metadata.file_path,
+                    cover_path: &cover_path,
                 })?;
             };
         }
