@@ -1,7 +1,6 @@
 use std::{
-    collections::HashMap,
     fs::File,
-    io::{BufReader, Read},
+    io::{BufReader, Cursor, Read, Seek},
     path::Path,
 };
 
@@ -51,8 +50,8 @@ impl Block {
         reader.read_exact(&mut data)?;
 
         let block = match block_type {
-            BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),
-            BlockType::VorbisComment => Block::VorbisComment(VorbisComment::from_bytes(data)),
+            BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(&data)),
+            BlockType::VorbisComment => Block::VorbisComment(VorbisComment::from_bytes(&data)),
             BlockType::Picture => Block::Picture(Picture::from_bytes(data)),
             BlockType::Unknown => Block::Unknown,
         };
@@ -83,7 +82,7 @@ impl StreamInfo {
         }
     }
 
-    pub fn from_bytes(bytes: Vec<u8>) -> StreamInfo {
+    pub fn from_bytes(bytes: &[u8]) -> StreamInfo {
         let mut stream_info = StreamInfo::new();
         let mut i = 0;
 
@@ -121,7 +120,11 @@ impl StreamInfo {
 #[derive(Debug, Clone)]
 pub struct VorbisComment {
     pub vendor_string: Option<String>,
-    pub fields: HashMap<String, String>,
+    pub album: Option<String>,
+    pub album_artist: Option<String>,
+    pub title: Option<String>,
+    pub year: Option<u16>,
+    pub track_number: Option<i32>,
 }
 
 impl Default for VorbisComment {
@@ -134,11 +137,15 @@ impl VorbisComment {
     pub fn new() -> VorbisComment {
         VorbisComment {
             vendor_string: None,
-            fields: HashMap::new(),
+            album: None,
+            album_artist: None,
+            title: None,
+            year: None,
+            track_number: None,
         }
     }
 
-    pub fn from_bytes(bytes: Vec<u8>) -> VorbisComment {
+    pub fn from_bytes(bytes: &[u8]) -> VorbisComment {
         let mut vorbis = VorbisComment::new();
         let mut i = 0;
 
@@ -152,14 +159,22 @@ impl VorbisComment {
         for _ in 0..num_comments {
             let comment_length = u32_from_bytes(Endian::Little, &bytes, &mut i) as usize;
 
-            let comments = String::from_utf8_lossy(&bytes[i..i + comment_length]).to_string();
+            let comments = unsafe { std::str::from_utf8_unchecked(&bytes[i..i + comment_length]) };
             i += comment_length;
 
             let comments_split: Vec<&str> = comments.splitn(2, '=').collect();
-            let key = comments_split[0].to_ascii_uppercase();
+            let key = comments_split[0];
+
             let value = comments_split[1].to_owned();
 
-            vorbis.fields.insert(key, value);
+            match key {
+                "ALBUM" | "album" => vorbis.album = Some(value),
+                "ALBUMARTIST" | "albumartist" => vorbis.album_artist = Some(value),
+                "TITLE" | "title" => vorbis.title = Some(value),
+                "YEAR" | "year" => vorbis.year = value.parse::<u16>().ok(),
+                "TRACKNUMBER" | "tracknumber" => vorbis.track_number = value.parse::<i32>().ok(),
+                _ => (),
+            }
         }
 
         vorbis
@@ -169,8 +184,8 @@ impl VorbisComment {
 #[derive(Debug, Clone)]
 pub struct Picture {
     pub picture_type: u32,
-    pub mime_type: String,
-    pub description: String,
+    // pub mime_type: String,
+    // pub description: String,
     pub width: u32,
     pub height: u32,
     pub color_depth: u32,
@@ -188,8 +203,8 @@ impl Picture {
     pub fn new() -> Picture {
         Picture {
             picture_type: 0,
-            mime_type: String::new(),
-            description: String::new(),
+            // mime_type: String::new(),
+            // description: String::new(),
             width: 0,
             height: 0,
             color_depth: 0,
@@ -198,7 +213,7 @@ impl Picture {
         }
     }
 
-    pub fn from_bytes(bytes: Vec<u8>) -> Picture {
+    pub fn from_bytes(mut bytes: Vec<u8>) -> Picture {
         let mut picture = Picture::new();
         let mut i = 0;
 
@@ -206,13 +221,13 @@ impl Picture {
 
         let mime_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
-        picture.mime_type = String::from_utf8_lossy(&bytes[i..i + mime_length]).to_string();
+        // picture.mime_type = String::from_utf8_lossy(&bytes[i..i + mime_length]).to_string();
         i += mime_length;
 
         let description_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
-        picture.description =
-            String::from_utf8_lossy(&bytes[i..i + description_length]).to_string();
+        // picture.description =
+        //     String::from_utf8_lossy(&bytes[i..i + description_length]).to_string();
         i += description_length;
 
         picture.width = u32_from_bytes(Endian::Big, &bytes, &mut i);
@@ -225,7 +240,8 @@ impl Picture {
 
         let picture_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
 
-        picture.data = bytes[i..i + picture_length].to_vec();
+        picture.data = bytes.split_off(i);
+        picture.data.truncate(picture_length);
 
         picture
     }
@@ -233,17 +249,25 @@ impl Picture {
 
 #[derive(Debug, Clone)]
 pub struct Flac {
-    pub file_path: String,
     pub stream_info: StreamInfo,
+    pub picture: Option<Box<Picture>>,
+    pub file_path: String,
     pub vorbis_comment: VorbisComment,
-    pub picture: Option<Picture>,
 }
 
 impl Flac {
     pub fn new(file_path: &Path) -> Result<Flac> {
         let file = File::open(file_path)?;
-        let mut reader = BufReader::new(file);
+        let mut reader = BufReader::with_capacity(4 * 1024, file);
+        Self::from_reader(&mut reader, Some(file_path))
+    }
 
+    pub fn from_bytes(data: &[u8]) -> Result<Flac> {
+        let mut reader = Cursor::new(data);
+        Self::from_reader(&mut reader, None)
+    }
+
+    fn from_reader<R: Read + Seek>(reader: &mut R, file_path: Option<&Path>) -> Result<Flac> {
         // Check the FLAC signature (fLaC)
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
@@ -259,7 +283,7 @@ impl Flac {
         let mut picture = None;
 
         loop {
-            let result = Block::read_from(&mut reader)?;
+            let result = Block::read_from(reader)?;
             let (flag, block) = result;
 
             match block {
@@ -270,7 +294,7 @@ impl Flac {
                     vorbis_comment = vc;
                 }
                 Block::Picture(pic) => {
-                    picture = Some(pic);
+                    picture = Some(Box::new(pic));
                 }
                 Block::Unknown => {}
             }
@@ -285,7 +309,9 @@ impl Flac {
         }
 
         Ok(Flac {
-            file_path: file_path.to_string_lossy().to_string(),
+            file_path: file_path
+                .map(|p| p.to_string_lossy().into_owned())
+                .unwrap_or_else(|| "<memory>".to_string()),
             stream_info,
             vorbis_comment,
             picture,

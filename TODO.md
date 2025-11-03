@@ -46,3 +46,4 @@
 - [ ] Adding back / forward arrows
 - [x] Make slider tracker only appear on hover
 - [ ] Add environment variables to `config.json`
+- [ ] Improve

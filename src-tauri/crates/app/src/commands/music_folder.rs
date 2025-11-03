@@ -86,7 +86,7 @@ pub async fn select_music_folder(
 
                     if !Path::new(&cover_path).exists() {
                         if !metadata.picture_data.is_empty() {
-                            fs::write(&cover_path, &metadata.picture_data)?;
+                            fs::write(&cover_path, &*metadata.picture_data)?;
                         } else {
                             let album_path = Path::new(&album_path);
 

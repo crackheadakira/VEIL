@@ -8,22 +8,35 @@ use std::collections::HashMap;
 pub struct Metadata {
     /// Artist name
     pub artist: String,
+
     /// Album name
     pub album: String,
+
     /// Track name
     pub name: String,
+
     /// Path to the audio file
     pub file_path: String,
+
     /// Album type
     pub album_type: String,
+
     /// Duration of the album in seconds
     pub duration: f32,
+
+    pub track_number: i32,
+    /// Track number
+
     /// Year of publication
     pub year: u16,
-    /// Track number
-    pub track_number: i32,
+
     /// Picture data
     pub picture_data: Vec<u8>,
+}
+
+pub enum SupportedFormats {
+    Flac,
+    ID3,
 }
 
 impl Default for Metadata {
@@ -71,19 +84,19 @@ impl Metadata {
     }
 
     fn from_flac(file: flac::Flac) -> Metadata {
-        let vc = file.vorbis_comment;
+        let vorbis_comment = file.vorbis_comment;
 
         Metadata {
             duration: file.stream_info.duration,
-            album: get_field_value(&vc.fields, "ALBUM"),
-            artist: get_field_value(&vc.fields, "ALBUMARTIST"),
-            name: get_field_value(&vc.fields, "TITLE"),
+            album: vorbis_comment.album.unwrap_or(String::from("Unknown")),
+            artist: vorbis_comment
+                .album_artist
+                .unwrap_or(String::from("Unknown")),
+            name: vorbis_comment.title.unwrap_or(String::from("Unknown")),
             file_path: file.file_path,
             album_type: String::from("Unknown"),
-            year: get_field_value(&vc.fields, "YEAR").parse().unwrap_or(0),
-            track_number: get_field_value(&vc.fields, "TRACKNUMBER")
-                .parse()
-                .unwrap_or(-1),
+            year: vorbis_comment.year.unwrap_or(0),
+            track_number: vorbis_comment.track_number.unwrap_or(-1),
             picture_data: file.picture.unwrap_or_default().data,
         }
     }
@@ -130,9 +143,20 @@ impl Metadata {
         }
     }
 
+    pub fn from_bytes(data: &[u8], format: SupportedFormats) -> Result<Metadata> {
+        match format {
+            SupportedFormats::Flac => {
+                let file = flac::Flac::from_bytes(data)?;
+                Ok(Metadata::from_flac(file))
+            }
+            SupportedFormats::ID3 => Err(Error::UnsupportedId3Version),
+        }
+    }
+
     /// Create a vec of `Metadata` structs from a list of audio files
     pub fn from_files(file_paths: &[std::path::PathBuf]) -> Result<Vec<Metadata>> {
-        let mut all_metadata = Vec::new();
+        let mut all_metadata = Vec::with_capacity(file_paths.len());
+
         for path in file_paths {
             let metadata = Metadata::from_file(path);
             match metadata {
@@ -157,6 +181,7 @@ fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
         .to_string()
 }
 
+#[inline(always)]
 /// Read `n` bits from a byte slice starting at a given bit position
 fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
 where
@@ -189,19 +214,19 @@ enum Endian {
     Little,
 }
 
+#[inline(always)]
 /// Convert a slice of bytes to a u32 integer
 fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
-    // We unwrap here because we know that the slice has 4 bytes
-    // and we know that the conversion from slice to array will not fail
-    let slice: [u8; 4] = (&bytes[*offset..*offset + 4]).try_into().unwrap();
-
-    let length = match endian {
-        Endian::Big => u32::from_be_bytes(slice),
-        Endian::Little => u32::from_le_bytes(slice),
-    };
-
+    let b0 = bytes[*offset] as u32;
+    let b1 = bytes[*offset + 1] as u32;
+    let b2 = bytes[*offset + 2] as u32;
+    let b3 = bytes[*offset + 3] as u32;
     *offset += 4;
-    length
+
+    match endian {
+        Endian::Big => (b0 << 24) | (b1 << 16) | (b2 << 8) | b3,
+        Endian::Little => (b3 << 24) | (b2 << 16) | (b1 << 8) | b0,
+    }
 }
 
 #[cfg(test)]
