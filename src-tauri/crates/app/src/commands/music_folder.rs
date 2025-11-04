@@ -35,7 +35,8 @@ pub async fn select_music_folder(
 
     if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();
-        let all_track_files = collect_album_tracks(path);
+        let all_track_files = Metadata::collect_album_files_for_smart(path)?;
+
         let total_files = all_track_files.iter().map(|album| album.len()).sum();
 
         let event_id = 1;
@@ -44,34 +45,16 @@ pub async fn select_music_folder(
             total: total_files,
         })?;
 
-        let mut all_metadata = Vec::with_capacity(total_files);
-        for album_tracks in all_track_files.iter() {
-            let first_track = &album_tracks[0];
-            let first_metadata = Metadata::from_file(first_track, false)?;
-
-            for (idx, track) in album_tracks[1..].iter().enumerate() {
-                let metadata = Metadata::from_file(track, true);
-
-                match metadata {
-                    Ok(mut metadata) => {
-                        if metadata.picture_data.is_none() {
-                            metadata.picture_data = first_metadata.picture_data.clone();
-                        }
-
-                        all_metadata.push(metadata);
-
-                        on_event.send(MetadataEvent::Progress {
-                            id: event_id,
-                            current: idx,
-                        })?;
-                    }
-
-                    Err(_) => continue,
-                }
-            }
-
-            all_metadata.push(first_metadata);
-        }
+        let all_metadata = Metadata::from_files_smart(
+            &all_track_files,
+            total_files,
+            Some(|current| {
+                let _ = on_event.send(MetadataEvent::Progress {
+                    id: event_id,
+                    current,
+                });
+            }),
+        )?;
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
 
@@ -189,31 +172,6 @@ pub async fn select_music_folder(
     } else {
         Ok(String::from(""))
     }
-}
-
-fn collect_album_tracks(path: &Path) -> Vec<Vec<PathBuf>> {
-    let mut albums = Vec::new();
-
-    for entry in fs::read_dir(path).unwrap() {
-        let entry = entry.unwrap();
-        let path = entry.path();
-
-        if path.is_dir() {
-            albums.extend(collect_album_tracks(&path));
-        } else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-            if ext.eq_ignore_ascii_case("mp3") || ext.eq_ignore_ascii_case("flac") {
-                // Find album by parent
-                if let Some(album_idx) = albums.iter().position(|a| a[0].parent() == path.parent())
-                {
-                    albums[album_idx].push(path);
-                } else {
-                    albums.push(vec![path]);
-                }
-            }
-        }
-    }
-
-    albums
 }
 
 /// Singles are less than 3 tracks and 30 minutes,

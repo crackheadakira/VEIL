@@ -1,7 +1,11 @@
 mod flac;
 mod id3;
 
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 #[derive(Debug, Clone)]
 /// Metadata struct that holds information about an audio file
@@ -122,7 +126,7 @@ impl Metadata {
     }
 
     /// Create a `Metadata` struct from a valid audio file
-    pub fn from_file(path: &std::path::Path, skip_picture: bool) -> Result<Metadata> {
+    pub fn from_file(path: &Path, skip_picture: bool) -> Result<Metadata> {
         if let Some(os_ext) = path.extension()
             && let Some(ext) = os_ext.to_str()
         {
@@ -157,10 +161,7 @@ impl Metadata {
     }
 
     /// Create a vec of `Metadata` structs from a list of audio files
-    pub fn from_files(
-        file_paths: &[std::path::PathBuf],
-        skip_picture: bool,
-    ) -> Result<Vec<Metadata>> {
+    pub fn from_files(file_paths: &[PathBuf], skip_picture: bool) -> Result<Vec<Metadata>> {
         let mut all_metadata = Vec::with_capacity(file_paths.len());
 
         for path in file_paths {
@@ -174,6 +175,85 @@ impl Metadata {
             }
         }
         Ok(all_metadata)
+    }
+
+    /// Creates a vec of `Metadata` structs from a vec of folder containing a vec of all the tracks within
+    ///
+    /// What makes it "smart" is it reads the album cover only for the first file, and all the other files just
+    /// reference that image.
+    /// But this smart-reading requires the files to be inputted in a specific format.
+    pub fn from_files_smart<F>(
+        file_paths: &Vec<Vec<PathBuf>>,
+        total_files: usize,
+        mut on_progress: Option<F>,
+    ) -> Result<Vec<Metadata>>
+    where
+        F: FnMut(usize),
+    {
+        let mut all_metadata = Vec::with_capacity(total_files);
+        let mut processed = 0;
+
+        for album_tracks in file_paths {
+            let first_track = &album_tracks[0];
+            let first_metadata = Metadata::from_file(first_track, false)?;
+
+            processed += 1;
+            if let Some(f) = &mut on_progress {
+                f(processed);
+            }
+
+            for track in album_tracks[1..].iter() {
+                let mut metadata = Metadata::from_file(track, true)?;
+
+                if metadata.picture_data.is_none() {
+                    metadata.picture_data = first_metadata.picture_data.clone();
+                }
+
+                all_metadata.push(metadata);
+
+                processed += 1;
+                if let Some(f) = &mut on_progress {
+                    f(processed);
+                }
+            }
+
+            // Push it to Vec after the loop to allow the other tracks to reference the Arc
+            all_metadata.push(first_metadata);
+        }
+
+        Ok(all_metadata)
+    }
+
+    /// The resulting output is needed by [`Metadata::from_files_smart`].
+    pub fn collect_album_files_for_smart(path: &Path) -> Result<Vec<Vec<PathBuf>>> {
+        let mut albums: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
+        Self::collect_recursive(path, &mut albums)?;
+        Ok(albums.into_values().collect())
+    }
+
+    fn collect_recursive(dir: &Path, albums: &mut HashMap<PathBuf, Vec<PathBuf>>) -> Result<()> {
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.is_dir() {
+                Self::collect_recursive(&path, albums)?;
+                continue;
+            }
+
+            let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
+                continue;
+            };
+            if !ext.eq_ignore_ascii_case("mp3") && !ext.eq_ignore_ascii_case("flac") {
+                continue;
+            }
+
+            if let Some(parent) = path.parent() {
+                albums.entry(parent.to_path_buf()).or_default().push(path);
+            }
+        }
+
+        Ok(())
     }
 }
 
