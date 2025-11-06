@@ -140,7 +140,7 @@ impl Database {
     }
 
     /// Insert value to `T` table
-    pub fn insert<T: Insertable>(&self, data_to_pass: T) -> Result<()> {
+    pub fn insert<T: Insertable + Hashable>(&self, data_to_pass: T) -> Result<()> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let stmt_to_call = match T::table_name() {
@@ -152,7 +152,13 @@ impl Database {
 
         {
             let mut stmt = tx.prepare_cached(stmt_to_call)?;
-            let params = data_to_pass.to_params();
+            let mut params = data_to_pass.to_params();
+            let hash = data_to_pass.make_hash();
+
+            if T::table_name() == "tracks" {
+                params.push(&hash);
+            }
+
             stmt.execute(rusqlite::params_from_iter(params))?;
         }
 
@@ -216,13 +222,16 @@ impl Database {
     }
 
     /// Counts how many values `T` table has
-    pub fn count<T: Queryable>(&self, id: u32, call_where: &str) -> Result<u32> {
+    pub fn count<T: Queryable>(
+        &self,
+        id: u32,
+        column: &str,
+        table_override: Option<&str>,
+    ) -> Result<u32> {
         let conn = self.pool.get()?;
-        let stmt_to_call = format!(
-            "SELECT COUNT(*) FROM {} WHERE {} = ?1",
-            T::table_name(),
-            call_where
-        );
+        let table = table_override.unwrap_or(T::table_name());
+
+        let stmt_to_call = format!("SELECT COUNT(*) FROM {} WHERE {} = ?1", table, column);
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
         let result = stmt.query_row([id], |row| row.get(0))?;
 
@@ -295,14 +304,14 @@ impl Database {
     }
 
     /// Update track duration
-    pub fn update_duration(&self, track_id: &u32, album_id: &u32, duration: &u32) -> Result<()> {
+    pub fn update_duration(&self, track_id: u32, album_id: u32, duration: u32) -> Result<()> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare(query("tracks_update_duration"))?;
         stmt.execute((duration, track_id))?;
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
         let new_album_type = AlbumType::get(track_count, new_duration);
-        self.update_album_type(album_id, new_album_type, &(new_duration, track_count))?;
+        self.update_album_type(album_id, new_album_type, new_duration, track_count)?;
 
         Ok(())
     }
@@ -328,7 +337,7 @@ impl Database {
     }
 
     /// Get duration of all tracks of given album
-    pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32)> {
+    pub fn get_album_duration(&self, album_id: u32) -> Result<(u32, u32)> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare(query("albums_duration"))?;
 
@@ -352,14 +361,15 @@ impl Database {
 
     pub fn update_album_type(
         &self,
-        album_id: &u32,
+        album_id: u32,
         album_type: AlbumType,
-        duration_count: &(u32, u32),
+        duration: u32,
+        track_count: u32,
     ) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute(
             query("albums_update_type"),
-            (album_type, duration_count.0, duration_count.1, album_id),
+            (album_type, duration, track_count, album_id),
         )?;
 
         Ok(())

@@ -7,8 +7,9 @@ edition = "2024"
 serde = { version = "1.0.219", features = ["derive"], optional = true }
 specta = { version = "2.0.0-rc.21", optional = true }
 rusqlite = { version = "0.36.0", features = ["bundled"], optional = true }
+blake3 = { version = "1.8.2", optional = true }
 
 [features]
 default = []
-rusqlite = ["dep:rusqlite"]
+rusqlite = ["dep:rusqlite", "dep:blake3"]
 serialization = ["dep:serde", "dep:specta"]

@@ -4,14 +4,15 @@ use crate::{
     systems::utils::{data_path, get_handle_to_music_folder, sanitize_string},
 };
 
-use common::{AlbumType, Albums, Artists, NewAlbum, NewArtist, NewTrack, Tracks};
+use common::{AlbumType, Albums, Artists, NewAlbum, NewArtist, NewTrack, Tracks, traits::Hashable};
 use metadata_audio::Metadata;
 use serde::Serialize;
 use specta::Type;
 
 use std::{
+    collections::HashSet,
     fs::{self},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
 use tauri::{Manager, ipc::Channel};
@@ -58,6 +59,7 @@ pub async fn select_music_folder(
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
 
+        let mut existing_hashes: HashSet<String> = HashSet::new();
         for metadata in &all_metadata {
             let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
 
@@ -121,50 +123,60 @@ pub async fn select_music_folder(
                     (a_id, cover_path)
                 };
 
-            let track_exists = state.db.exists::<Tracks>("name", &metadata.name)?;
+            let new_track = NewTrack {
+                duration: metadata.duration.round() as u32,
+                album_name: &metadata.album,
+                album_id,
+                artist_name: &metadata.artist,
+                artist_id,
+                name: &metadata.name,
+                number: metadata.track_number,
+                path: &metadata.file_path,
+                cover_path: &cover_path,
+            };
+
+            let hash = new_track.make_hash();
+
+            let track_exists = state.db.exists::<Tracks>("hash", &hash)?;
 
             if !track_exists {
-                state.db.insert::<NewTrack>(NewTrack {
-                    duration: metadata.duration.round() as u32,
-                    album_name: &metadata.album,
-                    album_id,
-                    artist_name: &metadata.artist,
-                    artist_id,
-                    name: &metadata.name,
-                    number: metadata.track_number,
-                    path: &metadata.file_path,
-                    cover_path: &cover_path,
-                })?;
+                state.db.insert::<NewTrack>(new_track)?;
             };
+
+            existing_hashes.insert(hash);
         }
 
         // Remove tracks that are no longer in the music folder
         let all_tracks = &state.db.all::<Tracks>()?;
 
+        // Stored album covers aren't cleaned up upon album deletion.
         for track in all_tracks.iter() {
-            let exists_on_disk = all_track_files
-                .iter()
-                .flatten()
-                .any(|p| p == &PathBuf::from(&track.path));
+            let track_in_db = existing_hashes.contains(&track.hash);
 
-            if !exists_on_disk {
+            if !track_in_db {
                 state.db.delete::<Tracks>(track.id)?;
-
-                let album_tracks = state.db.count::<Tracks>(track.album_id, "album_id")?;
+                let album_tracks = state.db.count::<Tracks>(track.album_id, "album_id", None)?;
                 if album_tracks == 0 {
                     state.db.delete::<Albums>(track.album_id)?;
 
-                    let artist_albums = state.db.count::<Albums>(track.artist_id, "artist_id")?;
+                    let artist_albums = state.db.count::<Albums>(
+                        track.artist_id,
+                        "artist_id",
+                        Some("album_artists"),
+                    )?;
                     if artist_albums == 0 {
                         state.db.delete::<Artists>(track.artist_id)?;
                     }
                 }
             } else {
-                let duration = &state.db.get_album_duration(&track.album_id)?;
-                let album_type = get_album_type(duration.1, duration.0);
-                state
-                    .db
-                    .update_album_type(&track.album_id, album_type, duration)?;
+                let (total_duration, track_count) = state.db.get_album_duration(track.album_id)?;
+                let album_type = get_album_type(track_count, total_duration);
+                state.db.update_album_type(
+                    track.album_id,
+                    album_type,
+                    total_duration,
+                    track_count,
+                )?;
             }
         }
 
@@ -177,12 +189,12 @@ pub async fn select_music_folder(
 /// Singles are less than 3 tracks and 30 minutes,
 /// EPs are up to 6 tracks and 30 minutes,
 /// LPs/Albums are more than 6 tracks and 30 minutes.
-fn get_album_type(tracks: u32, duration: u32) -> AlbumType {
-    if duration == 0 || tracks == 0 {
+fn get_album_type(track_count: u32, duration: u32) -> AlbumType {
+    if duration == 0 || track_count == 0 {
         AlbumType::Unknown
-    } else if tracks < 3 && duration < 1800 {
+    } else if track_count < 3 && duration < 1800 {
         AlbumType::Single
-    } else if tracks <= 6 && duration < 1800 {
+    } else if track_count <= 6 && duration < 1800 {
         AlbumType::EP
     } else {
         AlbumType::Album

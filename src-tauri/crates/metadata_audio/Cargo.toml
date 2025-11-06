@@ -13,19 +13,3 @@ criterion = "0.7.0"
 [[bench]]
 name = "metadata_bench"
 harness = false
-
-[[bin]]
-name = "bench_hdd_smart"
-path = "benchmarks/bench_hdd_smart.rs"
-
-[[bin]]
-name = "bench_ssd_smart"
-path = "benchmarks/bench_ssd_smart.rs"
-
-[[bin]]
-name = "bench_hdd_normal"
-path = "benchmarks/bench_hdd_normal.rs"
-
-[[bin]]
-name = "bench_ssd_normal"
-path = "benchmarks/bench_ssd_normal.rs"

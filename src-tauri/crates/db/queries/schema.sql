@@ -24,7 +24,8 @@ CREATE TABLE IF NOT EXISTS tracks (
     number      INTEGER NOT NULL,
     duration    INTEGER NOT NULL,
     cover_path  TEXT    NOT NULL,
-    path        TEXT    NOT NULL UNIQUE
+    path        TEXT    NOT NULL UNIQUE,
+    hash        TEXT    NOT NULL UNIQUE
 ); 
 
 CREATE TABLE IF NOT EXISTS playlists (

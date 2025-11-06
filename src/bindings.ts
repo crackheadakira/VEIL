@@ -581,6 +581,10 @@ export type Tracks = {
    * Path to track file
    */
   path: string;
+  /**
+   * Hash of the metadata
+   */
+  hash: string;
 };
 export type UIUpdateEvent =
   /**

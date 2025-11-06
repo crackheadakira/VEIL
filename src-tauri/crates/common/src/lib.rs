@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
 use specta::Type;
 
+mod rusqlite_impl;
 pub mod traits;
 
 #[derive(Debug)]
@@ -103,6 +104,9 @@ pub struct Tracks {
 
     /// Path to track file
     pub path: String,
+
+    /// Hash of the metadata
+    pub hash: String,
 }
 
 #[derive(Debug)]
