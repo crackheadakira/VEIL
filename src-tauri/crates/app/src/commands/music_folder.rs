@@ -46,6 +46,8 @@ pub async fn select_music_folder(
             total: total_files,
         })?;
 
+        // If I were to attempt zero-copy reading, then this function would need
+        // to own the data passed into `from_files_smart`.
         let all_metadata = Metadata::from_files_smart(
             &all_track_files,
             total_files,
@@ -59,8 +61,26 @@ pub async fn select_music_folder(
 
         on_event.send(MetadataEvent::Finished { id: event_id })?;
 
+        // New flow could be to parse & insert in same step instead of waiting
+        // for whole folder to be parsed we insert into database the moment it's
+        // done.
+        // I don't believe this new method could be multi-threaded though as we're
+        // constantly relying on the previous tracks inserted / checking if they exist
+        // so batching could work instead technically.
+
+        /*
+            INIT REUSABLE FILE BUFFER ( 128 KB? )
+            FOR file IN ALL_TRACK_FILES
+                OPEN file
+                WRAP file IN BufReader
+                PARSE metadata FROM BufReader
+                INSERT parsed metadata INTO database
+                SEND event TO frontend
+        */
+
+        // Store a HashMap of already found artist IDs & album IDs.
         let mut existing_hashes: HashSet<String> = HashSet::new();
-        for metadata in &all_metadata {
+        for metadata in all_metadata.into_iter() {
             let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
 
             let artist_id = if artist_exists {
