@@ -10,7 +10,7 @@ use serde::Serialize;
 use specta::Type;
 
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fs::{self},
     path::Path,
 };
@@ -36,135 +36,147 @@ pub async fn select_music_folder(
 
     if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();
-        let all_track_files = Metadata::collect_album_files_for_smart(path)?;
-
-        let total_files = all_track_files.iter().map(|album| album.len()).sum();
+        let all_track_files = Metadata::recursive_dir(path);
 
         let event_id = 1;
         on_event.send(MetadataEvent::Started {
             id: event_id,
-            total: total_files,
+            total: all_track_files.len(),
         })?;
 
-        // If I were to attempt zero-copy reading, then this function would need
-        // to own the data passed into `from_files_smart`.
-        let all_metadata = Metadata::from_files_smart(
-            &all_track_files,
-            total_files,
-            Some(|current| {
-                let _ = on_event.send(MetadataEvent::Progress {
-                    id: event_id,
-                    current,
-                });
-            }),
-        )?;
+        let mut buffer = Vec::with_capacity(1024 * 64);
 
-        on_event.send(MetadataEvent::Finished { id: event_id })?;
-
-        // New flow could be to parse & insert in same step instead of waiting
-        // for whole folder to be parsed we insert into database the moment it's
-        // done.
-        // I don't believe this new method could be multi-threaded though as we're
-        // constantly relying on the previous tracks inserted / checking if they exist
-        // so batching could work instead technically.
-
-        /*
-            INIT REUSABLE FILE BUFFER ( 128 KB? )
-            FOR file IN ALL_TRACK_FILES
-                OPEN file
-                WRAP file IN BufReader
-                PARSE metadata FROM BufReader
-                INSERT parsed metadata INTO database
-                SEND event TO frontend
-        */
-
-        // Store a HashMap of already found artist IDs & album IDs.
         let mut existing_hashes: HashSet<String> = HashSet::new();
-        for metadata in all_metadata.into_iter() {
-            let artist_exists = state.db.exists::<Artists>("name", &metadata.artist)?;
+        let mut existing_artists: HashMap<String, u32> = state
+            .db
+            .all::<Artists>()?
+            .into_iter()
+            .map(|a| (a.name, a.id))
+            .collect();
+        let mut existing_albums: HashMap<(u32, String), u32> = state
+            .db
+            .all::<Albums>()?
+            .into_iter()
+            .map(|a| ((a.artist_id, a.name), a.id))
+            .collect();
 
-            let artist_id = if artist_exists {
-                state.db.artist_by_name(&metadata.artist)?.id
-            } else {
-                state.db.insert::<NewArtist>(NewArtist {
-                    name: &metadata.artist,
-                })?;
+        let mut album_covers: HashMap<u32, String> = state
+            .db
+            .all::<Albums>()?
+            .into_iter()
+            .map(|a| (a.id, a.cover_path))
+            .collect();
 
-                state.db.latest::<Artists>()?.id
+        for (idx, track_path) in all_track_files.iter().enumerate() {
+            buffer.clear();
+
+            let metadata = match Metadata::from_file(&mut buffer, &track_path, false) {
+                Ok(m) => m,
+                Err(e) => {
+                    logging::error!(
+                        "Failed to read metadata for {}: {:?}",
+                        track_path.display(),
+                        e
+                    );
+                    continue;
+                }
             };
 
-            let album_path = get_album_path(path.to_str().unwrap(), &metadata.file_path);
-            let cover_path = cover_path(&metadata.artist, &metadata.album);
+            if let (Some(artist), Some(album), Some(name)) =
+                (metadata.artist, metadata.album, metadata.name)
+            {
+                let year = metadata.year.unwrap_or(0);
 
-            let (album_id, cover_path) =
-                if let Some(a) = state.db.album_exists(&metadata.album, metadata.year)? {
-                    (a.id, a.cover_path)
+                let artist_id = if let Some(&id) = existing_artists.get(artist) {
+                    id
                 } else {
-                    let mut cover_path = cover_path;
-
-                    if !Path::new(&cover_path).exists() {
-                        if let Some(picture_data) = &metadata.picture_data {
-                            fs::write(&cover_path, &**picture_data)?;
-                        } else {
-                            let album_path = Path::new(&album_path);
-
-                            // If there is no picture data, check if there exists
-                            // either cover.jpg or cover.png, and then copy that
-                            // over. If not, just point cover_path to placeholder.png
-                            if album_path.join("cover.jpg").exists() {
-                                fs::copy(album_path.join("cover.jpg"), &cover_path)?;
-                            } else if album_path.join("cover.png").exists() {
-                                fs::copy(album_path.join("cover.png"), &cover_path)?;
-                            } else {
-                                cover_path = data_path()
-                                    .join("covers")
-                                    .join("placeholder.png")
-                                    .to_str()
-                                    .unwrap()
-                                    .to_string();
-                            }
-                        }
-                    }
-
-                    state.db.insert_album::<NewAlbum>(NewAlbum {
-                        artist_id,
-                        artist_name: &metadata.artist,
-                        name: &metadata.album,
-                        cover_path: &cover_path,
-                        year: metadata.year,
-                        album_type: &metadata.album_type.as_str().into(),
-                        track_count: 0,
-                        duration: 0,
-                        path: &album_path,
-                    })?;
-
-                    let a_id = state.db.latest::<Albums>()?.id;
-
-                    (a_id, cover_path)
+                    let _ = state.db.insert::<NewArtist>(NewArtist { name: artist });
+                    let id = state.db.latest::<Artists>().unwrap().id;
+                    existing_artists.insert(artist.to_owned(), id);
+                    id
                 };
 
-            let new_track = NewTrack {
-                duration: metadata.duration.round() as u32,
-                album_name: &metadata.album,
-                album_id,
-                artist_name: &metadata.artist,
-                artist_id,
-                name: &metadata.name,
-                number: metadata.track_number,
-                path: &metadata.file_path,
-                cover_path: &cover_path,
-            };
+                let track_path_str = track_path.to_string_lossy();
+                let album_path = get_album_path(&path.to_string_lossy(), &track_path_str);
 
-            let hash = new_track.make_hash();
+                let (album_id, cover_path) =
+                    if let Some(&id) = existing_albums.get(&(artist_id, album.to_owned())) {
+                        let cover_path = album_covers.get(&id).unwrap();
+                        (id, cover_path.clone())
+                    } else {
+                        let mut cover_path = get_cover_path(artist, album);
 
-            let track_exists = state.db.exists::<Tracks>("hash", &hash)?;
+                        if !Path::new(&cover_path).exists() {
+                            if let Some(picture_data) = &metadata.picture_data {
+                                fs::write(&cover_path, &**picture_data)?;
+                            } else {
+                                let album_path = Path::new(&album_path);
+                                if album_path.join("cover.jpg").exists() {
+                                    fs::copy(album_path.join("cover.jpg"), &cover_path)?;
+                                } else if album_path.join("cover.png").exists() {
+                                    fs::copy(album_path.join("cover.png"), &cover_path)?;
+                                } else {
+                                    cover_path = data_path()
+                                        .join("covers")
+                                        .join("placeholder.png")
+                                        .to_str()
+                                        .unwrap()
+                                        .to_string();
+                                }
+                            }
+                        }
 
-            if !track_exists {
-                state.db.insert::<NewTrack>(new_track)?;
-            };
+                        state.db.insert_album::<NewAlbum>(NewAlbum {
+                            artist_id,
+                            artist_name: artist,
+                            name: album,
+                            cover_path: &cover_path,
+                            year,
+                            album_type: &AlbumType::Unknown,
+                            track_count: 0,
+                            duration: 0,
+                            path: &album_path,
+                        })?;
 
-            existing_hashes.insert(hash);
+                        let id = state.db.latest::<Albums>()?.id;
+                        existing_albums.insert((artist_id, album.to_owned()), id);
+                        album_covers.insert(id, cover_path.clone());
+
+                        (id, cover_path)
+                    };
+
+                let new_track = NewTrack {
+                    duration: metadata.duration.round() as u32,
+                    album_name: album,
+                    album_id,
+                    artist_name: artist,
+                    artist_id,
+                    name: name,
+                    number: metadata.track_number.map(|n| n as i32).unwrap_or(-1),
+                    path: &track_path_str,
+                    cover_path: &cover_path,
+                };
+
+                let hash = new_track.make_hash();
+
+                let track_exists = state.db.exists::<Tracks>("hash", &hash)?;
+
+                if !track_exists {
+                    state.db.insert::<NewTrack>(new_track)?;
+                };
+
+                existing_hashes.insert(hash);
+
+                on_event.send(MetadataEvent::Progress {
+                    id: event_id,
+                    current: idx,
+                })?;
+            } else {
+                continue;
+            }
         }
+
+        on_event.send(MetadataEvent::Finished { id: event_id })?;
 
         // Remove tracks that are no longer in the music folder
         let all_tracks = &state.db.all::<Tracks>()?;
@@ -221,7 +233,7 @@ fn get_album_type(track_count: u32, duration: u32) -> AlbumType {
     }
 }
 
-fn cover_path(artist: &str, album: &str) -> String {
+fn get_cover_path(artist: &str, album: &str) -> String {
     // have to sanitize the artist and album names to avoid issues with file paths
     let p = data_path().to_str().unwrap().to_owned();
     p + "/covers/" + &sanitize_string(artist) + " - " + &sanitize_string(album) + ".jpg"

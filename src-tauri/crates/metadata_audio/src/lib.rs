@@ -1,52 +1,43 @@
-mod flac;
+pub mod flac;
 mod id3;
 
 use std::{
     collections::HashMap,
+    fs::File,
+    io::{BufReader, Cursor, Read, Seek},
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
-#[derive(Debug, Clone)]
+use crate::flac::Block;
+
+#[derive(Debug, Clone, Default)]
 /// Metadata struct that holds information about an audio file
-pub struct Metadata {
+pub struct Metadata<'a> {
     /// Artist name
-    pub artist: String,
+    pub artist: Option<&'a str>,
 
     /// Album name
-    pub album: String,
+    pub album: Option<&'a str>,
 
     /// Track name
-    pub name: String,
-
-    /// Path to the audio file
-    pub file_path: String,
-
-    /// Album type
-    pub album_type: String,
+    pub name: Option<&'a str>,
 
     /// Duration of the album in seconds
     pub duration: f32,
 
-    pub track_number: i32,
     /// Track number
+    pub track_number: Option<u32>,
 
     /// Year of publication
-    pub year: u16,
+    pub year: Option<u16>,
 
     /// Picture data
-    pub picture_data: Option<Rc<Vec<u8>>>,
+    pub picture_data: Option<&'a [u8]>,
 }
 
 pub enum SupportedFormats {
     Flac,
     ID3,
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -72,47 +63,39 @@ pub enum Error {
 
 pub(crate) type Result<T, U = Error> = std::result::Result<T, U>;
 
-impl Metadata {
-    pub fn new() -> Metadata {
-        Metadata {
-            duration: 0.0,
-            album: String::new(),
-            artist: String::new(),
-            name: String::new(),
-            file_path: String::new(),
-            album_type: String::new(),
-            year: 0,
-            track_number: 0,
-            picture_data: None,
+impl<'a> Metadata<'a> {
+    fn from_flac_blocks(blocks: Vec<Block>) -> Metadata {
+        let mut metadata = Metadata::default();
+
+        for block in blocks {
+            match block {
+                Block::StreamInfo(stream_info) => {
+                    metadata.duration = stream_info.duration;
+                }
+                Block::VorbisComment(vorbis_comment) => {
+                    metadata.album = vorbis_comment.album;
+                    metadata.artist = vorbis_comment.album_artist;
+                    metadata.name = vorbis_comment.title;
+                    metadata.year = vorbis_comment.year;
+                    metadata.track_number = vorbis_comment.track_number;
+                }
+                Block::Picture(picture) => {
+                    metadata.picture_data = Some(picture.data);
+                }
+                Block::Unknown => {}
+            }
         }
+
+        metadata
     }
 
-    fn from_flac(file: flac::Flac) -> Metadata {
-        let vorbis_comment = file.vorbis_comment;
-
-        Metadata {
-            duration: file.stream_info.duration,
-            album: vorbis_comment.album.unwrap_or(String::from("Unknown")),
-            artist: vorbis_comment
-                .album_artist
-                .unwrap_or(String::from("Unknown")),
-            name: vorbis_comment.title.unwrap_or(String::from("Unknown")),
-            file_path: file.file_path,
-            album_type: String::from("Unknown"),
-            year: vorbis_comment.year.unwrap_or(0),
-            track_number: vorbis_comment.track_number.unwrap_or(-1),
-            picture_data: file.picture.map(|pic| Rc::new(pic.data)),
-        }
-    }
-
-    fn from_id3(file: id3::Id3) -> Metadata {
+    /*fn from_id3(file: id3::Id3) -> Metadata {
         Metadata {
             duration: -1.0,
             album: get_field_value(&file.text_frames, "TALB"),
             artist: get_field_value(&file.text_frames, "TPE1"),
             name: get_field_value(&file.text_frames, "TIT2"),
             file_path: file.file_path,
-            album_type: String::from("Unknown"),
             year: get_field_value(&file.text_frames, "TYER")
                 .parse()
                 .unwrap_or(0),
@@ -123,22 +106,48 @@ impl Metadata {
                 .unwrap_or(-1),
             picture_data: file.attached_picture.map(|pic| Rc::new(pic.picture_data)),
         }
+    }*/
+
+    fn read_flac<R: Read + Seek>(
+        buffer: &'a mut Vec<u8>,
+        reader: &mut R,
+        skip_picture: bool,
+    ) -> Result<Metadata<'a>> {
+        let block_headers = flac::Flac::read_all_blocks(buffer, reader, skip_picture)?;
+
+        let mut flac_blocks = Vec::with_capacity(block_headers.len());
+        for header in block_headers {
+            let start = header.start as usize;
+            let end = (header.start + header.length) as usize;
+
+            let slice = &buffer[start..end];
+            let block = flac::Block::parse_by_block_type(header.block_type, slice);
+            flac_blocks.push(block);
+        }
+
+        Ok(Metadata::from_flac_blocks(flac_blocks))
     }
 
     /// Create a `Metadata` struct from a valid audio file
-    pub fn from_file(path: &Path, skip_picture: bool) -> Result<Metadata> {
-        if let Some(os_ext) = path.extension()
-            && let Some(ext) = os_ext.to_str()
-        {
-            match ext {
+    pub fn from_file(
+        buffer: &'a mut Vec<u8>,
+        path: &'a Path,
+        skip_picture: bool,
+    ) -> Result<Metadata<'a>> {
+        if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+            match ext.to_lowercase().as_str() {
                 "flac" => {
-                    let file = flac::Flac::new(path, skip_picture)?;
-                    Ok(Metadata::from_flac(file))
+                    let file = File::open(path)?;
+                    let mut reader = BufReader::with_capacity(4 * 1024, file);
+
+                    let metadata = Self::read_flac(buffer, &mut reader, skip_picture)?;
+
+                    Ok(metadata)
                 }
-                "mp3" => {
+                /*"mp3" => {
                     let file = id3::Id3::new(path)?;
                     Ok(Metadata::from_id3(file))
-                }
+                }*/
                 _ => Err(Error::UnsupportedFileType),
             }
         } else {
@@ -147,81 +156,39 @@ impl Metadata {
     }
 
     pub fn from_bytes(
+        buffer: &'a mut Vec<u8>,
         data: &[u8],
         format: SupportedFormats,
         skip_picture: bool,
-    ) -> Result<Metadata> {
+    ) -> Result<Metadata<'a>> {
         match format {
             SupportedFormats::Flac => {
-                let file = flac::Flac::from_bytes(data, skip_picture)?;
-                Ok(Metadata::from_flac(file))
+                let mut reader = Cursor::new(data);
+                Self::read_flac(buffer, &mut reader, skip_picture)
             }
             SupportedFormats::ID3 => Err(Error::UnsupportedId3Version),
         }
     }
 
-    /// Create a vec of `Metadata` structs from a list of audio files
-    pub fn from_files(file_paths: &[PathBuf], skip_picture: bool) -> Result<Vec<Metadata>> {
-        let mut all_metadata = Vec::with_capacity(file_paths.len());
+    pub fn recursive_dir(path: &Path) -> Vec<std::path::PathBuf> {
+        let paths = std::fs::read_dir(path).unwrap();
+        let mut tracks = Vec::new();
 
-        for path in file_paths {
-            let metadata = Metadata::from_file(path, skip_picture);
-            match metadata {
-                Ok(m) => all_metadata.push(m),
-                Err(e) => {
-                    logging::warn!("Skipping over audio file ({path:?}) due to error: {e}");
+        for path in paths {
+            let path = path.unwrap().path();
+            if path.is_dir() {
+                tracks.extend(Self::recursive_dir(&path));
+            } else {
+                let extension = path.extension().unwrap();
+                if extension != "mp3" && extension != "flac" {
                     continue;
                 }
+
+                tracks.push(path);
             }
         }
-        Ok(all_metadata)
-    }
 
-    /// Creates a vec of `Metadata` structs from a vec of folder containing a vec of all the tracks within
-    ///
-    /// What makes it "smart" is it reads the album cover only for the first file, and all the other files just
-    /// reference that image.
-    /// But this smart-reading requires the files to be inputted in a specific format.
-    pub fn from_files_smart<F>(
-        file_paths: &Vec<Vec<PathBuf>>,
-        total_files: usize,
-        mut on_progress: Option<F>,
-    ) -> Result<Vec<Metadata>>
-    where
-        F: FnMut(usize),
-    {
-        let mut all_metadata = Vec::with_capacity(total_files);
-        let mut processed = 0;
-
-        for album_tracks in file_paths {
-            let first_track = &album_tracks[0];
-            let first_metadata = Metadata::from_file(first_track, false)?;
-
-            processed += 1;
-            if let Some(f) = &mut on_progress {
-                f(processed);
-            }
-
-            for track in album_tracks[1..].iter() {
-                let mut metadata = Metadata::from_file(track, true)?;
-
-                if metadata.picture_data.is_none() {
-                    metadata.picture_data = first_metadata.picture_data.clone();
-                }
-
-                all_metadata.push(metadata);
-
-                processed += 1;
-                if let Some(f) = &mut on_progress {
-                    f(processed);
-                }
-            }
-
-            // Push it to Vec after the loop to allow the other tracks to reference the Arc
-            all_metadata.push(first_metadata);
-        }
-
-        Ok(all_metadata)
+        tracks
     }
 
     /// The resulting output is needed by [`Metadata::from_files_smart`].
@@ -257,16 +224,6 @@ impl Metadata {
     }
 }
 
-// Helper functions
-
-/// Get value at key from hashmap, if key doesn't exist return `Unknown`
-fn get_field_value(fields: &HashMap<String, String>, key: &str) -> String {
-    fields
-        .get(key)
-        .unwrap_or(&String::from("Unknown"))
-        .to_string()
-}
-
 #[inline(always)]
 /// Read `n` bits from a byte slice starting at a given bit position
 fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
@@ -300,18 +257,14 @@ enum Endian {
     Little,
 }
 
-#[inline(always)]
 /// Convert a slice of bytes to a u32 integer
+#[inline(always)]
 fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
-    let b0 = bytes[*offset] as u32;
-    let b1 = bytes[*offset + 1] as u32;
-    let b2 = bytes[*offset + 2] as u32;
-    let b3 = bytes[*offset + 3] as u32;
+    let slice = &bytes[*offset..*offset + 4];
     *offset += 4;
-
     match endian {
-        Endian::Big => (b0 << 24) | (b1 << 16) | (b2 << 8) | b3,
-        Endian::Little => (b3 << 24) | (b2 << 16) | (b1 << 8) | b0,
+        Endian::Big => u32::from_be_bytes(slice.try_into().unwrap()),
+        Endian::Little => u32::from_le_bytes(slice.try_into().unwrap()),
     }
 }
 

@@ -1,12 +1,8 @@
-use std::{
-    fs::File,
-    io::{BufReader, Cursor, Read, Seek},
-    path::Path,
-};
+use std::io::{Read, Seek};
 
 use crate::{Endian, Error, Result, read_n_bits, u32_from_bytes};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(u8)]
 pub enum BlockType {
     StreamInfo = 0,
@@ -27,43 +23,52 @@ impl BlockType {
 }
 
 #[derive(Debug)]
-pub enum Block {
-    VorbisComment(VorbisComment),
+pub enum Block<'a> {
+    VorbisComment(VorbisComment<'a>),
     StreamInfo(StreamInfo),
-    Picture(Picture),
+    Picture(Picture<'a>),
     Unknown,
 }
 
-impl Block {
-    pub fn read_from<R: Read + Seek>(reader: &mut R, skip_picture: bool) -> Result<(bool, Block)> {
-        let mut byte = 0u8;
-        reader.read_exact(std::slice::from_mut(&mut byte))?;
+#[derive(Debug)]
+pub struct BlockHeader {
+    pub is_last: bool,
+    pub block_type: BlockType,
+    pub start: u32,
+    pub length: u32,
+}
 
-        let is_last = (byte & 0x80) != 0;
-        let block_type = BlockType::from_u8(byte & 0x7F);
+impl<'a> Block<'a> {
+    pub fn parse_by_block_type(block_type: BlockType, data: &'a [u8]) -> Block<'a> {
+        match block_type {
+            BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),
+            BlockType::VorbisComment => Block::VorbisComment(VorbisComment::from_bytes(data)),
+            BlockType::Picture => Block::Picture(Picture::from_bytes(data)),
+            BlockType::Unknown => Block::Unknown,
+        }
+    }
+
+    pub fn parse_block_header<R: Read + Seek>(reader: &mut R) -> Result<BlockHeader> {
+        // Big-endian, first bit is whether it's last,
+        // the remaining bits state the metadata block type
+        let mut header_byte = 0u8;
+        reader.read_exact(std::slice::from_mut(&mut header_byte))?;
+
+        let is_last = (header_byte & 0x80) != 0;
+        let block_type = BlockType::from_u8(header_byte & 0x7F);
 
         let mut len_bytes = [0u8; 3];
         reader.read_exact(&mut len_bytes)?;
-        let length = u32::from_be_bytes([0, len_bytes[0], len_bytes[1], len_bytes[2]]);
 
-        if let BlockType::Picture = block_type
-            && skip_picture
-        {
-            reader.seek_relative(length as i64)?;
-            return Ok((is_last, Block::Unknown));
-        }
+        // Length is max 3 bytes --> 16MB
+        let length = u32::from_be_bytes([0x00, len_bytes[0], len_bytes[1], len_bytes[2]]);
 
-        let mut data = vec![0u8; length as usize];
-        reader.read_exact(&mut data)?;
-
-        let block = match block_type {
-            BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(&data)),
-            BlockType::VorbisComment => Block::VorbisComment(VorbisComment::from_bytes(&data)),
-            BlockType::Picture => Block::Picture(Picture::from_bytes(data)),
-            BlockType::Unknown => Block::Unknown,
-        };
-
-        Ok((is_last, block))
+        Ok(BlockHeader {
+            is_last,
+            block_type,
+            start: 0,
+            length,
+        })
     }
 }
 
@@ -124,161 +129,150 @@ impl StreamInfo {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct VorbisComment {
-    pub vendor_string: Option<String>,
-    pub album: Option<String>,
-    pub album_artist: Option<String>,
-    pub title: Option<String>,
+#[derive(Debug, Clone, Default)]
+pub struct VorbisComment<'a> {
+    pub vendor_string: Option<&'a str>,
+
+    pub album: Option<&'a str>,
+
+    pub album_artist: Option<&'a str>,
+
+    pub title: Option<&'a str>,
+
     pub year: Option<u16>,
-    pub track_number: Option<i32>,
+
+    pub track_number: Option<u32>,
 }
 
-impl Default for VorbisComment {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl VorbisComment {
-    pub fn new() -> VorbisComment {
-        VorbisComment {
-            vendor_string: None,
-            album: None,
-            album_artist: None,
-            title: None,
-            year: None,
-            track_number: None,
-        }
-    }
-
-    pub fn from_bytes(bytes: &[u8]) -> VorbisComment {
-        let mut vorbis = VorbisComment::new();
+impl<'a> VorbisComment<'a> {
+    pub fn from_bytes(bytes: &'a [u8]) -> VorbisComment<'a> {
+        let mut vorbis = VorbisComment::default();
         let mut i = 0;
 
-        let vendor_length = u32_from_bytes(Endian::Little, &bytes, &mut i) as usize;
+        let vendor_length = u32_from_bytes(Endian::Little, bytes, &mut i) as usize;
 
-        vorbis.vendor_string =
-            Some(String::from_utf8_lossy(&bytes[i..i + vendor_length]).to_string());
+        let vendor_string = unsafe { std::str::from_utf8_unchecked(&bytes[i..i + vendor_length]) };
+        vorbis.vendor_string = Some(vendor_string);
+
         i += vendor_length;
 
-        let num_comments = u32_from_bytes(Endian::Little, &bytes, &mut i);
+        let num_comments = u32_from_bytes(Endian::Little, bytes, &mut i);
         for _ in 0..num_comments {
-            let comment_length = u32_from_bytes(Endian::Little, &bytes, &mut i) as usize;
+            let comment_length = u32_from_bytes(Endian::Little, bytes, &mut i) as usize;
+            let comment_slice = &bytes[i..i + comment_length];
 
-            let comments = unsafe { std::str::from_utf8_unchecked(&bytes[i..i + comment_length]) };
-            i += comment_length;
+            if let Some(eq_pos) = comment_slice.iter().position(|&b| b == b'=') {
+                let (key, value) = comment_slice.split_at(eq_pos);
+                let value_raw = &value[1..];
+                let value = unsafe { std::str::from_utf8_unchecked(value_raw) };
 
-            let comments_split: Vec<&str> = comments.splitn(2, '=').collect();
-            let key = comments_split[0];
-
-            let value = comments_split[1].to_owned();
-
-            match key {
-                "ALBUM" | "album" => vorbis.album = Some(value),
-                "ALBUMARTIST" | "albumartist" => vorbis.album_artist = Some(value),
-                "TITLE" | "title" => vorbis.title = Some(value),
-                "YEAR" | "year" => vorbis.year = value.parse::<u16>().ok(),
-                "TRACKNUMBER" | "tracknumber" => vorbis.track_number = value.parse::<i32>().ok(),
-                _ => (),
+                match key {
+                    b"ALBUM" => vorbis.album = Some(value),
+                    b"ALBUMARTIST" => vorbis.album_artist = Some(value),
+                    b"TITLE" => vorbis.title = Some(value),
+                    b"YEAR" => vorbis.year = Self::parse_u16_ascii(value_raw),
+                    b"TRACKNUMBER" => vorbis.track_number = Self::parse_u32_ascii(value_raw),
+                    _ => {}
+                }
             }
+
+            i += comment_length;
         }
 
         vorbis
     }
+
+    #[inline(always)]
+    fn parse_u16_ascii(bytes: &[u8]) -> Option<u16> {
+        let mut n = 0u16;
+        for &b in bytes {
+            if b < b'0' || b > b'9' {
+                return None;
+            }
+            n = n * 10 + (b - b'0') as u16;
+        }
+        Some(n)
+    }
+
+    #[inline(always)]
+    fn parse_u32_ascii(bytes: &[u8]) -> Option<u32> {
+        if bytes.is_empty() {
+            return None;
+        }
+
+        let mut n = 0u32;
+        for &b in bytes {
+            if b < b'0' || b > b'9' {
+                return None;
+            }
+            n = n * 10 + (b - b'0') as u32;
+        }
+        Some(n)
+    }
 }
 
 #[derive(Debug, Clone)]
-pub struct Picture {
-    pub picture_type: u32,
+pub struct Picture<'a> {
+    // pub picture_type: u32,
     // pub mime_type: String,
     // pub description: String,
-    pub width: u32,
-    pub height: u32,
-    pub color_depth: u32,
-    pub indexed_color: u32,
-    pub data: Vec<u8>,
+    // pub width: u32,
+    // pub height: u32,
+    // pub color_depth: u32,
+    // pub indexed_color: u32,
+    pub data: &'a [u8],
 }
 
-impl Default for Picture {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Picture {
-    pub fn new() -> Picture {
-        Picture {
-            picture_type: 0,
-            // mime_type: String::new(),
-            // description: String::new(),
-            width: 0,
-            height: 0,
-            color_depth: 0,
-            indexed_color: 0,
-            data: Vec::new(),
-        }
-    }
-
-    pub fn from_bytes(mut bytes: Vec<u8>) -> Picture {
-        let mut picture = Picture::new();
+impl<'a> Picture<'a> {
+    pub fn from_bytes(bytes: &'a [u8]) -> Picture<'a> {
         let mut i = 0;
 
-        picture.picture_type = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        // picture.picture_type = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        i += 4;
 
-        let mime_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
+        let mime_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
 
         // picture.mime_type = String::from_utf8_lossy(&bytes[i..i + mime_length]).to_string();
         i += mime_length;
 
-        let description_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
+        let description_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
 
         // picture.description =
         //     String::from_utf8_lossy(&bytes[i..i + description_length]).to_string();
         i += description_length;
 
-        picture.width = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        // picture.width = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.height = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        // picture.height = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.color_depth = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        // picture.color_depth = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        picture.indexed_color = u32_from_bytes(Endian::Big, &bytes, &mut i);
+        // picture.indexed_color = u32_from_bytes(Endian::Big, &bytes, &mut i);
 
-        let picture_length = u32_from_bytes(Endian::Big, &bytes, &mut i) as usize;
+        i += 16;
 
-        picture.data = bytes.split_off(i);
-        picture.data.truncate(picture_length);
+        let picture_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
 
-        picture
+        Picture {
+            data: &bytes[i..i + picture_length],
+        }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct Flac {
+pub struct Flac<'a> {
     pub stream_info: StreamInfo,
-    pub picture: Option<Box<Picture>>,
-    pub file_path: String,
-    pub vorbis_comment: VorbisComment,
+    pub picture: Option<Picture<'a>>,
+    pub file_path: &'a str,
+    pub vorbis_comment: VorbisComment<'a>,
 }
 
-impl Flac {
-    pub fn new(file_path: &Path, skip_picture: bool) -> Result<Flac> {
-        let file = File::open(file_path)?;
-        let mut reader = BufReader::with_capacity(4 * 1024, file);
-        Self::from_reader(&mut reader, Some(file_path), skip_picture)
-    }
-
-    pub fn from_bytes(data: &[u8], skip_picture: bool) -> Result<Flac> {
-        let mut reader = Cursor::new(data);
-        Self::from_reader(&mut reader, None, skip_picture)
-    }
-
-    fn from_reader<R: Read + Seek>(
+impl<'a> Flac<'a> {
+    pub fn read_all_blocks<R: Read + Seek>(
+        block_buffer: &mut Vec<u8>,
         reader: &mut R,
-        file_path: Option<&Path>,
         skip_picture: bool,
-    ) -> Result<Flac> {
+    ) -> Result<Vec<BlockHeader>> {
         // Check the FLAC signature (fLaC)
         let mut signature = [0u8; 4];
         reader.read_exact(&mut signature)?;
@@ -286,46 +280,73 @@ impl Flac {
             return Err(Error::InvalidFlacSignature);
         }
 
-        let mut stream_info = StreamInfo::new();
-        // We don't use none for vorbis_comment because inside of lib
-        // the HashMap will return a string containing "Unknown"
-        // if the key is not found
-        let mut vorbis_comment = VorbisComment::new();
-        let mut picture = None;
+        let mut stream_info_found = false;
+        let mut vorbis_comment_found = false;
+        let mut picture_found = false;
 
+        let mut headers = Vec::with_capacity(3);
         loop {
-            let result = Block::read_from(reader, skip_picture)?;
-            let (flag, block) = result;
+            let block_header = Block::parse_block_header(reader)?;
+            let is_last = block_header.is_last;
 
-            match block {
-                Block::StreamInfo(si) => {
-                    stream_info = si;
+            let read_block = block_header.block_type != BlockType::Unknown
+                && !(skip_picture && block_header.block_type == BlockType::Picture);
+
+            let start = block_buffer.len() as u32;
+            if read_block {
+                Self::read_into_buffer_unchecked(
+                    reader,
+                    block_buffer,
+                    block_header.length as usize,
+                )?;
+
+                headers.push(BlockHeader {
+                    start,
+                    length: block_header.length,
+                    block_type: block_header.block_type,
+                    is_last,
+                });
+
+                match block_header.block_type {
+                    BlockType::StreamInfo => stream_info_found = true,
+                    BlockType::VorbisComment => vorbis_comment_found = true,
+                    BlockType::Picture => picture_found = true,
+                    BlockType::Unknown => (),
                 }
-                Block::VorbisComment(vc) => {
-                    vorbis_comment = vc;
-                }
-                Block::Picture(pic) => {
-                    picture = Some(Box::new(pic));
-                }
-                Block::Unknown => {}
+            } else {
+                reader.seek_relative(block_header.length as i64)?;
             }
 
-            if flag
-                || (vorbis_comment.vendor_string.is_some()
-                    && (picture.is_some() || skip_picture)
-                    && stream_info.total_samples > 0)
+            if is_last
+                || (stream_info_found && vorbis_comment_found && (picture_found || skip_picture))
             {
                 break;
             }
         }
 
-        Ok(Flac {
-            file_path: file_path
-                .map(|p| p.to_string_lossy().into_owned())
-                .unwrap_or_else(|| "<memory>".to_string()),
-            stream_info,
-            vorbis_comment,
-            picture,
-        })
+        Ok(headers)
+    }
+
+    #[inline(always)]
+    fn read_into_buffer_unchecked<R: Read>(
+        reader: &mut R,
+        buffer: &mut Vec<u8>,
+        len: usize,
+    ) -> Result<()> {
+        let start_offset = buffer.len();
+        let end_offset = start_offset + len;
+
+        if end_offset > buffer.capacity() {
+            buffer.reserve(end_offset - buffer.len());
+        }
+
+        // SAFETY: reserve ensures capacity >= end_offset
+        debug_assert!(end_offset <= buffer.capacity());
+
+        unsafe { buffer.set_len(end_offset) };
+
+        reader.read_exact(&mut buffer[start_offset..end_offset])?;
+
+        Ok(())
     }
 }
