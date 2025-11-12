@@ -5,7 +5,7 @@ use std::{
     path::Path,
 };
 
-use crate::{Endian, Error, Result, u32_from_bytes};
+use crate::{Error, Result, u32_from_bytes_be, u32_from_bytes_le};
 
 pub enum FrameType {
     AttachedPicture,
@@ -37,7 +37,7 @@ impl Frame {
 
         let frame_type_str = std::str::from_utf8(&overview[0..4])?;
         let frame_type = FrameType::from_str(frame_type_str);
-        let size = u32_from_bytes(Endian::Big, &overview[4..8], &mut 0_usize);
+        let size = u32_from_bytes_be(&overview[4..8], &mut 0_usize);
 
         let mut data = Vec::new();
         reader.take(size as u64).read_to_end(&mut data)?;

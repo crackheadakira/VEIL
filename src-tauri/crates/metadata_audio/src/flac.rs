@@ -1,6 +1,8 @@
 use std::io::{Read, Seek};
 
-use crate::{Endian, Error, Result, read_n_bits, u32_from_bytes};
+use crate::{
+    Error, Result, read_n_bits_u32, read_n_bits_u64, u32_from_bytes_be, u32_from_bytes_le,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[repr(u8)]
@@ -49,19 +51,17 @@ impl<'a> Block<'a> {
     }
 
     pub fn parse_block_header<R: Read + Seek>(reader: &mut R) -> Result<BlockHeader> {
+        let mut buf = [0u8; 4];
+        reader.read_exact(&mut buf)?;
+
         // Big-endian, first bit is whether it's last,
         // the remaining bits state the metadata block type
-        let mut header_byte = 0u8;
-        reader.read_exact(std::slice::from_mut(&mut header_byte))?;
-
+        let header_byte = buf[0];
         let is_last = (header_byte & 0x80) != 0;
         let block_type = BlockType::from_u8(header_byte & 0x7F);
 
-        let mut len_bytes = [0u8; 3];
-        reader.read_exact(&mut len_bytes)?;
-
         // Length is max 3 bytes --> 16MB
-        let length = u32::from_be_bytes([0x00, len_bytes[0], len_bytes[1], len_bytes[2]]);
+        let length = u32::from_be_bytes([0x00, buf[1], buf[2], buf[3]]);
 
         Ok(BlockHeader {
             is_last,
@@ -111,7 +111,7 @@ impl StreamInfo {
         i += 3;
 
         // Read the sample rate (20 bits)
-        stream_info.sample_rate = read_n_bits(&bytes[i..i + 3], 0, 20);
+        stream_info.sample_rate = read_n_bits_u32(&bytes[i..i + 3], 0, 20);
         i += 2; // But only increment by 2 bytes
 
         // We need to skip the first 4 bits to reach where sample rate ended
@@ -121,7 +121,7 @@ impl StreamInfo {
 
         // from last one we're at bit 24, but bits_per_sample reached until 28 so we need to skip 4 bits
         // total_samples is 36 bits long which is 4.5 bytes, so we need to read 5 bytes
-        stream_info.total_samples = read_n_bits(&bytes[i..i + 5], 4, 36);
+        stream_info.total_samples = read_n_bits_u64(&bytes[i..i + 5], 4, 36);
 
         stream_info.duration = stream_info.total_samples as f32 / stream_info.sample_rate as f32;
 
@@ -149,20 +149,20 @@ impl<'a> VorbisComment<'a> {
         let mut vorbis = VorbisComment::default();
         let mut i = 0;
 
-        let vendor_length = u32_from_bytes(Endian::Little, bytes, &mut i) as usize;
+        let vendor_length = u32_from_bytes_le(bytes, &mut i) as usize;
 
         let vendor_string = unsafe { std::str::from_utf8_unchecked(&bytes[i..i + vendor_length]) };
         vorbis.vendor_string = Some(vendor_string);
 
         i += vendor_length;
 
-        let num_comments = u32_from_bytes(Endian::Little, bytes, &mut i);
+        let num_comments = u32_from_bytes_le(bytes, &mut i);
         for _ in 0..num_comments {
-            let comment_length = u32_from_bytes(Endian::Little, bytes, &mut i) as usize;
+            let comment_length = u32_from_bytes_le(bytes, &mut i) as usize;
             let comment_slice = &bytes[i..i + comment_length];
 
             if let Some(eq_pos) = comment_slice.iter().position(|&b| b == b'=') {
-                let (key, value) = comment_slice.split_at(eq_pos);
+                let (key, value) = unsafe { comment_slice.split_at_unchecked(eq_pos) };
                 let value_raw = &value[1..];
                 let value = unsafe { std::str::from_utf8_unchecked(value_raw) };
 
@@ -230,12 +230,12 @@ impl<'a> Picture<'a> {
         // picture.picture_type = u32_from_bytes(Endian::Big, &bytes, &mut i);
         i += 4;
 
-        let mime_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
+        let mime_length = u32_from_bytes_be(bytes, &mut i) as usize;
 
         // picture.mime_type = String::from_utf8_lossy(&bytes[i..i + mime_length]).to_string();
         i += mime_length;
 
-        let description_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
+        let description_length = u32_from_bytes_be(bytes, &mut i) as usize;
 
         // picture.description =
         //     String::from_utf8_lossy(&bytes[i..i + description_length]).to_string();
@@ -251,7 +251,7 @@ impl<'a> Picture<'a> {
 
         i += 16;
 
-        let picture_length = u32_from_bytes(Endian::Big, bytes, &mut i) as usize;
+        let picture_length = u32_from_bytes_be(bytes, &mut i) as usize;
 
         Picture {
             data: &bytes[i..i + picture_length],

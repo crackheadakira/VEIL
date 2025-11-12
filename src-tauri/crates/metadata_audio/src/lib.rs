@@ -135,20 +135,20 @@ impl<'a> Metadata<'a> {
         skip_picture: bool,
     ) -> Result<Metadata<'a>> {
         if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-            match ext.to_lowercase().as_str() {
-                "flac" => {
-                    let file = File::open(path)?;
-                    let mut reader = BufReader::with_capacity(4 * 1024, file);
+            if ext.eq_ignore_ascii_case("flac") {
+                let file = File::open(path)?;
+                let mut reader = BufReader::with_capacity(4 * 1024, file);
 
-                    let metadata = Self::read_flac(buffer, &mut reader, skip_picture)?;
+                let metadata = Self::read_flac(buffer, &mut reader, skip_picture)?;
 
-                    Ok(metadata)
-                }
-                /*"mp3" => {
-                    let file = id3::Id3::new(path)?;
-                    Ok(Metadata::from_id3(file))
-                }*/
-                _ => Err(Error::UnsupportedFileType),
+                Ok(metadata)
+            }
+            /*"mp3" => {
+                let file = id3::Id3::new(path)?;
+                Ok(Metadata::from_id3(file))
+            }*/
+            else {
+                Err(Error::UnsupportedFileType)
             }
         } else {
             Err(Error::InvalidFilePath)
@@ -166,7 +166,7 @@ impl<'a> Metadata<'a> {
                 let mut reader = Cursor::new(data);
                 Self::read_flac(buffer, &mut reader, skip_picture)
             }
-            SupportedFormats::ID3 => Err(Error::UnsupportedId3Version),
+            SupportedFormats::ID3 => Err(Error::UnsupportedFileType),
         }
     }
 
@@ -226,46 +226,54 @@ impl<'a> Metadata<'a> {
 
 #[inline(always)]
 /// Read `n` bits from a byte slice starting at a given bit position
-fn read_n_bits<T>(bytes: &[u8], start_bit: usize, n_bits: usize) -> T
-where
-    T: Default + Copy + std::ops::Shl<u32, Output = T> + std::ops::BitOr<Output = T> + From<u8>,
-{
-    assert!(
-        n_bits <= std::mem::size_of::<T>() * 8,
-        "Cannot read more bits than fit in T."
-    );
-    let total_bits = bytes.len() * 8;
-    assert!(start_bit + n_bits <= total_bits, "Not enough bits to read.");
+fn read_n_bits_u32(bytes: &[u8], start_bit: usize, n_bits: usize) -> u32 {
+    debug_assert!(n_bits <= 32);
 
-    let mut value = T::default();
-    for bit_index in 0..n_bits {
-        let bit_position = start_bit + bit_index;
-        let byte_index = bit_position / 8;
-        let bit_in_byte = 7 - (bit_position % 8); // Most significant bit first
-        let bit = (bytes[byte_index] >> bit_in_byte) & 1;
-        value = (value << 1) | T::from(bit);
-    }
+    let byte_offset = start_bit / 8;
+    let bit_offset = start_bit % 8;
 
-    value
+    // Load 4 bytes (u32) from the slice
+    let mut buf = [0u8; 4];
+    let len = bytes.len() - byte_offset;
+    buf[..len.min(4)].copy_from_slice(&bytes[byte_offset..byte_offset + len.min(4)]);
+
+    let val = u32::from_be_bytes(buf);
+    let shift = 32 - n_bits - bit_offset;
+    (val >> shift) & ((1 << n_bits) - 1)
 }
 
-/// Endian enum
-enum Endian {
-    /// Big endian
-    Big,
-    /// Little endian
-    Little,
-}
-
-/// Convert a slice of bytes to a u32 integer
 #[inline(always)]
-fn u32_from_bytes(endian: Endian, bytes: &[u8], offset: &mut usize) -> u32 {
-    let slice = &bytes[*offset..*offset + 4];
+/// Read `n` bits from a byte slice starting at a given bit position
+fn read_n_bits_u64(bytes: &[u8], start_bit: usize, n_bits: usize) -> u64 {
+    debug_assert!(n_bits <= 64);
+
+    let byte_offset = start_bit / 8;
+    let bit_offset = start_bit % 8;
+
+    // Load 8 bytes (u64) from the slice
+    let mut buf = [0u8; 8];
+    let len = bytes.len() - byte_offset;
+    buf[..len.min(8)].copy_from_slice(&bytes[byte_offset..byte_offset + len.min(8)]);
+
+    let val = u64::from_be_bytes(buf);
+    let shift = 64 - n_bits - bit_offset;
+    (val >> shift) & ((1u64 << n_bits) - 1)
+}
+
+/// Convert a little-endian slice of bytes to a `u32` integer
+#[inline(always)]
+fn u32_from_bytes_le(bytes: &[u8], offset: &mut usize) -> u32 {
+    let res = u32::from_le_bytes(bytes[*offset..*offset + 4].try_into().unwrap());
     *offset += 4;
-    match endian {
-        Endian::Big => u32::from_be_bytes(slice.try_into().unwrap()),
-        Endian::Little => u32::from_le_bytes(slice.try_into().unwrap()),
-    }
+    res
+}
+
+/// Convert a big-endian slice of bytes to a `u32` integer
+#[inline(always)]
+fn u32_from_bytes_be(bytes: &[u8], offset: &mut usize) -> u32 {
+    let res = u32::from_be_bytes(bytes[*offset..*offset + 4].try_into().unwrap());
+    *offset += 4;
+    res
 }
 
 #[cfg(test)]
@@ -274,37 +282,37 @@ mod tests {
 
     #[test]
     fn u32_from_bytes_little_endian() {
-        let result = u32_from_bytes(Endian::Little, &[0x00, 0x00, 0x00, 0x00], &mut 0);
+        let result = u32_from_bytes_le(&[0x00, 0x00, 0x00, 0x00], &mut 0);
         assert_eq!(result, 0x0000);
 
-        let result = u32_from_bytes(Endian::Little, &[0x01, 0x02, 0x03, 0x04], &mut 0);
+        let result = u32_from_bytes_le(&[0x01, 0x02, 0x03, 0x04], &mut 0);
         assert_eq!(result, 0x04030201);
 
-        let result = u32_from_bytes(Endian::Little, &[0x4, 0x3, 0x2, 0x1], &mut 0);
+        let result = u32_from_bytes_le(&[0x4, 0x3, 0x2, 0x1], &mut 0);
         assert_eq!(result, 0x01020304);
 
-        let result = u32_from_bytes(Endian::Little, &[0x10, 0x20, 0x30, 0x40], &mut 0);
+        let result = u32_from_bytes_le(&[0x10, 0x20, 0x30, 0x40], &mut 0);
         assert_eq!(result, 0x40302010);
 
-        let result = u32_from_bytes(Endian::Little, &[0x10, 0x20, 0x40, 0x30], &mut 0);
+        let result = u32_from_bytes_le(&[0x10, 0x20, 0x40, 0x30], &mut 0);
         assert_eq!(result, 0x30402010);
     }
 
     #[test]
     fn u32_from_bytes_big_endian() {
-        let result = u32_from_bytes(Endian::Big, &[0x00, 0x00, 0x00, 0x00], &mut 0);
+        let result = u32_from_bytes_be(&[0x00, 0x00, 0x00, 0x00], &mut 0);
         assert_eq!(result, 0x0000);
 
-        let result = u32_from_bytes(Endian::Big, &[0x01, 0x02, 0x03, 0x04], &mut 0);
+        let result = u32_from_bytes_be(&[0x01, 0x02, 0x03, 0x04], &mut 0);
         assert_eq!(result, 0x01020304);
 
-        let result = u32_from_bytes(Endian::Big, &[0x4, 0x3, 0x2, 0x1], &mut 0);
+        let result = u32_from_bytes_be(&[0x4, 0x3, 0x2, 0x1], &mut 0);
         assert_eq!(result, 0x04030201);
 
-        let result = u32_from_bytes(Endian::Big, &[0x10, 0x20, 0x30, 0x40], &mut 0);
+        let result = u32_from_bytes_be(&[0x10, 0x20, 0x30, 0x40], &mut 0);
         assert_eq!(result, 0x10203040);
 
-        let result = u32_from_bytes(Endian::Big, &[0x10, 0x20, 0x40, 0x30], &mut 0);
+        let result = u32_from_bytes_be(&[0x10, 0x20, 0x40, 0x30], &mut 0);
         assert_eq!(result, 0x10204030);
     }
 }
