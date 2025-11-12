@@ -146,7 +146,7 @@ pub fn handle_tauri_setup(
         fs::create_dir(&covers).expect("Error creating covers directory");
         let pc = include_bytes!("../../../../../public/placeholder.png");
 
-        fs::write(covers.join("placeholder.png"), pc)?
+        fs::write(covers.join("placeholder.png"), pc)?;
     }
 
     // Populate the queue if a queue origin exists

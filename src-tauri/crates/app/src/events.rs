@@ -23,10 +23,10 @@ pub trait EventSystemHandler: Event + Sized + Send + Sync + 'static + Serialize 
         Self::listen(&handle_clone.clone(), move |event| {
             let handle = handle_clone.clone();
             tauri::async_runtime::spawn(async move {
-                if let Err(e) = Self::handle(event, &handle).await {
-                    if let Err(e) = e.emit(&handle) {
-                        logging::error!("Failed to emit error to Frontend: {:?}", e);
-                    }
+                if let Err(e) = Self::handle(event, &handle).await
+                    && let Err(e) = e.emit(&handle)
+                {
+                    logging::error!("Failed to emit error to Frontend: {:?}", e);
                 }
             });
         });

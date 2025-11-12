@@ -121,7 +121,7 @@ impl<'a> Metadata<'a> {
             let end = (header.start + header.length) as usize;
 
             let slice = &buffer[start..end];
-            let block = flac::Block::parse_by_block_type(header.block_type, slice);
+            let block = flac::Block::parse_by_block_type(header.block_type, slice)?;
             flac_blocks.push(block);
         }
 

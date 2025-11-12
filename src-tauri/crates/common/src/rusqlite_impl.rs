@@ -50,8 +50,7 @@ pub trait Hashable {
 
 impl<'a> Hashable for NewArtist<'a> {
     fn make_hash(&self) -> String {
-        let formatted_string = format!("{}", self.name);
-        blake3::hash(formatted_string.as_bytes())
+        blake3::hash(self.name.to_owned().as_bytes())
             .to_hex()
             .to_string()
     }

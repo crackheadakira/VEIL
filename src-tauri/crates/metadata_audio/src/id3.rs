@@ -47,7 +47,7 @@ impl Frame {
             FrameType::AttachedPicture => {
                 Frame::AttachedPicture(AttachedPicture::from_bytes(data)?)
             }
-            _ => Self::Unknown,
+            FrameType::Unknown => Self::Unknown,
         };
 
         Ok((size, frame))

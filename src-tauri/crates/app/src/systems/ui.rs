@@ -1,3 +1,4 @@
+use common::Tracks;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::Event;
@@ -24,5 +25,9 @@ pub enum UIUpdateEvent {
 
     PlayButton {
         state: PlayButtonState,
+    },
+
+    TrackChange {
+        track: Tracks,
     },
 }

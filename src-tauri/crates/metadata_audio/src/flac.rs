@@ -41,12 +41,12 @@ pub struct BlockHeader {
 }
 
 impl<'a> Block<'a> {
-    pub fn parse_by_block_type(block_type: BlockType, data: &'a [u8]) -> Block<'a> {
+    pub fn parse_by_block_type(block_type: BlockType, data: &'a [u8]) -> Result<Block<'a>> {
         match block_type {
-            BlockType::StreamInfo => Block::StreamInfo(StreamInfo::from_bytes(data)),
-            BlockType::VorbisComment => Block::VorbisComment(VorbisComment::from_bytes(data)),
-            BlockType::Picture => Block::Picture(Picture::from_bytes(data)),
-            BlockType::Unknown => Block::Unknown,
+            BlockType::StreamInfo => Ok(Block::StreamInfo(StreamInfo::from_bytes(data))),
+            BlockType::VorbisComment => Ok(Block::VorbisComment(VorbisComment::from_bytes(data)?)),
+            BlockType::Picture => Ok(Block::Picture(Picture::from_bytes(data))),
+            BlockType::Unknown => Ok(Block::Unknown),
         }
     }
 
@@ -145,13 +145,13 @@ pub struct VorbisComment<'a> {
 }
 
 impl<'a> VorbisComment<'a> {
-    pub fn from_bytes(bytes: &'a [u8]) -> VorbisComment<'a> {
+    pub fn from_bytes(bytes: &'a [u8]) -> Result<VorbisComment<'a>> {
         let mut vorbis = VorbisComment::default();
         let mut i = 0;
 
         let vendor_length = u32_from_bytes_le(bytes, &mut i) as usize;
 
-        let vendor_string = unsafe { std::str::from_utf8_unchecked(&bytes[i..i + vendor_length]) };
+        let vendor_string = std::str::from_utf8(&bytes[i..i + vendor_length])?;
         vorbis.vendor_string = Some(vendor_string);
 
         i += vendor_length;
@@ -162,9 +162,10 @@ impl<'a> VorbisComment<'a> {
             let comment_slice = &bytes[i..i + comment_length];
 
             if let Some(eq_pos) = comment_slice.iter().position(|&b| b == b'=') {
-                let (key, value) = unsafe { comment_slice.split_at_unchecked(eq_pos) };
+                let (key, value) = comment_slice.split_at(eq_pos);
+
                 let value_raw = &value[1..];
-                let value = unsafe { std::str::from_utf8_unchecked(value_raw) };
+                let value = std::str::from_utf8(value_raw)?;
 
                 match key {
                     b"ALBUM" => vorbis.album = Some(value),
@@ -179,14 +180,14 @@ impl<'a> VorbisComment<'a> {
             i += comment_length;
         }
 
-        vorbis
+        Ok(vorbis)
     }
 
     #[inline(always)]
     fn parse_u16_ascii(bytes: &[u8]) -> Option<u16> {
         let mut n = 0u16;
         for &b in bytes {
-            if b < b'0' || b > b'9' {
+            if !b.is_ascii_digit() {
                 return None;
             }
             n = n * 10 + (b - b'0') as u16;
@@ -202,7 +203,7 @@ impl<'a> VorbisComment<'a> {
 
         let mut n = 0u32;
         for &b in bytes {
-            if b < b'0' || b > b'9' {
+            if !b.is_ascii_digit() {
                 return None;
             }
             n = n * 10 + (b - b'0') as u32;
@@ -340,10 +341,15 @@ impl<'a> Flac<'a> {
             buffer.reserve(end_offset - buffer.len());
         }
 
-        // SAFETY: reserve ensures capacity >= end_offset
         debug_assert!(end_offset <= buffer.capacity());
 
-        unsafe { buffer.set_len(end_offset) };
+        // SAFETY:
+        // - `reserve` ensures capacity >= `end_offset`.
+        // - `set_len` is thus safe because we're initializing that range immediately below.
+        #[allow(unsafe_code)]
+        unsafe {
+            buffer.set_len(end_offset);
+        };
 
         reader.read_exact(&mut buffer[start_offset..end_offset])?;
 

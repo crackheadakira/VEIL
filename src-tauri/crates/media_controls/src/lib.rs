@@ -254,7 +254,7 @@ impl Player {
     pub fn maybe_queue_next(&mut self, track: &Tracks) -> Result<()> {
         logging::debug!("Preloading next track for gapless playback.");
 
-        let player_track = self.create_player_track(&track, None)?;
+        let player_track = self.create_player_track(track, None)?;
         self.preloaded_track = Some(player_track);
 
         Ok(())
@@ -269,7 +269,7 @@ impl Player {
         }
     }
 
-    /// Pause track if has sound_handle
+    /// Pause track if has `sound_handle`
     pub fn pause(&mut self) -> Result<()> {
         if let Some(ref mut player_track) = self.track {
             logging::debug!("Pausing track");
@@ -287,7 +287,7 @@ impl Player {
         Ok(())
     }
 
-    /// Resume track if has sound_handle
+    /// Resume track if has `sound_handle`
     pub fn resume(&mut self) -> Result<()> {
         if let Some(ref mut player_track) = self.track {
             logging::debug!("Resuming track");
@@ -309,21 +309,18 @@ impl Player {
         if let Some(ref mut player_track) = self.track {
             logging::debug!("Seeking track to {position}");
 
-            match self.state {
-                PlayerState::Playing => {
-                    player_track.sound_handle.seek_to(position);
-                    player_track.progress = position;
-                    self.set_media_controls_playing(position)?;
-                }
-                _ => {
-                    player_track.sound_handle.seek_to(position);
-                    player_track.progress = position;
+            if let PlayerState::Playing = self.state {
+                player_track.sound_handle.seek_to(position);
+                player_track.progress = position;
+                self.set_media_controls_playing(position)?;
+            } else {
+                player_track.sound_handle.seek_to(position);
+                player_track.progress = position;
 
-                    if resume {
-                        self.resume()?
-                    } else {
-                        self.set_media_controls_paused(position)?;
-                    }
+                if resume {
+                    self.resume()?;
+                } else {
+                    self.set_media_controls_paused(position)?;
                 }
             }
         }
@@ -331,7 +328,7 @@ impl Player {
         Ok(())
     }
 
-    /// Stop track if has sound_handle
+    /// Stop track if has `sound_handle`
     pub fn stop(&mut self) -> Result<()> {
         logging::debug!("Stopping track");
 

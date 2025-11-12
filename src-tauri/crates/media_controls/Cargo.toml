@@ -3,6 +3,9 @@ name = "media_controls"
 version = "0.0.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 thiserror = "2.0.12"
 kira = "0.10.8"

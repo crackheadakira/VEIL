@@ -367,16 +367,16 @@ impl EventSystemHandler for QueueEvent {
     ) -> Result<(), FrontendError> {
         match event.payload {
             QueueEvent::EnqueuePersonal { track_id } => {
-                Self::enqueue_personal_track(handle, track_id)?
+                Self::enqueue_personal_track(handle, track_id)?;
             }
             QueueEvent::SetGlobalQueue {
                 tracks,
                 queue_idx,
                 origin,
             } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
-            QueueEvent::ShuffleGlobalQueue {} => QueueEvent::shuffle_global_queue(handle, None)?,
+            QueueEvent::ShuffleGlobalQueue => QueueEvent::shuffle_global_queue(handle, None)?,
             QueueEvent::SetGlobalQueueShuffle { shuffle } => {
-                QueueEvent::shuffle_global_queue(handle, Some(shuffle))?
+                QueueEvent::shuffle_global_queue(handle, Some(shuffle))?;
             }
             QueueEvent::UpdateRepeatMode => QueueEvent::update_repeat_mode(handle)?,
         }
@@ -438,13 +438,11 @@ impl QueueEvent {
             } else {
                 queue.unshuffle_global();
             }
+        } else if queue.shuffled {
+            // As the queue is already shuffled, simply unshuffle it.
+            queue.unshuffle_global();
         } else {
-            if queue.shuffled {
-                // As the queue is already shuffled, simply unshuffle it.
-                queue.unshuffle_global();
-            } else {
-                queue.shuffle_global();
-            }
+            queue.shuffle_global();
         }
 
         UIUpdateEvent::emit(

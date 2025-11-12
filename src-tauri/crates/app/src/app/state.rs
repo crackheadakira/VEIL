@@ -47,7 +47,7 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     let path = data_path();
 
     if !path.exists() {
-        create_dir(&path).expect("Error creating main data directory")
+        create_dir(&path).expect("Error creating main data directory");
     }
 
     let platform_config = media_controls::PlatformConfig {

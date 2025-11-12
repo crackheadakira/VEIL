@@ -202,7 +202,7 @@ impl EventSystemHandler for PlayerEvent {
         // These emits would then sync the frontend to the backend, with the backend being the source of truth.
         match event.payload {
             PlayerEvent::Initialize { track, progress } => {
-                Self::initialize_player_with_track(handle, track, progress)?
+                Self::initialize_player_with_track(handle, track, progress)?;
             }
             PlayerEvent::NewTrack { track } => Self::set_new_track(handle, track, online).await?,
             PlayerEvent::Pause => Self::pause_current_track(handle, online).await?,
@@ -215,9 +215,9 @@ impl EventSystemHandler for PlayerEvent {
 
                 if let Some(playback_state) = playback_state {
                     if playback_state == PlaybackState::Playing {
-                        Self::pause_current_track(handle, online).await?
+                        Self::pause_current_track(handle, online).await?;
                     } else if playback_state == PlaybackState::Paused {
-                        Self::resume_current_track(handle, online)?
+                        Self::resume_current_track(handle, online)?;
                     }
                 } else {
                     // We have to load in the track as there is no playback state yet
@@ -228,17 +228,17 @@ impl EventSystemHandler for PlayerEvent {
             }
             PlayerEvent::Stop => Self::stop_current_track(handle)?,
             PlayerEvent::Seek { position, resume } => {
-                Self::seek_current_track(handle, position, resume, online)?
+                Self::seek_current_track(handle, position, resume, online)?;
             }
             PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
             PlayerEvent::PreviousTrackInQueue => {
-                Self::play_previous_track_from_queue(handle, online).await?
+                Self::play_previous_track_from_queue(handle, online).await?;
             }
             PlayerEvent::NextTrackInQueue => {
-                Self::play_next_track_from_queue(handle, online).await?
+                Self::play_next_track_from_queue(handle, online).await?;
             }
             PlayerEvent::CurrentTrackInQueue => {
-                Self::play_current_track_from_queue(handle, online).await?
+                Self::play_current_track_from_queue(handle, online).await?;
             }
         };
 
@@ -369,7 +369,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?
+            Self::set_new_track(handle, track, online).await?;
         }
 
         Ok(())
@@ -390,7 +390,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?
+            Self::set_new_track(handle, track, online).await?;
         }
 
         Ok(())
@@ -411,7 +411,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?
+            Self::set_new_track(handle, track, online).await?;
         }
 
         Ok(())
@@ -446,12 +446,12 @@ impl PlayerEvent {
             handle,
         )?;
 
-        if online.last_fm_enabled {
-            if let Some((track_id, track_timestamp)) = should_scrobble {
-                let track = state.db.by_id::<Tracks>(&track_id)?;
-                let lastfm = state.lastfm.lock().await;
-                try_scrobble_track_to_lastfm(lastfm, track, track_timestamp).await?;
-            }
+        if online.last_fm_enabled
+            && let Some((track_id, track_timestamp)) = should_scrobble
+        {
+            let track = state.db.by_id::<Tracks>(&track_id)?;
+            let lastfm = state.lastfm.lock().await;
+            try_scrobble_track_to_lastfm(lastfm, track, track_timestamp).await?;
         }
 
         Ok(())

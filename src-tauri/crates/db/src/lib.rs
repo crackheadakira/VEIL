@@ -9,17 +9,17 @@ use std::{collections::HashMap, fs::create_dir, path::PathBuf};
 
 fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
     for file in dir.files() {
-        if file.path().extension().map(|e| e == "sql").unwrap_or(false) {
-            if let Some(content) = file.contents_utf8() {
-                let file_name = file
-                    .path()
-                    .file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string();
-                queries.insert(file_name, content.to_string());
-            }
+        if file.path().extension().is_some_and(|e| e == "sql")
+            && let Some(content) = file.contents_utf8()
+        {
+            let file_name = file
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_string();
+            queries.insert(file_name, content.to_string());
         }
     }
 

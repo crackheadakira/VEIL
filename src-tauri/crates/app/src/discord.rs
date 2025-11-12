@@ -118,11 +118,11 @@ impl DiscordState {
             self.payload_changed = true;
         }
 
-        if let Some(p) = progress {
-            if p != self.payload.progress {
-                self.payload.progress = p;
-                self.payload_changed = true;
-            }
+        if let Some(p) = progress
+            && p != self.payload.progress
+        {
+            self.payload.progress = p;
+            self.payload_changed = true;
         }
 
         if self.payload_changed {
@@ -165,11 +165,8 @@ impl DiscordState {
             activity = activity.timestamps(
                 timestamp
                     .start(start - self.payload.progress as i64 * 1000)
-                    .end(
-                        start
-                            + (self.payload.duration as f64 - self.payload.progress) as i64 * 1000,
-                    ),
-            )
+                    .end(start + (self.payload.duration - self.payload.progress) as i64 * 1000),
+            );
         };
 
         self.rpc.set_activity(activity)?;

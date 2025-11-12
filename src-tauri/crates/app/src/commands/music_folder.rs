@@ -70,7 +70,7 @@ pub async fn select_music_folder(
         for (idx, track_path) in all_track_files.iter().enumerate() {
             buffer.clear();
 
-            let metadata = match Metadata::from_file(&mut buffer, &track_path, false) {
+            let metadata = match Metadata::from_file(&mut buffer, track_path, false) {
                 Ok(m) => m,
                 Err(e) => {
                     logging::error!(
@@ -151,8 +151,8 @@ pub async fn select_music_folder(
                     album_id,
                     artist_name: artist,
                     artist_id,
-                    name: name,
-                    number: metadata.track_number.map(|n| n as i32).unwrap_or(-1),
+                    name,
+                    number: metadata.track_number.map_or(-1, |n| n as i32),
                     path: &track_path_str,
                     cover_path: &cover_path,
                 };
@@ -171,8 +171,6 @@ pub async fn select_music_folder(
                     id: event_id,
                     current: idx,
                 })?;
-            } else {
-                continue;
             }
         }
 
@@ -242,5 +240,5 @@ fn get_cover_path(artist: &str, album: &str) -> String {
 fn get_album_path(music_folder: &str, full_path: &str) -> String {
     let path = full_path.replace(music_folder, "");
     let path = path.split('/').collect::<Vec<&str>>()[1..3].join("/");
-    music_folder.to_string() + "/" + &path
+    music_folder.to_owned() + "/" + &path
 }

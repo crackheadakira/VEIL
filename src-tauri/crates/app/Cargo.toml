@@ -3,6 +3,9 @@ name = "sodapop_reimagined"
 version = "0.0.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [build-dependencies]
 tauri-build = { version = "2.3.0", features = [] }
 

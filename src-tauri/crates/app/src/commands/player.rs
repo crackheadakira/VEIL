@@ -124,7 +124,6 @@ pub fn player_progress_channel(
 
                 state.resume_notify.notified().await;
                 logging::debug!("New track added, resuming loop.");
-                continue;
             }
         }
     });

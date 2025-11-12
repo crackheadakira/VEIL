@@ -55,7 +55,7 @@ pub struct LastFM {
     base_url: String,
     /// The HTTP request client
     client: reqwest::Client,
-    /// If LastFM API should be enabled, if `false` doesn't send any HTTP requests.
+    /// If `LastFM` API should be enabled, if `false` doesn't send any HTTP requests.
     ///
     /// By default is `true`.
     enabled: bool,
