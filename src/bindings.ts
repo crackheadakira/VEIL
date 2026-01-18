@@ -3,573 +3,698 @@
 
 /** user-defined commands **/
 
-
 export const commands = {
-async selectMusicFolder(onEvent: TAURI_CHANNEL<MetadataEvent>) : Promise<Result<string, FrontendError>> {
+  async selectMusicFolder(
+    onEvent: TAURI_CHANNEL<MetadataEvent>,
+  ): Promise<Result<string, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("select_music_folder", { onEvent }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getAlbumWithTracks(id: number) : Promise<Result<AlbumWithTracks, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("select_music_folder", { onEvent }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getAlbumWithTracks(
+    id: number,
+  ): Promise<Result<AlbumWithTracks, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_album_with_tracks", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getArtistWithAlbums(id: number) : Promise<Result<ArtistWithAlbums, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_album_with_tracks", { id }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getArtistWithAlbums(
+    id: number,
+  ): Promise<Result<ArtistWithAlbums, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_artist_with_albums", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getAllAlbums() : Promise<Result<Albums[], FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_artist_with_albums", { id }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getAllAlbums(): Promise<Result<Albums[], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_all_albums") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async trackById(id: number) : Promise<Result<Tracks, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("get_all_albums") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async trackById(id: number): Promise<Result<Tracks, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("track_by_id", { id }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async newPlaylist(name: string) : Promise<Result<number, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("track_by_id", { id }) };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async newPlaylist(name: string): Promise<Result<number, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("new_playlist", { name }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getAllPlaylists() : Promise<Result<Playlists[], FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("new_playlist", { name }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getAllPlaylists(): Promise<Result<Playlists[], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_all_playlists") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async addToPlaylist(playlistId: number, trackId: number) : Promise<Result<null, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("get_all_playlists") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async addToPlaylist(
+    playlistId: number,
+    trackId: number,
+  ): Promise<Result<null, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("add_to_playlist", { playlistId, trackId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getPlaylistTracks(playlistId: number) : Promise<Result<PlaylistWithTracks, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("add_to_playlist", { playlistId, trackId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getPlaylistTracks(
+    playlistId: number,
+  ): Promise<Result<PlaylistWithTracks, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_playlist_tracks", { playlistId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async removeFromPlaylist(playlistId: number, trackId: number) : Promise<Result<null, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_playlist_tracks", { playlistId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async removeFromPlaylist(
+    playlistId: number,
+    trackId: number,
+  ): Promise<Result<null, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("remove_from_playlist", { playlistId, trackId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async searchDb(searchStr: string) : Promise<Result<Search[], FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("remove_from_playlist", {
+          playlistId,
+          trackId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async searchDb(searchStr: string): Promise<Result<Search[], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("search_db", { searchStr }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getAlbumsOffset(limit: number, offset: number) : Promise<Result<Albums[], FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("search_db", { searchStr }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getAlbumsOffset(
+    limit: number,
+    offset: number,
+  ): Promise<Result<Albums[], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_albums_offset", { limit, offset }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getTotalAlbums() : Promise<Result<number, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_albums_offset", { limit, offset }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTotalAlbums(): Promise<Result<number, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_total_albums") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getBatchTrack(ids: number[]) : Promise<Result<(Tracks | null)[], FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("get_total_albums") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getBatchTrack(
+    ids: number[],
+  ): Promise<Result<(Tracks | null)[], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_batch_track", { ids }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getPlayerState() : Promise<PlayerState> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_batch_track", { ids }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getPlayerState(): Promise<PlayerState> {
     return await TAURI_INVOKE("get_player_state");
-},
-async playerHasTrack() : Promise<boolean> {
+  },
+  async playerHasTrack(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_track");
-},
-async getPlayerProgress() : Promise<number> {
+  },
+  async getPlayerProgress(): Promise<number> {
     return await TAURI_INVOKE("get_player_progress");
-},
-async getPlayerDuration() : Promise<number> {
+  },
+  async getPlayerDuration(): Promise<number> {
     return await TAURI_INVOKE("get_player_duration");
-},
-async playerHasEnded() : Promise<boolean> {
+  },
+  async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
-},
-async playerProgressChannel(onEvent: TAURI_CHANNEL<PlayerProgressEvent>) : Promise<Result<null, FrontendError>> {
+  },
+  async playerProgressChannel(
+    onEvent: TAURI_CHANNEL<PlayerProgressEvent>,
+  ): Promise<Result<null, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("player_progress_channel", { onEvent }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getToken() : Promise<Result<[string, string], FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("player_progress_channel", { onEvent }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getToken(): Promise<Result<[string, string], FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_token") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getSession(token: string) : Promise<Result<null, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("get_token") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getSession(token: string): Promise<Result<null, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_session", { token }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async readCustomStyle() : Promise<Result<string, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_session", { token }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async readCustomStyle(): Promise<Result<string, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("read_custom_style") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async readConfig() : Promise<Result<SodapopConfig, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("read_custom_style") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async readConfig(): Promise<Result<SodapopConfig, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("read_config") };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async openUrl(url: string) : Promise<Result<null, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("read_config") };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async openUrl(url: string): Promise<Result<null, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("open_url", { url }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getPlaylistTracksOffset(playlistId: number, limit: number, offset: number) : Promise<Result<PlaylistWithTracks, FrontendError>> {
+      return { status: "ok", data: await TAURI_INVOKE("open_url", { url }) };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getPlaylistTracksOffset(
+    playlistId: number,
+    limit: number,
+    offset: number,
+  ): Promise<Result<PlaylistWithTracks, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_playlist_tracks_offset", { playlistId, limit, offset }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-},
-async getTotalTracksInPlaylist(playlistId: number) : Promise<Result<number, FrontendError>> {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_playlist_tracks_offset", {
+          playlistId,
+          limit,
+          offset,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTotalTracksInPlaylist(
+    playlistId: number,
+  ): Promise<Result<number, FrontendError>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("get_total_tracks_in_playlist", { playlistId }) };
-} catch (e) {
-    if(e instanceof Error) throw e;
-    else return { status: "error", error: e  as any };
-}
-}
-}
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_total_tracks_in_playlist", {
+          playlistId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+};
 
 /** user-defined events **/
 
-
 export const events = __makeEvents__<{
-frontendError: FrontendError,
-playerEvent: PlayerEvent,
-queueEvent: QueueEvent,
-sodapopConfigEvent: SodapopConfigEvent,
-uiUpdateEvent: UIUpdateEvent
+  frontendError: FrontendError;
+  playerEvent: PlayerEvent;
+  queueEvent: QueueEvent;
+  sodapopConfigEvent: SodapopConfigEvent;
+  uiUpdateEvent: UIUpdateEvent;
 }>({
-frontendError: "frontend-error",
-playerEvent: "player-event",
-queueEvent: "queue-event",
-sodapopConfigEvent: "sodapop-config-event",
-uiUpdateEvent: "ui-update-event"
-})
+  frontendError: "frontend-error",
+  playerEvent: "player-event",
+  queueEvent: "queue-event",
+  sodapopConfigEvent: "sodapop-config-event",
+  uiUpdateEvent: "ui-update-event",
+});
 
 /** user-defined constants **/
 
-
-
 /** user-defined types **/
 
-export type AlbumType = "Unknown" | "Single" | "EP" | "Album"
-export type AlbumWithTracks = { album: Albums; 
-/**
- * All tracks belonging to album
- */
-tracks: Tracks[] }
-export type Albums = { 
-/**
- * ID of album in database
- */
-id: number; 
-/**
- * ID of artist in database
- */
-artist_id: number; 
-/**
- * Name of artist
- */
-artist_name: string; 
-/**
- * Name of album
- */
-name: string; 
-/**
- * Year album was published
- */
-year: number; 
-/**
- * Album type
- */
-album_type: AlbumType; 
-/**
- * Amount of tracks in album
- */
-track_count: number; 
-/**
- * Album duration
- */
-duration: number; 
-/**
- * Path to album cover in Sodapop local app data
- */
-cover_path: string; 
-/**
- * Path to album folder from where it was imported
- */
-path: string }
-export type ArtistWithAlbums = { artist: Artists; 
-/**
- * All albums belonging to artist
- */
-albums: AlbumWithTracks[] }
-export type Artists = { 
-/**
- * ID of artist in database
- */
-id: number; 
-/**
- * Name of artist
- */
-name: string }
-export type FrontendError = { type: "Io"; data: string } | { type: "Metadata"; data: string } | { type: "Database"; data: string } | { type: "Player"; data: string } | { type: "Standard"; data: string } | { type: "LastFMError"; data: string } | { type: "SerdeJson"; data: string } | { type: "TauriError"; data: string } | { type: "AnyhowError"; data: string }
+export type AlbumType = "Unknown" | "Single" | "EP" | "Album";
+export type AlbumWithTracks = {
+  album: Albums;
+  /**
+   * All tracks belonging to album
+   */
+  tracks: Tracks[];
+};
+export type Albums = {
+  /**
+   * ID of album in database
+   */
+  id: number;
+  /**
+   * ID of artist in database
+   */
+  artist_id: number;
+  /**
+   * Name of artist
+   */
+  artist_name: string;
+  /**
+   * Name of album
+   */
+  name: string;
+  /**
+   * Year album was published
+   */
+  year: number;
+  /**
+   * Album type
+   */
+  album_type: AlbumType;
+  /**
+   * Amount of tracks in album
+   */
+  track_count: number;
+  /**
+   * Album duration
+   */
+  duration: number;
+  /**
+   * Path to album cover in Sodapop local app data
+   */
+  cover_path: string;
+  /**
+   * Path to album folder from where it was imported
+   */
+  path: string;
+};
+export type ArtistWithAlbums = {
+  artist: Artists;
+  /**
+   * All albums belonging to artist
+   */
+  albums: AlbumWithTracks[];
+};
+export type Artists = {
+  /**
+   * ID of artist in database
+   */
+  id: number;
+  /**
+   * Name of artist
+   */
+  name: string;
+};
+export type FrontendError =
+  | { type: "Io"; data: string }
+  | { type: "Metadata"; data: string }
+  | { type: "Database"; data: string }
+  | { type: "Player"; data: string }
+  | { type: "Standard"; data: string }
+  | { type: "LastFMError"; data: string }
+  | { type: "SerdeJson"; data: string }
+  | { type: "TauriError"; data: string }
+  | { type: "AnyhowError"; data: string };
 /**
  * Integrations like Discord RPC or Last.FM
  */
-export type IntegrationsConfig = { 
-/**
- * If Discord RPC should be enabled
- */
-discord_enabled: boolean; 
-/**
- * If Last.FM should be enabled
- */
-last_fm_enabled: boolean; 
-/**
- * The session key from Last.FM, used for API communication
- */
-last_fm_session_key: string | null }
+export type IntegrationsConfig = {
+  /**
+   * If Discord RPC should be enabled
+   */
+  discord_enabled: boolean;
+  /**
+   * If Last.FM should be enabled
+   */
+  last_fm_enabled: boolean;
+  /**
+   * The session key from Last.FM, used for API communication
+   */
+  last_fm_session_key: string | null;
+};
 /**
  * Music library settings
  */
-export type LibraryConfig = { 
-/**
- * The directory where all the music files are
- */
-music_dir: string | null }
-export type MetadataEvent = { event: "Started"; data: { id: number } } | { event: "Total"; data: { id: number; total: number } } | { event: "Progress"; data: { id: number; current: number } } | { event: "Finished"; data: { id: number } }
-export type PlayButtonState = "Playing" | "Paused"
+export type LibraryConfig = {
+  /**
+   * The directory where all the music files are
+   */
+  music_dir: string | null;
+};
+export type MetadataEvent =
+  | { event: "Started"; data: { id: number } }
+  | { event: "Total"; data: { id: number; total: number } }
+  | { event: "Progress"; data: { id: number; current: number } }
+  | { event: "Finished"; data: { id: number } };
+export type PlayButtonState = "Playing" | "Paused";
 /**
  * Playback behavior and queue state
  */
-export type PlaybackConfig = { 
-/**
- * Where the queue originated from
- */
-queue_origin: QueueOrigin | null; 
-/**
- * What index the queue is at
- */
-queue_idx: number; 
-/**
- * What repeat mode the queue should be at
- */
-repeat_mode: RepeatMode }
-export type PlayerEvent = 
-/**
- * Initialize the player to load in this track, seeked to the specified position.
- */
-{ type: "Initialize"; data: { track: Tracks; progress: number } } | 
-/**
- * If a new track is to be played.
- */
-{ type: "NewTrack"; data: { track: Tracks } } | 
-/**
- * Plays the track at the current index in the queue.
- */
-{ type: "CurrentTrackInQueue" } | 
-/**
- * Play the previous track in the queue.
- */
-{ type: "PreviousTrackInQueue" } | 
-/**
- * Play the next track in the queue.
- */
-{ type: "NextTrackInQueue" } | 
-/**
- * If the current track is to be paused.
- */
-{ type: "Pause" } | 
-/**
- * If the current track is to be resumed.
- */
-{ type: "Resume" } | 
-/**
- * Depdenent on the state of the player either pause or resumme the track.
- */
-{ type: "UpdatePlayerState" } | 
-/**
- * If the current track is to be stopped.
- */
-{ type: "Stop" } | 
-/**
- * Where to set the progress of the currently playing track.
- */
-{ type: "Seek"; data: { position: number; resume: boolean } } | 
-/**
- * Set the volume of the player.
- */
-{ type: "SetVolume"; data: { volume: number } }
-export type PlayerProgressEvent = { event: "Progress"; data: { progress: number } }
-export type PlayerState = "Playing" | "Paused"
-export type PlaylistWithTracks = { playlist: Playlists; 
-/**
- * All tracks belonging to playlist
- */
-tracks: Tracks[] }
-export type Playlists = { 
-/**
- * ID of playlist in database
- */
-id: number; 
-/**
- * Playlist name
- */
-name: string; 
-/**
- * Playlist description
- */
-description: string; 
-/**
- * Path to playlist cover in Sodapop local app data
- */
-cover_path: string }
-export type QueueEvent = 
-/**
- * Add to personal queue via context menu
- */
-{ type: "EnqueuePersonal"; data: { track_id: number } } | 
-/**
- * Sets global queue to a vec of tracks
- */
-{ type: "SetGlobalQueue"; data: { tracks: number[]; queue_idx: number; origin: QueueOrigin } } | 
-/**
- * Flips the shuffle boolean So these happen:
- * - shuffle: True  --> Talse
- * - shuffle: False --> True
- */
-{ type: "ShuffleGlobalQueue" } | { type: "SetGlobalQueueShuffle"; data: { shuffle: boolean } } | { type: "UpdateRepeatMode" }
-export type QueueOrigin = { type: "Playlist"; data: { id: number } } | { type: "Album"; data: { id: number } }
-export type RepeatMode = 
-/**
- * Do not repeat anything when the end of the queue is hit.
- */
-"None" | 
-/**
- * Repeat the queue when the end of the queue is hit.
- */
-"Queue" | 
-/**
- * Repeat the track when the end of the track is hit.
- */
-"Track"
-export type Search = { 
-/**
- * ID of the search item
- */
-search_id: number; 
-/**
- * Name of the search item
- */
-title: string; 
-/**
- * Type of the search item
- */
-search_type: string }
-export type SodapopConfig = { 
-/**
- * User interface–related preferences
- */
-ui: UiConfig; 
-/**
- * Integration & connectivity settings
- */
-integrations: IntegrationsConfig; 
-/**
- * Music library settings
- */
-library: LibraryConfig; 
-/**
- * Playback behavior and queue info
- */
-playback: PlaybackConfig }
-export type SodapopConfigEvent = { theme: ThemeMode | null; discord_enabled: boolean | null; last_fm_enabled: boolean | null; music_dir: string | null; last_fm_session_key: string | null; queue_origin: QueueOrigin | null; queue_idx: number | null; repeat_mode: RepeatMode | null }
-export type ThemeMode = "Dark" | "Light" | "System"
-export type Tracks = { 
-/**
- * ID of track in database
- */
-id: number; 
-/**
- * ID of album in database
- */
-album_id: number; 
-/**
- * ID of artist in database
- */
-artist_id: number; 
-/**
- * Album name
- */
-album_name: string; 
-/**
- * Artist name
- */
-artist_name: string; 
-/**
- * Track name
- */
-name: string; 
-/**
- * Track number in album
- */
-number: number; 
-/**
- * Track duration
- */
-duration: number; 
-/**
- * Path to album cover in Sodapop local app data
- */
-cover_path: string; 
-/**
- * Path to track file
- */
-path: string; 
-/**
- * Hash of the metadata
- */
-hash: string }
-export type UIUpdateEvent = 
-/**
- * Updates the state of the shuffle button
- */
-{ type: "ShuffleButton"; data: { enabled: boolean } } | { type: "LoopButton"; data: { mode: RepeatMode } } | { type: "PlayButton"; data: { state: PlayButtonState } } | { type: "TrackChange"; data: { track: Tracks } }
+export type PlaybackConfig = {
+  /**
+   * Where the queue originated from
+   */
+  queue_origin: QueueOrigin | null;
+  /**
+   * What index the queue is at
+   */
+  queue_idx: number;
+  /**
+   * What repeat mode the queue should be at
+   */
+  repeat_mode: RepeatMode;
+};
+export type PlayerEvent =
+  /**
+   * Initialize the player to load in this track, seeked to the specified position.
+   */
+  | { type: "Initialize"; data: { track: Tracks; progress: number } }
+  /**
+   * If a new track is to be played.
+   */
+  | { type: "NewTrack"; data: { track: Tracks } }
+  /**
+   * Plays the track at the current index in the queue.
+   */
+  | { type: "CurrentTrackInQueue" }
+  /**
+   * Play the previous track in the queue.
+   */
+  | { type: "PreviousTrackInQueue" }
+  /**
+   * Play the next track in the queue.
+   */
+  | { type: "NextTrackInQueue" }
+  /**
+   * If the current track is to be paused.
+   */
+  | { type: "Pause" }
+  /**
+   * If the current track is to be resumed.
+   */
+  | { type: "Resume" }
+  /**
+   * Depdenent on the state of the player either pause or resumme the track.
+   */
+  | { type: "UpdatePlayerState" }
+  /**
+   * If the current track is to be stopped.
+   */
+  | { type: "Stop" }
+  /**
+   * Where to set the progress of the currently playing track.
+   */
+  | { type: "Seek"; data: { position: number; resume: boolean } }
+  /**
+   * Set the volume of the player.
+   */
+  | { type: "SetVolume"; data: { volume: number } };
+export type PlayerProgressEvent = {
+  event: "Progress";
+  data: { progress: number };
+};
+export type PlayerState = "Playing" | "Paused";
+export type PlaylistWithTracks = {
+  playlist: Playlists;
+  /**
+   * All tracks belonging to playlist
+   */
+  tracks: Tracks[];
+};
+export type Playlists = {
+  /**
+   * ID of playlist in database
+   */
+  id: number;
+  /**
+   * Playlist name
+   */
+  name: string;
+  /**
+   * Playlist description
+   */
+  description: string;
+  /**
+   * Path to playlist cover in Sodapop local app data
+   */
+  cover_path: string;
+};
+export type QueueEvent =
+  /**
+   * Add to personal queue via context menu
+   */
+  | { type: "EnqueuePersonal"; data: { track_id: number } }
+  /**
+   * Sets global queue to a vec of tracks
+   */
+  | {
+      type: "SetGlobalQueue";
+      data: { tracks: number[]; queue_idx: number; origin: QueueOrigin };
+    }
+  /**
+   * Flips the shuffle boolean So these happen:
+   * - shuffle: True  --> Talse
+   * - shuffle: False --> True
+   */
+  | { type: "ShuffleGlobalQueue" }
+  | { type: "SetGlobalQueueShuffle"; data: { shuffle: boolean } }
+  | { type: "UpdateRepeatMode" };
+export type QueueOrigin =
+  | { type: "Playlist"; data: { id: number } }
+  | { type: "Album"; data: { id: number } };
+export type RepeatMode =
+  /**
+   * Do not repeat anything when the end of the queue is hit.
+   */
+  | "None"
+  /**
+   * Repeat the queue when the end of the queue is hit.
+   */
+  | "Queue"
+  /**
+   * Repeat the track when the end of the track is hit.
+   */
+  | "Track";
+export type Search = {
+  /**
+   * ID of the search item
+   */
+  search_id: number;
+  /**
+   * Name of the search item
+   */
+  title: string;
+  /**
+   * Type of the search item
+   */
+  search_type: string;
+};
+export type SodapopConfig = {
+  /**
+   * User interface–related preferences
+   */
+  ui: UiConfig;
+  /**
+   * Integration & connectivity settings
+   */
+  integrations: IntegrationsConfig;
+  /**
+   * Music library settings
+   */
+  library: LibraryConfig;
+  /**
+   * Playback behavior and queue info
+   */
+  playback: PlaybackConfig;
+};
+export type SodapopConfigEvent = {
+  theme: ThemeMode | null;
+  discord_enabled: boolean | null;
+  last_fm_enabled: boolean | null;
+  music_dir: string | null;
+  last_fm_session_key: string | null;
+  queue_origin: QueueOrigin | null;
+  queue_idx: number | null;
+  repeat_mode: RepeatMode | null;
+};
+export type ThemeMode = "Dark" | "Light" | "System";
+export type Tracks = {
+  /**
+   * ID of track in database
+   */
+  id: number;
+  /**
+   * ID of album in database
+   */
+  album_id: number;
+  /**
+   * ID of artist in database
+   */
+  artist_id: number;
+  /**
+   * Album name
+   */
+  album_name: string;
+  /**
+   * Artist name
+   */
+  artist_name: string;
+  /**
+   * Track name
+   */
+  name: string;
+  /**
+   * Track number in album
+   */
+  number: number;
+  /**
+   * Track duration
+   */
+  duration: number;
+  /**
+   * Path to album cover in Sodapop local app data
+   */
+  cover_path: string;
+  /**
+   * Path to track file
+   */
+  path: string;
+  /**
+   * Hash of the metadata
+   */
+  hash: string;
+};
+export type UIUpdateEvent =
+  /**
+   * Updates the state of the shuffle button
+   */
+  | { type: "ShuffleButton"; data: { enabled: boolean } }
+  | { type: "LoopButton"; data: { mode: RepeatMode } }
+  | { type: "PlayButton"; data: { state: PlayButtonState } }
+  | { type: "TrackChange"; data: { track: Tracks } };
 /**
  * UI configuration such as theme or other future endeavors
  */
-export type UiConfig = { 
-/**
- * What theme the user has selected
- */
-theme: ThemeMode }
+export type UiConfig = {
+  /**
+   * What theme the user has selected
+   */
+  theme: ThemeMode;
+};
 
 /** tauri-specta globals **/
 
 import {
-	invoke as TAURI_INVOKE,
-	Channel as TAURI_CHANNEL,
+  invoke as TAURI_INVOKE,
+  Channel as TAURI_CHANNEL,
 } from "@tauri-apps/api/core";
 import * as TAURI_API_EVENT from "@tauri-apps/api/event";
 import { type WebviewWindow as __WebviewWindow__ } from "@tauri-apps/api/webviewWindow";
 
 type __EventObj__<T> = {
-	listen: (
-		cb: TAURI_API_EVENT.EventCallback<T>,
-	) => ReturnType<typeof TAURI_API_EVENT.listen<T>>;
-	once: (
-		cb: TAURI_API_EVENT.EventCallback<T>,
-	) => ReturnType<typeof TAURI_API_EVENT.once<T>>;
-	emit: null extends T
-		? (payload?: T) => ReturnType<typeof TAURI_API_EVENT.emit>
-		: (payload: T) => ReturnType<typeof TAURI_API_EVENT.emit>;
+  listen: (
+    cb: TAURI_API_EVENT.EventCallback<T>,
+  ) => ReturnType<typeof TAURI_API_EVENT.listen<T>>;
+  once: (
+    cb: TAURI_API_EVENT.EventCallback<T>,
+  ) => ReturnType<typeof TAURI_API_EVENT.once<T>>;
+  emit: null extends T
+    ? (payload?: T) => ReturnType<typeof TAURI_API_EVENT.emit>
+    : (payload: T) => ReturnType<typeof TAURI_API_EVENT.emit>;
 };
 
 export type Result<T, E> =
-	| { status: "ok"; data: T }
-	| { status: "error"; error: E };
+  | { status: "ok"; data: T }
+  | { status: "error"; error: E };
 
 function __makeEvents__<T extends Record<string, any>>(
-	mappings: Record<keyof T, string>,
+  mappings: Record<keyof T, string>,
 ) {
-	return new Proxy(
-		{} as unknown as {
-			[K in keyof T]: __EventObj__<T[K]> & {
-				(handle: __WebviewWindow__): __EventObj__<T[K]>;
-			};
-		},
-		{
-			get: (_, event) => {
-				const name = mappings[event as keyof T];
+  return new Proxy(
+    {} as unknown as {
+      [K in keyof T]: __EventObj__<T[K]> & {
+        (handle: __WebviewWindow__): __EventObj__<T[K]>;
+      };
+    },
+    {
+      get: (_, event) => {
+        const name = mappings[event as keyof T];
 
-				return new Proxy((() => {}) as any, {
-					apply: (_, __, [window]: [__WebviewWindow__]) => ({
-						listen: (arg: any) => window.listen(name, arg),
-						once: (arg: any) => window.once(name, arg),
-						emit: (arg: any) => window.emit(name, arg),
-					}),
-					get: (_, command: keyof __EventObj__<any>) => {
-						switch (command) {
-							case "listen":
-								return (arg: any) => TAURI_API_EVENT.listen(name, arg);
-							case "once":
-								return (arg: any) => TAURI_API_EVENT.once(name, arg);
-							case "emit":
-								return (arg: any) => TAURI_API_EVENT.emit(name, arg);
-						}
-					},
-				});
-			},
-		},
-	);
+        return new Proxy((() => {}) as any, {
+          apply: (_, __, [window]: [__WebviewWindow__]) => ({
+            listen: (arg: any) => window.listen(name, arg),
+            once: (arg: any) => window.once(name, arg),
+            emit: (arg: any) => window.emit(name, arg),
+          }),
+          get: (_, command: keyof __EventObj__<any>) => {
+            switch (command) {
+              case "listen":
+                return (arg: any) => TAURI_API_EVENT.listen(name, arg);
+              case "once":
+                return (arg: any) => TAURI_API_EVENT.once(name, arg);
+              case "emit":
+                return (arg: any) => TAURI_API_EVENT.emit(name, arg);
+            }
+          },
+        });
+      },
+    },
+  );
 }

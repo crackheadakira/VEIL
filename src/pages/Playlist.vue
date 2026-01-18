@@ -141,7 +141,6 @@ async function updateData() {
 }
 
 async function fetchMore(offset: number, count: number) {
-  console.log("Fetching more...");
   if (!data.value) return;
 
   const result = await commands.getPlaylistTracksOffset(

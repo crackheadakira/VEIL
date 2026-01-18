@@ -304,6 +304,13 @@ impl PlayerEvent {
             handle,
         )?;
 
+        UIUpdateEvent::emit(
+            &UIUpdateEvent::TrackChange {
+                track: track.clone(),
+            },
+            handle,
+        )?;
+
         if online.discord_enabled {
             // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
             let album_cover = if online.last_fm_enabled {

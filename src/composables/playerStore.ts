@@ -82,21 +82,12 @@ export const usePlayerStore = defineStore("player", () => {
   // LISTENERS
 
   // will be updated in the future to use its own UIChangeEvent
-  const listenNewTrack = events.playerEvent.listen((e) => {
+  const listenNewTrack = events.uiUpdateEvent.listen((e) => {
     switch (e.payload.type) {
-      case "NewTrack":
+      case "TrackChange":
         currentTrack.value = e.payload.data.track;
         playerProgress.value = 0;
         paused.value = false;
-        break;
-
-      case "Pause":
-        break;
-
-      case "Resume":
-        break;
-
-      case "Stop":
         break;
     }
   });
