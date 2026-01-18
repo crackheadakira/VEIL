@@ -5,7 +5,7 @@
     @scroll="onScroll"
   >
     <div :style="{ height: topOffset + 'px' }"></div>
-    <slot :items="visibleItems"></slot>
+    <slot :items="visibleItems" :startIndex="cardStartIndex"></slot>
     <div :style="{ height: bottomOffset + 'px' }"></div>
   </div>
 </template>
@@ -18,12 +18,15 @@ interface Props<T> {
   items: T[];
   total: number;
   itemHeight: number;
-  itemWidth: number;
+  itemWidth?: number;
   gap: number;
+  mode?: "grid" | "list";
   fetchMore?: (offset: number, count: number) => Promise<void>;
 }
 
-const props = defineProps<Props<any>>();
+const props = withDefaults(defineProps<Props<any>>(), {
+  mode: "grid",
+});
 
 const container = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
@@ -33,16 +36,20 @@ useResizeObserver(container, (entries) => {
   if (entries[0]) containerWidth.value = entries[0].contentRect.width;
 });
 
-const cardsPerRow = computed(() =>
-  Math.max(
+const cardsPerRow = computed(() => {
+  if (props.mode === "list") return 1;
+
+  return Math.max(
     1,
     Math.floor(
-      (containerWidth.value + props.gap) / (props.itemWidth + props.gap),
+      (containerWidth.value + props.gap) / ((props.itemWidth ?? 0) + props.gap),
     ),
-  ),
-);
+  );
+});
 
-const itemsToFetch = computed(() => cardsPerRow.value * 6);
+const itemsToFetch = computed(() =>
+  props.mode === "list" ? 40 : cardsPerRow.value * 6,
+);
 
 const cardStartIndex = computed(() =>
   Math.max(
@@ -76,8 +83,15 @@ const bottomOffset = computed(() => {
 });
 
 watch(cardStartIndex, async (newIndex) => {
-  if (props.fetchMore && newIndex + itemsToFetch.value > props.items.length) {
-    await props.fetchMore(props.items.length, itemsToFetch.value);
+  if (!props.fetchMore) return;
+
+  while (
+    newIndex + itemsToFetch.value > props.items.length &&
+    props.items.length < props.total
+  ) {
+    const remaining = props.total - props.items.length;
+    const count = Math.min(itemsToFetch.value, remaining);
+    await props.fetchMore(props.items.length, count);
   }
 });
 

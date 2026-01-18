@@ -414,6 +414,33 @@ impl Database {
         Ok(PlaylistWithTracks { playlist, tracks })
     }
 
+    /// Fetch tracks in playlist limited by amount & offset
+    pub fn playlist_track_pagination(
+        &self,
+        playlist_id: u32,
+        limit: u32,
+        offset: u32,
+    ) -> Result<PlaylistWithTracks> {
+        let conn = self.pool.get()?;
+        let playlist = self.by_id::<Playlists>(&playlist_id)?;
+
+        let mut stmt = conn.prepare(query("tracks_offset"))?;
+        let tracks = stmt
+            .query_map([limit, offset], Tracks::from_row)?
+            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
+
+        Ok(PlaylistWithTracks { playlist, tracks })
+    }
+
+    pub fn playlist_track_count(&self, playlist_id: u32) -> Result<u32> {
+        let conn = self.pool.get()?;
+
+        let mut stmt = conn.prepare(query("playlists_tracks_total"))?;
+        let result = stmt.query_row([playlist_id], |row| row.get(0))?;
+
+        Ok(result)
+    }
+
     pub fn update_playlist(&self, playlist: &NewPlaylist) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute(query("playlists_update"), playlist.to_params().as_slice())?;

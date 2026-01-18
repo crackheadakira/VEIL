@@ -1,5 +1,5 @@
 <template>
-  <div class="text-text-primary flex w-full flex-col gap-8" v-if="data">
+  <div class="text-text-primary flex h-full w-full flex-col gap-8" v-if="data">
     <div class="sodapop-card flex items-center gap-8 p-8">
       <img
         class="aspect-square w-64 rounded-md"
@@ -14,8 +14,8 @@
             {{ data.playlist.description }}
           </p>
           <small class="text-text-secondary">
-            {{ data.tracks.length }}
-            {{ data.tracks.length > 1 ? "songs" : "song" }}
+            {{ totalTracks }}
+            {{ totalTracks > 1 ? "songs" : "song" }}
           </small>
         </div>
 
@@ -41,8 +41,11 @@
 
     <TrackList
       :tracks="data.tracks"
+      :total-tracks="totalTracks"
       :origin-id="data.playlist.id"
       :playlist="data.playlist"
+      :fetch-more="fetchMore"
+      class="overflow-y-scroll"
     />
   </div>
 </template>
@@ -50,7 +53,9 @@
 <script setup lang="ts">
 import { TrackList } from "@/components/";
 import {
+  commands,
   events,
+  handleBackendError,
   placeholderIfEmpty,
   useConfigStore,
   usePlaylistStore,
@@ -66,13 +71,13 @@ const route = useRoute();
 const playlist_id = ref(route.params.id as string);
 
 const data = ref<PlaylistWithTracks | null>(null);
+const totalTracks = ref(0);
 
 watch(
-  () => route.params.playlist_id,
+  () => route.params.id,
   async (newId) => {
     playlist_id.value = newId as string;
     await updateData();
-
     window.scrollTo(0, 0);
   },
 );
@@ -126,14 +131,36 @@ async function handlePlayButton(shuffle: boolean) {
 }
 
 async function updateData() {
-  const res_data = await playlistStore.getTracksFromPlaylist(
+  const result = await commands.getPlaylistTracksOffset(
     parseInt(playlist_id.value),
+    40,
+    0,
   );
-  if (res_data) data.value = res_data;
+  if (result.status === "error") return handleBackendError(result.error);
+  data.value = result.data;
+}
+
+async function fetchMore(offset: number, count: number) {
+  console.log("Fetching more...");
+  if (!data.value) return;
+
+  const result = await commands.getPlaylistTracksOffset(
+    +playlist_id.value,
+    count,
+    offset,
+  );
+  if (result.status === "error") return handleBackendError(result.error);
+
+  data.value.tracks.push(...result.data.tracks);
 }
 
 onBeforeMount(async () => {
   await updateData();
+
+  const total = await commands.getTotalTracksInPlaylist(+playlist_id.value);
+  if (total.status === "error") return handleBackendError(total.error);
+  totalTracks.value = total.data;
+
   configStore.currentPage = `/playlist/${playlist_id.value}`;
   configStore.pageName = data.value?.playlist.name || "Playlist";
 });

@@ -13,84 +13,91 @@
         class="i-fluent-clock-12-regular text-text-secondary -end-col-1 size-4"
       ></span>
     </div>
-    <ContextMenu
-      :track="track"
-      :playlists="playlistStore.playlists"
-      :curr_playlist="playlist"
-      @playlist="handlePlaylist"
-      @create-playlist="
-        async (playlist: string, trackId: number) => {
-          const playlistId = await playlistStore.createPlaylist(playlist);
-          if (playlistId) {
-            handlePlaylist('add', playlistId, trackId);
-          }
-        }
-      "
-      v-for="(track, idx) of tracks"
+    <VirtualList
+      :items="tracks"
+      :total="totalTracks"
+      :itemHeight="72"
+      :gap="0"
+      :fetch-more="props.fetchMore"
+      mode="list"
+      class="h-60vh"
     >
-      <div
-        class="hover:bg-bg-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
-        :class="
-          playlist
-            ? 'grid-cols-[auto_2fr_1fr_auto]'
-            : 'grid-cols-[auto_1fr_auto]'
-        "
-        @dblclick="() => emitNewTrack(track, idx)"
-      >
-        <div class="flex shrink-0 items-center gap-4">
-          <!-- (10 / 16) rem === 10px if rem = 16px -->
-          <p
-            :style="{ width: idxWidth * (10 / 16) + 'rem' }"
-            class="text-text-secondary group-hover:text-text-secondary-hovered text-right"
-          >
-            {{ idx + 1 }}
-          </p>
-          <img
-            v-if="playlist"
-            :src="convertFileSrc(track.cover_path)"
-            class="aspect-square w-10 rounded-md"
-          />
-        </div>
-        <div class="grow basis-0 truncate *:truncate">
-          <p
-            class="text-text-primary group-hover:text-text-primary-hovered mb-1"
-          >
-            {{ track.name }}
-          </p>
-          <small
-            class="text-text-secondary group-hover:text-text-secondary-hovered"
-          >
-            {{ track.artist_name }}
-          </small>
-        </div>
-        <RouterLink
-          class="grow basis-0 truncate"
-          v-if="playlist"
-          :to="{
-            name: 'album',
-            params: { id: track.album_id },
-          }"
+      <template #default="{ items, startIndex }">
+        <ContextMenu
+          v-for="(track, idx) in items"
+          :key="track.id"
+          :track="track"
+          :playlists="playlistStore.playlists"
+          :curr_playlist="playlist"
+          @playlist="handlePlaylist"
         >
-          <small
-            class="text-text-secondary hover:text-accent-secondary truncate hover:underline"
+          <div
+            class="hover:bg-bg-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+            :class="
+              playlist
+                ? 'grid-cols-[auto_2fr_1fr_auto]'
+                : 'grid-cols-[auto_1fr_auto]'
+            "
+            @dblclick="emitNewTrack(track, idx)"
           >
-            {{ track.album_name }}
-          </small>
-        </RouterLink>
-        <div class="grid grid-cols-[1rem_auto] items-center justify-end gap-2">
-          <p
-            class="text-text-primary group-hover:text-text-primary-hovered text-right tabular-nums"
-          >
-            {{ formatTime("mm:ss", track.duration) }}
-          </p>
-        </div>
-      </div>
-    </ContextMenu>
+            <div class="flex shrink-0 items-center gap-4">
+              <!-- (10 / 16) rem === 10px if rem = 16px -->
+              <p
+                :style="{ width: idxWidth * (10 / 16) + 'rem' }"
+                class="text-text-secondary group-hover:text-text-secondary-hovered text-right"
+              >
+                {{ startIndex + idx + 1 }}
+              </p>
+              <img
+                v-if="playlist"
+                :src="convertFileSrc(track.cover_path)"
+                class="aspect-square w-10 rounded-md"
+              />
+            </div>
+            <div class="grow basis-0 truncate *:truncate">
+              <p
+                class="text-text-primary group-hover:text-text-primary-hovered mb-1"
+              >
+                {{ track.name }}
+              </p>
+              <small
+                class="text-text-secondary group-hover:text-text-secondary-hovered"
+              >
+                {{ track.artist_name }}
+              </small>
+            </div>
+            <RouterLink
+              class="grow basis-0 truncate"
+              v-if="playlist"
+              :to="{
+                name: 'album',
+                params: { id: track.album_id },
+              }"
+            >
+              <small
+                class="text-text-secondary hover:text-accent-secondary truncate hover:underline"
+              >
+                {{ track.album_name }}
+              </small>
+            </RouterLink>
+            <div
+              class="grid grid-cols-[1rem_auto] items-center justify-end gap-5"
+            >
+              <p
+                class="text-text-primary group-hover:text-text-primary-hovered text-right tabular-nums"
+              >
+                {{ formatTime("mm:ss", track.duration) }}
+              </p>
+            </div>
+          </div>
+        </ContextMenu>
+      </template>
+    </VirtualList>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ContextMenu } from "@/components/";
+import { ContextMenu, VirtualList } from "@/components/";
 import {
   events,
   formatTime,
@@ -107,8 +114,10 @@ const idxWidth = computed(() => props.tracks.length.toString().length); // numbe
 
 const props = defineProps<{
   tracks: Tracks[];
+  totalTracks: number;
   originId: number;
   playlist?: Playlists;
+  fetchMore: (offset: number, count: number) => Promise<void>;
 }>();
 
 // Make the backend set the track and do everything related to it.

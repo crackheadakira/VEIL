@@ -27,12 +27,34 @@ pub fn get_total_albums(state: TauriState) -> Result<u32, FrontendError> {
 
 #[tauri::command]
 #[specta::specta]
+pub fn get_total_tracks_in_playlist(
+    state: TauriState,
+    playlist_id: u32,
+) -> Result<u32, FrontendError> {
+    Ok(state.db.playlist_track_count(playlist_id)?)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn get_albums_offset(
     state: TauriState,
     limit: u32,
     offset: u32,
 ) -> Result<Vec<Albums>, FrontendError> {
     Ok(state.db.album_pagination(limit, offset)?)
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_playlist_tracks_offset(
+    state: TauriState,
+    playlist_id: u32,
+    limit: u32,
+    offset: u32,
+) -> Result<PlaylistWithTracks, FrontendError> {
+    Ok(state
+        .db
+        .playlist_track_pagination(playlist_id, limit, offset)?)
 }
 
 #[tauri::command]
