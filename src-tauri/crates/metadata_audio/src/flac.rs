@@ -166,7 +166,7 @@ impl<'a> VorbisComment<'a> {
                 let (key, value) = comment_slice.split_at(eq_pos);
 
                 let value_raw = &value[1..];
-                let value = std::str::from_utf8(value_raw)?;
+                let value = std::str::from_utf8(value_raw)?.trim();
 
                 match key {
                     b"ALBUM" => vorbis.album = Some(value),

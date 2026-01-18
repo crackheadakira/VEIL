@@ -29,7 +29,9 @@ pub async fn open_folder_picker(
 }
 
 pub fn sanitize_string(string: &str) -> String {
-    string.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
+    string
+        .trim()
+        .replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "")
 }
 
 pub async fn get_handle_to_music_folder(

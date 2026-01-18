@@ -18,8 +18,8 @@ fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
                 .unwrap()
                 .to_str()
                 .unwrap()
-                .to_string();
-            queries.insert(file_name, content.to_string());
+                .to_owned();
+            queries.insert(file_name, content.to_owned());
         }
     }
 

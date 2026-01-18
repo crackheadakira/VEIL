@@ -202,31 +202,32 @@ async function openDialog() {
   }
 }
 
-const persistentToastId = ref<number | null>(null);
 const totalSongs = ref<number | null>(null);
 
 onEvent.onmessage = (res) => {
   if (res.event === "Started") {
-    persistentToastId.value = res.data.id;
-    totalSongs.value = res.data.total;
-
     toastBus.persistentToast(
       res.data.id,
       "info",
-      `Going to import ${res.data.total} songs!`,
+      "Preparing to import songs...",
     );
+  } else if (res.event === "Total") {
+    totalSongs.value = res.data.total;
   } else if (res.event === "Progress") {
     toastBus.persistentToast(
       res.data.id,
       "info",
       `Importing songs (${res.data.current} / ${totalSongs.value})`,
     );
-  } else {
-    setTimeout(() => {
-      toastBus.removeToast(res.data.id);
-      persistentToastId.value = null;
-      totalSongs.value = null;
-    });
+  } else if (res.event === "Finished") {
+    toastBus.removeToast(res.data.id);
+
+    toastBus.addToast(
+      "success",
+      `Successfully imported ${totalSongs.value} songs!`,
+    );
+
+    totalSongs.value = null;
   }
 };
 

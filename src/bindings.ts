@@ -365,7 +365,8 @@ export type LibraryConfig = {
   music_dir: string | null;
 };
 export type MetadataEvent =
-  | { event: "Started"; data: { id: number; total: number } }
+  | { event: "Started"; data: { id: number } }
+  | { event: "Total"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
 export type PlayButtonState = "Playing" | "Paused";

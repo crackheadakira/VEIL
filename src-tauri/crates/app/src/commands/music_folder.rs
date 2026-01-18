@@ -22,7 +22,8 @@ use tauri::{Manager, ipc::Channel};
 #[serde(tag = "event", content = "data")]
 // rust-analyzer expected Expr error: https://github.com/specta-rs/specta/issues/387
 pub enum MetadataEvent {
-    Started { id: usize, total: usize },
+    Started { id: usize },
+    Total { id: usize, total: usize },
     Progress { id: usize, current: usize },
     Finished { id: usize },
 }
@@ -37,10 +38,11 @@ pub async fn select_music_folder(
 
     if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();
-        let all_track_files = Metadata::recursive_dir(path);
-
         let event_id = 1;
-        on_event.send(MetadataEvent::Started {
+        on_event.send(MetadataEvent::Started { id: event_id })?;
+
+        let all_track_files = Metadata::recursive_dir(path);
+        on_event.send(MetadataEvent::Total {
             id: event_id,
             total: all_track_files.len(),
         })?;
@@ -68,10 +70,24 @@ pub async fn select_music_folder(
             .map(|a| (a.id, a.cover_path))
             .collect();
 
+        let mut albums_seen = HashSet::new();
+
         for (idx, track_path) in all_track_files.iter().enumerate() {
             buffer.clear();
 
-            let metadata = match Metadata::from_file(&mut buffer, track_path, false) {
+            let skip_picture = if let Some(album_folder) = track_path.parent() {
+                let contains = albums_seen.contains(&album_folder);
+
+                if !contains {
+                    albums_seen.insert(album_folder);
+                }
+
+                contains
+            } else {
+                false
+            };
+
+            let metadata = match Metadata::from_file(&mut buffer, track_path, skip_picture) {
                 Ok(m) => m,
                 Err(e) => {
                     logging::error!(
@@ -102,7 +118,7 @@ pub async fn select_music_folder(
                     id
                 };
 
-                let album_path = get_album_path(&path, &track_path);
+                let album_path = get_album_path(path, track_path);
 
                 let (album_id, cover_path) =
                     if let Some(&id) = existing_albums.get(&(artist_id, album.to_owned())) {
