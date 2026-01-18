@@ -2,6 +2,9 @@
   <div
     class="bg-bg-primary text-text-primary relative flex h-full w-full flex-col items-center gap-4"
   >
+    <h6 class="text-text-secondary w-full select-none">
+      {{ totalAlbums }} albums
+    </h6>
     <div
       ref="container"
       class="grid h-full w-full grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4 overflow-y-scroll"
@@ -71,7 +74,7 @@ const cardsPerRow = computed(() =>
   Math.floor((containerWidth.value + gap) / (bigCardWidth + gap)),
 );
 
-const albumsToFetch = computed(() => cardsPerRow.value * 5);
+const albumsToFetch = computed(() => cardsPerRow.value * 6);
 
 const scrollOffset = ref(0);
 
@@ -80,13 +83,6 @@ function onScroll() {
   if (!el) return;
 
   scrollOffset.value = el.scrollTop;
-
-  console.log(
-    albumsToFetch.value,
-    cardStartIndex.value,
-    endIndex.value,
-    cardsPerRow.value,
-  );
 }
 
 const visibleAlbums = computed(() =>

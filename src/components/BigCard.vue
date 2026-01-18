@@ -61,10 +61,9 @@ import { computed, ref } from "vue";
 
 const props = defineProps<{
   data: Albums | AlbumWithTracks;
-  loading?: boolean;
 }>();
 
-const loadingImage = ref(props.loading ?? true);
+const loadingImage = ref(true);
 
 const album_data = computed(() => {
   if ("tracks" in props.data) return props.data.album;

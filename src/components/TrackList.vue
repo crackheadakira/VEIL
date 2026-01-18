@@ -1,5 +1,18 @@
 <template>
   <div class="sodapop-card flex flex-col p-4" ref="trackList">
+    <div
+      class="text-text-secondary border-border-secondary mb-4 grid items-center gap-4 rounded-md border-b p-3 px-4 select-none"
+      :class="
+        playlist ? 'grid-cols-[auto_2fr_1fr_auto]' : 'grid-cols-[auto_1fr_auto]'
+      "
+    >
+      <small>#</small>
+      <small class="col-span-1">Title</small>
+      <small v-if="playlist" class="col-span-1">Album</small>
+      <span
+        class="i-fluent-clock-12-regular text-text-secondary -end-col-1 size-4"
+      ></span>
+    </div>
     <ContextMenu
       :track="track"
       :playlists="playlistStore.playlists"
@@ -65,9 +78,6 @@
           </small>
         </RouterLink>
         <div class="grid grid-cols-[1rem_auto] items-center justify-end gap-2">
-          <span
-            class="i-fluent-clock-12-regular text-text-secondary size-4"
-          ></span>
           <p
             class="text-text-primary group-hover:text-text-primary-hovered text-right tabular-nums"
           >
@@ -89,11 +99,10 @@ import {
   usePlaylistStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { computed, ref } from "vue";
+import { computed } from "vue";
 
 const playlistStore = usePlaylistStore();
 
-const trackList = ref<HTMLDivElement | null>(null);
 const idxWidth = computed(() => props.tracks.length.toString().length); // number of digits
 
 const props = defineProps<{
