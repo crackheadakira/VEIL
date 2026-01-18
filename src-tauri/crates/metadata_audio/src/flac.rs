@@ -1,7 +1,8 @@
 use std::io::{Read, Seek};
 
 use crate::{
-    Error, Result, read_n_bits_u32, read_n_bits_u64, u32_from_bytes_be, u32_from_bytes_le,
+    Error, Result, read_into_buffer_unchecked, read_n_bits_u32, read_n_bits_u64, u32_from_bytes_be,
+    u32_from_bytes_le,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -264,7 +265,6 @@ impl<'a> Picture<'a> {
 pub struct Flac<'a> {
     pub stream_info: StreamInfo,
     pub picture: Option<Picture<'a>>,
-    pub file_path: &'a str,
     pub vorbis_comment: VorbisComment<'a>,
 }
 
@@ -295,11 +295,7 @@ impl<'a> Flac<'a> {
 
             let start = block_buffer.len() as u32;
             if read_block {
-                Self::read_into_buffer_unchecked(
-                    reader,
-                    block_buffer,
-                    block_header.length as usize,
-                )?;
+                read_into_buffer_unchecked(reader, block_buffer, block_header.length as usize)?;
 
                 headers.push(BlockHeader {
                     start,
@@ -326,33 +322,5 @@ impl<'a> Flac<'a> {
         }
 
         Ok(headers)
-    }
-
-    #[inline(always)]
-    fn read_into_buffer_unchecked<R: Read>(
-        reader: &mut R,
-        buffer: &mut Vec<u8>,
-        len: usize,
-    ) -> Result<()> {
-        let start_offset = buffer.len();
-        let end_offset = start_offset + len;
-
-        if end_offset > buffer.capacity() {
-            buffer.reserve(end_offset - buffer.len());
-        }
-
-        debug_assert!(end_offset <= buffer.capacity());
-
-        // SAFETY:
-        // - `reserve` ensures capacity >= `end_offset`.
-        // - `set_len` is thus safe because we're initializing that range immediately below.
-        #[allow(unsafe_code)]
-        unsafe {
-            buffer.set_len(end_offset);
-        };
-
-        reader.read_exact(&mut buffer[start_offset..end_offset])?;
-
-        Ok(())
     }
 }

@@ -1,14 +1,17 @@
 pub mod flac;
 mod id3;
+mod traits;
 
 use std::{
-    collections::HashMap,
     fs::File,
     io::{BufReader, Cursor, Read, Seek},
-    path::{Path, PathBuf},
+    path::Path,
 };
 
-use crate::flac::Block;
+use crate::{
+    flac::Block,
+    id3::{Frame, FrameId},
+};
 
 #[derive(Debug, Clone, Default)]
 /// Metadata struct that holds information about an audio file
@@ -89,24 +92,26 @@ impl<'a> Metadata<'a> {
         metadata
     }
 
-    /*fn from_id3(file: id3::Id3) -> Metadata {
-        Metadata {
-            duration: -1.0,
-            album: get_field_value(&file.text_frames, "TALB"),
-            artist: get_field_value(&file.text_frames, "TPE1"),
-            name: get_field_value(&file.text_frames, "TIT2"),
-            file_path: file.file_path,
-            year: get_field_value(&file.text_frames, "TYER")
-                .parse()
-                .unwrap_or(0),
-            track_number: get_field_value(&file.text_frames, "TRCK")
-                .split('/')
-                .next()
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(-1),
-            picture_data: file.attached_picture.map(|pic| Rc::new(pic.picture_data)),
+    fn from_id3_frames(frames: Vec<Frame>) -> Metadata {
+        let mut metadata = Metadata::default();
+
+        for frame in frames {
+            match frame {
+                Frame::Duration(duration) => metadata.duration = duration,
+                Frame::Text((frame_id, frame_str)) => match frame_id {
+                    FrameId::Talb => metadata.album = Some(frame_str),
+                    FrameId::Tit2 => metadata.name = Some(frame_str),
+                    FrameId::Tpe1 => metadata.artist = Some(frame_str),
+                    _ => {}
+                },
+                Frame::Picture(picture_data) => metadata.picture_data = Some(picture_data),
+                Frame::Year(year) => metadata.year = Some(year),
+                Frame::Unknown => {}
+            }
         }
-    }*/
+
+        metadata
+    }
 
     fn read_flac<R: Read + Seek>(
         buffer: &'a mut Vec<u8>,
@@ -126,6 +131,22 @@ impl<'a> Metadata<'a> {
         }
 
         Ok(Metadata::from_flac_blocks(flac_blocks))
+    }
+
+    fn read_id3<R: Read + Seek>(buffer: &'a mut Vec<u8>, reader: &mut R) -> Result<Metadata<'a>> {
+        let frame_headers = id3::Id3::read_all_frames(buffer, reader)?;
+
+        let mut id3_frames = Vec::with_capacity(frame_headers.len());
+        for frame in frame_headers {
+            let start = frame.data_start as usize;
+            let end = start + frame.length as usize;
+
+            let slice = &buffer[start..end];
+            let block = id3::Frame::parse_by_id(frame.frame_id, slice)?;
+            id3_frames.push(block);
+        }
+
+        Ok(Metadata::from_id3_frames(id3_frames))
     }
 
     /// Create a `Metadata` struct from a valid audio file
@@ -166,7 +187,10 @@ impl<'a> Metadata<'a> {
                 let mut reader = Cursor::new(data);
                 Self::read_flac(buffer, &mut reader, skip_picture)
             }
-            SupportedFormats::ID3 => Err(Error::UnsupportedFileType),
+            SupportedFormats::ID3 => {
+                let mut reader = Cursor::new(data);
+                Self::read_id3(buffer, &mut reader)
+            }
         }
     }
 
@@ -189,38 +213,6 @@ impl<'a> Metadata<'a> {
         }
 
         tracks
-    }
-
-    /// The resulting output is needed by [`Metadata::from_files_smart`].
-    pub fn collect_album_files_for_smart(path: &Path) -> Result<Vec<Vec<PathBuf>>> {
-        let mut albums: HashMap<PathBuf, Vec<PathBuf>> = HashMap::new();
-        Self::collect_recursive(path, &mut albums)?;
-        Ok(albums.into_values().collect())
-    }
-
-    fn collect_recursive(dir: &Path, albums: &mut HashMap<PathBuf, Vec<PathBuf>>) -> Result<()> {
-        for entry in std::fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-
-            if path.is_dir() {
-                Self::collect_recursive(&path, albums)?;
-                continue;
-            }
-
-            let Some(ext) = path.extension().and_then(|e| e.to_str()) else {
-                continue;
-            };
-            if !ext.eq_ignore_ascii_case("mp3") && !ext.eq_ignore_ascii_case("flac") {
-                continue;
-            }
-
-            if let Some(parent) = path.parent() {
-                albums.entry(parent.to_path_buf()).or_default().push(path);
-            }
-        }
-
-        Ok(())
     }
 }
 
@@ -274,6 +266,34 @@ fn u32_from_bytes_be(bytes: &[u8], offset: &mut usize) -> u32 {
     let res = u32::from_be_bytes(bytes[*offset..*offset + 4].try_into().unwrap());
     *offset += 4;
     res
+}
+
+#[inline(always)]
+pub(crate) fn read_into_buffer_unchecked<R: Read>(
+    reader: &mut R,
+    buffer: &mut Vec<u8>,
+    len: usize,
+) -> Result<()> {
+    let start_offset = buffer.len();
+    let end_offset = start_offset + len;
+
+    if end_offset > buffer.capacity() {
+        buffer.reserve(end_offset - buffer.len());
+    }
+
+    debug_assert!(end_offset <= buffer.capacity());
+
+    // SAFETY:
+    // - `reserve` ensures capacity >= `end_offset`.
+    // - `set_len` is thus safe because we're initializing that range immediately below.
+    #[allow(unsafe_code)]
+    unsafe {
+        buffer.set_len(end_offset);
+    };
+
+    reader.read_exact(&mut buffer[start_offset..end_offset])?;
+
+    Ok(())
 }
 
 #[cfg(test)]
