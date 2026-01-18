@@ -7,6 +7,10 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::OptionalExtension;
 use std::{collections::HashMap, fs::create_dir, path::PathBuf};
 
+use crate::timed_connection::TimedPool;
+
+mod timed_connection;
+
 fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
     for file in dir.files() {
         if file.path().extension().is_some_and(|e| e == "sql")
@@ -54,7 +58,7 @@ pub enum Error {
 }
 
 pub struct Database {
-    pool: Pool<SqliteConnectionManager>,
+    pool: TimedPool,
 }
 
 type Result<T, U = Error> = std::result::Result<T, U>;
@@ -68,7 +72,8 @@ impl Database {
 
         let manager = SqliteConnectionManager::file(path.join("db.sqlite"));
         let pool = Pool::new(manager).unwrap();
-        let conn = pool.get().unwrap();
+        let timed_pool = TimedPool(pool);
+        let conn = timed_pool.get().unwrap();
 
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
@@ -82,7 +87,7 @@ impl Database {
 
         drop(conn);
 
-        Self { pool }
+        Self { pool: timed_pool }
     }
 
     /// Writes WAL data to database
@@ -435,7 +440,7 @@ impl Database {
     pub fn playlist_track_count(&self, playlist_id: u32) -> Result<u32> {
         let conn = self.pool.get()?;
 
-        let mut stmt = conn.prepare(query("playlists_tracks_total"))?;
+        let mut stmt = conn.prepare("SELECT track_count FROM playlists WHERE id = ?1;")?;
         let result = stmt.query_row([playlist_id], |row| row.get(0))?;
 
         Ok(result)

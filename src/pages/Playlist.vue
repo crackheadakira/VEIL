@@ -138,6 +138,10 @@ async function updateData() {
   );
   if (result.status === "error") return handleBackendError(result.error);
   data.value = result.data;
+
+  const total = await commands.getTotalTracksInPlaylist(+playlist_id.value);
+  if (total.status === "error") return handleBackendError(total.error);
+  totalTracks.value = total.data;
 }
 
 async function fetchMore(offset: number, count: number) {

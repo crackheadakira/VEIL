@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS playlists (
     id          INTEGER NOT NULL PRIMARY KEY,
     name        TEXT    NOT NULL,
     description TEXT    NOT NULL,
-    cover_path  TEXT    NOT NULL
+    cover_path  TEXT    NOT NULL,
+    track_count INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS playlist_tracks (
@@ -93,4 +94,22 @@ CREATE TRIGGER IF NOT EXISTS playlists_delete_search
 AFTER DELETE ON playlists
 BEGIN
     DELETE FROM search WHERE type = 'playlist' AND type_id = OLD.id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS playlist_track_insert
+AFTER INSERT ON playlist_tracks
+FOR EACH ROW
+BEGIN
+    UPDATE playlists
+    SET track_count = track_count + 1
+    WHERE id = NEW.playlist_id;
+END;
+
+CREATE TRIGGER IF NOT EXISTS playlist_track_delete
+AFTER DELETE ON playlist_tracks
+FOR EACH ROW
+BEGIN
+    UPDATE playlists
+    SET track_count = track_count - 1
+    WHERE id = OLD.playlist_id;
 END;

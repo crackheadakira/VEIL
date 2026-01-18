@@ -98,7 +98,7 @@ pub fn player_progress_channel(
                     if let Some(track) = next_track_status(&state, &player) {
                         match PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle) {
                             Ok(_) => {
-                                logging::debug!("Emitted new track event to frontend.")
+                                logging::debug!("Emitted new track event to frontend.");
                             }
                             Err(e) => {
                                 logging::error!("Error emitting new track from queue system: {e}");
