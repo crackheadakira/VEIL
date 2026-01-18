@@ -592,7 +592,8 @@ export type UIUpdateEvent =
    */
   | { type: "ShuffleButton"; data: { enabled: boolean } }
   | { type: "LoopButton"; data: { mode: RepeatMode } }
-  | { type: "PlayButton"; data: { state: PlayButtonState } };
+  | { type: "PlayButton"; data: { state: PlayButtonState } }
+  | { type: "TrackChange"; data: { track: Tracks } };
 /**
  * UI configuration such as theme or other future endeavors
  */

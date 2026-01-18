@@ -1,5 +1,6 @@
 use std::{fs, path::PathBuf};
 
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri_specta::Event;
@@ -164,7 +165,8 @@ impl SodapopConfig {
         fs::write(
             Self::config_file_path(),
             serde_json::to_string_pretty(&self)?,
-        )?;
+        )
+        .context("Failed to write to config.json")?;
         Ok(())
     }
 

@@ -104,12 +104,12 @@ impl DiscordState {
         }
 
         if small_image != self.payload.small_image {
-            self.payload.small_image = small_image.to_string();
+            self.payload.small_image = small_image.to_owned();
             self.payload_changed = true;
         }
 
         if small_text != self.payload.small_text {
-            self.payload.small_text = small_text.to_string();
+            self.payload.small_text = small_text.to_owned();
             self.payload_changed = true;
         }
 

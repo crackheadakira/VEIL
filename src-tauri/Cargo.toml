@@ -28,7 +28,9 @@ media_controls = { path = "crates/media_controls" }
 metadata_audio = { path = "crates/metadata_audio" }
 
 [workspace.lints.clippy]
-all = "warn"
+all = { level = "warn", priority = 0 }
+suspicious = { level = "warn", priority = 1 }
+perf = { level = "warn", priority = 2 }
 await_holding_lock = "warn"
 char_lit_as_u8 = "warn"
 checked_conversions = "warn"
@@ -65,6 +67,7 @@ map_unwrap_or = "warn"
 match_same_arms = "warn"
 match_wild_err_arm = "warn"
 match_wildcard_for_single_variants = "warn"
+match_like_matches_macro = "warn"
 mem_forget = "warn"
 missing_enforced_import_renames = "warn"
 mut_mut = "warn"
@@ -91,6 +94,7 @@ unused_self = "warn"
 useless_transmute = "warn"
 verbose_file_reads = "warn"
 zero_sized_map_values = "warn"
+str_to_string = "warn"
 
 [workspace.lints.rust]
 nonstandard_style = { level = "warn", priority = 0 }

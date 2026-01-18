@@ -1,3 +1,4 @@
+use anyhow::Context;
 use rfd::{AsyncFileDialog, FileHandle};
 
 use crate::{TauriState, error::FrontendError};
@@ -5,11 +6,11 @@ use crate::{TauriState, error::FrontendError};
 pub fn open_url(url: &str) -> Result<(), FrontendError> {
     if !url.contains("http") {
         return Err(FrontendError::Standard(
-            "URL does not contain HTTP".to_string(),
+            "URL does not contain HTTP".to_owned(),
         ));
     }
 
-    webbrowser::open(url)?;
+    webbrowser::open(url).context("Failed to open URL in browser")?;
 
     Ok(())
 }

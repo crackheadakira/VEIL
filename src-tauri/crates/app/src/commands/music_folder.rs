@@ -4,6 +4,7 @@ use crate::{
     systems::utils::{data_path, get_handle_to_music_folder, sanitize_string},
 };
 
+use anyhow::Context;
 use common::{AlbumType, Albums, Artists, NewAlbum, NewArtist, NewTrack, Tracks, traits::Hashable};
 use metadata_audio::Metadata;
 use serde::Serialize;
@@ -12,7 +13,7 @@ use specta::Type;
 use std::{
     collections::{HashMap, HashSet},
     fs::{self},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use tauri::{Manager, ipc::Channel};
@@ -90,14 +91,18 @@ pub async fn select_music_folder(
                 let artist_id = if let Some(&id) = existing_artists.get(artist) {
                     id
                 } else {
-                    let _ = state.db.insert::<NewArtist>(NewArtist { name: artist });
+                    state
+                        .db
+                        .insert::<NewArtist>(NewArtist { name: artist })
+                        .with_context(|| {
+                            format!("Failed to insert artist for {}", track_path.display())
+                        })?;
                     let id = state.db.latest::<Artists>().unwrap().id;
                     existing_artists.insert(artist.to_owned(), id);
                     id
                 };
 
-                let track_path_str = track_path.to_string_lossy();
-                let album_path = get_album_path(&path.to_string_lossy(), &track_path_str);
+                let album_path = get_album_path(&path, &track_path);
 
                 let (album_id, cover_path) =
                     if let Some(&id) = existing_albums.get(&(artist_id, album.to_owned())) {
@@ -108,35 +113,57 @@ pub async fn select_music_folder(
 
                         if !Path::new(&cover_path).exists() {
                             if let Some(picture_data) = &metadata.picture_data {
-                                fs::write(&cover_path, &**picture_data)?;
+                                fs::write(&cover_path, &**picture_data).with_context(|| {
+                                    format!(
+                                        "Failed to write the raw picture data to disk for {}",
+                                        track_path.display()
+                                    )
+                                })?;
                             } else {
                                 let album_path = Path::new(&album_path);
                                 if album_path.join("cover.jpg").exists() {
-                                    fs::copy(album_path.join("cover.jpg"), &cover_path)?;
+                                    fs::copy(album_path.join("cover.jpg"), &cover_path)
+                                        .with_context(|| {
+                                            format!(
+                                                "Failed to copy cover.jpg for {}",
+                                                track_path.display()
+                                            )
+                                        })?;
                                 } else if album_path.join("cover.png").exists() {
-                                    fs::copy(album_path.join("cover.png"), &cover_path)?;
+                                    fs::copy(album_path.join("cover.png"), &cover_path)
+                                        .with_context(|| {
+                                            format!(
+                                                "Failed to copy cover.png for {}",
+                                                track_path.display()
+                                            )
+                                        })?;
                                 } else {
                                     cover_path = data_path()
                                         .join("covers")
                                         .join("placeholder.png")
                                         .to_str()
                                         .unwrap()
-                                        .to_string();
+                                        .to_owned();
                                 }
                             }
                         }
 
-                        state.db.insert_album::<NewAlbum>(NewAlbum {
-                            artist_id,
-                            artist_name: artist,
-                            name: album,
-                            cover_path: &cover_path,
-                            year,
-                            album_type: &AlbumType::Unknown,
-                            track_count: 0,
-                            duration: 0,
-                            path: &album_path,
-                        })?;
+                        state
+                            .db
+                            .insert_album::<NewAlbum>(NewAlbum {
+                                artist_id,
+                                artist_name: artist,
+                                name: album,
+                                cover_path: &cover_path,
+                                year,
+                                album_type: &AlbumType::Unknown,
+                                track_count: 0,
+                                duration: 0,
+                                path: &album_path.to_string_lossy(),
+                            })
+                            .with_context(|| {
+                                format!("Failed to insert album for {}", track_path.display())
+                            })?;
 
                         let id = state.db.latest::<Albums>()?.id;
                         existing_albums.insert((artist_id, album.to_owned()), id);
@@ -153,7 +180,7 @@ pub async fn select_music_folder(
                     artist_id,
                     name,
                     number: metadata.track_number.map_or(-1, |n| n as i32),
-                    path: &track_path_str,
+                    path: &track_path.to_string_lossy(),
                     cover_path: &cover_path,
                 };
 
@@ -162,7 +189,9 @@ pub async fn select_music_folder(
                 let track_exists = state.db.exists::<Tracks>("hash", &hash)?;
 
                 if !track_exists {
-                    state.db.insert::<NewTrack>(new_track)?;
+                    state.db.insert::<NewTrack>(new_track).with_context(|| {
+                        format!("Failed to insert track for {}", track_path.display())
+                    })?;
                 };
 
                 existing_hashes.insert(hash);
@@ -237,8 +266,14 @@ fn get_cover_path(artist: &str, album: &str) -> String {
     p + "/covers/" + &sanitize_string(artist) + " - " + &sanitize_string(album) + ".jpg"
 }
 
-fn get_album_path(music_folder: &str, full_path: &str) -> String {
-    let path = full_path.replace(music_folder, "");
-    let path = path.split('/').collect::<Vec<&str>>()[1..3].join("/");
-    music_folder.to_owned() + "/" + &path
+fn get_album_path(music_folder: &Path, full_path: &Path) -> PathBuf {
+    let rel = full_path.strip_prefix(music_folder).unwrap();
+
+    let comps: Vec<_> = rel.parent().unwrap().components().collect();
+
+    match comps.len() {
+        0 => music_folder.to_path_buf(),
+        1 => music_folder.join(comps[0]), // only album
+        _ => music_folder.join(comps[0]).join(comps[1]), // artist/album or album/subfolder
+    }
 }
