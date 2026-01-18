@@ -61,7 +61,7 @@ import {
   usePlaylistStore,
   type PlaylistWithTracks,
 } from "@/composables/";
-import { onBeforeMount, ref, watch } from "vue";
+import { onBeforeMount, ref, shallowRef, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const configStore = useConfigStore();
@@ -70,8 +70,8 @@ const playlistStore = usePlaylistStore();
 const route = useRoute();
 const playlist_id = ref(route.params.id as string);
 
-const data = ref<PlaylistWithTracks | null>(null);
-const totalTracks = ref(0);
+const data = shallowRef<PlaylistWithTracks | null>(null);
+const totalTracks = shallowRef(0);
 
 watch(
   () => route.params.id,
@@ -159,10 +159,6 @@ async function fetchMore(offset: number, count: number) {
 
 onBeforeMount(async () => {
   await updateData();
-
-  const total = await commands.getTotalTracksInPlaylist(+playlist_id.value);
-  if (total.status === "error") return handleBackendError(total.error);
-  totalTracks.value = total.data;
 
   configStore.currentPage = `/playlist/${playlist_id.value}`;
   configStore.pageName = data.value?.playlist.name || "Playlist";

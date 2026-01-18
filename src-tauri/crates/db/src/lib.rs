@@ -300,7 +300,7 @@ impl Database {
     /// Fetch albums limited by amount & offset
     pub fn album_pagination(&self, limit: u32, offset: u32) -> Result<Vec<Albums>> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(query("albums_offset"))?;
+        let mut stmt = conn.prepare_cached(query("albums_offset"))?;
         let result = stmt
             .query_map([limit, offset], Albums::from_row)?
             .collect::<Result<Vec<Albums>, rusqlite::Error>>()?;
@@ -429,10 +429,12 @@ impl Database {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(&playlist_id)?;
 
-        let mut stmt = conn.prepare(query("tracks_playlist_offset"))?;
-        let tracks = stmt
-            .query_map([playlist_id, limit, offset], Tracks::from_row)?
-            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
+        let mut stmt = conn.prepare_cached(query("tracks_playlist_offset"))?;
+        let mut tracks = Vec::with_capacity(limit as usize);
+
+        for track in stmt.query_map([playlist_id, limit, offset], Tracks::from_row)? {
+            tracks.push(track?);
+        }
 
         Ok(PlaylistWithTracks { playlist, tracks })
     }

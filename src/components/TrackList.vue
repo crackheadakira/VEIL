@@ -38,7 +38,7 @@
                 ? 'grid-cols-[auto_2fr_1fr_auto]'
                 : 'grid-cols-[auto_1fr_auto]'
             "
-            @dblclick="emitNewTrack(track, idx)"
+            @dblclick="emitNewTrack(track, idx + startIndex)"
           >
             <div class="flex shrink-0 items-center gap-4">
               <!-- (10 / 16) rem === 10px if rem = 16px -->
