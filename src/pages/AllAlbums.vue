@@ -5,30 +5,37 @@
     <h6 class="text-text-secondary w-full select-none">
       {{ totalAlbums }} albums
     </h6>
-    <div
-      ref="container"
-      class="grid h-full w-full grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4 overflow-y-scroll"
-      @scroll="onScroll"
+    <VirtualList
+      :items="albums"
+      :total="totalAlbums"
+      :itemHeight="bigCardHeight"
+      :itemWidth="bigCardWidth"
+      :gap="gap"
+      :fetchMore="fetchMore"
     >
-      <div
-        class="col-span-full w-full"
-        :style="{ height: topOffset + 'px' }"
-      ></div>
-      <BigCard class="shrink" v-for="album in visibleAlbums" :data="album" />
-      <div :style="{ height: bottomOffset + 'px' }"></div>
-    </div>
+      <template #default="{ items }">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4">
+          <BigCard
+            v-for="album in items"
+            :key="album.id"
+            :data="album"
+            class="shrink"
+          />
+        </div>
+      </template>
+    </VirtualList>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BigCard } from "@/components/";
+import { BigCard, VirtualList } from "@/components/";
 import {
   commands,
   handleBackendError,
   useConfigStore,
   type Albums,
 } from "@/composables/";
-import { computed, onMounted, ref, useTemplateRef, watch } from "vue";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
 import { useResizeObserver } from "@vueuse/core";
 
 const rootFontSize = parseFloat(
@@ -51,18 +58,6 @@ const totalAlbums = ref<number>(0);
 
 const container = useTemplateRef<HTMLElement>("container");
 
-const cardStartIndex = computed(() => {
-  const rowHeight = bigCardHeight + gap;
-  return Math.max(
-    0,
-    Math.floor(scrollOffset.value / rowHeight) * cardsPerRow.value,
-  );
-});
-
-const endIndex = computed(() =>
-  Math.min(cardStartIndex.value + albumsToFetch.value, totalAlbums.value),
-);
-
 const containerWidth = ref(container.value?.clientWidth || 1504);
 useResizeObserver(container, (entries) => {
   if (entries[0]) {
@@ -76,45 +71,11 @@ const cardsPerRow = computed(() =>
 
 const albumsToFetch = computed(() => cardsPerRow.value * 6);
 
-const scrollOffset = ref(0);
-
-function onScroll() {
-  const el = container.value;
-  if (!el) return;
-
-  scrollOffset.value = el.scrollTop;
+async function fetchMore(offset: number, count: number) {
+  const result = await commands.getAlbumsOffset(count, offset);
+  if (result.status === "error") return handleBackendError(result.error);
+  albums.value.push(...result.data);
 }
-
-const visibleAlbums = computed(() =>
-  albums.value.slice(cardStartIndex.value, endIndex.value),
-);
-
-const topOffset = computed(() => {
-  const rowHeight = bigCardHeight + gap;
-  const rowIndex = Math.floor(cardStartIndex.value / cardsPerRow.value);
-  return rowIndex * rowHeight;
-});
-
-const bottomOffset = computed(() => {
-  const totalRows = Math.ceil(totalAlbums.value / cardsPerRow.value);
-  const renderedRows = Math.ceil(
-    visibleAlbums.value.length / cardsPerRow.value,
-  );
-  return (
-    (totalRows -
-      (renderedRows + Math.floor(cardStartIndex.value / cardsPerRow.value))) *
-    (bigCardHeight + gap)
-  );
-});
-
-watch(cardStartIndex, async (newIndex) => {
-  if (newIndex + albumsToFetch.value > albums.value.length) {
-    const offset = albums.value.length;
-    const result = await commands.getAlbumsOffset(albumsToFetch.value, offset);
-    if (result.status === "error") return handleBackendError(result.error);
-    albums.value.push(...result.data);
-  }
-});
 
 onMounted(async () => {
   containerWidth.value = container.value?.clientWidth || containerWidth.value;

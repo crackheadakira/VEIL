@@ -1,0 +1,88 @@
+<template>
+  <div
+    ref="container"
+    class="relative h-full w-full overflow-y-auto"
+    @scroll="onScroll"
+  >
+    <div :style="{ height: topOffset + 'px' }"></div>
+    <slot :items="visibleItems"></slot>
+    <div :style="{ height: bottomOffset + 'px' }"></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch } from "vue";
+import { useResizeObserver } from "@vueuse/core";
+
+interface Props<T> {
+  items: T[];
+  total: number;
+  itemHeight: number;
+  itemWidth: number;
+  gap: number;
+  fetchMore?: (offset: number, count: number) => Promise<void>;
+}
+
+const props = defineProps<Props<any>>();
+
+const container = ref<HTMLElement | null>(null);
+const containerWidth = ref(0);
+const scrollOffset = ref(0);
+
+useResizeObserver(container, (entries) => {
+  if (entries[0]) containerWidth.value = entries[0].contentRect.width;
+});
+
+const cardsPerRow = computed(() =>
+  Math.max(
+    1,
+    Math.floor(
+      (containerWidth.value + props.gap) / (props.itemWidth + props.gap),
+    ),
+  ),
+);
+
+const itemsToFetch = computed(() => cardsPerRow.value * 6);
+
+const cardStartIndex = computed(() =>
+  Math.max(
+    0,
+    Math.floor(scrollOffset.value / (props.itemHeight + props.gap)) *
+      cardsPerRow.value,
+  ),
+);
+
+const endIndex = computed(() =>
+  Math.min(cardStartIndex.value + itemsToFetch.value, props.total),
+);
+
+const visibleItems = computed(() =>
+  props.items.slice(cardStartIndex.value, endIndex.value),
+);
+
+const topOffset = computed(() => {
+  const rowIndex = Math.floor(cardStartIndex.value / cardsPerRow.value);
+  return rowIndex * (props.itemHeight + props.gap);
+});
+
+const bottomOffset = computed(() => {
+  const totalRows = Math.ceil(props.total / cardsPerRow.value);
+  const renderedRows = Math.ceil(visibleItems.value.length / cardsPerRow.value);
+  return (
+    (totalRows -
+      (renderedRows + Math.floor(cardStartIndex.value / cardsPerRow.value))) *
+    (props.itemHeight + props.gap)
+  );
+});
+
+watch(cardStartIndex, async (newIndex) => {
+  if (props.fetchMore && newIndex + itemsToFetch.value > props.items.length) {
+    await props.fetchMore(props.items.length, itemsToFetch.value);
+  }
+});
+
+function onScroll() {
+  if (!container.value) return;
+  scrollOffset.value = container.value.scrollTop;
+}
+</script>

@@ -72,7 +72,7 @@
           }"
         >
           <small
-            class="text-text-secondary hover:text-accent-secondary truncate"
+            class="text-text-secondary hover:text-accent-secondary truncate hover:underline"
           >
             {{ track.album_name }}
           </small>
