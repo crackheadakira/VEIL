@@ -424,9 +424,9 @@ impl Database {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(&playlist_id)?;
 
-        let mut stmt = conn.prepare(query("tracks_offset"))?;
+        let mut stmt = conn.prepare(query("tracks_playlist_offset"))?;
         let tracks = stmt
-            .query_map([limit, offset], Tracks::from_row)?
+            .query_map([playlist_id, limit, offset], Tracks::from_row)?
             .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
 
         Ok(PlaylistWithTracks { playlist, tracks })

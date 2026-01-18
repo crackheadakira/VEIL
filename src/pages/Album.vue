@@ -42,7 +42,12 @@
       </div>
     </div>
 
-    <TrackList :origin-id="data.album.id" :tracks="data.tracks" />
+    <TrackList
+      :tracks="data.tracks"
+      :total-tracks="data.tracks.length"
+      :origin-id="data.album.id"
+      class="overflow-y-scroll"
+    />
   </div>
 </template>
 

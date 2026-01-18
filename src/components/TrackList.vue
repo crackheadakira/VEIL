@@ -117,7 +117,7 @@ const props = defineProps<{
   totalTracks: number;
   originId: number;
   playlist?: Playlists;
-  fetchMore: (offset: number, count: number) => Promise<void>;
+  fetchMore?: (offset: number, count: number) => Promise<void>;
 }>();
 
 // Make the backend set the track and do everything related to it.
