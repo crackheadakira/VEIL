@@ -30,7 +30,7 @@ function addToast(type: ToastType, description: string) {
   const id = Date.now();
   toasts.value.push({ id, type, description });
 
-  setTimeout(() => removeToast(id), 2100);
+  setTimeout(() => removeToast(id), 3500);
 }
 
 function persistentToast(id: number, type: ToastType, description: string) {

@@ -18,7 +18,6 @@ use crate::{
 };
 
 pub fn make_specta_type_builder() -> Builder {
-    // TODO: maybe easier way to pass in commands than typing all by hand?
     let specta_builder = Builder::<tauri::Wry>::new()
         .commands(collect_commands![
             commands::music_folder::select_music_folder,

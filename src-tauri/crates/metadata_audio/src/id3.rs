@@ -151,7 +151,6 @@ impl<'a> Frame<'a> {
     pub fn parse_by_id(frame_id: FrameId, data: &'a [u8]) -> Result<Self> {
         let parsed_frame = match frame_id {
             FrameId::Tit2 | FrameId::Tpe1 | FrameId::Talb => {
-                // TODO: check if worth doing unsafe in benchmarks
                 let text_data = str::from_utf8(&data[1..])?.trim();
                 Self::Text((frame_id, text_data))
             }

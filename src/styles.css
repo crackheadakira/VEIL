@@ -111,8 +111,8 @@ html[data-theme="dark"] {
   --animate-slideDownAndFade: slideDownAndFade 75ms var(--ease-sodapop);
 
   /* Zooms */
-  --animate-zoomIn: zoomIn 75ms var(--ease-sodapop);
-  --animate-zoomOut: zoomOut 75ms var(--ease-sodapop);
+  --animate-zoomIn: zoomIn 300ms var(--ease-sodapop);
+  --animate-zoomOut: zoomOut 150ms var(--ease-sodapop);
 
   @keyframes slideLeftAndFade {
     0% {
@@ -197,6 +197,10 @@ html[data-theme="dark"] {
 
 @utility context-menu-item {
   @apply text-text-primary data-disabled:text-text-secondary data-highlighted:bg-accent-primary data-highlighted:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-disabled:pointer-events-none;
+}
+
+@utility skeleton-loader {
+  @apply bg-border-secondary absolute inset-0 w-full animate-pulse rounded;
 }
 
 @layer base {
