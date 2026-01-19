@@ -32,6 +32,7 @@
           @playlist="handlePlaylist"
         >
           <div
+            v-show="!imageLoading[track.id]"
             class="hover:bg-bg-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
             :class="
               playlist
@@ -43,16 +44,24 @@
             <div class="flex shrink-0 items-center gap-4">
               <!-- (10 / 16) rem === 10px if rem = 16px -->
               <p
-                :style="{ width: idxWidth * (10 / 16) + 'rem' }"
+                :style="{
+                  width:
+                    (startIndex + idx).toString().length * (10 / 16) + 'rem',
+                }"
                 class="text-text-secondary group-hover:text-text-secondary-hovered text-right"
               >
                 {{ startIndex + idx + 1 }}
               </p>
-              <img
-                v-if="playlist"
-                :src="convertFileSrc(track.cover_path)"
-                class="aspect-square w-10 rounded-md"
-              />
+              <div class="relative aspect-square w-10">
+                {{ ensureLoading(track.id) }}
+
+                <img
+                  :src="convertFileSrc(track.cover_path)"
+                  class="aspect-square w-10 rounded-md"
+                  @load="imageLoading[track.id] = false"
+                  @error="imageLoading[track.id] = false"
+                />
+              </div>
             </div>
             <div class="grow basis-0 truncate *:truncate">
               <p
@@ -90,6 +99,36 @@
               </p>
             </div>
           </div>
+
+          <div
+            v-if="imageLoading[track.id]"
+            class="grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+            :class="
+              playlist
+                ? 'grid-cols-[auto_2fr_1fr_auto]'
+                : 'grid-cols-[auto_1fr_auto]'
+            "
+          >
+            <div class="relative flex w-10 shrink-0 items-center gap-4">
+              <div class="relative aspect-square w-10">
+                {{ ensureLoading(track.id) }}
+                <div class="skeleton-loader aspect-square w-10 rounded-md" />
+              </div>
+            </div>
+
+            <div class="grow basis-0">
+              <div class="relative mb-1 h-4 w-96">
+                <div class="skeleton-loader bg-border-primary"></div>
+              </div>
+              <div class="relative h-4 w-32">
+                <div class="skeleton-loader"></div>
+              </div>
+            </div>
+
+            <div class="relative h-4 w-32 grow basis-0">
+              <div class="skeleton-loader bg-border-primary"></div>
+            </div>
+          </div>
         </ContextMenu>
       </template>
     </VirtualList>
@@ -106,11 +145,9 @@ import {
   usePlaylistStore,
 } from "@/composables/";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import { computed } from "vue";
+import { ref } from "vue";
 
 const playlistStore = usePlaylistStore();
-
-const idxWidth = computed(() => props.tracks.length.toString().length); // number of digits
 
 const props = defineProps<{
   tracks: Tracks[];
@@ -136,6 +173,14 @@ async function emitNewTrack(track: Tracks, trackIdx: number) {
       },
     },
   });
+}
+
+const imageLoading = ref<Record<number, boolean>>({});
+
+function ensureLoading(id: number) {
+  if (imageLoading.value[id] === undefined) {
+    imageLoading.value[id] = true;
+  }
 }
 
 async function handlePlaylist(

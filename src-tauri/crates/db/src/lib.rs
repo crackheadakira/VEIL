@@ -430,11 +430,13 @@ impl Database {
         let playlist = self.by_id::<Playlists>(&playlist_id)?;
 
         let mut stmt = conn.prepare_cached(query("tracks_playlist_offset"))?;
-        let mut tracks = Vec::with_capacity(limit as usize);
 
-        for track in stmt.query_map([playlist_id, limit, offset], Tracks::from_row)? {
-            tracks.push(track?);
-        }
+        let start = std::time::Instant::now();
+        let tracks = stmt
+            .query_map([playlist_id, limit, offset], Tracks::from_row)?
+            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
+
+        logging::debug!("DB query took {:?}", start.elapsed());
 
         Ok(PlaylistWithTracks { playlist, tracks })
     }

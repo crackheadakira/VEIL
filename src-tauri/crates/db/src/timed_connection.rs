@@ -1,7 +1,7 @@
 use r2d2::{Pool, PooledConnection};
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{
-    CachedStatement, MappedRows, Params, Result as SqlResult, Row, Statement, Transaction,
+    CachedStatement, MappedRows, Params, Result as SqlResult, Row, Rows, Statement, Transaction,
 };
 use std::time::Instant;
 
@@ -57,6 +57,10 @@ pub struct TimedCachedStatement<'conn>(CachedStatement<'conn>, String);
 impl<'conn> TimedCachedStatement<'conn> {
     pub fn execute<P: Params>(&mut self, params: P) -> SqlResult<usize> {
         bench!("execute", self.1, self.0.execute(params))
+    }
+
+    pub fn query<P: Params>(&mut self, params: P) -> SqlResult<Rows<'_>> {
+        bench!("query", self.1, self.0.query(params))
     }
 
     pub fn query_row<P, F, T>(&mut self, params: P, f: F) -> SqlResult<T>

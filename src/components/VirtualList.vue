@@ -10,23 +10,24 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { ref, computed, watch } from "vue";
 import { useResizeObserver } from "@vueuse/core";
 
-interface Props<T> {
-  items: T[];
-  total: number;
-  itemHeight: number;
-  itemWidth?: number;
-  gap: number;
-  mode?: "grid" | "list";
-  fetchMore?: (offset: number, count: number) => Promise<void>;
-}
-
-const props = withDefaults(defineProps<Props<any>>(), {
-  mode: "grid",
-});
+const props = withDefaults(
+  defineProps<{
+    items: T[];
+    total: number;
+    itemHeight: number;
+    itemWidth?: number;
+    gap: number;
+    mode?: "grid" | "list";
+    fetchMore?: (offset: number, count: number) => Promise<void>;
+  }>(),
+  {
+    mode: "grid",
+  },
+);
 
 const container = ref<HTMLElement | null>(null);
 const containerWidth = ref(0);
