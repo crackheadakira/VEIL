@@ -49,7 +49,7 @@ const cardsPerRow = computed(() => {
 });
 
 const itemsToFetch = computed(() =>
-  props.mode === "list" ? 40 : cardsPerRow.value * 6,
+  props.mode === "list" ? 40 : cardsPerRow.value * 10,
 );
 
 const cardStartIndex = computed(() =>

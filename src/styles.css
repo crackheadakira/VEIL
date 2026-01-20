@@ -44,6 +44,7 @@ svg {
   /* Text Colors */
   --color-text-primary: #333333;
   --color-text-secondary: #777777;
+  --color-text-tertiary: #474749;
   --color-text-primary-hovered: #2d2d2d;
   --color-text-secondary-hovered: #616161;
 
@@ -59,19 +60,20 @@ svg {
 
 html[data-theme="dark"] {
   /* Text Colors */
-  --color-text-primary: #dddddd;
-  --color-text-secondary: #9a9a9a;
+  --color-text-primary: #a09fa4;
+  --color-text-secondary: #686970;
+  --color-text-tertiary: #474749;
   --color-text-primary-hovered: #b5b5b5;
   --color-text-secondary-hovered: #8d8c8c;
 
   /* Backgrounds */
-  --color-bg-primary: #010101;
-  --color-bg-secondary: #020202;
+  --color-bg-primary: #0d0c0f;
+  --color-bg-secondary: #0a0a0c;
   --color-bg-hovered: #040404;
 
   /* Borders */
-  --color-border-primary: #222222;
-  --color-border-secondary: #191919;
+  --color-border-primary: #211f27;
+  --color-border-secondary: #26232e;
 }
 
 @theme {
@@ -83,6 +85,7 @@ html[data-theme="dark"] {
   /* Text Colors */
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
   --color-text-primary-hovered: var(--color-text-primary-hovered);
   --color-text-secondary-hovered: var(--color-text-secondary-hovered);
 
@@ -236,13 +239,13 @@ html[data-theme="dark"] {
 
   p,
   label {
-    font-size: 1rem;
+    font-size: 0.8875rem;
     font-weight: 500;
     line-height: 1.25;
   }
 
   small {
-    font-size: 0.8875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
   }
 }

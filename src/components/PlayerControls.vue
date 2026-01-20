@@ -5,7 +5,7 @@
       :class="
         shuffled
           ? 'text-accent-primary hover:text-accent-primary-hovered'
-          : 'text-text-secondary hover:text-text-primary'
+          : 'text-text-tertiary hover:text-text-secondary'
       "
       class="i-fluent-arrow-shuffle-16-filled size-5 cursor-pointer transition-colors duration-150"
       @click="shuffleQueue"
@@ -28,7 +28,7 @@
       @click="updateRepeatMode"
       :class="
         (repeatMode === 'None'
-          ? 'text-text-secondary hover:text-text-primary'
+          ? 'text-text-tertiary hover:text-text-secondary'
           : '') ||
         (repeatMode === 'Queue'
           ? 'text-accent-primary hover:text-accent-primary-hovered'

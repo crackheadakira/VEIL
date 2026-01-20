@@ -4,30 +4,25 @@
   >
     <SearchBar />
 
-    <section class="flex flex-col gap-4">
-      <h6>General</h6>
-      <hr class="border-border-secondary border-t-2" />
+    <section class="flex flex-col gap-6">
+      <small class="text-text-tertiary">General</small>
 
       <div
-        class="*:hover:text-text-primary flex flex-col gap-6 *:inline-flex *:items-center *:gap-3"
+        class="*:hover:text-text-primary flex flex-col gap-4 px-2 *:inline-flex *:items-center"
       >
         <RouterLink to="/">
-          <span class="i-fluent-home-16-filled size-6"></span>
           <p>Home</p>
         </RouterLink>
 
         <div>
-          <span class="i-fluent-heart-16-filled size-6"></span>
           <p>Liked Songs</p>
         </div>
 
         <RouterLink to="/all_albums">
-          <span class="i-fluent-music-note-2-16-filled size-6"></span>
           <p>Albums</p>
         </RouterLink>
 
         <RouterLink to="/settings">
-          <span class="i-fluent-settings-16-filled size-6"></span>
           <p>Settings</p>
         </RouterLink>
       </div>
@@ -35,19 +30,23 @@
 
     <section
       v-if="allPlaylists && allPlaylists.length > 0"
-      class="flex flex-col gap-4"
+      class="flex flex-col gap-6"
     >
-      <h6 class="text-text-secondary">Playlists</h6>
-      <hr class="border-border-secondary border-t-2" />
-      <RouterLink
-        v-for="playlist of allPlaylists"
-        :key="playlist.id"
-        :to="`/playlist/${playlist.id}`"
-        class="text-text-secondary hover:text-text-primary flex items-center gap-4 rounded-md"
-      >
-        <img :src="playlist.cover_path" class="aspect-square w-16 rounded-sm" />
-        <p>{{ playlist.name }}</p>
-      </RouterLink>
+      <small class="text-text-tertiary">Playlists</small>
+      <div class="flex flex-col gap-4">
+        <RouterLink
+          v-for="playlist of allPlaylists"
+          :key="playlist.id"
+          :to="`/playlist/${playlist.id}`"
+          class="text-text-secondary hover:text-text-primary flex items-center gap-4 rounded-md"
+        >
+          <img
+            :src="playlist.cover_path"
+            class="border-border-primary aspect-square w-16 rounded-sm border"
+          />
+          <p>{{ playlist.name }}</p>
+        </RouterLink>
+      </div>
     </section>
   </nav>
 </template>

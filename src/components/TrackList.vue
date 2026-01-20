@@ -1,7 +1,7 @@
 <template>
   <div class="sodapop-card flex flex-col p-4" ref="trackList">
     <div
-      class="text-text-secondary border-border-secondary mb-4 grid items-center gap-4 rounded-md border-b p-3 px-4 select-none"
+      class="text-text-tertiary border-border-secondary mb-4 grid items-center gap-4 rounded-md border-b p-3 px-4 select-none"
       :class="
         playlist ? 'grid-cols-[auto_2fr_1fr_auto]' : 'grid-cols-[auto_1fr_auto]'
       "
@@ -48,7 +48,7 @@
                   width:
                     (startIndex + idx).toString().length * (10 / 16) + 'rem',
                 }"
-                class="text-text-secondary group-hover:text-text-secondary-hovered text-right"
+                class="text-text-tertiary group-hover:text-text-secondary-hovered text-right"
               >
                 {{ startIndex + idx + 1 }}
               </p>

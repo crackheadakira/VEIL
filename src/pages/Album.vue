@@ -8,17 +8,17 @@
 
       <div class="flex flex-col gap-4">
         <div class="flex cursor-default flex-col gap-1 select-none">
-          <h6 class="text-text-secondary">
+          <h6 class="text-text-tertiary">
             {{ data.album.album_type }}
           </h6>
           <h2 class="text-text-primary">{{ data.album.name }}</h2>
           <p class="text-text-secondary">{{ data.album.artist_name }}</p>
-          <small class="text-text-secondary">
+          <small class="text-text-tertiary">
             {{ formatTime("hh:mm:ss", data.album.duration) }},
             {{ data.album.track_count }}
             {{ data.album.track_count > 1 ? "songs" : "song" }}
           </small>
-          <p v-if="data.album.year" class="text-text-secondary">
+          <p v-if="data.album.year" class="text-text-tertiary">
             {{ data.album.year }}
           </p>
         </div>

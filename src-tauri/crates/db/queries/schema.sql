@@ -113,3 +113,6 @@ BEGIN
     SET track_count = track_count - 1
     WHERE id = OLD.playlist_id;
 END;
+
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist_id
+ON playlist_tracks (playlist_id);

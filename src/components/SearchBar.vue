@@ -1,13 +1,13 @@
 <template>
   <div
     @click="updateDialog"
-    class="text-text-secondary sodapop-card bg-bg-primary hover:border-border-primary flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
+    class="sodapop-card bg-bg-primary hover:border-border-primary flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
-    <p>Search...</p>
+    <p class="text-text-secondary">Search...</p>
     <small
-      class="text-text-primary bg-border-secondary ml-auto rounded-sm p-1 px-2"
-      >Ctrl F</small
+      class="text-text-tertiary bg-bg-secondary border-border-secondary ml-auto rounded-sm border p-1.5 px-3"
+      >Ctrl+F</small
     >
   </div>
   <Teleport to="body">
@@ -20,7 +20,7 @@
           v-if="showDialog"
           class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
         >
-          <div class="text-text-primary flex h-72 w-96 flex-col">
+          <div class="text-text-secondary flex h-72 w-96 flex-col">
             <div
               class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2"
             >
@@ -63,14 +63,14 @@
                   >
                     {{ result.title }}
                   </p>
-                  <p
+                  <small
                     :class="
                       idx === selected ? 'text-text-secondary-hovered' : ''
                     "
-                    class="text-text-secondary group-hover:text-text-secondary-hovered shrink-0"
+                    class="text-text-tertiary group-hover:text-text-secondary shrink-0"
                   >
                     {{ readableCapitalization(result.search_type) }}
-                  </p>
+                  </small>
                 </div>
               </div>
             </Transition>
