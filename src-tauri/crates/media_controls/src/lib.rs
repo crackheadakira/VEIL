@@ -38,9 +38,11 @@ use serde::Serialize;
 #[cfg(feature = "serialization")]
 use specta::Type;
 
-use crate::seams::{FakeSoundFactory, KiraSoundFactory, Sound, SoundFactory};
+use crate::seams::{
+    FakeMediaControls, FakeSoundFactory, KiraSoundFactory, Sound, SoundFactory, SouvlakiControls,
+};
 
-#[derive(Clone, Copy, Default, Debug)]
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub enum PlayerState {
     Playing,
@@ -103,7 +105,7 @@ impl<S: Sound> PlayerTrack<S> {
     }
 }
 
-pub struct Player<F: SoundFactory> {
+pub struct Player<F: SoundFactory, S: SouvlakiControls> {
     sound_factory: F,
 
     /// To use for playback & volume
@@ -119,15 +121,15 @@ pub struct Player<F: SoundFactory> {
     pub state: PlayerState,
 
     /// Souvlaki Controls
-    pub controls: MediaControls,
+    pub controls: S,
 
     pub track: Option<PlayerTrack<F::Sound>>,
     preloaded_track: Option<PlayerTrack<F::Sound>>,
 }
 
-pub type DefaultPlayer = Player<KiraSoundFactory>;
+pub type DefaultPlayer = Player<KiraSoundFactory, MediaControls>;
 
-impl Player<KiraSoundFactory> {
+impl Player<KiraSoundFactory, MediaControls> {
     pub fn new(c: souvlaki::PlatformConfig) -> Result<Self> {
         let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
 
@@ -153,8 +155,8 @@ impl Player<KiraSoundFactory> {
     }
 }
 
-impl Player<FakeSoundFactory> {
-    pub fn new_mock(controls: MediaControls) -> Result<Self> {
+impl Player<FakeSoundFactory, FakeMediaControls> {
+    pub fn new_mock() -> Result<Self> {
         let mut manager =
             AudioManager::<MockBackend>::new(AudioManagerSettings::default()).unwrap();
 
@@ -173,12 +175,12 @@ impl Player<FakeSoundFactory> {
             preloaded_track: None,
             volume: -6.0, // externally 0.0 - 1.0
             state: PlayerState::Paused,
-            controls,
+            controls: FakeMediaControls,
         })
     }
 }
 
-impl<F: SoundFactory> Player<F> {
+impl<F: SoundFactory, S: SouvlakiControls> Player<F, S> {
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
     pub fn set_volume(&mut self, volume: f32) -> Result<()> {
         // https://www.desmos.com/calculator/cj1nmmamzb
@@ -200,9 +202,7 @@ impl<F: SoundFactory> Player<F> {
         logging::debug!("Trying to play track {}", track.name);
 
         let (progress, track_duration) = {
-            if let Some(mut player_track) =
-                self.preloaded_track.take().or_else(|| self.track.take())
-            {
+            if let Some(mut player_track) = self.preloaded_track.take() {
                 logging::debug!("Found existing player track for track {}", track.name);
                 player_track
                     .sound_handle
@@ -452,17 +452,258 @@ impl<F: SoundFactory> Player<F> {
 mod tests {
     use super::*;
 
+    fn get_track(id: u32) -> Tracks {
+        Tracks {
+            id,
+            album_id: 0,
+            artist_id: 0,
+            album_name: "a".into(),
+            artist_name: "a".into(),
+            name: "a".into(),
+            number: 0,
+            duration: 120,
+            cover_path: "a".into(),
+            path: "a".into(),
+            hash: "a".into(),
+        }
+    }
+
     #[test]
     fn set_volume_range() -> Result<()> {
-        let controls = MediaControls::new(PlatformConfig {
-            dbus_name: "com.sodapop.reimagined.mock.dbus",
-            display_name: "Sodapop Reimagined Mock",
-            hwnd: None,
-        })?;
-        let mut player = Player::new_mock(controls)?;
+        let mut player = Player::new_mock()?;
 
         player.set_volume(0.0)?;
         assert_eq!(player.volume, -60.0);
+
+        player.set_volume(1.0)?;
+        assert_eq!(player.volume, 1.0);
+        Ok(())
+    }
+
+    #[test]
+    fn play_creates_track_when_none_preloaded() -> Result<()> {
+        let mut player = Player::new_mock()?;
+
+        assert_eq!(player.state, PlayerState::Paused);
+        assert!(!player.track.is_some());
+        assert!(!player.preloaded_track.is_some());
+
+        player.play(&get_track(0), None)?;
+
+        assert!(player.track.is_some());
+        assert!(!player.preloaded_track.is_some());
+
+        assert_eq!(player.state, PlayerState::Playing);
+        assert_eq!(player.clock.time().ticks, 0);
+        assert_eq!(player.track.as_ref().unwrap().duration, 120.0);
+        assert_eq!(player.track.as_ref().unwrap().progress, 0.0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn maybe_queue_next_sets_preloaded_track() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        assert!(player.preloaded_track.is_none());
+        player.maybe_queue_next(&track)?;
+        assert!(player.preloaded_track.is_some());
+        Ok(())
+    }
+
+    #[test]
+    fn play_uses_preloaded_track_if_available() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.maybe_queue_next(&track)?;
+
+        assert_eq!(player.state, PlayerState::Paused);
+        assert!(!player.track.is_some());
+        assert!(player.preloaded_track.is_some());
+
+        player.play(&track, None)?;
+
+        assert!(player.track.is_some());
+        assert!(!player.preloaded_track.is_some());
+
+        assert_eq!(player.state, PlayerState::Playing);
+        assert_eq!(player.clock.time().ticks, 0);
+        assert_eq!(player.track.as_ref().unwrap().duration, 120.0);
+        assert_eq!(player.track.as_ref().unwrap().progress, 0.0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn playing_new_track_replaces_current_track() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track1 = get_track(0);
+        let track2 = get_track(1);
+
+        player.play(&track1, None)?;
+        let first_id = player.track.as_ref().unwrap().id;
+
+        player.play(&track2, None)?;
+        let second_id = player.track.as_ref().unwrap().id;
+
+        assert_ne!(first_id, second_id);
+        Ok(())
+    }
+
+    #[test]
+    fn initialize_player_sets_track_with_progress() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.initialize_player(track.clone(), 50.0)?;
+        assert_eq!(player.track.as_ref().unwrap().progress, 50.0);
+        Ok(())
+    }
+
+    #[test]
+    fn player_play_sets_state_playing() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        assert!(player.get_player_state().is_none());
+        player.play(&track, None)?;
+
+        assert_eq!(player.get_player_state().unwrap(), PlaybackState::Playing);
+        assert_eq!(player.state, PlayerState::Playing);
+
+        Ok(())
+    }
+
+    #[test]
+    fn player_pause_sets_state_paused() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        assert!(player.get_player_state().is_none());
+        player.play(&track, None)?;
+
+        player.pause()?;
+
+        assert_eq!(player.get_player_state().unwrap(), PlaybackState::Paused);
+        assert_eq!(player.state, PlayerState::Paused);
+
+        Ok(())
+    }
+
+    #[test]
+    fn player_resume_sets_state_playing() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        assert!(player.get_player_state().is_none());
+        player.play(&track, None)?;
+        player.pause()?;
+
+        player.resume()?;
+
+        assert_eq!(player.get_player_state().unwrap(), PlaybackState::Playing);
+        assert_eq!(player.state, PlayerState::Playing);
+
+        Ok(())
+    }
+
+    #[test]
+    fn player_stop_sets_state_paused_and_clears_track() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        assert!(player.get_player_state().is_none());
+        player.play(&track, None)?;
+
+        player.stop()?;
+
+        assert!(player.get_player_state().is_none());
+        assert_eq!(player.state, PlayerState::Paused);
+        assert!(player.track.is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn scrobble_not_ready_returns_false() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.play(&track, None)?;
+
+        assert!(!player.scrobble());
+        assert_eq!(
+            player.track.as_ref().unwrap().scrobble_condition,
+            Some(60.0)
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn scrobble_ready_returns_true_once() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.play(&track, None)?;
+
+        player.track.as_mut().unwrap().scrobble_condition = Some(0.0);
+
+        assert!(player.scrobble());
+        assert!(player.should_scrobble().is_some());
+
+        Ok(())
+    }
+
+    #[test]
+    fn scrobble_after_already_scrobbled_returns_none() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.play(&track, None)?;
+
+        player.track.as_mut().unwrap().scrobble_condition = Some(0.0);
+
+        player.track.as_mut().unwrap().scrobbled = true;
+        assert!(player.should_scrobble().is_none());
+
+        Ok(())
+    }
+
+    #[test]
+    fn seek_with_resume_true_updates_progress_and_resumes() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.play(&track, None)?;
+
+        player.pause()?;
+
+        player.seek(20.0, true)?;
+
+        assert_eq!(player.track.as_ref().unwrap().sound_handle.pos, 20.0);
+        assert_eq!(player.track.as_ref().unwrap().progress, 20.0);
+        assert_eq!(player.state, PlayerState::Playing);
+
+        Ok(())
+    }
+
+    #[test]
+    fn seek_with_resume_false_updates_progress_but_pauses() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track = get_track(0);
+
+        player.play(&track, None)?;
+
+        player.pause()?;
+
+        player.seek(60.0, false)?;
+
+        assert_eq!(player.track.as_ref().unwrap().sound_handle.pos, 60.0);
+        assert_eq!(player.track.as_ref().unwrap().progress, 60.0);
+        assert_eq!(player.state, PlayerState::Paused);
 
         Ok(())
     }

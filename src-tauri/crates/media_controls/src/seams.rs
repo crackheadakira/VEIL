@@ -6,6 +6,7 @@ use kira::{
         streaming::{StreamingSoundData, StreamingSoundHandle},
     },
 };
+use souvlaki::MediaControls;
 
 pub trait Sound {
     /// Pauses playback.
@@ -83,6 +84,41 @@ impl Sound for StreamingSoundHandle<FromFileError> {
 
     fn set_volume(&mut self, volume: f32, tween: Tween) {
         self.set_volume(volume, tween);
+    }
+}
+
+pub trait SouvlakiControls {
+    fn set_volume(&mut self, volume: f64) -> Result<(), souvlaki::Error>;
+    fn set_metadata(&mut self, metadata: souvlaki::MediaMetadata) -> Result<(), souvlaki::Error>;
+    fn set_playback(&mut self, playback: souvlaki::MediaPlayback) -> Result<(), souvlaki::Error>;
+}
+
+impl SouvlakiControls for MediaControls {
+    fn set_volume(&mut self, volume: f64) -> Result<(), souvlaki::Error> {
+        self.set_volume(volume)
+    }
+
+    fn set_metadata(&mut self, metadata: souvlaki::MediaMetadata) -> Result<(), souvlaki::Error> {
+        self.set_metadata(metadata)
+    }
+
+    fn set_playback(&mut self, playback: souvlaki::MediaPlayback) -> Result<(), souvlaki::Error> {
+        self.set_playback(playback)
+    }
+}
+
+pub struct FakeMediaControls;
+impl SouvlakiControls for FakeMediaControls {
+    fn set_volume(&mut self, _volume: f64) -> Result<(), souvlaki::Error> {
+        Ok(())
+    }
+
+    fn set_metadata(&mut self, _metadata: souvlaki::MediaMetadata) -> Result<(), souvlaki::Error> {
+        Ok(())
+    }
+
+    fn set_playback(&mut self, _playback: souvlaki::MediaPlayback) -> Result<(), souvlaki::Error> {
+        Ok(())
     }
 }
 
