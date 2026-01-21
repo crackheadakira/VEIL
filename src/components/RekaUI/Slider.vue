@@ -9,7 +9,7 @@
       <SliderRange class="bg-accent-secondary absolute h-full rounded-full" />
     </SliderTrack>
     <SliderThumb
-      class="bg-text-primary hover:bg-accent-secondary focus:inset-ring-text-primary block h-4 w-4 rounded-full opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus:inset-ring-1 focus:outline-none"
+      class="bg-text-primary hover:bg-accent-secondary focus:inset-ring-text-primary block h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 focus:inset-ring-1 focus:outline-none"
     />
   </SliderRoot>
 </template>

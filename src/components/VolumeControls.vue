@@ -6,7 +6,7 @@
           ? 'i-fluent-speaker-mute-16-regular'
           : 'i-fluent-speaker-16-regular'
       "
-      class="text-text-secondary size-6"
+      class="text-text-secondary size-5"
     ></span>
     <Slider
       @update:model-value="updateVolume"

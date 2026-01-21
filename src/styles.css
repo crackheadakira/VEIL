@@ -237,14 +237,14 @@ html[data-theme="dark"] {
     font-weight: 500;
   }
 
-  p,
-  label {
+  p {
     font-size: 0.8875rem;
     font-weight: 500;
     line-height: 1.25;
   }
 
-  small {
+  small,
+  label {
     font-size: 0.8125rem;
     font-weight: 500;
   }

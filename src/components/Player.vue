@@ -47,9 +47,7 @@
 
     <div class="flex w-full flex-col items-center gap-4 px-6">
       <div class="flex w-full items-center gap-4 text-center">
-        <label class="text-text-tertiary w-10 text-sm">{{
-          currentProgress
-        }}</label>
+        <label class="text-text-tertiary w-10">{{ currentProgress }}</label>
         <Slider
           class="w-full"
           @pointerdown="beingHeld = true"
@@ -58,7 +56,7 @@
           :max="playerStore.currentTrack.duration"
           :step="0.1"
         />
-        <label class="text-text-tertiary w-10 text-sm">{{ totalLength }}</label>
+        <label class="text-text-tertiary w-10">{{ totalLength }}</label>
       </div>
 
       <PlayerControls :extra="true" />
