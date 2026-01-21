@@ -5,13 +5,12 @@ pub use kira::sound::PlaybackState;
 use kira::{
     AudioManager, AudioManagerSettings, DefaultBackend, StartTime, Tween,
     clock::{ClockHandle, ClockSpeed},
-    sound::{
-        FromFileError,
-        streaming::{StreamingSoundData, StreamingSoundHandle},
-    },
+    sound::FromFileError,
 };
 pub use souvlaki::{MediaControlEvent, PlatformConfig, SeekDirection};
 use souvlaki::{MediaControls, MediaMetadata, MediaPlayback};
+
+mod seams;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -38,6 +37,8 @@ use serde::Serialize;
 #[cfg(feature = "serialization")]
 use specta::Type;
 
+use crate::seams::{Clock, KiraSoundFactory, Sound, SoundFactory};
+
 #[derive(Clone, Copy, Default, Debug)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Type))]
 pub enum PlayerState {
@@ -46,9 +47,9 @@ pub enum PlayerState {
     Paused,
 }
 
-pub struct PlayerTrack {
+pub struct PlayerTrack<S: Sound> {
     /// Handle for the tracks [`StreamingSoundData`]
-    sound_handle: StreamingSoundHandle<FromFileError>,
+    sound_handle: S,
 
     /// Database ID of the track
     pub id: u32,
@@ -69,12 +70,8 @@ pub struct PlayerTrack {
     scrobble_condition: Option<f64>,
 }
 
-impl PlayerTrack {
-    pub fn new(
-        track_id: u32,
-        duration: f64,
-        sound_handle: StreamingSoundHandle<FromFileError>,
-    ) -> Self {
+impl<S: Sound> PlayerTrack<S> {
+    pub fn new(track_id: u32, duration: f64, sound_handle: S) -> Self {
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards")
@@ -105,14 +102,14 @@ impl PlayerTrack {
     }
 }
 
-pub struct Player {
-    manager: AudioManager<DefaultBackend>,
+pub struct Player<F: SoundFactory, C: Clock> {
+    sound_factory: F,
 
     /// To use for playback & volume
     tween: Tween,
 
     /// Clock to keep track of user's progress, can't use [`Player::progress`] as the user can manipulate that
-    clock: ClockHandle,
+    clock: C,
 
     /// Volume that ranges from -60 to 1.0
     pub volume: f32,
@@ -123,19 +120,23 @@ pub struct Player {
     /// Souvlaki Controls
     pub controls: MediaControls,
 
-    pub track: Option<PlayerTrack>,
-    preloaded_track: Option<PlayerTrack>,
+    pub track: Option<PlayerTrack<F::Sound>>,
+    preloaded_track: Option<PlayerTrack<F::Sound>>,
 }
 
-impl Player {
-    pub fn new(c: souvlaki::PlatformConfig) -> Result<Self> {
+pub type DefaultPlayer = Player<KiraSoundFactory, ClockHandle>;
+
+impl Player<KiraSoundFactory, ClockHandle> {
+    pub fn new(c: souvlaki::PlatformConfig) -> Result<Player<KiraSoundFactory, ClockHandle>> {
         let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
 
         // 1 tick per second
         let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0))?;
 
+        let sound_factory = KiraSoundFactory { manager };
+
         Ok(Player {
-            manager,
+            sound_factory,
             clock,
             tween: Tween {
                 start_time: StartTime::Immediate,
@@ -149,7 +150,9 @@ impl Player {
             controls: MediaControls::new(c)?,
         })
     }
+}
 
+impl<F: SoundFactory, C: Clock> Player<F, C> {
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
     pub fn set_volume(&mut self, volume: f32) -> Result<()> {
         // https://www.desmos.com/calculator/cj1nmmamzb
@@ -235,20 +238,14 @@ impl Player {
         &mut self,
         track: &Tracks,
         start_position: Option<f64>,
-    ) -> Result<PlayerTrack> {
+    ) -> Result<PlayerTrack<F::Sound>> {
         let progress = start_position.unwrap_or(0.0);
-        let sound_data = StreamingSoundData::from_file(&track.path)?.start_position(progress);
-        let track_duration = sound_data.duration();
 
-        let mut sound_handle = self.manager.play(sound_data)?;
-        sound_handle.set_volume(self.volume, self.tween);
-        sound_handle.pause(self.tween);
+        let (sound, duration) =
+            self.sound_factory
+                .create(&track.path, progress, self.volume, self.tween)?;
 
-        Ok(PlayerTrack::new(
-            track.id,
-            track_duration.as_secs_f64(),
-            sound_handle,
-        ))
+        Ok(PlayerTrack::new(track.id, duration, sound))
     }
 
     pub fn maybe_queue_next(&mut self, track: &Tracks) -> Result<()> {

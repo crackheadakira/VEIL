@@ -3,7 +3,7 @@ use std::sync::RwLockWriteGuard;
 use common::Tracks;
 use lastfm::TrackData;
 use logging::lock_or_log;
-use media_controls::{PlaybackState, Player};
+use media_controls::{DefaultPlayer, PlaybackState};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager, ipc::Channel};
@@ -74,7 +74,7 @@ pub async fn try_update_now_playing_to_lastfm(
 
 pub fn next_track_status(
     state: &TauriState,
-    player: &RwLockWriteGuard<'_, Player>,
+    player: &RwLockWriteGuard<'_, DefaultPlayer>,
 ) -> Option<Tracks> {
     player
         .get_player_state()
@@ -111,7 +111,7 @@ pub fn send_player_progress_via_channel(
 
 pub fn try_preloading_next_sound_handle(
     state: &TauriState,
-    player: &mut RwLockWriteGuard<'_, Player>,
+    player: &mut RwLockWriteGuard<'_, DefaultPlayer>,
 ) {
     // We already check if the track ends soon outside the call
     if !player.has_preloaded_track() {

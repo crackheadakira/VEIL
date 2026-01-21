@@ -17,7 +17,7 @@ use crate::{
 };
 
 pub struct SodapopState {
-    pub player: Arc<RwLock<media_controls::Player>>,
+    pub player: Arc<RwLock<media_controls::DefaultPlayer>>,
     pub queue: Arc<Mutex<QueueSystem>>,
     pub db: Arc<db::Database>,
     pub discord: Mutex<DiscordState>,
@@ -79,9 +79,9 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
         lastfm.set_session_key(session_key);
     }
 
-    let player = try_with_log!("Music Player", || media_controls::Player::new(
-        platform_config
-    ))?;
+    let player = try_with_log!("Music Player", || {
+        media_controls::Player::new(platform_config)
+    })?;
 
     Ok(SodapopState {
         player: Arc::new(RwLock::new(player)),
