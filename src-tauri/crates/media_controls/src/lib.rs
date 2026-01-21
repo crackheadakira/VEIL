@@ -4,6 +4,7 @@ use common::Tracks;
 pub use kira::sound::PlaybackState;
 use kira::{
     AudioManager, AudioManagerSettings, DefaultBackend, StartTime, Tween,
+    backend::mock::MockBackend,
     clock::{ClockHandle, ClockSpeed},
     sound::FromFileError,
 };
@@ -37,7 +38,7 @@ use serde::Serialize;
 #[cfg(feature = "serialization")]
 use specta::Type;
 
-use crate::seams::{Clock, KiraSoundFactory, Sound, SoundFactory};
+use crate::seams::{FakeSoundFactory, KiraSoundFactory, Sound, SoundFactory};
 
 #[derive(Clone, Copy, Default, Debug)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Type))]
@@ -102,14 +103,14 @@ impl<S: Sound> PlayerTrack<S> {
     }
 }
 
-pub struct Player<F: SoundFactory, C: Clock> {
+pub struct Player<F: SoundFactory> {
     sound_factory: F,
 
     /// To use for playback & volume
     tween: Tween,
 
     /// Clock to keep track of user's progress, can't use [`Player::progress`] as the user can manipulate that
-    clock: C,
+    clock: ClockHandle,
 
     /// Volume that ranges from -60 to 1.0
     pub volume: f32,
@@ -124,10 +125,10 @@ pub struct Player<F: SoundFactory, C: Clock> {
     preloaded_track: Option<PlayerTrack<F::Sound>>,
 }
 
-pub type DefaultPlayer = Player<KiraSoundFactory, ClockHandle>;
+pub type DefaultPlayer = Player<KiraSoundFactory>;
 
-impl Player<KiraSoundFactory, ClockHandle> {
-    pub fn new(c: souvlaki::PlatformConfig) -> Result<Player<KiraSoundFactory, ClockHandle>> {
+impl Player<KiraSoundFactory> {
+    pub fn new(c: souvlaki::PlatformConfig) -> Result<Self> {
         let mut manager = AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())?;
 
         // 1 tick per second
@@ -152,7 +153,32 @@ impl Player<KiraSoundFactory, ClockHandle> {
     }
 }
 
-impl<F: SoundFactory, C: Clock> Player<F, C> {
+impl Player<FakeSoundFactory> {
+    pub fn new_mock(controls: MediaControls) -> Result<Self> {
+        let mut manager =
+            AudioManager::<MockBackend>::new(AudioManagerSettings::default()).unwrap();
+
+        // 1 tick per second
+        let clock = manager.add_clock(ClockSpeed::TicksPerMinute(60.0))?;
+
+        Ok(Player {
+            sound_factory: FakeSoundFactory {},
+            clock,
+            tween: Tween {
+                start_time: StartTime::Immediate,
+                duration: Duration::from_millis(0),
+                easing: kira::Easing::Linear,
+            },
+            track: None,
+            preloaded_track: None,
+            volume: -6.0, // externally 0.0 - 1.0
+            state: PlayerState::Paused,
+            controls,
+        })
+    }
+}
+
+impl<F: SoundFactory> Player<F> {
     /// Takes a value from 0.0 to 1.0 and passes to player. Range gets converted to -60.0 to 1.0
     pub fn set_volume(&mut self, volume: f32) -> Result<()> {
         // https://www.desmos.com/calculator/cj1nmmamzb
@@ -419,5 +445,25 @@ impl<F: SoundFactory, C: Clock> Player<F, C> {
         Some(souvlaki::MediaPosition(std::time::Duration::from_secs_f64(
             progress,
         )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn set_volume_range() -> Result<()> {
+        let controls = MediaControls::new(PlatformConfig {
+            dbus_name: "com.sodapop.reimagined.mock.dbus",
+            display_name: "Sodapop Reimagined Mock",
+            hwnd: None,
+        })?;
+        let mut player = Player::new_mock(controls)?;
+
+        player.set_volume(0.0)?;
+        assert_eq!(player.volume, -60.0);
+
+        Ok(())
     }
 }

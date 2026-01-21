@@ -3,7 +3,9 @@ use serde::{Deserialize, Serialize};
 #[cfg(feature = "serialization")]
 use specta::Type;
 
+#[cfg(feature = "rusqlite")]
 mod rusqlite_impl;
+
 pub mod traits;
 
 #[derive(Debug)]

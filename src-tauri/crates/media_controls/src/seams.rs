@@ -1,7 +1,6 @@
 use crate::Result;
 use kira::{
     AudioManager, DefaultBackend, Tween,
-    clock::{ClockHandle, ClockTime},
     sound::{
         FromFileError, PlaybackState,
         streaming::{StreamingSoundData, StreamingSoundHandle},
@@ -45,6 +44,18 @@ pub trait Sound {
     fn set_volume(&mut self, volume: f32, tween: Tween);
 }
 
+pub trait SoundFactory {
+    type Sound: Sound;
+
+    fn create(
+        &mut self,
+        path: &str,
+        start_position: f64,
+        volume: f32,
+        tween: Tween,
+    ) -> Result<(Self::Sound, f64)>;
+}
+
 impl Sound for StreamingSoundHandle<FromFileError> {
     fn pause(&mut self, tween: Tween) {
         self.pause(tween);
@@ -75,18 +86,6 @@ impl Sound for StreamingSoundHandle<FromFileError> {
     }
 }
 
-pub trait SoundFactory {
-    type Sound: Sound;
-
-    fn create(
-        &mut self,
-        path: &str,
-        start_position: f64,
-        volume: f32,
-        tween: Tween,
-    ) -> Result<(Self::Sound, f64)>;
-}
-
 pub struct KiraSoundFactory {
     pub manager: AudioManager<DefaultBackend>,
 }
@@ -112,42 +111,61 @@ impl SoundFactory for KiraSoundFactory {
     }
 }
 
-pub trait Clock {
-    /// Starts the clock.
-    ///
-    /// See [`ClockHandle::start`] for detailed behavior.
-    fn start(&mut self);
-
-    /// Pauses the clock.
-    ///
-    /// See [`ClockHandle::pause`] for detailed behavior.
-    fn pause(&mut self);
-
-    /// Stops the clock.
-    ///
-    /// See [`ClockHandle::stop`] for detailed behavior.
-    fn stop(&mut self);
-
-    /// Returns the current time from the clock.
-    ///
-    /// See [`ClockHandle::time`] for detailed behavior.
-    fn time(&self) -> ClockTime;
+pub struct FakeSoundHandle {
+    pub pos: f64,
+    pub state: PlaybackState,
+    pub volume: f32,
 }
 
-impl Clock for ClockHandle {
-    fn start(&mut self) {
-        self.start();
+impl Sound for FakeSoundHandle {
+    fn pause(&mut self, _tween: Tween) {
+        self.state = PlaybackState::Paused;
     }
 
-    fn pause(&mut self) {
-        self.pause();
+    fn resume(&mut self, _tween: Tween) {
+        self.state = PlaybackState::Playing;
     }
 
-    fn stop(&mut self) {
-        self.stop();
+    fn seek_to(&mut self, pos: f64) {
+        self.pos = pos;
     }
 
-    fn time(&self) -> ClockTime {
-        self.time()
+    fn stop(&mut self, _tween: Tween) {
+        self.state = PlaybackState::Stopped;
+    }
+
+    fn position(&self) -> f64 {
+        self.pos
+    }
+
+    fn state(&self) -> PlaybackState {
+        self.state
+    }
+
+    fn set_volume(&mut self, volume: f32, _tween: Tween) {
+        self.volume = volume;
+    }
+}
+
+#[derive(Default)]
+pub struct FakeSoundFactory;
+impl crate::seams::SoundFactory for FakeSoundFactory {
+    type Sound = FakeSoundHandle;
+
+    fn create(
+        &mut self,
+        _path: &str,
+        start_position: f64,
+        volume: f32,
+        _tween: Tween,
+    ) -> Result<(Self::Sound, f64)> {
+        Ok((
+            FakeSoundHandle {
+                pos: start_position,
+                state: PlaybackState::Paused,
+                volume,
+            },
+            120.0,
+        ))
     }
 }
