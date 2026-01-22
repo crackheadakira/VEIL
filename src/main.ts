@@ -11,6 +11,7 @@ import {
   ArtistView,
   PlaylistView,
   SettingsView,
+  ColorTestingView,
 } from "@/pages/";
 
 const routes = [
@@ -24,6 +25,7 @@ const routes = [
   },
   { path: "/artist/:id", component: ArtistView, name: "artist", meta: { pageName: "Artist" } },
   { path: "/all_albums", component: AllAlbumsView, name: "all_albums", meta: { pageName: "All Albums" } },
+  { path: "/color_testing", component: ColorTestingView, name: "color_Testing", meta: { pageName: "Color Testing" } },
   { path: "/", component: HomeView, meta: { pageName: "Home" } },
 ];
 const router = createRouter({

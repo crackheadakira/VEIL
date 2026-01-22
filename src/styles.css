@@ -60,24 +60,44 @@ svg {
 
 html[data-theme="dark"] {
   /* Text Colors */
-  --color-text-primary: #a09fa4;
-  --color-text-secondary: #686970;
-  --color-text-tertiary: #474749;
-  --color-text-primary-hovered: #b5b5b5;
-  --color-text-secondary-hovered: #8d8c8c;
+  --color-text-primary: oklch(0.705 0.007 295.389);
+  --color-text-primary-disabled: oklch(0.582 0.011 295.389);
+  --color-text-primary-hovered: oklch(0.766 0.006 295.389);
+  --color-text-primary-active: oklch(0.827 0.004 295.389);
+
+  --color-text-secondary: oklch(0.522 0.011 279.51);
+  --color-text-secondary-disabled: oklch(0.422 0.01 279.51);
+  --color-text-secondary-hovered: oklch(0.622 0.008 279.51);
+  --color-text-secondary-active: oklch(0.722 0.006 279.51);
+
+  --color-text-tertiary: oklch(0.399 0.003 286.248);
+  --color-text-tertiary-disabled: oklch(0.311 0.003 286.248);
+  --color-text-tertiary-hovered: oklch(0.486 0.004 286.248);
+  --color-text-tertiary-active: oklch(0.573 0.004 286.248);
 
   /* Backgrounds */
-  --color-bg-primary: oklch(0.14 0.008 301);
-  --color-bg-secondary: #0a0a0c;
   --color-bg-hovered: #040404;
 
+  --color-bg-primary: oklch(0.14 0.008 301);
   --color-bg-primary-disabled: oklch(0.118 0.007 301);
-  --color-bg-primary-hover: oklch(0.163 0.009 301);
+  --color-bg-primary-hovered: oklch(0.163 0.009 301);
   --color-bg-primary-active: oklch(0.185 0.011 301);
 
+  --color-bg-secondary: oklch(0.146 0.004 285.857);
+  --color-bg-secondary-disabled: oklch(0.122 0.004 285.857);
+  --color-bg-secondary-hovered: oklch(0.17 0.005 285.857);
+  --color-bg-secondary-active: oklch(0.194 0.006 285.857);
+
   /* Borders */
-  --color-border-primary: #211f27;
-  --color-border-secondary: #26232e;
+  --color-border-primary: oklch(0.245 0.015 296.706);
+  --color-border-primary-disabled: oklch(0.196 0.012 296.706);
+  --color-border-primary-hovered: oklch(0.294 0.018 296.706);
+  --color-border-primary-active: oklch(0.342 0.021 296.706);
+
+  --color-border-secondary: oklch(0.264 0.021 297.459);
+  --color-border-secondary-disabled: oklch(0.211 0.016 297.459);
+  --color-border-secondary-hovered: oklch(0.318 0.025 297.459);
+  --color-border-secondary-active: oklch(0.371 0.029 297.459);
 }
 
 @theme {
@@ -88,23 +108,43 @@ html[data-theme="dark"] {
 
   /* Text Colors */
   --color-text-primary: var(--color-text-primary);
-  --color-text-secondary: var(--color-text-secondary);
-  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-primary-disabled: var(--color-text-primary-disabled);
   --color-text-primary-hovered: var(--color-text-primary-hovered);
+  --color-text-primary-active: var(--color-text-primary-active);
+
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-secondary-disabled: var(--color-text-secondary-disabled);
   --color-text-secondary-hovered: var(--color-text-secondary-hovered);
+  --color-text-secondary-active: var(--color-text-secondary-active);
+
+  --color-text-tertiary: var(--color-text-tertiary);
+  --color-text-tertiary-disabled: var(--color-text-tertiary-disabled);
+  --color-text-tertiary-hovered: var(--color-text-tertiary-hovered);
+  --color-text-tertiary-active: var(--color-text-tertiary-active);
 
   /* Backgrounds */
   --color-bg-primary: var(--color-bg-primary);
-  --color-bg-secondary: var(--color-bg-secondary);
-  --color-bg-hovered: var(--color-bg-hovered);
-
   --color-bg-primary-disabled: var(--color-bg-primary-disabled);
-  --color-bg-primary-hover: var(--color-bg-primary-hover);
+  --color-bg-primary-hovered: var(--color-bg-primary-hovered);
   --color-bg-primary-active: var(--color-bg-primary-active);
+
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-secondary-disabled: var(--color-bg-secondary-disabled);
+  --color-bg-secondary-hovered: var(--color-bg-secondary-hovered);
+  --color-bg-secondary-active: var(--color-bg-secondary-active);
+
+  --color-bg-hovered: var(--color-bg-hovered);
 
   /* Borders */
   --color-border-primary: var(--color-border-primary);
+  --color-border-primary-disabled: var(--color-border-primary-disabled);
+  --color-border-primary-hovered: var(--color-border-primary-hovered);
+  --color-border-primary-active: var(--color-border-primary-active);
+
   --color-border-secondary: var(--color-border-secondary);
+  --color-border-secondary-disabled: var(--color-border-secondary-disabled);
+  --color-border-secondary-hovered: var(--color-border-secondary-hovered);
+  --color-border-secondary-active: var(--color-border-secondary-active);
 
   /* Sodapop Aspect Ratios */
   --aspect-card: 3.9 / 1;
