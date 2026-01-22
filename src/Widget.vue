@@ -22,9 +22,7 @@
           v-show="imageHovered"
         >
           <PlayerControls class="text-text-primary" />
-          <VolumeControls
-            class="text-text-primary absolute bottom-1 left-1/2 -translate-x-1/2"
-          />
+          <VolumeControls class="absolute bottom-1 left-1/2 -translate-x-1/2" />
         </div>
       </Transition>
     </div>
@@ -39,7 +37,7 @@
         </p>
       </div>
       <span
-        class="i-fluent-window-new-24-filled text-text-secondary hover:text-border-primary pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
+        class="i-fluent-window-new-24-filled text-text-tertiary hover:text-text-secondary-hovered pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
         @click="hideWidget"
       ></span>
     </div>

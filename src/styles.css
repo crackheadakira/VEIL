@@ -67,9 +67,13 @@ html[data-theme="dark"] {
   --color-text-secondary-hovered: #8d8c8c;
 
   /* Backgrounds */
-  --color-bg-primary: #0d0c0f;
+  --color-bg-primary: oklch(0.14 0.008 301);
   --color-bg-secondary: #0a0a0c;
   --color-bg-hovered: #040404;
+
+  --color-bg-primary-disabled: oklch(0.118 0.007 301);
+  --color-bg-primary-hover: oklch(0.163 0.009 301);
+  --color-bg-primary-active: oklch(0.185 0.011 301);
 
   /* Borders */
   --color-border-primary: #211f27;
@@ -93,6 +97,10 @@ html[data-theme="dark"] {
   --color-bg-primary: var(--color-bg-primary);
   --color-bg-secondary: var(--color-bg-secondary);
   --color-bg-hovered: var(--color-bg-hovered);
+
+  --color-bg-primary-disabled: var(--color-bg-primary-disabled);
+  --color-bg-primary-hover: var(--color-bg-primary-hover);
+  --color-bg-primary-active: var(--color-bg-primary-active);
 
   /* Borders */
   --color-border-primary: var(--color-border-primary);

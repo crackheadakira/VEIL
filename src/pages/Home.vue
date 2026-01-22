@@ -14,6 +14,7 @@
         Show Error Toast
       </button>
     </div>
+    <RouterLink to="/color_testing">Color Testing</RouterLink>
     <div class="flex gap-2">
       <PlaylistCard />
     </div>
