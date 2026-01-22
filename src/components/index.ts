@@ -14,5 +14,6 @@ export { default as TitleBar } from "./TitleBar.vue";
 export { default as SearchBar } from "./SearchBar.vue";
 export { default as VolumeControls } from "./VolumeControls.vue";
 export { default as VirtualList } from "./VirtualList.vue";
+export { default as Button } from "./Button.vue";
 
 export * from "./RekaUI/index";

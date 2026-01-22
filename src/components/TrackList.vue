@@ -13,6 +13,7 @@
         class="i-fluent-clock-12-regular text-text-secondary -end-col-1 size-4"
       ></span>
     </div>
+
     <VirtualList
       :items="tracks"
       :total="totalTracks"
@@ -33,7 +34,7 @@
         >
           <div
             v-show="!imageLoading[track.id]"
-            class="hover:bg-bg-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
+            class="hover:bg-bg-secondary-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
             :class="
               playlist
                 ? 'grid-cols-[auto_2fr_1fr_auto]'
@@ -48,7 +49,7 @@
                   width:
                     (startIndex + idx).toString().length * (10 / 16) + 'rem',
                 }"
-                class="text-text-tertiary group-hover:text-text-secondary-hovered text-right"
+                class="text-text-tertiary group-hover:text-text-tertiary-hovered text-right"
               >
                 {{ startIndex + idx + 1 }}
               </p>
@@ -84,7 +85,7 @@
               }"
             >
               <small
-                class="text-text-secondary hover:text-accent-secondary truncate hover:underline"
+                class="text-text-secondary hover:text-text-secondary-hovered truncate hover:underline"
               >
                 {{ track.album_name }}
               </small>

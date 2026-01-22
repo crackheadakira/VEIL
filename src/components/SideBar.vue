@@ -5,10 +5,10 @@
     <SearchBar />
 
     <section class="flex flex-col gap-6">
-      <small class="text-text-tertiary">General</small>
+      <small class="text-text-tertiary select-none">General</small>
 
       <div
-        class="*:hover:text-text-primary flex flex-col gap-4 px-2 *:inline-flex *:items-center"
+        class="*:hover:text-text-secondary-hovered *:active:text-text-secondary-active flex flex-col gap-4 px-2 *:inline-flex *:items-center"
       >
         <RouterLink to="/">
           <p>Home</p>
@@ -32,7 +32,7 @@
       v-if="allPlaylists && allPlaylists.length > 0"
       class="flex flex-col gap-6"
     >
-      <small class="text-text-tertiary">Playlists</small>
+      <small class="text-text-tertiary select-none">Playlists</small>
       <div class="flex flex-col gap-4">
         <RouterLink
           v-for="playlist of allPlaylists"

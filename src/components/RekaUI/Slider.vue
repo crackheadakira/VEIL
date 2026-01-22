@@ -6,10 +6,10 @@
     :step="props.step"
   >
     <SliderTrack class="bg-border-secondary relative h-2 grow rounded-full">
-      <SliderRange class="bg-accent-secondary absolute h-full rounded-full" />
+      <SliderRange class="bg-text-primary absolute h-full rounded-full" />
     </SliderTrack>
     <SliderThumb
-      class="bg-text-primary hover:bg-accent-secondary focus:inset-ring-text-primary block h-4 w-4 rounded-full opacity-0 group-hover:opacity-100 focus:inset-ring-1 focus:outline-none"
+      class="bg-text-secondary border-border-primary focus:inset-ring-text-secondary block h-4 w-4 rounded-full border opacity-0 group-hover:opacity-100 focus:inset-ring-1 focus:outline-none"
     />
   </SliderRoot>
 </template>

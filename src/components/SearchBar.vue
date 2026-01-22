@@ -1,10 +1,10 @@
 <template>
   <div
     @click="updateDialog"
-    class="sodapop-card bg-bg-primary hover:border-border-primar flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
+    class="sodapop-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
   >
     <span class="i-fluent-search-20-filled"></span>
-    <p class="text-text-secondary">Search...</p>
+    <p class="text-text-tertiary">Search...</p>
     <small
       class="text-text-tertiary bg-bg-secondary border-border-secondary ml-auto rounded-sm border p-1.5 px-3"
       >Ctrl+F</small
@@ -33,7 +33,7 @@
                 type="text"
                 @focusin="focused = true"
                 @focusout="focused = false"
-                class="placeholder-text-secondary w-full focus:outline-hidden"
+                class="placeholder-text-tertiary w-full font-medium focus:outline-hidden"
                 placeholder="Search..."
               />
             </div>
@@ -53,9 +53,9 @@
                     router.push(`/${result.search_type}/${result.search_id}`))
                   "
                   v-for="(result, idx) of searchResults"
-                  :class="idx === selected ? 'bg-bg-hovered' : ''"
+                  :class="idx === selected ? 'bg-bg-primary-hovered' : ''"
                   ref="resultElements"
-                  class="hover:bg-bg-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+                  class="hover:bg-bg-secondary-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
                 >
                   <p
                     :class="idx === selected ? 'text-text-primary-hovered' : ''"
@@ -67,7 +67,7 @@
                     :class="
                       idx === selected ? 'text-text-secondary-hovered' : ''
                     "
-                    class="text-text-tertiary group-hover:text-text-secondary shrink-0"
+                    class="text-text-tertiary group-hover:text-text-tertiary-hovered shrink-0"
                   >
                     {{ readableCapitalization(result.search_type) }}
                   </small>

@@ -20,21 +20,16 @@
         </div>
 
         <div class="flex gap-4 *:cursor-pointer">
-          <button
+          <Button
             @click="handlePlayButton(false)"
-            class="text aspect-button bg-accent-primary text-bg-primary flex h-12 items-center justify-center gap-2 rounded-md duration-150 hover:opacity-90"
-          >
-            <span class="i-fluent-play-24-filled h-7"></span>
-            <p>Play</p>
-          </button>
-
-          <button
+            label="Play"
+            icon="i-fluent-play-24-filled"
+          />
+          <Button
             @click="handlePlayButton(true)"
-            class="text aspect-button border-border-secondary bg-bg-primary text-text-secondary flex h-12 items-center justify-center gap-2 rounded-md border duration-150 hover:opacity-80"
-          >
-            <span class="i-fluent-arrow-shuffle-20-filled h-7"></span>
-            <p>Shuffle</p>
-          </button>
+            label="Shuffle"
+            icon="i-fluent-arrow-shuffle-20-filled"
+          />
         </div>
       </div>
     </div>
@@ -51,7 +46,7 @@
 </template>
 
 <script setup lang="ts">
-import { TrackList } from "@/components/";
+import { TrackList, Button } from "@/components/";
 import {
   commands,
   events,

@@ -2,7 +2,7 @@
   <div>
     <div
       v-show="!loadingImage"
-      class="group aspect-secondaryCard flex h-70 w-48 cursor-pointer flex-col gap-4 select-none"
+      class="group aspect-secondaryCard flex h-70 w-48 flex-col gap-4 select-none"
     >
       <RouterLink
         :to="{
@@ -11,7 +11,7 @@
         }"
       >
         <img
-          class="aspect-square w-48 rounded-md duration-150 group-hover:opacity-90"
+          class="aspect-square w-48 cursor-pointer rounded-md duration-150 group-hover:opacity-90"
           :src="convertFileSrc(album_data.cover_path)"
           alt="Album Cover"
           width="192"
@@ -20,13 +20,19 @@
         />
       </RouterLink>
       <div class="text-text-secondary flex flex-col gap-1">
-        <h6 class="text-text-primary truncate">
+        <h6
+          class="text-text-primary group-hover:text-text-primary-hovered truncate"
+        >
           {{ album_data.name }}
         </h6>
 
-        <p class="truncate">{{ album_data.artist_name }}</p>
+        <p class="truncate">
+          {{ album_data.artist_name }}
+        </p>
 
-        <p>{{ album_data.album_type }}</p>
+        <p class="text-text-tertiary">
+          {{ album_data.album_type }}
+        </p>
       </div>
     </div>
 

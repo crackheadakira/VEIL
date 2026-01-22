@@ -51,7 +51,6 @@ svg {
   /* Backgrounds */
   --color-bg-primary: #fcfcfc;
   --color-bg-secondary: #f5f5f5;
-  --color-bg-hovered: #e7e7e7;
 
   /* Borders */
   --color-border-primary: #dddddd;
@@ -74,9 +73,6 @@ html[data-theme="dark"] {
   --color-text-tertiary-disabled: oklch(0.311 0.003 286.248);
   --color-text-tertiary-hovered: oklch(0.486 0.004 286.248);
   --color-text-tertiary-active: oklch(0.573 0.004 286.248);
-
-  /* Backgrounds */
-  --color-bg-hovered: #040404;
 
   --color-bg-primary: oklch(0.14 0.008 301);
   --color-bg-primary-disabled: oklch(0.118 0.007 301);
@@ -132,8 +128,6 @@ html[data-theme="dark"] {
   --color-bg-secondary-disabled: var(--color-bg-secondary-disabled);
   --color-bg-secondary-hovered: var(--color-bg-secondary-hovered);
   --color-bg-secondary-active: var(--color-bg-secondary-active);
-
-  --color-bg-hovered: var(--color-bg-hovered);
 
   /* Borders */
   --color-border-primary: var(--color-border-primary);
@@ -247,7 +241,7 @@ html[data-theme="dark"] {
 }
 
 @utility context-menu-item {
-  @apply text-text-primary data-disabled:text-text-secondary data-highlighted:bg-accent-primary data-highlighted:text-text-primary relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-disabled:pointer-events-none;
+  @apply bg-bg-secondary text-text-primary data-disabled:text-text-primary-disabled data-highlighted:bg-bg-secondary-hovered data-highlighted:text-text-primary-hovered relative flex h-6 cursor-default items-center gap-1.5 rounded-sm px-2 py-4 text-sm leading-none outline-none select-none data-disabled:pointer-events-none;
 }
 
 @utility skeleton-loader {

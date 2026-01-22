@@ -5,22 +5,22 @@
       :class="
         shuffled
           ? 'text-accent-primary hover:text-accent-primary-hovered'
-          : 'text-text-tertiary hover:text-text-secondary'
+          : 'text-text-tertiary hover:text-text-tertiary-hovered'
       "
       class="i-fluent-arrow-shuffle-16-filled size-5 cursor-pointer transition-colors duration-150"
       @click="shuffleQueue"
     ></span>
     <span
-      class="i-fluent-previous-16-filled text-text-secondary hover:text-text-primary size-5 cursor-pointer transition-colors duration-150"
+      class="i-fluent-previous-16-filled text-text-secondary hover:text-text-secondary-hovered size-5 cursor-pointer transition-colors duration-150"
       @click="previousTrack"
     ></span>
     <span
       @click="updatePlayerState"
       :class="playing ? 'i-fluent-pause-16-filled' : 'i-fluent-play-16-filled'"
-      class="i-fluent-pause-16-filled text-text-secondary hover:text-text-primary size-6 cursor-pointer transition-colors duration-150"
+      class="i-fluent-pause-16-filled text-text-secondary hover:text-text-secondary-hovered size-6 cursor-pointer transition-colors duration-150"
     ></span>
     <span
-      class="i-fluent-next-16-filled text-text-secondary hover:text-text-primary size-5 cursor-pointer transition-colors duration-150"
+      class="i-fluent-next-16-filled text-text-secondary hover:text-text-secondary-hovered size-5 cursor-pointer transition-colors duration-150"
       @click="nextTrack"
     ></span>
     <span
@@ -28,7 +28,7 @@
       @click="updateRepeatMode"
       :class="
         (repeatMode === 'None'
-          ? 'text-text-tertiary hover:text-text-secondary'
+          ? 'text-text-tertiary hover:text-text-tertiary-hovered'
           : '') ||
         (repeatMode === 'Queue'
           ? 'text-accent-primary hover:text-accent-primary-hovered'
