@@ -335,4 +335,70 @@ mod tests {
         let result = u32_from_bytes_be(&[0x10, 0x20, 0x40, 0x30], &mut 0);
         assert_eq!(result, 0x10204030);
     }
+
+    #[test]
+    fn read_n_bits_u32_across_byte_boundary() {
+        let bytes = [0b1010_1010, 0b1100_1100];
+
+        // start at bit 4, read 8 bits → 1010_1100
+        let val = read_n_bits_u32(&bytes, 4, 8);
+        assert_eq!(val, 0b1010_1100);
+    }
+
+    #[test]
+    fn metadata_from_flac_blocks_populates_fields() {
+        let blocks = vec![
+            Block::StreamInfo(crate::flac::StreamInfo {
+                duration: 123.0,
+                sample_rate: 20_000,
+                total_samples: 60_000,
+            }),
+            Block::VorbisComment(crate::flac::VorbisComment {
+                vendor_string: Some("Vendor"),
+                album: Some("Album"),
+                album_artist: Some("Artist"),
+                title: Some("Track"),
+                year: Some(2024),
+                track_number: Some(3),
+            }),
+        ];
+
+        let meta = Metadata::from_flac_blocks(blocks);
+
+        assert_eq!(meta.duration, 123.0);
+        assert_eq!(meta.album, Some("Album"));
+        assert_eq!(meta.artist, Some("Artist"));
+        assert_eq!(meta.name, Some("Track"));
+        assert_eq!(meta.year, Some(2024));
+        assert_eq!(meta.track_number, Some(3));
+    }
+
+    #[test]
+    fn metadata_from_id3_frames_populates_fields() {
+        let frames = vec![
+            Frame::Text((FrameId::Tit2, "Track")),
+            Frame::Text((FrameId::Tpe1, "Artist")),
+            Frame::Text((FrameId::Talb, "Album")),
+            Frame::Year(2023),
+            Frame::Duration(180.0),
+        ];
+
+        let meta = Metadata::from_id3_frames(frames);
+
+        assert_eq!(meta.name, Some("Track"));
+        assert_eq!(meta.artist, Some("Artist"));
+        assert_eq!(meta.album, Some("Album"));
+        assert_eq!(meta.year, Some(2023));
+        assert_eq!(meta.duration, 180.0);
+    }
+
+    #[test]
+    fn invalid_flac_signature_returns_error() {
+        let mut buffer = Vec::new();
+        let data = b"NOTF";
+        let mut reader = Cursor::new(data);
+
+        let err = Metadata::read_flac(&mut buffer, &mut reader, true).unwrap_err();
+        matches!(err, Error::InvalidFlacSignature);
+    }
 }

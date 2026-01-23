@@ -26,6 +26,8 @@ lastfm = { path = "crates/lastfm" }
 logging = { path = "crates/logging" }
 media_controls = { path = "crates/media_controls" }
 metadata_audio = { path = "crates/metadata_audio" }
+thiserror = "^2.0.12"
+anyhow = "^1.0.100"
 
 [workspace.lints.clippy]
 all = { level = "warn", priority = 0 }

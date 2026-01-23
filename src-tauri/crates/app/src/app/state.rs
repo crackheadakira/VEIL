@@ -70,7 +70,7 @@ pub fn initialize_state() -> Result<SodapopState, FrontendError> {
     let discord_client_id =
         env::var("DISCORD_CLIENT_ID").expect("Missing DISCORD_CLIENT_ID environment variable");
 
-    let mut discord = try_with_log!("Discord RPC", || DiscordState::new(&discord_client_id))?;
+    let mut discord = DiscordState::new(&discord_client_id);
 
     lastfm.enable(sodapop_config.integrations.last_fm_enabled);
     discord.enable(sodapop_config.integrations.discord_enabled);

@@ -79,7 +79,7 @@ impl<'a> LastFM {
         let url = &self.base_url;
 
         let response = match method {
-            Method::GET => self.client.get(url).query(&params).send().await?,
+            Method::GET => self.client.get(url).form(&params).send().await?,
             Method::POST => {
                 self.client
                     .post(url)

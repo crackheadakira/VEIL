@@ -29,7 +29,7 @@
             <div class="flex w-full justify-end gap-2">
               <button
                 @click="showDialog = false"
-                class="aspect-button sodapop-card text-text-secondary w-24 cursor-pointer hover:opacity-80"
+                class="aspect-button sodapop-card text-text-secondary hover:border-border-secondary-hovered hover:text-text-secondary-hovered w-24 cursor-pointer"
               >
                 <p>Cancel</p>
               </button>
@@ -37,11 +37,11 @@
               <button
                 :class="
                   inputValue.length === 0
-                    ? 'cursor-not-allowed opacity-80'
-                    : 'cursor-pointer'
+                    ? 'text-text-secondary-disabled border-border-secondary-disabled cursor-not-allowed'
+                    : 'hover:border-border-secondary-hovered hover:text-text-secondary-hovered cursor-pointer'
                 "
                 @click="handleSubmit"
-                class="aspect-button sodapop-card text-text-secondary w-24 hover:opacity-80"
+                class="aspect-button sodapop-card text-text-secondary w-24"
               >
                 <p>Submit</p>
               </button>

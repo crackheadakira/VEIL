@@ -23,9 +23,10 @@ pub struct PayloadData {
 }
 
 impl DiscordState {
-    pub fn new(client_id: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let rpc = DiscordIpcClient::new(client_id)?;
-        Ok(Self {
+    pub fn new(client_id: &str) -> Self {
+        let rpc = DiscordIpcClient::new(client_id);
+
+        Self {
             enabled: false,
             rpc,
             payload_changed: false,
@@ -39,7 +40,7 @@ impl DiscordState {
                 progress: 0.0,
                 duration: -1.0,
             },
-        })
+        }
     }
 
     pub fn enable(&mut self, enable: bool) {

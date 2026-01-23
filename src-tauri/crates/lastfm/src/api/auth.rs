@@ -17,7 +17,7 @@ impl<'a> Auth<'a> {
     /// # Example
     /// Assumes you have already built [`LastFM`] and are
     /// holding it under the variable `last_fm`
-    /// ```
+    /// ```ignore
     /// use lastfm::Auth;
     ///
     /// // Request a token from Last.FM that can be later
@@ -33,7 +33,7 @@ impl<'a> Auth<'a> {
     /// # Example
     /// Assumes you have already built [`LastFM`] and are
     /// holding it under the variable `last_fm`
-    /// ```
+    /// ```ignore
     /// use lastfm::Auth;
     ///
     /// // User has already authorized the token

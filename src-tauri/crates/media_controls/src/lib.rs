@@ -216,12 +216,7 @@ impl<F: SoundFactory, S: SouvlakiControls> Player<F, S> {
                 self.track = Some(player_track);
 
                 (progress, duration)
-            } else if self
-                .track
-                .as_ref()
-                .map(|t| t.id != track.id)
-                .unwrap_or(true)
-            {
+            } else if self.track.as_ref().is_none_or(|t| t.id != track.id) {
                 logging::debug!("Creating new player track for {}", track.name);
                 let mut player_track = self.create_player_track(track, start_position)?;
                 player_track.sound_handle.resume(self.tween);
