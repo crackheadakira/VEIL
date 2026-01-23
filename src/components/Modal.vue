@@ -1,6 +1,6 @@
 <template>
-  <div class="h-fit w-fit">
-    <div v-if="!hideTrigger" @click="show = true">
+  <div>
+    <div class="w-fit" v-if="!hideTrigger" @click="show = true">
       <slot name="trigger">
         <Button
           wide
@@ -9,6 +9,7 @@
         />
       </slot>
     </div>
+
     <teleport to="body">
       <Transition
         enter-active-class="animate-zoomIn"
@@ -18,6 +19,7 @@
           id="modal"
           v-if="show"
           class="bg-bg-primary/50 fixed inset-0 flex items-center justify-center"
+          @click="closeOnBackdrop"
         >
           <slot></slot>
         </div>
@@ -44,6 +46,12 @@ const show = defineModel<boolean>({ default: false });
  */
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key === "Escape") {
+    show.value = false;
+  }
+}
+
+function closeOnBackdrop(event: MouseEvent) {
+  if (event.target === event.currentTarget) {
     show.value = false;
   }
 }

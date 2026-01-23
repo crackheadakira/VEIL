@@ -1,84 +1,75 @@
 <template>
-  <div
-    @click="updateDialog"
-    class="sodapop-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
-  >
-    <span class="i-fluent-search-20-filled"></span>
-    <p class="text-text-tertiary">Search...</p>
-    <small
-      class="text-text-tertiary bg-bg-secondary border-border-secondary ml-auto rounded-sm border p-1.5 px-3"
-      >Ctrl+F</small
-    >
-  </div>
-  <Teleport to="body">
-    <div>
-      <Transition
-        enter-active-class="animate-zoomIn"
-        leave-active-class="animate-zoomOut"
+  <Modal v-model="showDialog">
+    <template #trigger>
+      <div
+        @click="updateDialog"
+        class="sodapop-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
       >
-        <div
-          v-if="showDialog"
-          class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
+        <span class="i-fluent-search-20-filled"></span>
+        <p class="text-text-tertiary">Search...</p>
+        <small
+          class="text-text-tertiary bg-bg-secondary border-border-secondary ml-auto rounded-sm border p-1.5 px-3"
+          >Ctrl+F</small
         >
-          <div class="text-text-secondary flex h-72 w-96 flex-col">
-            <div
-              class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2"
-            >
-              <span
-                class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
-              ></span>
-              <InputBar
-                v-model="input"
-                ref="inputElement"
-                input-type="text"
-                @focusin="focused = true"
-                @focusout="focused = false"
-                placeholder="Search..."
-                input-name="searchBar"
-              />
-            </div>
+      </div>
+    </template>
 
-            <Transition
-              enter-active-class="animate-slideDownAndFade"
-              leave-active-class="animate-slideDownAndFade animation-reverse"
-            >
-              <div
-                v-if="searchResults && searchResults.length"
-                class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
-              >
-                <div
-                  :key="result.title + result.search_id"
-                  @click="
-                    ((showDialog = false),
-                    router.push(`/${result.search_type}/${result.search_id}`))
-                  "
-                  v-for="(result, idx) of searchResults"
-                  :class="idx === selected ? 'bg-bg-primary-hovered' : ''"
-                  ref="resultElements"
-                  class="hover:bg-bg-secondary-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
-                >
-                  <p
-                    :class="idx === selected ? 'text-text-primary-hovered' : ''"
-                    class="group-hover:text-text-primary-hovered truncate"
-                  >
-                    {{ result.title }}
-                  </p>
-                  <small
-                    :class="
-                      idx === selected ? 'text-text-secondary-hovered' : ''
-                    "
-                    class="text-text-tertiary group-hover:text-text-tertiary-hovered shrink-0"
-                  >
-                    {{ readableCapitalization(result.search_type) }}
-                  </small>
-                </div>
-              </div>
-            </Transition>
-          </div>
+    <template #default>
+      <div class="text-text-secondary flex h-72 w-96 flex-col">
+        <div
+          class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2"
+        >
+          <span
+            class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
+          ></span>
+          <InputBar
+            v-model="input"
+            ref="inputElement"
+            input-type="text"
+            @focusin="focused = true"
+            @focusout="focused = false"
+            placeholder="Search..."
+            input-name="searchBar"
+          />
         </div>
-      </Transition>
-    </div>
-  </Teleport>
+
+        <Transition
+          enter-active-class="animate-slideDownAndFade"
+          leave-active-class="animate-slideDownAndFade animation-reverse"
+        >
+          <div
+            v-if="searchResults && searchResults.length"
+            class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+          >
+            <div
+              :key="result.title + result.search_id"
+              @click="
+                ((showDialog = false),
+                router.push(`/${result.search_type}/${result.search_id}`))
+              "
+              v-for="(result, idx) of searchResults"
+              :class="idx === selected ? 'bg-bg-primary-hovered' : ''"
+              ref="resultElements"
+              class="hover:bg-bg-secondary-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+            >
+              <p
+                :class="idx === selected ? 'text-text-primary-hovered' : ''"
+                class="group-hover:text-text-primary-hovered truncate"
+              >
+                {{ result.title }}
+              </p>
+              <small
+                :class="idx === selected ? 'text-text-secondary-hovered' : ''"
+                class="text-text-tertiary group-hover:text-text-tertiary-hovered shrink-0"
+              >
+                {{ readableCapitalization(result.search_type) }}
+              </small>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
@@ -86,7 +77,7 @@ import { nextTick, ref, useTemplateRef, watch } from "vue";
 import { Search, commands, readableCapitalization } from "@/composables/";
 import { useEventListener } from "@vueuse/core";
 import { useRouter } from "vue-router";
-import { InputBar } from "@/components/";
+import { InputBar, Modal } from "@/components/";
 
 const router = useRouter();
 

@@ -33,7 +33,7 @@ import { ref } from "vue";
 const props = defineProps<{
   title: string;
   description?: string;
-  placeholder?: string;
+  placeholder: string;
 }>();
 
 const emit = defineEmits<{

@@ -1,20 +1,18 @@
 <template>
   <div class="bg-bg-primary text-text-primary flex flex-col gap-4">
-    <div>
-      <button
+    <div class="flex gap-2">
+      <Button
         @click="showToast('success', 'This is a success toast')"
-        class="sodapop-card cursor-pointer"
-      >
-        Show Success Toast
-      </button>
-      <button
+        label="Show Success Toast"
+      />
+      <Button
         @click="showToast('error', 'This is an error toast')"
-        class="sodapop-card cursor-pointer"
-      >
-        Show Error Toast
-      </button>
+        label="Show Error Toast"
+      />
     </div>
-    <RouterLink to="/color_testing">Color Testing</RouterLink>
+    <RouterLink class="w-fit" to="/color_testing">
+      <Button label="Color Testing" />
+    </RouterLink>
     <div class="flex gap-2">
       <PlaylistCard />
     </div>
@@ -22,15 +20,15 @@
       <p class="text-text-primary">Hello</p>
     </Modal>
     <Dialog
-      title="Hello"
+      title="I am a title."
       description="I am a description."
-      placeholder="Submit..."
+      placeholder="Placeholder..."
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { PlaylistCard, Modal, Dialog } from "@/components/";
+import { PlaylistCard, Modal, Dialog, Button } from "@/components/";
 import { toastBus, useConfigStore } from "@/composables/";
 import { onMounted } from "vue";
 
