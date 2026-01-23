@@ -18,11 +18,14 @@
     <div class="flex gap-2">
       <PlaylistCard />
     </div>
+    <Modal>
+      <p class="text-text-primary">Hello</p>
+    </Modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { PlaylistCard } from "@/components/";
+import { PlaylistCard, Modal } from "@/components/";
 import { toastBus, useConfigStore } from "@/composables/";
 import { onMounted } from "vue";
 

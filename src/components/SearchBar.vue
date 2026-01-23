@@ -27,14 +27,14 @@
               <span
                 class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
               ></span>
-              <input
+              <InputBar
                 v-model="input"
                 ref="inputElement"
-                type="text"
+                input-type="text"
                 @focusin="focused = true"
                 @focusout="focused = false"
-                class="placeholder-text-tertiary w-full font-medium focus:outline-hidden"
                 placeholder="Search..."
+                input-name="searchBar"
               />
             </div>
 
@@ -86,6 +86,7 @@ import { nextTick, ref, useTemplateRef, watch } from "vue";
 import { Search, commands, readableCapitalization } from "@/composables/";
 import { useEventListener } from "@vueuse/core";
 import { useRouter } from "vue-router";
+import { InputBar } from "@/components/";
 
 const router = useRouter();
 
@@ -97,7 +98,7 @@ const clamp = (v: number) =>
 const showDialog = ref(false);
 const lastInput = ref(Date.now());
 
-const inputElement = useTemplateRef<HTMLInputElement>("inputElement");
+const inputElement = ref<InstanceType<typeof InputBar>>();
 const input = ref("");
 const selected = ref(0);
 const focused = ref(false);

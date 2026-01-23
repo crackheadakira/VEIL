@@ -1,5 +1,6 @@
 export { default as BigCard } from "./BigCard.vue";
 export { default as Dialog } from "./Dialog.vue";
+export { default as Modal } from "./Modal.vue";
 export { default as DialogGuide } from "./DialogGuide.vue";
 export { default as Dropdown } from "./Dropdown.vue";
 export { default as Player } from "./Player.vue";
@@ -15,5 +16,6 @@ export { default as SearchBar } from "./SearchBar.vue";
 export { default as VolumeControls } from "./VolumeControls.vue";
 export { default as VirtualList } from "./VirtualList.vue";
 export { default as Button } from "./Button.vue";
+export { default as InputBar } from "./InputBar.vue";
 
 export * from "./RekaUI/index";
