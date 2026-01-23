@@ -31,6 +31,7 @@
           :playlists="playlistStore.playlists"
           :curr_playlist="playlist"
           @playlist="handlePlaylist"
+          @create-playlist="createNewPlaylist"
         >
           <div
             v-show="!imageLoading[track.id]"
@@ -191,5 +192,13 @@ async function handlePlaylist(
 ) {
   if (type === "add") await playlistStore.addToPlaylist(playlistId, trackId);
   else await playlistStore.removeFromPlaylist(playlistId, trackId);
+}
+
+async function createNewPlaylist(playlist: string, trackId: number) {
+  const playlistId = await playlistStore.createPlaylist(playlist);
+
+  if (playlistId) {
+    handlePlaylist("add", playlistId, trackId);
+  }
 }
 </script>

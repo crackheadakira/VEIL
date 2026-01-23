@@ -21,11 +21,16 @@
     <Modal>
       <p class="text-text-primary">Hello</p>
     </Modal>
+    <Dialog
+      title="Hello"
+      description="I am a description."
+      placeholder="Submit..."
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { PlaylistCard, Modal } from "@/components/";
+import { PlaylistCard, Modal, Dialog } from "@/components/";
 import { toastBus, useConfigStore } from "@/composables/";
 import { onMounted } from "vue";
 

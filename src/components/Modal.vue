@@ -1,8 +1,9 @@
 <template>
   <div class="h-fit w-fit">
-    <div @click="model = true">
+    <div v-if="!hideTrigger" @click="show = true">
       <slot name="trigger">
         <Button
+          wide
           :label="triggerLabel ?? 'Show Modal'"
           icon="i-fluent-layout-row-two-16-filled"
         />
@@ -15,7 +16,7 @@
       >
         <div
           id="modal"
-          v-if="model"
+          v-if="show"
           class="bg-bg-primary/50 fixed inset-0 flex items-center justify-center"
         >
           <slot></slot>
@@ -31,9 +32,10 @@ import { watch } from "vue";
 
 const props = defineProps<{
   triggerLabel?: string;
+  hideTrigger?: boolean;
 }>();
 
-const model = defineModel<boolean>({ default: false });
+const show = defineModel<boolean>({ default: false });
 
 /**
  * Handle the keydown event.
@@ -42,11 +44,11 @@ const model = defineModel<boolean>({ default: false });
  */
 function handleKeyDown(e: KeyboardEvent) {
   if (e.key === "Escape") {
-    model.value = false;
+    show.value = false;
   }
 }
 
-watch(model, (value) => {
+watch(show, (value) => {
   if (value) window.addEventListener("keydown", handleKeyDown);
   else window.removeEventListener("keydown", handleKeyDown);
 });

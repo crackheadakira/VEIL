@@ -23,16 +23,18 @@
           </p>
         </div>
 
-        <div class="flex gap-4 *:cursor-pointer">
+        <div class="flex gap-4">
           <Button
             @click="handlePlayButton(false)"
             label="Play"
             icon="i-fluent-play-24-filled"
+            wide
           />
           <Button
             @click="handlePlayButton(true)"
             label="Shuffle"
             icon="i-fluent-arrow-shuffle-20-filled"
+            wide
           />
         </div>
       </div>

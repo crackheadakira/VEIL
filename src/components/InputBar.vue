@@ -21,8 +21,8 @@ import { useTemplateRef, type InputTypeHTMLAttribute } from "vue";
 
 defineProps<{
   inputName: string;
-  placeholder: string;
   inputType: InputTypeHTMLAttribute;
+  placeholder?: string;
   label?: string;
   required?: boolean;
 }>();

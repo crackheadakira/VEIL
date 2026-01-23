@@ -64,19 +64,25 @@
       </ContextMenuContent>
     </ContextMenuPortal>
   </ContextMenuRoot>
-  <Dialog
-    :title="'New Playlist'"
-    placeholder="New Playlist"
-    @submitted="
-      (name: string) => $emit('create-playlist', name, props.track.id)
-    "
-    v-model="showDialog"
-  ></Dialog>
+
+  <Modal hide-trigger v-model="showDialog">
+    <Dialog
+      title="New Playlist"
+      placeholder="New Playlist"
+      @cancel="showDialog = false"
+      @submit="
+        (name: string) => (
+          $emit('create-playlist', name, props.track.id),
+          (showDialog = false)
+        )
+      "
+    />
+  </Modal>
 </template>
 
 <script setup lang="ts">
 import { events, Playlists, Tracks } from "@/composables/";
-import { Dialog } from "@/components/";
+import { Dialog, Modal } from "@/components/";
 import {
   ContextMenuRoot,
   ContextMenuTrigger,
