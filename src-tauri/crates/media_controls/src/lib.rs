@@ -212,6 +212,7 @@ impl<F: SoundFactory, S: SouvlakiControls> Player<F, S> {
 
                 let duration = player_track.duration;
                 let progress = player_track.progress;
+                player_track.scrobbled = false;
 
                 self.track = Some(player_track);
 
@@ -238,6 +239,7 @@ impl<F: SoundFactory, S: SouvlakiControls> Player<F, S> {
 
                 let duration = player_track.duration;
                 let progress = player_track.progress;
+                player_track.scrobbled = false;
 
                 (progress, duration)
             }
@@ -562,6 +564,22 @@ mod tests {
         let second_id = player.track.as_ref().unwrap().id;
 
         assert_ne!(first_id, second_id);
+        Ok(())
+    }
+
+    #[test]
+    fn playing_same_track_resets_fields() -> Result<()> {
+        let mut player = Player::new_mock()?;
+        let track1 = get_track(0);
+
+        player.play(&track1, None)?;
+        assert!(!player.track.as_ref().unwrap().scrobbled);
+
+        player.track.as_mut().unwrap().scrobbled = true;
+
+        player.play(&track1, None)?;
+
+        assert!(!player.track.as_ref().unwrap().scrobbled);
         Ok(())
     }
 
