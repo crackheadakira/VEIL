@@ -6,28 +6,35 @@ import App from "./App.vue";;
 
 import {
   HomeView,
-  AlbumView,
   AllAlbumsView,
   ArtistView,
-  PlaylistView,
   SettingsView,
   ColorTestingView,
+  CollectionView,
 } from "@/pages/";
 
 const routes = [
   { path: "/settings", component: SettingsView, name: "settings", meta: { pageName: "Settings" } },
-  { path: "/album/:id", component: AlbumView, name: "album", meta: { pageName: "Album" } },
+  {
+    path: "/album/:id",
+    component: CollectionView,
+    name: "album",
+    meta: { pageName: "Album" },
+    props: { type: "Album" as const },
+  },
   {
     path: "/playlist/:id",
-    component: PlaylistView,
+    component: CollectionView,
     name: "playlist",
-    meta: { pageName: "Playlist" }
+    meta: { pageName: "Playlist" },
+    props: { type: "Playlist" as const },
   },
   { path: "/artist/:id", component: ArtistView, name: "artist", meta: { pageName: "Artist" } },
   { path: "/all_albums", component: AllAlbumsView, name: "all_albums", meta: { pageName: "All Albums" } },
   { path: "/color_testing", component: ColorTestingView, name: "color_Testing", meta: { pageName: "Color Testing" } },
   { path: "/", component: HomeView, meta: { pageName: "Home" } },
 ];
+
 const router = createRouter({
   history: createMemoryHistory(),
   routes,

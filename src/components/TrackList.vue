@@ -3,12 +3,14 @@
     <div
       class="text-text-tertiary border-border-secondary mb-4 grid items-center gap-4 rounded-md border-b p-3 px-4 select-none"
       :class="
-        playlist ? 'grid-cols-[auto_2fr_1fr_auto]' : 'grid-cols-[auto_1fr_auto]'
+        playlist_id
+          ? 'grid-cols-[auto_2fr_1fr_auto]'
+          : 'grid-cols-[auto_1fr_auto]'
       "
     >
       <small>#</small>
       <small class="col-span-1">Title</small>
-      <small v-if="playlist" class="col-span-1">Album</small>
+      <small v-if="playlist_id" class="col-span-1">Album</small>
       <span
         class="i-fluent-clock-12-regular text-text-secondary -end-col-1 size-4"
       ></span>
@@ -29,7 +31,7 @@
           :key="track.id"
           :track="track"
           :playlists="playlistStore.playlists"
-          :curr_playlist="playlist"
+          :playlist_id="playlist_id"
           @playlist="handlePlaylist"
           @create-playlist="createNewPlaylist"
         >
@@ -37,7 +39,7 @@
             v-show="!imageLoading[track.id]"
             class="hover:bg-bg-secondary-hovered group grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
             :class="
-              playlist
+              playlist_id
                 ? 'grid-cols-[auto_2fr_1fr_auto]'
                 : 'grid-cols-[auto_1fr_auto]'
             "
@@ -79,7 +81,7 @@
             </div>
             <RouterLink
               class="grow basis-0 truncate"
-              v-if="playlist"
+              v-if="playlist_id"
               :to="{
                 name: 'album',
                 params: { id: track.album_id },
@@ -106,7 +108,7 @@
             v-if="imageLoading[track.id]"
             class="grid cursor-pointer items-center gap-4 rounded-md p-3 px-4 select-none"
             :class="
-              playlist
+              playlist_id
                 ? 'grid-cols-[auto_2fr_1fr_auto]'
                 : 'grid-cols-[auto_1fr_auto]'
             "
@@ -142,7 +144,6 @@ import { ContextMenu, VirtualList } from "@/components/";
 import {
   events,
   formatTime,
-  Playlists,
   type Tracks,
   usePlaylistStore,
 } from "@/composables/";
@@ -155,7 +156,7 @@ const props = defineProps<{
   tracks: Tracks[];
   totalTracks: number;
   originId: number;
-  playlist?: Playlists;
+  playlist_id?: number;
   fetchMore?: (offset: number, count: number) => Promise<void>;
 }>();
 
@@ -170,7 +171,7 @@ async function emitNewTrack(track: Tracks, trackIdx: number) {
       tracks: trackIds,
       queue_idx: trackIdx,
       origin: {
-        type: props.playlist !== undefined ? "Playlist" : "Album",
+        type: props.playlist_id !== undefined ? "Playlist" : "Album",
         data: { id: props.originId },
       },
     },

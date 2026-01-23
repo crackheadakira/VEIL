@@ -44,11 +44,9 @@
         </ContextMenuSub>
 
         <ContextMenuItem
-          v-if="curr_playlist"
+          v-if="playlist_id"
           class="group context-menu-item"
-          @select="
-            $emit('playlist', 'remove', curr_playlist.id, props.track.id)
-          "
+          @select="$emit('playlist', 'remove', playlist_id, props.track.id)"
         >
           <span class="i-fluent-delete-24-regular"></span>
           <small>Remove from Playlist</small>
@@ -98,7 +96,7 @@ import { ref } from "vue";
 const showDialog = ref(false);
 
 const props = defineProps<{
-  curr_playlist?: Playlists;
+  playlist_id?: number;
   track: Tracks;
   playlists: Playlists[] | null;
 }>();
