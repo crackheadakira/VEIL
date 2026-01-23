@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-2">
-    <label v-if="label" class="text-text-inverse" :for="inputName">{{
+    <label v-if="label" class="text-text-secondary" :for="inputName">{{
       label
     }}</label>
     <input
@@ -11,7 +11,7 @@
       :required="required"
       v-model="inputValue"
       ref="inputRef"
-      class="placeholder-text-tertiary text-text-primary bg-bg-primary w-full font-medium focus:outline-hidden"
+      class="placeholder-text-tertiary text-text-primary bg-bg-secondary border-border-secondary w-full rounded-md border p-3 font-medium focus:outline-hidden"
     />
   </div>
 </template>
@@ -22,12 +22,12 @@ import { useTemplateRef, type InputTypeHTMLAttribute } from "vue";
 defineProps<{
   inputName: string;
   inputType: InputTypeHTMLAttribute;
-  placeholder?: string;
+  placeholder: string;
   label?: string;
   required?: boolean;
 }>();
 
-const inputValue = defineModel<string>({ required: true, default: "" });
+const inputValue = defineModel<string>({ default: "" });
 const inputRef = useTemplateRef<HTMLInputElement>("inputRef");
 
 defineExpose({

@@ -12,7 +12,6 @@
       input-type="text"
       :placeholder="placeholder"
       input-name="dialogInput"
-      class="sodapop-card"
     />
 
     <div class="flex w-full justify-end gap-2">

@@ -99,6 +99,13 @@ impl<'conn> TimedStatement<'conn> {
         bench!("query_row", self.1, self.0.query_row(params, f))
     }
 
+    pub fn query<P>(&mut self, params: P) -> SqlResult<Rows<'_>>
+    where
+        P: Params,
+    {
+        bench!("query", self.1, self.0.query(params))
+    }
+
     pub fn exists<P: Params>(&mut self, params: P) -> SqlResult<bool> {
         bench!("exists", self.1, self.0.exists(params))
     }

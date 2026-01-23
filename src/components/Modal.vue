@@ -18,7 +18,7 @@
         <div
           id="modal"
           v-if="show"
-          class="bg-bg-primary/50 fixed inset-0 flex items-center justify-center"
+          class="bg-bg-primary/50 fixed inset-0 z-10 flex items-center justify-center"
           @click="closeOnBackdrop"
         >
           <slot></slot>

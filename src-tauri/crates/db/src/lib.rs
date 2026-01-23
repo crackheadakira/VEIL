@@ -450,9 +450,19 @@ impl Database {
         Ok(result)
     }
 
-    pub fn update_playlist(&self, playlist: &NewPlaylist) -> Result<()> {
+    pub fn update_playlist(
+        &self,
+        playlist_id: u32,
+        name: Option<String>,
+        description: Option<String>,
+        cover_path: Option<String>,
+    ) -> Result<()> {
         let conn = self.pool.get()?;
-        conn.execute(query("playlists_update"), playlist.to_params().as_slice())?;
+
+        conn.execute(
+            query("playlists_update"),
+            rusqlite::params![name, description, cover_path, playlist_id],
+        )?;
 
         Ok(())
     }

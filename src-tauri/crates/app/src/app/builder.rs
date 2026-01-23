@@ -47,6 +47,8 @@ pub fn make_specta_type_builder() -> Builder {
             commands::plugins::open_url,
             commands::db::get_playlist_tracks_offset,
             commands::db::get_total_tracks_in_playlist,
+            commands::db::get_playlist_details,
+            commands::db::update_playlist,
         ])
         .events(collect_events![
             SodapopConfigEvent,

@@ -26,6 +26,37 @@ export const usePlaylistStore = defineStore("playlist", () => {
     return result.data;
   }
 
+  async function updatePlaylist(
+    id: number,
+    name: string,
+    description?: string,
+    cover?: string,
+  ) {
+    const index = playlists.value.findIndex((p) => p.id === id);
+    if (index === -1) return toastBus.addToast('error', "No matching playlist index was found.");
+
+    const result = await commands.updatePlaylist(
+      id,
+      name,
+      description ?? null,
+      cover ?? null,
+    );
+
+    if (result.status === "error") return handleBackendError(result.error);
+    toastBus.addToast("success", "Playlist updated successfully");
+
+    const playlist = playlists.value[index];
+    playlists.value[index] = {
+      ...playlist,
+      name,
+      description: description ?? playlist.description,
+      cover_path: cover ?? playlist.cover_path,
+    };
+
+    return true;
+  }
+
+
   async function addToPlaylist(playlistId: number, trackId: number) {
     const result = await commands.addToPlaylist(playlistId, trackId);
     if (result.status === "error") return handleBackendError(result.error);
@@ -49,5 +80,6 @@ export const usePlaylistStore = defineStore("playlist", () => {
     addToPlaylist,
     removeFromPlaylist,
     getTracksFromPlaylist,
+    updatePlaylist,
   };
 });

@@ -115,6 +115,33 @@ pub fn add_to_playlist(
 
 #[tauri::command]
 #[specta::specta]
+pub fn update_playlist(
+    playlist_id: u32,
+    name: Option<String>,
+    description: Option<String>,
+    cover_path: Option<String>,
+    state: TauriState,
+) -> Result<(), FrontendError> {
+    state
+        .db
+        .update_playlist(playlist_id, name, description, cover_path)?;
+
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn get_playlist_details(
+    playlist_id: u32,
+    state: TauriState,
+) -> Result<Playlists, FrontendError> {
+    let playlist = state.db.by_id::<Playlists>(&playlist_id)?;
+
+    Ok(playlist)
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn get_playlist_tracks(
     playlist_id: u32,
     state: TauriState,

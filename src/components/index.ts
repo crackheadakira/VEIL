@@ -17,5 +17,6 @@ export { default as VolumeControls } from "./VolumeControls.vue";
 export { default as VirtualList } from "./VirtualList.vue";
 export { default as Button } from "./Button.vue";
 export { default as InputBar } from "./InputBar.vue";
+export { default as PlaylistEdit } from "./PlaylistEdit.vue";
 
 export * from "./RekaUI/index";

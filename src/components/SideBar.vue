@@ -29,13 +29,13 @@
     </section>
 
     <section
-      v-if="allPlaylists && allPlaylists.length > 0"
+      v-if="playlistStore.playlists && playlistStore.playlists.length > 0"
       class="flex flex-col gap-6"
     >
       <small class="text-text-tertiary select-none">Playlists</small>
       <div class="flex flex-col gap-4">
         <RouterLink
-          v-for="playlist of allPlaylists"
+          v-for="playlist of playlistStore.playlists"
           :key="playlist.id"
           :to="`/playlist/${playlist.id}`"
           class="text-text-secondary hover:text-text-primary flex items-center gap-4 rounded-md"
@@ -54,13 +54,12 @@
 <script setup lang="ts">
 import { SearchBar } from "@/components/";
 import { usePlaylistStore } from "@/composables/";
-import { ref, watchEffect } from "vue";
+import { watchEffect } from "vue";
 import { RouterLink } from "vue-router";
 
 const playlistStore = usePlaylistStore();
-const allPlaylists = ref(playlistStore.playlists);
 
 watchEffect(() => {
-  allPlaylists.value = playlistStore.playlists;
+  playlistStore.playlists = playlistStore.playlists;
 });
 </script>

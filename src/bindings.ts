@@ -273,6 +273,40 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getPlaylistDetails(
+    playlistId: number,
+  ): Promise<Result<Playlists, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_playlist_details", { playlistId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async updatePlaylist(
+    playlistId: number,
+    name: string | null,
+    description: string | null,
+    coverPath: string | null,
+  ): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_playlist", {
+          playlistId,
+          name,
+          description,
+          coverPath,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/

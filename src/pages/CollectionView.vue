@@ -2,8 +2,16 @@
   <div class="text-text-primary flex w-full flex-col gap-8" v-if="data">
     <div class="sodapop-card flex items-center gap-8 p-8">
       <img
+        v-if="props.type != 'Playlist'"
         class="border-border-secondary size-48 rounded-md border"
         :src="placeholderIfEmpty(data.cover_path)"
+      />
+      <PlaylistEdit
+        :name="data.name"
+        :description="data.description"
+        :id="data.id"
+        @update="updatePlaylist"
+        v-else
       />
 
       <div class="flex flex-col gap-4">
@@ -12,6 +20,9 @@
             {{ data.type }}
           </h6>
           <h2 class="text-text-primary">{{ data.name }}</h2>
+          <p class="text-text-secondary" v-if="data.description != ''">
+            {{ data.description }}
+          </p>
           <p class="text-text-secondary">{{ data.artist_name }}</p>
           <small v-if="data.duration" class="text-text-tertiary">
             {{ formatTime("hh:mm:ss", data.duration) }},
@@ -56,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { TrackList, Button } from "@/components/";
+import { TrackList, Button, PlaylistEdit } from "@/components/";
 import {
   commands,
   handleBackendError,
@@ -66,6 +77,7 @@ import {
   Tracks,
   AlbumType,
   placeholderIfEmpty,
+  usePlaylistStore,
 } from "@/composables/";
 import { onBeforeMount, ref } from "vue";
 import { useRoute } from "vue-router";
@@ -75,6 +87,8 @@ const props = defineProps<{
 }>();
 
 const configStore = useConfigStore();
+const playlistStore = usePlaylistStore();
+
 const route = useRoute();
 const collection_id = ref<number>(+route.params.id);
 
@@ -123,6 +137,25 @@ async function handlePlayButton(shuffle: boolean) {
   }
 
   await events.playerEvent.emit({ type: "CurrentTrackInQueue" });
+}
+
+async function updatePlaylist(
+  name: string,
+  description?: string,
+  cover?: string,
+) {
+  const result = await playlistStore.updatePlaylist(
+    collection_id.value,
+    name,
+    description,
+    cover,
+  );
+  if (!result) return;
+
+  if (data.value) {
+    data.value.name = name;
+    data.value.description = description;
+  }
 }
 
 async function updateData() {
