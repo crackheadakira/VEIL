@@ -74,10 +74,10 @@ html[data-theme="dark"] {
   --color-text-tertiary-hovered: oklch(0.486 0.004 286.248);
   --color-text-tertiary-active: oklch(0.573 0.004 286.248);
 
-  --color-bg-primary: oklch(0.14 0.008 301);
-  --color-bg-primary-disabled: oklch(0.118 0.007 301);
-  --color-bg-primary-hovered: oklch(0.163 0.009 301);
-  --color-bg-primary-active: oklch(0.185 0.011 301);
+  --color-bg-primary: oklch(0.146 0.006 285);
+  --color-bg-primary-disabled: oklch(0.118 0.005 285);
+  --color-bg-primary-hovered: oklch(0.163 0.007 285);
+  --color-bg-primary-active: oklch(0.185 0.009 285);
 
   --color-bg-secondary: oklch(0.146 0.004 285.857);
   --color-bg-secondary-disabled: oklch(0.122 0.004 285.857);
