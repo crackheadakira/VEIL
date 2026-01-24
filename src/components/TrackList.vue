@@ -1,7 +1,10 @@
 <template>
-  <div class="sodapop-card flex flex-col p-4" ref="trackList">
+  <div
+    class="bg-bg-secondary border-border-primary flex flex-col rounded-md border p-4"
+    ref="trackList"
+  >
     <div
-      class="text-text-tertiary border-border-secondary mb-4 grid items-center gap-4 rounded-md border-b p-3 px-4 select-none"
+      class="text-text-tertiary border-border-secondary mb-4 grid items-center gap-4 border-b p-3 px-4 select-none"
       :class="
         playlist_id
           ? 'grid-cols-[auto_2fr_1fr_auto]'

@@ -1,6 +1,8 @@
 <template>
   <div class="text-text-primary flex w-full flex-col gap-8" v-if="data">
-    <div class="sodapop-card flex items-center gap-8 p-8">
+    <div
+      class="bg-bg-secondary border-border-primary flex items-center gap-8 rounded-md border p-8"
+    >
       <img
         v-if="props.type != 'Playlist'"
         class="border-border-secondary size-48 rounded-md border"
