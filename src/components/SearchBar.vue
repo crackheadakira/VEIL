@@ -30,6 +30,7 @@
             @focusout="focused = false"
             placeholder="Search..."
             input-name="searchBar"
+            class="w-full"
           />
         </div>
 

@@ -1,38 +1,36 @@
 <template>
-  <div>
-    <div class="w-fit" v-if="!hideTrigger" @click="show = true">
-      <slot name="trigger">
-        <Button
-          wide
-          :label="triggerLabel ?? 'Show Modal'"
-          icon="i-fluent-layout-row-two-16-filled"
-        />
-      </slot>
-    </div>
-
-    <teleport to="body">
-      <Transition
-        enter-active-class="animate-zoomIn"
-        leave-active-class="animate-zoomOut"
-      >
-        <div
-          id="modal"
-          v-if="show"
-          class="bg-bg-primary/50 fixed inset-0 z-10 flex items-center justify-center"
-          @click="closeOnBackdrop"
-        >
-          <slot></slot>
-        </div>
-      </Transition>
-    </teleport>
+  <div v-if="!hideTrigger" @click="show = true">
+    <slot name="trigger">
+      <Button
+        wide
+        :label="triggerLabel ?? 'Show Modal'"
+        icon="i-fluent-layout-row-two-16-filled"
+      />
+    </slot>
   </div>
+
+  <teleport to="body">
+    <Transition
+      enter-active-class="animate-zoomIn"
+      leave-active-class="animate-zoomOut"
+    >
+      <div
+        id="modal"
+        v-if="show"
+        class="bg-bg-primary/50 fixed inset-0 z-10 flex items-center justify-center"
+        @click="closeOnBackdrop"
+      >
+        <slot></slot>
+      </div>
+    </Transition>
+  </teleport>
 </template>
 
 <script setup lang="ts">
 import { Button } from "@/components/";
 import { watch } from "vue";
 
-const props = defineProps<{
+defineProps<{
   triggerLabel?: string;
   hideTrigger?: boolean;
 }>();

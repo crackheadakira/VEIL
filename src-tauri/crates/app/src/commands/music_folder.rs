@@ -243,16 +243,20 @@ pub async fn select_music_folder(
                         state.db.delete::<Artists>(track.artist_id)?;
                     }
                 }
-            } else {
-                let (total_duration, track_count) = state.db.get_album_duration(track.album_id)?;
-                let album_type = get_album_type(track_count, total_duration);
-                state.db.update_album_type(
-                    track.album_id,
-                    album_type,
-                    total_duration,
-                    track_count,
-                )?;
             }
+        }
+
+        for album_id in all_tracks
+            .iter()
+            .filter(|t| existing_hashes.contains(&t.hash))
+            .map(|t| t.album_id)
+            .collect::<std::collections::HashSet<_>>()
+        {
+            let (total_duration, track_count) = state.db.get_album_duration(album_id)?;
+            let album_type = get_album_type(track_count, total_duration);
+            state
+                .db
+                .update_album_type(album_id, album_type, total_duration, track_count)?;
         }
 
         Ok(String::from(path.to_str().unwrap()))

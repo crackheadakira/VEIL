@@ -52,8 +52,7 @@
               <!-- (10 / 16) rem === 10px if rem = 16px -->
               <p
                 :style="{
-                  width:
-                    (startIndex + idx).toString().length * (10 / 16) + 'rem',
+                  width: totalTracks.toString().length * (10 / 16) + 'rem',
                 }"
                 class="text-text-tertiary group-hover:text-text-tertiary-hovered text-right"
               >

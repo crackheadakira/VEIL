@@ -74,15 +74,21 @@ html[data-theme="dark"] {
   --color-text-tertiary-hovered: oklch(0.486 0.004 286.248);
   --color-text-tertiary-active: oklch(0.573 0.004 286.248);
 
+  /* Backgrounds */
   --color-bg-primary: oklch(0.146 0.006 285);
   --color-bg-primary-disabled: oklch(0.118 0.005 285);
   --color-bg-primary-hovered: oklch(0.163 0.007 285);
   --color-bg-primary-active: oklch(0.185 0.009 285);
 
-  --color-bg-secondary: oklch(0.146 0.004 285.857);
-  --color-bg-secondary-disabled: oklch(0.122 0.004 285.857);
-  --color-bg-secondary-hovered: oklch(0.17 0.005 285.857);
-  --color-bg-secondary-active: oklch(0.194 0.006 285.857);
+  --color-bg-secondary: oklch(0.153 0.006 285deg);
+  --color-bg-secondary-disabled: oklch(0.124 0.005 285deg);
+  --color-bg-secondary-hovered: oklch(0.182 0.009 285deg);
+  --color-bg-secondary-active: oklch(0.21 0.013 285deg);
+
+  --color-bg-tertiary: oklch(0.16 0.007 285deg);
+  --color-bg-tertiary-disabled: oklch(0.131 0.005 285deg);
+  --color-bg-tertiary-hovered: oklch(0.189 0.01 285deg);
+  --color-bg-tertiary-active: oklch(0.219 0.014 285deg);
 
   /* Borders */
   --color-border-primary: oklch(0.245 0.015 296.706);
@@ -94,6 +100,11 @@ html[data-theme="dark"] {
   --color-border-secondary-disabled: oklch(0.211 0.016 297.459);
   --color-border-secondary-hovered: oklch(0.318 0.025 297.459);
   --color-border-secondary-active: oklch(0.371 0.029 297.459);
+
+  --color-border-tertiary: oklch(0.294 0.02 297.459deg);
+  --color-border-tertiary-disabled: oklch(0.231 0.016 297.459deg);
+  --color-border-tertiary-hovered: oklch(0.356 0.025 297.459deg);
+  --color-border-tertiary-active: oklch(0.418 0.048 297.459deg);
 }
 
 @theme {
@@ -129,6 +140,11 @@ html[data-theme="dark"] {
   --color-bg-secondary-hovered: var(--color-bg-secondary-hovered);
   --color-bg-secondary-active: var(--color-bg-secondary-active);
 
+  --color-bg-tertiary: var(--color-bg-tertiary);
+  --color-bg-tertiary-disabled: var(--color-bg-tertiary-disabled);
+  --color-bg-tertiary-hovered: var(--color-bg-tertiary-hovered);
+  --color-bg-tertiary-active: var(--color-bg-tertiary-active);
+
   /* Borders */
   --color-border-primary: var(--color-border-primary);
   --color-border-primary-disabled: var(--color-border-primary-disabled);
@@ -139,6 +155,11 @@ html[data-theme="dark"] {
   --color-border-secondary-disabled: var(--color-border-secondary-disabled);
   --color-border-secondary-hovered: var(--color-border-secondary-hovered);
   --color-border-secondary-active: var(--color-border-secondary-active);
+
+  --color-border-tertiary: var(--color-border-tertiary);
+  --color-border-tertiary-disabled: var(--color-border-tertiary-disabled);
+  --color-border-tertiary-hovered: var(--color-border-tertiary-hovered);
+  --color-border-tertiary-active: var(--color-border-tertiary-active);
 
   /* Sodapop Aspect Ratios */
   --aspect-card: 3.9 / 1;

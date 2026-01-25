@@ -46,12 +46,14 @@
             label="Play"
             icon="i-fluent-play-24-filled"
             wide
+            class="bg-bg-tertiary hover:bg-bg-tertiary-hovered"
           />
           <Button
             @click="handlePlayButton(true)"
             label="Shuffle"
             icon="i-fluent-arrow-shuffle-20-filled"
             wide
+            class="bg-bg-tertiary hover:bg-bg-tertiary-hovered"
           />
         </div>
       </div>

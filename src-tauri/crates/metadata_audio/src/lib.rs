@@ -5,7 +5,7 @@ mod traits;
 use std::{
     fs::File,
     io::{BufReader, Cursor, Read, Seek},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -163,12 +163,14 @@ impl<'a> Metadata<'a> {
                 let metadata = Self::read_flac(buffer, &mut reader, skip_picture)?;
 
                 Ok(metadata)
-            }
-            /*"mp3" => {
-                let file = id3::Id3::new(path)?;
-                Ok(Metadata::from_id3(file))
-            }*/
-            else {
+            } else if ext.eq_ignore_ascii_case("mp3") {
+                let file = File::open(path)?;
+                let mut reader = BufReader::with_capacity(4 * 1024, file);
+
+                let metadata = Self::read_id3(buffer, &mut reader)?;
+
+                Ok(metadata)
+            } else {
                 Err(Error::UnsupportedFileType)
             }
         } else {
@@ -194,21 +196,22 @@ impl<'a> Metadata<'a> {
         }
     }
 
-    pub fn recursive_dir(path: &Path) -> Vec<std::path::PathBuf> {
-        let paths = std::fs::read_dir(path).unwrap();
-        let mut tracks = Vec::new();
+    pub fn recursive_dir(path: &Path) -> Vec<PathBuf> {
+        let mut tracks = Vec::with_capacity(3_000);
+        let mut stack = vec![path.to_path_buf()];
 
-        for path in paths {
-            let path = path.unwrap().path();
-            if path.is_dir() {
-                tracks.extend(Self::recursive_dir(&path));
-            } else {
-                let extension = path.extension().unwrap();
-                if extension != "mp3" && extension != "flac" {
-                    continue;
+        while let Some(current) = stack.pop() {
+            if let Ok(entries) = std::fs::read_dir(&current) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    if path.is_dir() {
+                        stack.push(path);
+                    } else if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+                        if ext.eq_ignore_ascii_case("mp3") || ext.eq_ignore_ascii_case("flac") {
+                            tracks.push(path);
+                        }
+                    }
                 }
-
-                tracks.push(path);
             }
         }
 
