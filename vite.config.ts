@@ -34,10 +34,13 @@ export default defineConfig(async () => ({
     target:
       process.env.TAURI_ENV_PLATFORM == "windows" ? "chrome105" : "safari13",
     // don't minify for debug builds
-    minify: !!process.env.TAURY_ENV_DEBUG,
+    minify: process.env.TAURI_ENV_DEBUG !== "true",
     // produce sourcemaps for debug builds
-    sourcemap: !!process.env.TAURI_ENV_DEBUG,
+    sourcemap: process.env.TAURI_ENV_DEBUG === "true",
     rollupOptions: {
+      treeshake: {
+        moduleSideEffects: false,
+      },
       input: {
         main: path.resolve(__dirname, "index.html"),
         widget: path.resolve(__dirname, "widget.html")
