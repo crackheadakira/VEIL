@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use logging::lock_or_log;
-use rand::{RngCore, SeedableRng, rngs::SmallRng};
+use rand::{Rng, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Manager};
@@ -51,9 +51,6 @@ pub struct QueueSystem {
     /// Tracks in global queue, set by playing a playlist or album.
     global_queue: Vec<u32>,
 
-    /// This is used to unshuffle the queue
-    original_global_queue: Vec<u32>,
-
     /// Gets set to true when the personal queue is consumed
     /// then immediately to false when going to global queue.
     personal_consumed: bool,
@@ -63,6 +60,9 @@ pub struct QueueSystem {
 
     /// If the queue is shuffled.
     shuffled: bool,
+
+    /// This is used to unshuffle the queue
+    shuffle_map: Option<Vec<usize>>,
 
     /// What repeat mode the queue should use.
     repeat_mode: RepeatMode,
@@ -101,9 +101,9 @@ impl QueueSystem {
         Self {
             personal_queue: VecDeque::with_capacity(50),
             global_queue: Vec::with_capacity(50),
-            original_global_queue: Vec::with_capacity(50),
             personal_consumed: false,
             shuffled: false,
+            shuffle_map: None,
             repeat_mode,
             current_index: 0,
             origin,
@@ -198,7 +198,6 @@ impl QueueSystem {
             }
         };
 
-        // If there is no queue simply return.
         if self.global_queue.is_empty() {
             return None;
         };
@@ -228,7 +227,7 @@ impl QueueSystem {
         );
 
         if let Some(idx) = idx {
-            let track = self.global_queue[idx];
+            let track = self.track_at_index(idx);
 
             if let Mode::Consume = mode {
                 self.set_current_index(idx);
@@ -237,6 +236,14 @@ impl QueueSystem {
             Some(track)
         } else {
             None
+        }
+    }
+
+    fn track_at_index(&self, idx: usize) -> u32 {
+        if let Some(shuffle_map) = &self.shuffle_map {
+            self.global_queue[shuffle_map[idx]]
+        } else {
+            self.global_queue[idx]
         }
     }
 
@@ -259,7 +266,11 @@ impl QueueSystem {
                 return None;
             }
 
-            Some(self.global_queue[self.current_index])
+            if let Some(shuffle_map) = &self.shuffle_map {
+                Some(self.global_queue[shuffle_map[self.current_index]])
+            } else {
+                Some(self.global_queue[self.current_index])
+            }
         }
     }
 
@@ -303,14 +314,14 @@ impl QueueSystem {
     pub fn shuffle_global(&mut self) {
         if !self.shuffled {
             logging::debug!("Shuffling global queue");
-            self.original_global_queue = self.global_queue.clone();
+            let mut indices: Vec<usize> = (0..self.global_queue.len()).collect();
 
-            let len = self.global_queue.len();
-            for i in (1..len).rev() {
-                let j = self.rng.next_u32() as usize % (i + 1);
-                self.global_queue.swap(i, j);
+            for i in (1..indices.len()).rev() {
+                let j = self.rng.random_range(0..=i);
+                indices.swap(i, j);
             }
 
+            self.shuffle_map = Some(indices);
             self.shuffled = true;
         }
     }
@@ -319,9 +330,13 @@ impl QueueSystem {
         if self.shuffled {
             logging::debug!("Unshuffling global queue");
 
-            let current_track_id = self.global_queue[self.current_index];
+            let current_track_id = if let Some(shuffle_map) = &self.shuffle_map {
+                self.global_queue[shuffle_map[self.current_index]]
+            } else {
+                self.global_queue[self.current_index]
+            };
 
-            std::mem::swap(&mut self.global_queue, &mut self.original_global_queue);
+            self.shuffle_map = None;
             self.shuffled = false;
 
             self.current_index = self
@@ -606,16 +621,54 @@ mod tests {
     #[test]
     fn shuffle_global_changes_order() {
         let mut queue = QueueSystem::new(None, RepeatMode::None);
-        queue.set_global(vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+        queue.set_global((0..25).collect());
 
         let original = queue.global_queue.clone();
         queue.shuffle_global();
 
-        assert_eq!(queue.global_queue.len(), original.len());
-        assert_ne!(
-            queue.global_queue, original,
-            "Expected shuffled order to differ"
-        );
+        let shuffled = queue
+            .shuffle_map
+            .as_ref()
+            .unwrap()
+            .iter()
+            .map(|&i| queue.global_queue[i])
+            .collect::<Vec<_>>();
+
+        assert_eq!(shuffled.len(), original.len());
+
+        for &id in &original {
+            assert!(shuffled.contains(&id));
+        }
+    }
+
+    #[test]
+    fn unshuffle_preserves_next_track() {
+        let mut queue = QueueSystem::new(None, RepeatMode::None);
+
+        let original = vec![1, 2, 3, 4, 5];
+        queue.set_global(original.clone());
+
+        queue.shuffle_map = Some(vec![2, 3, 0, 1, 4]);
+        queue.shuffled = true;
+
+        queue.set_current_index(0);
+
+        assert_eq!(queue.current(), Some(3));
+
+        // Next track in shuffled order should be 4
+        let next_shuffled = queue.peek_next();
+        assert_eq!(next_shuffled, Some(4));
+
+        queue.unshuffle_global();
+        assert_eq!(queue.global_queue, original);
+
+        assert!(queue.shuffle_map.is_none());
+        assert!(!queue.shuffled);
+
+        assert_eq!(queue.current(), Some(3));
+
+        let next_unshuffled = queue.peek_next();
+        assert_eq!(next_unshuffled, Some(4));
     }
 
     #[test]

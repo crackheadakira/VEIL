@@ -28,12 +28,14 @@ pub struct SodapopState {
 
 pub type TauriState<'a> = State<'a, SodapopState>;
 
-pub fn initialize_state() -> Result<SodapopState, FrontendError> {
+pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendError> {
     #[cfg(not(target_os = "windows"))]
     let hwnd = None;
 
     #[cfg(target_os = "windows")]
     let hwnd = {
+        use raw_window_handle::HasWindowHandle;
+        use tauri::Manager;
         if let Some(main_window) = app.get_webview_window("sodapop-reimagined")
             && let Ok(window_handle) = main_window.window_handle()
             && let raw_window_handle::RawWindowHandle::Win32(handle) = window_handle.as_raw()

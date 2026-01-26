@@ -93,7 +93,7 @@ pub fn handle_tauri_setup(
 ) -> Result<(), Box<dyn std::error::Error>> {
     specta_builder.mount_events(app);
 
-    let sodapop_state = initialize_state()?;
+    let sodapop_state = initialize_state(app)?;
     app.manage(sodapop_state);
 
     let state = app.state::<SodapopState>();
