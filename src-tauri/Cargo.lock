@@ -4674,35 +4674,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sodapop_reimagined"
-version = "0.0.0"
-dependencies = [
- "anyhow",
- "common",
- "db",
- "dirs",
- "discord-rich-presence",
- "dotenvy",
- "lastfm",
- "logging",
- "media_controls",
- "metadata_audio",
- "rand 0.9.2",
- "raw-window-handle",
- "rfd",
- "serde",
- "serde_json",
- "specta",
- "specta-typescript",
- "tauri",
- "tauri-build",
- "tauri-specta",
- "thiserror 2.0.18",
- "tokio",
- "webbrowser",
-]
-
-[[package]]
 name = "softbuffer"
 version = "0.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5970,6 +5941,35 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "veil"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "common",
+ "db",
+ "dirs",
+ "discord-rich-presence",
+ "dotenvy",
+ "lastfm",
+ "logging",
+ "media_controls",
+ "metadata_audio",
+ "rand 0.9.2",
+ "raw-window-handle",
+ "rfd",
+ "serde",
+ "serde_json",
+ "specta",
+ "specta-typescript",
+ "tauri",
+ "tauri-build",
+ "tauri-specta",
+ "thiserror 2.0.18",
+ "tokio",
+ "webbrowser",
+]
 
 [[package]]
 name = "version-compare"

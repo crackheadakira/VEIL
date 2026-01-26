@@ -161,24 +161,24 @@ html[data-theme="dark"] {
   --color-border-tertiary-hovered: var(--color-border-tertiary-hovered);
   --color-border-tertiary-active: var(--color-border-tertiary-active);
 
-  /* Sodapop Aspect Ratios */
+  /* VEIL Aspect Ratios */
   --aspect-card: 3.9 / 1;
   --aspect-secondaryCard: 0.75 / 1;
   --aspect-player: 16.5 / 1;
   --aspect-button: 2.96 / 1;
 
-  /* Sodapop Animations */
-  --ease-sodapop: cubic-bezier(0.16, 1, 0.3, 1);
+  /* VEIL Animations */
+  --ease-veil: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Slides */
-  --animate-slideLeftAndFade: slideLeftAndFade 75ms var(--ease-sodapop);
-  --animate-slideRightAndFade: slideRightAndFade 75ms var(--ease-sodapop);
-  --animate-slideUpAndFade: slideUpAndFade 75ms var(--ease-sodapop);
-  --animate-slideDownAndFade: slideDownAndFade 75ms var(--ease-sodapop);
+  --animate-slideLeftAndFade: slideLeftAndFade 75ms var(--ease-veil);
+  --animate-slideRightAndFade: slideRightAndFade 75ms var(--ease-veil);
+  --animate-slideUpAndFade: slideUpAndFade 75ms var(--ease-veil);
+  --animate-slideDownAndFade: slideDownAndFade 75ms var(--ease-veil);
 
   /* Zooms */
-  --animate-zoomIn: zoomIn 300ms var(--ease-sodapop);
-  --animate-zoomOut: zoomOut 150ms var(--ease-sodapop);
+  --animate-zoomIn: zoomIn 300ms var(--ease-veil);
+  --animate-zoomOut: zoomOut 150ms var(--ease-veil);
 
   @keyframes slideLeftAndFade {
     0% {
@@ -257,7 +257,7 @@ html[data-theme="dark"] {
   animation-direction: reverse;
 }
 
-@utility sodapop-card {
+@utility veil-card {
   @apply bg-bg-secondary border-border-secondary rounded-md border p-3;
 }
 

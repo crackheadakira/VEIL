@@ -1,5 +1,5 @@
 use crate::{
-    SodapopState,
+    VeilState,
     error::FrontendError,
     systems::utils::{data_path, get_handle_to_music_folder, sanitize_string},
 };
@@ -34,7 +34,7 @@ pub async fn select_music_folder(
     app: tauri::AppHandle,
     on_event: Channel<MetadataEvent>,
 ) -> Result<String, FrontendError> {
-    let state = app.state::<SodapopState>();
+    let state = app.state::<VeilState>();
 
     if let Some(handle) = get_handle_to_music_folder(&state).await? {
         let path = handle.path();

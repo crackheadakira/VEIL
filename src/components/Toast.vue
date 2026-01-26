@@ -8,7 +8,7 @@
         'text-blue-500',
       ])
     "
-    class="sodapop-card flex h-fit w-96 items-center gap-3 p-4"
+    class="veil-card flex h-fit w-96 items-center gap-3 p-4"
   >
     <span
       class="shrink-0"

@@ -11,7 +11,7 @@ use tauri_specta::{Event, TypedEvent};
 use tokio::sync::MutexGuard;
 
 use crate::{
-    SodapopState, TauriState,
+    TauriState, VeilState,
     commands::player::PlayerProgressEvent,
     discord::PayloadData,
     error::FrontendError,
@@ -187,10 +187,10 @@ impl EventSystemHandler for PlayerEvent {
         event: TypedEvent<PlayerEvent>,
         handle: &AppHandle,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         let online = {
-            let config: std::sync::RwLockReadGuard<'_, crate::config::SodapopConfig> =
+            let config: std::sync::RwLockReadGuard<'_, crate::config::VeilConfig> =
                 lock_or_log(state.config.read(), "Config Read")?;
             OnlineFeatures {
                 last_fm_enabled: config.integrations.last_fm_enabled,
@@ -253,7 +253,7 @@ impl PlayerEvent {
         track: Tracks,
         progress: f64,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.initialize_player(track, progress)?;
 
@@ -268,7 +268,7 @@ impl PlayerEvent {
         track: Tracks,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         let should_scrobble = {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
@@ -314,7 +314,7 @@ impl PlayerEvent {
         if online.discord_enabled {
             // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
             let album_cover = if online.last_fm_enabled {
-                let state = handle.state::<SodapopState>();
+                let state = handle.state::<VeilState>();
                 let lastfm = state.lastfm.lock().await;
                 match lastfm
                     .album()
@@ -367,7 +367,7 @@ impl PlayerEvent {
         handle: &AppHandle,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let track_id = {
             let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.current()
@@ -388,7 +388,7 @@ impl PlayerEvent {
         handle: &AppHandle,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.next()
@@ -409,7 +409,7 @@ impl PlayerEvent {
         handle: &AppHandle,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.previous()
@@ -432,7 +432,7 @@ impl PlayerEvent {
         handle: &AppHandle,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         if online.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
@@ -471,7 +471,7 @@ impl PlayerEvent {
         handle: &AppHandle,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.resume()?;
@@ -493,7 +493,7 @@ impl PlayerEvent {
 
     /// Stops the current track.
     fn stop_current_track(handle: &AppHandle) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.stop()?;
@@ -517,7 +517,7 @@ impl PlayerEvent {
         resume: bool,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.seek(position, resume)?;
@@ -537,7 +537,7 @@ impl PlayerEvent {
     }
 
     fn set_player_volume(handle: &AppHandle, volume: f32) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.set_volume(volume)?;

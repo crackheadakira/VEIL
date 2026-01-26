@@ -59,7 +59,7 @@ const window = getCurrentWindow();
 
 async function hideWidget() {
   const allWindows = await getAllWindows();
-  const mainWindow = allWindows.find((w) => w.label === "sodapop-reimagined");
+  const mainWindow = allWindows.find((w) => w.label === "veil");
   if (mainWindow) {
     await window.hide();
     await mainWindow.show();

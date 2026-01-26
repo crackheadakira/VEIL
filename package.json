@@ -1,5 +1,5 @@
 {
-  "name": "sodapop-reimagined",
+  "name": "VEIL",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "cd src-tauri/crates/app && RUST_LOG=\"common=debug,db=debug,lastfm=debug,logging=debug,media_controls=debug,metadata_audio=debug,sodapop_reimagined=debug\" tauri"
+    "tauri": "cd src-tauri/crates/app && RUST_LOG=\"common=debug,db=debug,lastfm=debug,logging=debug,media_controls=debug,metadata_audio=debug,VEIL=debug\" tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "2.9.1",

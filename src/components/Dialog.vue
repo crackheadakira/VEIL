@@ -1,5 +1,5 @@
 <template>
-  <div class="sodapop-card relative flex h-fit w-96 flex-col gap-3 p-4">
+  <div class="veil-card relative flex h-fit w-96 flex-col gap-3 p-4">
     <div>
       <h6 class="text-text-primary">{{ props.title }}</h6>
       <p v-if="props.description" class="text-text-secondary mt-2">

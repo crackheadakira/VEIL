@@ -1,10 +1,10 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Capability for the windows of Sodapop Reimagined",
+  "description": "Capability for the windows of VEIL",
   "windows": [
-    "sodapop-reimagined",
-    "sodapop-widget"
+    "veil",
+    "veil-widget"
   ],
   "permissions": [
     "core:default",

@@ -1,4 +1,4 @@
-# Sodapop Reimagined
+# VEIL
 
 - [x] Database
   - [x] Database pool

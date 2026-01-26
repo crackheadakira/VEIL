@@ -40,7 +40,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: pre-alpha-v__VERSION__
-          releaseName: "Sodapop Reimagined v__VERSION__"
+          releaseName: "VEIL v__VERSION__"
           prerelease: true
           releaseDraft: true
           releaseBody: "See the assets to download this version and install."

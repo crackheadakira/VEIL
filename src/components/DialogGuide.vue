@@ -19,7 +19,7 @@
         >
           <div
             :key="currentPage.title"
-            class="sodapop-card text-text-primary flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
+            class="veil-card text-text-primary flex min-h-36 w-96 flex-col justify-between gap-3 p-4"
           >
             <div class="h-fit">
               <h6 class="mb-2">{{ currentPage.title }}</h6>
@@ -43,7 +43,7 @@
                     : 'cursor-not-allowed opacity-80'
                 "
                 @click="(button.click(), closeDialog(button.close))"
-                class="aspect-button sodapop-card text-text-secondary w-24 hover:opacity-80"
+                class="aspect-button veil-card text-text-secondary w-24 hover:opacity-80"
               >
                 <p>{{ readableCapitalization(button.name) }}</p>
               </button>

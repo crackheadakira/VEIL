@@ -6,11 +6,11 @@ use tauri_specta::{Builder, Event, collect_commands, collect_events};
 
 use crate::{
     app::{
-        SodapopState,
+        VeilState,
         state::{attach_media_controls_to_player, initialize_state},
     },
     commands,
-    config::{SodapopConfig, SodapopConfigEvent},
+    config::{VeilConfig, VeilConfigEvent},
     error::FrontendError,
     events::EventSystemHandler,
     queue::{QueueEvent, QueueOrigin},
@@ -51,13 +51,13 @@ pub fn make_specta_type_builder() -> Builder {
             commands::db::update_playlist,
         ])
         .events(collect_events![
-            SodapopConfigEvent,
+            VeilConfigEvent,
             PlayerEvent,
             FrontendError,
             QueueEvent,
             UIUpdateEvent,
         ])
-        .typ::<SodapopConfig>();
+        .typ::<VeilConfig>();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     {
@@ -93,10 +93,10 @@ pub fn handle_tauri_setup(
 ) -> Result<(), Box<dyn std::error::Error>> {
     specta_builder.mount_events(app);
 
-    let sodapop_state = initialize_state(app)?;
-    app.manage(sodapop_state);
+    let veil_state = initialize_state(app)?;
+    app.manage(veil_state);
 
-    let state = app.state::<SodapopState>();
+    let state = app.state::<VeilState>();
 
     {
         let config = lock_or_log(state.config.read(), "Config RwLock")?;
@@ -110,8 +110,8 @@ pub fn handle_tauri_setup(
     attach_media_controls_to_player(app_handle, &state)?;
 
     let app_handle = app.handle().clone();
-    SodapopConfigEvent::listen(app, move |event| {
-        let state = app_handle.state::<SodapopState>();
+    VeilConfigEvent::listen(app, move |event| {
+        let state = app_handle.state::<VeilState>();
         if let Some(discord_enabled) = event.payload.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
             let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
@@ -129,7 +129,7 @@ pub fn handle_tauri_setup(
         let app_handle = app_handle.clone();
         tauri::async_runtime::spawn(async move {
             if let Some(l) = event.payload.last_fm_enabled {
-                let state = app_handle.state::<SodapopState>();
+                let state = app_handle.state::<VeilState>();
                 let mut lastfm = state.lastfm.lock().await;
                 lastfm.enable(l);
             };

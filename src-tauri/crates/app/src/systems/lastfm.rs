@@ -1,4 +1,4 @@
-use crate::{config::SodapopConfig, error::FrontendError};
+use crate::{config::VeilConfig, error::FrontendError};
 use lastfm::LastFMData;
 use std::sync::RwLockWriteGuard;
 use tokio::sync::MutexGuard;
@@ -28,7 +28,7 @@ pub async fn get_session(
 }
 
 pub fn write_session_to_config(
-    mut config: RwLockWriteGuard<'_, SodapopConfig>,
+    mut config: RwLockWriteGuard<'_, VeilConfig>,
     session_key: String,
 ) -> Result<(), FrontendError> {
     config.integrations.last_fm_session_key = Some(session_key);

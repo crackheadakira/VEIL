@@ -1,7 +1,7 @@
 {
-  "productName": "Sodapop Reimagined",
+  "productName": "VEIL",
   "version": "0.0.0",
-  "identifier": "com.sodapop.reimagined",
+  "identifier": "com.veil",
   "build": {
     "beforeDevCommand": "bun run dev",
     "beforeBuildCommand": "bun run build",
@@ -11,16 +11,16 @@
   "app": {
     "windows": [
       {
-        "title": "Sodapop Reimagined",
-        "label": "sodapop-reimagined",
+        "title": "VEIL",
+        "label": "veil",
         "url": "index.html",
         "width": 1280,
         "height": 720,
         "decorations": false
       },
       {
-        "title": "Sodapop Reimagined",
-        "label": "sodapop-widget",
+        "title": "VEIL",
+        "label": "veil-widget",
         "url": "widget.html",
         "width": 246,
         "height": 307,
@@ -34,7 +34,7 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$LOCALDATA/com.sodapop.reimagined/**"
+          "$LOCALDATA/com.veil/**"
         ]
       },
       "csp": {

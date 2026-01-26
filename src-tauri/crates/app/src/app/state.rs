@@ -9,26 +9,26 @@ use tauri_specta::Event;
 use tokio::sync::Notify;
 
 use crate::{
-    config::SodapopConfig,
+    config::VeilConfig,
     discord::DiscordState,
     error::FrontendError,
     queue::QueueSystem,
     systems::{player::PlayerEvent, utils::data_path},
 };
 
-pub struct SodapopState {
+pub struct VeilState {
     pub player: Arc<RwLock<media_controls::DefaultPlayer>>,
     pub queue: Arc<Mutex<QueueSystem>>,
     pub db: Arc<db::Database>,
     pub discord: Mutex<DiscordState>,
-    pub config: Arc<RwLock<SodapopConfig>>,
+    pub config: Arc<RwLock<VeilConfig>>,
     pub lastfm: Arc<tokio::sync::Mutex<lastfm::LastFM>>,
     pub resume_notify: Arc<Notify>,
 }
 
-pub type TauriState<'a> = State<'a, SodapopState>;
+pub type TauriState<'a> = State<'a, VeilState>;
 
-pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendError> {
+pub fn initialize_state(app: &mut tauri::App) -> Result<VeilState, FrontendError> {
     #[cfg(not(target_os = "windows"))]
     let hwnd = None;
 
@@ -36,7 +36,7 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendEr
     let hwnd = {
         use raw_window_handle::HasWindowHandle;
         use tauri::Manager;
-        if let Some(main_window) = app.get_webview_window("sodapop-reimagined")
+        if let Some(main_window) = app.get_webview_window("veil")
             && let Ok(window_handle) = main_window.window_handle()
             && let raw_window_handle::RawWindowHandle::Win32(handle) = window_handle.as_raw()
         {
@@ -53,12 +53,12 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendEr
     }
 
     let platform_config = media_controls::PlatformConfig {
-        dbus_name: "com.sodapop.reimagined.dbus",
-        display_name: "Sodapop Reimagined",
+        dbus_name: "com.veil.dbus",
+        display_name: "VEIL",
         hwnd,
     };
 
-    let sodapop_config = try_with_log!("Sodapop Config", SodapopConfig::new)?;
+    let veil_config = try_with_log!("VEIL Config", VeilConfig::new)?;
 
     let api_key = env::var("LASTFM_API_KEY").expect("Missing LASTFM_API_KEY environment variable");
     let api_secret =
@@ -74,10 +74,10 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendEr
 
     let mut discord = DiscordState::new(&discord_client_id);
 
-    lastfm.enable(sodapop_config.integrations.last_fm_enabled);
-    discord.enable(sodapop_config.integrations.discord_enabled);
+    lastfm.enable(veil_config.integrations.last_fm_enabled);
+    discord.enable(veil_config.integrations.discord_enabled);
 
-    if let Some(session_key) = sodapop_config.integrations.last_fm_session_key.clone() {
+    if let Some(session_key) = veil_config.integrations.last_fm_session_key.clone() {
         lastfm.set_session_key(session_key);
     }
 
@@ -85,15 +85,15 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<SodapopState, FrontendEr
         media_controls::Player::new(platform_config)
     })?;
 
-    Ok(SodapopState {
+    Ok(VeilState {
         player: Arc::new(RwLock::new(player)),
         queue: Arc::new(Mutex::new(QueueSystem::new(
-            sodapop_config.playback.queue_origin,
-            sodapop_config.playback.repeat_mode,
+            veil_config.playback.queue_origin,
+            veil_config.playback.repeat_mode,
         ))),
         db: Arc::new(db::Database::new(path.clone())),
         lastfm: Arc::new(tokio::sync::Mutex::new(lastfm)),
-        config: Arc::new(RwLock::new(sodapop_config)),
+        config: Arc::new(RwLock::new(veil_config)),
         discord: Mutex::new(discord),
         resume_notify: Arc::new(Notify::new()),
     })

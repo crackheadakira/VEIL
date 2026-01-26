@@ -67,7 +67,7 @@ pub struct Albums {
     /// Album duration
     pub duration: u32,
 
-    /// Path to album cover in Sodapop local app data
+    /// Path to album cover in VEIL local app data
     pub cover_path: String,
 
     /// Path to album folder from where it was imported
@@ -101,7 +101,7 @@ pub struct Tracks {
     /// Track duration
     pub duration: u32,
 
-    /// Path to album cover in Sodapop local app data
+    /// Path to album cover in VEIL local app data
     pub cover_path: String,
 
     /// Path to track file
@@ -123,7 +123,7 @@ pub struct Playlists {
     /// Playlist description
     pub description: String,
 
-    /// Path to playlist cover in Sodapop local app data
+    /// Path to playlist cover in VEIL local app data
     pub cover_path: String,
 }
 
@@ -193,7 +193,7 @@ pub struct NewAlbum<'a> {
     /// Album duration
     pub duration: u32,
 
-    /// Path to album cover in Sodapop local app data
+    /// Path to album cover in VEIL local app data
     pub cover_path: &'a str,
 
     /// Path to album folder from where it was imported
@@ -222,7 +222,7 @@ pub struct NewTrack<'a> {
     /// Track duration
     pub duration: u32,
 
-    /// Path to album cover in Sodapop local app data
+    /// Path to album cover in VEIL local app data
     pub cover_path: &'a str,
 
     /// Path to track file
@@ -236,6 +236,6 @@ pub struct NewPlaylist<'a> {
     /// Playlist description
     pub description: &'a str,
 
-    /// Path to playlist cover in Sodapop local app data
+    /// Path to playlist cover in VEIL local app data
     pub cover_path: &'a str,
 }

@@ -3,7 +3,7 @@
     <template #trigger>
       <div
         @click="updateDialog"
-        class="sodapop-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
+        class="veil-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
       >
         <span class="i-fluent-search-20-filled"></span>
         <p class="text-text-tertiary">Search...</p>

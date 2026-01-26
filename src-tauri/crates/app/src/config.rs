@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Type, Clone, Default)]
-pub struct SodapopConfig {
+pub struct VeilConfig {
     /// User interface–related preferences
     pub ui: UiConfig,
 
@@ -77,7 +77,7 @@ pub enum ThemeMode {
 }
 
 #[derive(Serialize, Deserialize, Type, Event, Clone, Default)]
-pub struct SodapopConfigEvent {
+pub struct VeilConfigEvent {
     pub theme: Option<ThemeMode>,
 
     pub discord_enabled: Option<bool>,
@@ -95,7 +95,7 @@ pub struct SodapopConfigEvent {
     pub repeat_mode: Option<RepeatMode>,
 }
 
-impl SodapopConfig {
+impl VeilConfig {
     pub fn new() -> Result<Self, FrontendError> {
         let path = Self::config_file_path();
         if path.exists() {
@@ -124,7 +124,7 @@ impl SodapopConfig {
     }
 
     /// Update config field values
-    fn update_config(&mut self, config: SodapopConfigEvent) {
+    fn update_config(&mut self, config: VeilConfigEvent) {
         // Update UI related preferences
         self.ui.theme = config.theme.unwrap_or(self.ui.theme);
 
@@ -153,7 +153,7 @@ impl SodapopConfig {
     /// Update config field values and writes it to disk
     pub fn update_config_and_write(
         &mut self,
-        config: SodapopConfigEvent,
+        config: VeilConfigEvent,
     ) -> Result<(), FrontendError> {
         self.update_config(config);
         self.write_config()?;
@@ -181,14 +181,14 @@ mod tests {
 
     #[test]
     fn update_theme() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.ui.theme, ThemeMode::Dark);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 theme: Some(ThemeMode::Light),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -197,14 +197,14 @@ mod tests {
 
     #[test]
     fn update_music_dir() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.library.music_dir, None);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 music_dir: Some("hello".to_owned()),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -213,14 +213,14 @@ mod tests {
 
     #[test]
     fn update_discord_enabled() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.integrations.discord_enabled, false);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 discord_enabled: Some(true),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -229,14 +229,14 @@ mod tests {
 
     #[test]
     fn update_last_fm_enabled() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.integrations.last_fm_enabled, false);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 last_fm_enabled: Some(true),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -245,14 +245,14 @@ mod tests {
 
     #[test]
     fn update_last_fm_key() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.integrations.last_fm_session_key, None);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 last_fm_session_key: Some("hello".to_owned()),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -264,15 +264,15 @@ mod tests {
 
     #[test]
     fn update_queue_origin() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
         let origin = QueueOrigin::Album { id: 0 };
 
         assert_eq!(config.playback.queue_origin, None);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 queue_origin: Some(origin.clone()),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -281,14 +281,14 @@ mod tests {
 
     #[test]
     fn update_queue_idx() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.playback.queue_idx, usize::MIN);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 queue_idx: Some(usize::MAX),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 
@@ -297,14 +297,14 @@ mod tests {
 
     #[test]
     fn update_repeat_mode() {
-        let mut config = SodapopConfig::default();
+        let mut config = VeilConfig::default();
 
         assert_eq!(config.playback.repeat_mode, RepeatMode::None);
 
         config.update_config({
-            SodapopConfigEvent {
+            VeilConfigEvent {
                 repeat_mode: Some(RepeatMode::Track),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             }
         });
 

@@ -52,7 +52,7 @@ function updateDocumentTheme(theme: ThemeMode) {
 }
 
 onMounted(async () => {
-  unlistenConfigEvent = await events.sodapopConfigEvent.listen((event) => {
+  unlistenConfigEvent = await events.veilConfigEvent.listen((event) => {
     if (!event.payload.theme) return;
 
     updateDocumentTheme(event.payload.theme);

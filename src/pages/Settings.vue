@@ -59,7 +59,7 @@ import {
   toastBus,
   commands,
   events,
-  SodapopConfigEvent,
+  VeilConfigEvent,
   DialogPage,
   MetadataEvent,
   ThemeMode,
@@ -140,7 +140,7 @@ function updateConfig(setting: SettingKey, value: any) {
     last_fm_session_key: null,
     discord_enabled: null,
     last_fm_enabled: null,
-  } satisfies Partial<SodapopConfigEvent>;
+  } satisfies Partial<VeilConfigEvent>;
 
   switch (setting) {
     case "Theme":
@@ -166,7 +166,7 @@ function updateConfig(setting: SettingKey, value: any) {
   }
 
   // as we did partial above we get error
-  events.sodapopConfigEvent.emit(updatedConfig as SodapopConfigEvent);
+  events.veilConfigEvent.emit(updatedConfig as VeilConfigEvent);
 }
 
 async function getToken() {

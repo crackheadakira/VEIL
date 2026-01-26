@@ -1,5 +1,5 @@
 use crate::{
-    SodapopState, TauriState,
+    TauriState, VeilState,
     error::FrontendError,
     systems::player::{
         PlayerEvent, next_track_status, send_player_progress_via_channel,
@@ -63,7 +63,7 @@ pub fn player_progress_channel(
     on_event: Channel<PlayerProgressEvent>,
 ) -> Result<(), FrontendError> {
     tauri::async_runtime::spawn(async move {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
 
         let sleep_duration = std::time::Duration::from_millis(10);
         let track_end_interval = std::time::Duration::from_millis(25);

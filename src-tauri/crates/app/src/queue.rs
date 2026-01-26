@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager};
 use tauri_specta::Event;
 
 use crate::{
-    SodapopState, config::SodapopConfigEvent, error::FrontendError, events::EventSystemHandler,
+    VeilState, config::VeilConfigEvent, error::FrontendError, events::EventSystemHandler,
     systems::ui::UIUpdateEvent,
 };
 
@@ -402,7 +402,7 @@ impl EventSystemHandler for QueueEvent {
 
 impl QueueEvent {
     fn enqueue_personal_track(handle: &AppHandle, track_id: u32) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         queue.enqueue_personal(track_id);
@@ -415,7 +415,7 @@ impl QueueEvent {
         queue_idx: usize,
         origin: QueueOrigin,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
         let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
 
@@ -423,17 +423,17 @@ impl QueueEvent {
             queue.set_global(tracks);
             queue.set_origin(origin);
 
-            config.update_config_and_write(SodapopConfigEvent {
+            config.update_config_and_write(VeilConfigEvent {
                 queue_origin: Some(origin),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             })?;
         }
 
         if queue.current_index() != queue_idx {
             queue.set_current_index(queue_idx);
-            config.update_config_and_write(SodapopConfigEvent {
+            config.update_config_and_write(VeilConfigEvent {
                 queue_idx: Some(queue_idx),
-                ..SodapopConfigEvent::default()
+                ..VeilConfigEvent::default()
             })?;
         }
 
@@ -444,7 +444,7 @@ impl QueueEvent {
         handle: &AppHandle,
         shuffle: Option<bool>,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         if let Some(shuffle) = shuffle {
@@ -471,7 +471,7 @@ impl QueueEvent {
     }
 
     fn update_repeat_mode(handle: &AppHandle) -> Result<(), FrontendError> {
-        let state = handle.state::<SodapopState>();
+        let state = handle.state::<VeilState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         match queue.repeat_mode {

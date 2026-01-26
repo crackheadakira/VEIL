@@ -1,15 +1,15 @@
 # Maintainer: Morgan Tali (morgan@duckie.party)
 # Contributor: Morgan Tali (morgan@duckie.party)
-pkgname=sodapop-reimagined
+pkgname=veil
 pkgver=0.0.0
 pkgrel=1
 pkgdesc="A modern-looking local music player written in Vue + Tauri"
 arch=('x86_64')
-url="https://github.com/crackheadakira/Sodapop-Reimagined"
+url="https://github.com/crackheadakira/VEIL"
 license=('apache-2.0')
 depends=('alsa-lib' 'cairo' 'desktop-file-utils' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libsoup' 'pango' 'webkit2gtk-4.1' 'openssl')
 options=('!strip' '!emptydirs')
-source_x86_64=("https://github.com/crackheadakira/Sodapop-Reimagined/releases/download/pre-alpha-v$pkgver/Sodapop.Reimagined_"$pkgver"_amd64.deb")
+source_x86_64=("https://github.com/crackheadakira/VEIL/releases/download/pre-alpha-v$pkgver/VEIL_"$pkgver"_amd64.deb")
 install=${pkgname}.install
 sha256sums_x86_64=('SKIP')
 

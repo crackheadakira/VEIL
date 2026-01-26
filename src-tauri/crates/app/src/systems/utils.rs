@@ -48,7 +48,7 @@ pub async fn get_handle_to_music_folder(
 
 pub fn data_path() -> std::path::PathBuf {
     let home_dir = dirs::data_local_dir().unwrap();
-    home_dir.join("com.sodapop.reimagined")
+    home_dir.join("com.veil")
 }
 
 #[cfg(test)]

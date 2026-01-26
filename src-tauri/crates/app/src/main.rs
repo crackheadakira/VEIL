@@ -10,7 +10,7 @@ mod events;
 mod queue;
 mod systems;
 
-pub use app::{SodapopState, TauriState};
+pub use app::{TauriState, VeilState};
 
 fn main() -> Result<(), anyhow::Error> {
     dotenvy::dotenv().ok();

@@ -223,7 +223,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async readConfig(): Promise<Result<SodapopConfig, FrontendError>> {
+  async readConfig(): Promise<Result<VeilConfig, FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("read_config") };
     } catch (e) {
@@ -315,14 +315,14 @@ export const events = __makeEvents__<{
   frontendError: FrontendError;
   playerEvent: PlayerEvent;
   queueEvent: QueueEvent;
-  sodapopConfigEvent: SodapopConfigEvent;
   uiUpdateEvent: UIUpdateEvent;
+  veilConfigEvent: VeilConfigEvent;
 }>({
   frontendError: "frontend-error",
   playerEvent: "player-event",
   queueEvent: "queue-event",
-  sodapopConfigEvent: "sodapop-config-event",
   uiUpdateEvent: "ui-update-event",
+  veilConfigEvent: "veil-config-event",
 });
 
 /** user-defined constants **/
@@ -371,7 +371,7 @@ export type Albums = {
    */
   duration: number;
   /**
-   * Path to album cover in Sodapop local app data
+   * Path to album cover in VEIL local app data
    */
   cover_path: string;
   /**
@@ -526,7 +526,7 @@ export type Playlists = {
    */
   description: string;
   /**
-   * Path to playlist cover in Sodapop local app data
+   * Path to playlist cover in VEIL local app data
    */
   cover_path: string;
 };
@@ -580,34 +580,6 @@ export type Search = {
    */
   search_type: string;
 };
-export type SodapopConfig = {
-  /**
-   * User interface–related preferences
-   */
-  ui: UiConfig;
-  /**
-   * Integration & connectivity settings
-   */
-  integrations: IntegrationsConfig;
-  /**
-   * Music library settings
-   */
-  library: LibraryConfig;
-  /**
-   * Playback behavior and queue info
-   */
-  playback: PlaybackConfig;
-};
-export type SodapopConfigEvent = {
-  theme: ThemeMode | null;
-  discord_enabled: boolean | null;
-  last_fm_enabled: boolean | null;
-  music_dir: string | null;
-  last_fm_session_key: string | null;
-  queue_origin: QueueOrigin | null;
-  queue_idx: number | null;
-  repeat_mode: RepeatMode | null;
-};
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {
   /**
@@ -643,7 +615,7 @@ export type Tracks = {
    */
   duration: number;
   /**
-   * Path to album cover in Sodapop local app data
+   * Path to album cover in VEIL local app data
    */
   cover_path: string;
   /**
@@ -671,6 +643,34 @@ export type UiConfig = {
    * What theme the user has selected
    */
   theme: ThemeMode;
+};
+export type VeilConfig = {
+  /**
+   * User interface–related preferences
+   */
+  ui: UiConfig;
+  /**
+   * Integration & connectivity settings
+   */
+  integrations: IntegrationsConfig;
+  /**
+   * Music library settings
+   */
+  library: LibraryConfig;
+  /**
+   * Playback behavior and queue info
+   */
+  playback: PlaybackConfig;
+};
+export type VeilConfigEvent = {
+  theme: ThemeMode | null;
+  discord_enabled: boolean | null;
+  last_fm_enabled: boolean | null;
+  music_dir: string | null;
+  last_fm_session_key: string | null;
+  queue_origin: QueueOrigin | null;
+  queue_idx: number | null;
+  repeat_mode: RepeatMode | null;
 };
 
 /** tauri-specta globals **/

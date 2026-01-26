@@ -32,7 +32,7 @@ impl DiscordState {
             payload_changed: false,
             payload: PayloadData {
                 state: String::from("Browsing"),
-                details: String::from("Sodapop Reimagined"),
+                details: String::from("VEIL"),
                 small_image: String::from("paused"),
                 small_text: String::from("Paused"),
                 album_cover: None,
@@ -144,13 +144,13 @@ impl DiscordState {
         let assets = if let Some(cover) = &self.payload.album_cover {
             Assets::new()
                 .large_image(cover)
-                .large_text("Sodapop Reimagined")
+                .large_text("VEIL")
                 .small_image(&self.payload.small_image)
                 .small_text(&self.payload.small_text)
         } else {
             Assets::new()
-                .large_image("sodapop")
-                .large_text("Sodapop Reimagined")
+                .large_image("veil")
+                .large_text("VEIL")
                 .small_image(&self.payload.small_image)
                 .small_text(&self.payload.small_text)
         };
