@@ -8,6 +8,7 @@ workspace = true
 
 [build-dependencies]
 tauri-build = { version = "2.5.1", features = [] }
+dotenvy = "0.15.7"
 
 [dependencies]
 anyhow = "1.0.98"

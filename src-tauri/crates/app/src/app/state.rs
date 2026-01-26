@@ -60,17 +60,30 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<VeilState, FrontendError
 
     let veil_config = try_with_log!("VEIL Config", VeilConfig::new)?;
 
+    #[cfg(debug_assertions)]
     let api_key = env::var("LASTFM_API_KEY").expect("Missing LASTFM_API_KEY environment variable");
+
+    #[cfg(not(debug_assertions))]
+    let api_key = env!("LASTFM_API_KEY");
+
+    #[cfg(debug_assertions)]
     let api_secret =
         env::var("LASTFM_API_SECRET").expect("Missing LASTFM_API_SECRET environment variable");
+
+    #[cfg(not(debug_assertions))]
+    let api_secret = env!("LASTFM_API_SECRET");
 
     let mut lastfm = try_with_log!("LastFM API", || lastfm::LastFM::builder()
         .api_key(&api_key)
         .api_secret(&api_secret)
         .build())?;
 
+    #[cfg(debug_assertions)]
     let discord_client_id =
         env::var("DISCORD_CLIENT_ID").expect("Missing DISCORD_CLIENT_ID environment variable");
+
+    #[cfg(not(debug_assertions))]
+    let discord_client_id = env!("DISCORD_CLIENT_ID");
 
     let mut discord = DiscordState::new(&discord_client_id);
 
