@@ -51,7 +51,6 @@ pub fn get_player_duration(state: TauriState) -> f64 {
 
 #[derive(Clone, Serialize, Type)]
 #[serde(tag = "event", content = "data")]
-// rust-analyzer expected Expr error: https://github.com/specta-rs/specta/issues/387
 pub enum PlayerProgressEvent {
     Progress { progress: f64 },
 }
@@ -64,51 +63,43 @@ pub fn player_progress_channel(
 ) -> Result<(), FrontendError> {
     tauri::async_runtime::spawn(async move {
         let state = handle.state::<VeilState>();
-
-        let sleep_duration = std::time::Duration::from_millis(10);
-        let track_end_interval = std::time::Duration::from_millis(25);
         let progress_interval = std::time::Duration::from_millis(400);
 
-        let mut last_track_end_check = tokio::time::Instant::now();
-        let mut last_progress_sent = tokio::time::Instant::now();
+        loop {
+            tokio::time::sleep(progress_interval).await;
+            send_player_progress_via_channel(&state, &on_event);
+        }
+    });
+
+    Ok(())
+}
+
+pub fn initiate_track_ended_thread(handle: &AppHandle) {
+    let handle = handle.clone();
+    tauri::async_runtime::spawn(async move {
+        let state = handle.state::<VeilState>();
+        let check_interval = std::time::Duration::from_millis(25);
 
         loop {
-            tokio::time::sleep(sleep_duration).await;
-            let ends_soon = {
+            tokio::time::sleep(check_interval).await;
+
+            let ended = {
                 let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
-                (player.get_duration() - player.get_progress()) <= 0.5
+                player.has_ended()
             };
 
-            if !ends_soon {
-                if last_progress_sent.elapsed() >= progress_interval {
-                    send_player_progress_via_channel(&state, &on_event);
-                    last_progress_sent = tokio::time::Instant::now();
-                }
-
+            if !ended {
                 continue;
             }
 
-            // Workaround due to RwLock not being thread-safe (using std::sync)
             {
                 let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
-
                 try_preloading_next_sound_handle(&state, &mut player);
 
-                if last_track_end_check.elapsed() >= track_end_interval {
-                    if let Some(track) = next_track_status(&state, &player) {
-                        match PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle) {
-                            Ok(_) => {
-                                logging::debug!("Emitted new track event to frontend.");
-                            }
-                            Err(e) => {
-                                logging::error!("Error emitting new track from queue system: {e}");
-                            }
-                        };
-                    };
-
-                    last_track_end_check = tokio::time::Instant::now();
+                if let Some(track) = next_track_status(&state, &player) {
+                    let _ = PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle);
                 }
-            };
+            }
 
             let queue_has_ended = {
                 let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
@@ -116,19 +107,9 @@ pub fn player_progress_channel(
             };
 
             if queue_has_ended {
-                // Wait until a notificaton to resume this loop
-                match PlayerEvent::emit(&PlayerEvent::Stop, &handle) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        logging::error!("Error emitting stop player event: {e}");
-                    }
-                }
-
+                let _ = PlayerEvent::emit(&PlayerEvent::Stop, &handle);
                 state.resume_notify.notified().await;
-                logging::debug!("New track added, resuming loop.");
             }
         }
     });
-
-    Ok(())
 }

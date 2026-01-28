@@ -112,7 +112,7 @@ pub fn send_player_progress_via_channel(
 pub fn try_preloading_next_sound_handle(
     state: &TauriState,
     player: &mut RwLockWriteGuard<'_, DefaultPlayer>,
-) {
+) -> bool {
     // We already check if the track ends soon outside the call
     if !player.has_preloaded_track() {
         let next_track_id = {
@@ -125,16 +125,21 @@ pub fn try_preloading_next_sound_handle(
                 Ok(track) => {
                     if let Err(e) = player.maybe_queue_next(&track) {
                         logging::error!("Failed to preload next track: {e}");
+                        return false;
                     }
+                    return true;
                 }
                 Err(e) => {
                     logging::error!(
                         "Tried preloading next track but got error fetching from database: {e}"
                     );
+                    return false;
                 }
-            };
+            }
         }
     }
+
+    false
 }
 
 #[derive(Serialize, Deserialize, Type, Event, Clone)]

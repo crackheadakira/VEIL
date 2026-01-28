@@ -9,7 +9,7 @@ use crate::{
         VeilState,
         state::{attach_media_controls_to_player, initialize_state},
     },
-    commands,
+    commands::{self, player::initiate_track_ended_thread},
     config::{VeilConfig, VeilConfigEvent},
     error::FrontendError,
     events::EventSystemHandler,
@@ -173,6 +173,8 @@ pub fn handle_tauri_setup(
 
         queue.set_current_index(config.playback.queue_idx);
     }
+
+    initiate_track_ended_thread(&app_handle);
 
     Ok(())
 }

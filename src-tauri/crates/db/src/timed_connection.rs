@@ -3,9 +3,11 @@ use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{
     CachedStatement, MappedRows, Params, Result as SqlResult, Row, Rows, Statement, Transaction,
 };
+
+#[cfg(feature = "bench")]
 use std::time::Instant;
 
-#[cfg(debug_assertions)]
+#[cfg(feature = "bench")]
 macro_rules! bench {
     ($method:expr, $sql:expr, $block:expr) => {{
         let start = Instant::now();
@@ -16,7 +18,7 @@ macro_rules! bench {
     }};
 }
 
-#[cfg(not(debug_assertions))]
+#[cfg(not(feature = "bench"))]
 macro_rules! bench {
     ($method:expr, $sql:expr, $block:expr) => {
         $block
