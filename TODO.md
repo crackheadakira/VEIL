@@ -11,10 +11,6 @@
   - [x] Database
   - [x] Commands
   - [x] Add support for a custom CSS folder
-- [x] Playlist support
-  - [x] Database methods
-  - [x] Context menu
-  - [x] Playlist page
 - [x] Add last.fm support
   - [x] Allow adding session key
   - [x] Scrobble track > 30s
@@ -27,7 +23,7 @@
 - [ ] ID3
   - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
   - [ ] Add support for ID3v2.4
-- [ ] Better queue system
+- [x] Better queue system
 - [ ] Logging System
   - [ ] Log warn / error instead of unwrapping
 - [ ] Add a fullscreen view
@@ -45,5 +41,16 @@
   - [ ] Lyric View
 - [ ] Adding back / forward arrows
 - [x] Make slider tracker only appear on hover
-- [ ] Add environment variables to `config.json`
-- [ ] Improve
+- [ ] Album artist & track artist separation (for compilations & collaborations)
+- [ ] Disc number support
+- [ ] Queue UI
+- [ ] Enqueing next & last
+- [ ] Make context menu generic accepting an object defining it's structure
+- [ ] Keyboard shortcuts
+- [ ] Scalable font size (modifies UI as well?)
+- [x] Playlist support
+  - [x] Database methods
+  - [x] Context menu
+  - [x] Playlist page
+  - [ ] Exporting playlists to m3u8
+- [ ] mDNS remote control
