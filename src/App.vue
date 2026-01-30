@@ -23,7 +23,6 @@ import { Player, SideBar, ToastManager, TitleBar } from "@/components/";
 import {
   useConfigStore,
   commands,
-  handleBackendError,
   usePlayerStore,
   usePlaylistStore,
   PlayerProgressEvent,
@@ -51,6 +50,21 @@ function updateDocumentTheme(theme: ThemeMode) {
   }
 }
 
+void requestAnimationFrame(async () => {
+  const css = await commands.readCustomStyle();
+  let styleElement = document.getElementById("custom-style");
+
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "custom-style";
+    document.head.appendChild(styleElement);
+  }
+
+  if (css.status === "ok" && css.data.length > 0 && styleElement) {
+    styleElement.innerText = css.data;
+  }
+});
+
 onMounted(async () => {
   unlistenConfigEvent = await events.veilConfigEvent.listen((event) => {
     if (!event.payload.theme) return;
@@ -63,32 +77,16 @@ onMounted(async () => {
 
   updateDocumentTheme(theme);
 
-  const css = await commands.readCustomStyle();
-  let styleElement = document.getElementById("custom-style");
-
-  if (!styleElement) {
-    styleElement = document.createElement("style");
-    styleElement.id = "custom-style";
-    document.head.appendChild(styleElement);
-  }
-
-  if (css.status === "ok" && styleElement) {
-    styleElement.innerText = css.data;
-  }
-
-  const result = await commands.getAllAlbums();
-  if (result.status === "error") return handleBackendError(result.error);
-
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;
 
-  if (result.data.length === 0 && track) {
-    playerStore.$reset();
-  } else if (track) {
+  if (track) {
     await events.playerEvent.emit({
       type: "Initialize",
       data: { track, progress },
     });
+  } else {
+    playerStore.$reset();
   }
 
   await playlistStore.fetchPlaylists();

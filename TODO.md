@@ -47,7 +47,6 @@
 - [ ] Enqueing next & last
 - [ ] Make context menu generic accepting an object defining it's structure
 - [ ] Keyboard shortcuts
-- [ ] Scalable font size (modifies UI as well?)
 - [x] Playlist support
   - [x] Database methods
   - [x] Context menu

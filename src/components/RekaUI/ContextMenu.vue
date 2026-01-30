@@ -1,15 +1,19 @@
 <template>
-  <ContextMenuRoot>
+  <ContextMenuRoot v-model:open="open">
     <ContextMenuTrigger as-child>
       <slot></slot>
     </ContextMenuTrigger>
-    <ContextMenuPortal>
+
+    <ContextMenuPortal v-if="open">
       <ContextMenuContent
         class="border-border-secondary data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-bg-secondary z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
         :side-offset="5"
       >
         <ContextMenuSub>
-          <ContextMenuSubTrigger class="group context-menu-item w-full pr-0">
+          <ContextMenuSubTrigger
+            v-model:open="subOpen"
+            class="group context-menu-item w-full pr-0"
+          >
             <span class="i-fluent-add-24-regular"></span>
             <small>Add to Playlist</small>
             <div class="pl-5">
@@ -18,7 +22,8 @@
               ></span>
             </div>
           </ContextMenuSubTrigger>
-          <ContextMenuPortal>
+
+          <ContextMenuPortal v-if="subOpen">
             <ContextMenuSubContent
               class="border-border-secondary data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-bg-secondary z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
               :side-offset="2"
@@ -94,6 +99,8 @@ import {
 import { ref } from "vue";
 
 const showDialog = ref(false);
+const open = ref(false);
+const subOpen = ref(false);
 
 const props = defineProps<{
   playlist_id?: number;

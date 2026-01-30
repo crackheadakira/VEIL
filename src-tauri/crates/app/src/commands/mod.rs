@@ -12,7 +12,12 @@ pub(crate) mod plugins;
 #[specta::specta]
 pub fn read_custom_style() -> Result<String, FrontendError> {
     let path = data_path().join("custom.css");
-    Ok(std::fs::read_to_string(&path).context("Failed to read custom.css")?)
+
+    if std::fs::exists(&path)? {
+        Ok(std::fs::read_to_string(&path).context("Failed to read custom.css")?)
+    } else {
+        Ok(String::new())
+    }
 }
 
 #[tauri::command]
