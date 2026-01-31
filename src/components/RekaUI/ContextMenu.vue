@@ -9,11 +9,8 @@
         class="border-border-secondary data-[side=top]:animate-slideDownAndFade data-[side=right]:animate-slideLeftAndFade data-[side=bottom]:animate-slideUpAndFade data-[side=left]:animate-slideRightAndFade bg-bg-secondary z-30 w-fit rounded-md border p-1 will-change-[opacity,transform]"
         :side-offset="5"
       >
-        <ContextMenuSub>
-          <ContextMenuSubTrigger
-            v-model:open="subOpen"
-            class="group context-menu-item w-full pr-0"
-          >
+        <ContextMenuSub v-model:open="subOpen">
+          <ContextMenuSubTrigger class="group context-menu-item w-full pr-0">
             <span class="i-fluent-add-24-regular"></span>
             <small>Add to Playlist</small>
             <div class="pl-5">

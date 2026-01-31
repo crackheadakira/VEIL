@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS albums (
     track_count INTEGER NOT NULL,
     duration    INTEGER NOT NULL,
     cover_path  TEXT    NOT NULL,
-    path        TEXT    NOT NULL UNIQUE
+    path        TEXT    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tracks (
@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS tracks (
     number      INTEGER NOT NULL,
     duration    INTEGER NOT NULL,
     cover_path  TEXT    NOT NULL,
-    path        TEXT    NOT NULL UNIQUE,
+    path        TEXT    NOT NULL,
     hash        TEXT    NOT NULL UNIQUE
 ); 
 
