@@ -13,7 +13,6 @@
         <ContextMenu
           :track="playerStore.currentTrack"
           :playlists="playlistStore.playlists"
-          @queue="handleAddToQueue"
           @playlist="handlePlaylist"
         >
           <RouterLink
@@ -37,22 +36,18 @@
             params: { id: playerStore.currentTrack.artist_id },
           }"
         >
-          <p
-            class="text-text-secondary hover:text-text-secondary-hovered cursor-pointer truncate font-normal"
+          <small
+            class="text-text-secondary hover:text-text-secondary-hovered cursor-pointer truncate"
           >
             {{ playerStore.currentTrack.artist_name }}
-          </p>
+          </small>
         </RouterLink>
       </div>
     </div>
 
     <div class="flex w-full flex-col items-center gap-4 px-6">
-      <PlayerControls :extra="true" />
-
-      <div
-        class="text-text-secondary flex w-full items-center gap-4 text-center"
-      >
-        <label class="w-10 text-sm">{{ currentProgress }}</label>
+      <div class="flex w-full items-center gap-4 text-center">
+        <label class="text-text-tertiary w-10">{{ currentProgress }}</label>
         <Slider
           class="w-full"
           @pointerdown="beingHeld = true"
@@ -61,8 +56,10 @@
           :max="playerStore.currentTrack.duration"
           :step="0.1"
         />
-        <label class="w-10 text-sm">{{ totalLength }}</label>
+        <label class="text-text-tertiary w-10">{{ totalLength }}</label>
       </div>
+
+      <PlayerControls :extra="true" />
     </div>
 
     <VolumeControls class="pr-4" />
@@ -72,12 +69,10 @@
 <script setup lang="ts">
 import {
   commands,
+  events,
   formatTime,
-  handleBackendError,
-  Tracks,
   usePlayerStore,
   usePlaylistStore,
-  useQueueStore,
 } from "@/composables/";
 import {
   VolumeControls,
@@ -89,7 +84,6 @@ import { convertFileSrc } from "@tauri-apps/api/core";
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { RouterLink } from "vue-router";
 
-const queueStore = useQueueStore();
 const playlistStore = usePlaylistStore();
 const playerStore = usePlayerStore();
 
@@ -123,12 +117,10 @@ async function selectProgress() {
   if (!(await commands.playerHasTrack())) return;
   const skipTo = (await commands.getPlayerState()) === "Playing";
 
-  const result = await commands.seekTrack(
-    parseFloat(progress.value.toString()),
-    skipTo,
-  );
-
-  if (result.status === "error") return handleBackendError(result.error);
+  await events.playerEvent.emit({
+    type: "Seek",
+    data: { position: progress.value, resume: skipTo },
+  });
 
   beingHeld.value = false;
 
@@ -144,18 +136,11 @@ async function handlePlaylist(
   else await playlistStore.removeFromPlaylist(playlistId, trackId);
 }
 
-async function handleAddToQueue(track: Tracks) {
-  queueStore.personalQueue.push(track);
-}
-
 onMounted(async () => {
   await playerStore.initialLoad();
 });
 
 onUnmounted(async () => {
-  const result = await commands.stopPlayer();
-  if (result.status === "error") return handleBackendError(result.error);
-
-  (await playerStore.listenMediaControl)();
+  await events.playerEvent.emit({ type: "Stop" });
 });
 </script>

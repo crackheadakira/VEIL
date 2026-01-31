@@ -1,52 +1,55 @@
-# Sodapop Reimagined
-
-## High Priority
+# VEIL
 
 - [x] Database
   - [x] Database pool
   - [x] Lessening repetiton in db.rs
   - [x] ~~Add support for featuring artists (e.g Tyler The Creator, Daniel Caesar)~~
 - [x] Migrate away from audiotags and use custom readers
-- [ ] ID3
-  - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
-  - [ ] Add support for ID3v2.4
 - [x] Better error handling (backend)
   - [x] FLAC
   - [x] ID3
   - [x] Database
   - [x] Commands
-- [ ] Better queue system
-- [ ] Logging System
-  - [ ] Log warn / error instead of unwrapping
-- [ ] Add a fullscreen view
-- [x] Add support for a custom CSS folder
-
-## Medium Priority
-
-- [x] Playlist support
-  - [x] Database methods
-  - [x] Context menu
-  - [x] Playlist page
+  - [x] Add support for a custom CSS folder
 - [x] Add last.fm support
   - [x] Allow adding session key
   - [x] Scrobble track > 30s
-  - [ ] Get metadata for missing files
-- [ ] Liked Songs
-- [ ] Artist page
-  - [ ] Allow user to view their liked songs for given artist
-  - [ ] Play random track from artist
-- [x] Settings page
-
-## Low Priority
-
-- [ ] Add documentation / comments
-  - [x] Frontend
-  - [ ] Backend
 - [x] Implement souvlaki
   - [x] Get it working on backend side
   - [x] Control frontend actions
   - [ ] Desync when seeking
+- [x] Settings page
+- [x] Discord RPC
+- [ ] ID3
+  - [x] Find a way to calculate duration for ID3 files (we just have the user play the track to update it)
+  - [ ] Add support for ID3v2.4
+- [x] Better queue system
+- [ ] Logging System
+  - [ ] Log warn / error instead of unwrapping
+- [ ] Add a fullscreen view
+- [ ] Liked Songs
+- [ ] Artist page
+  - [ ] Allow user to view their liked songs for given artist
+  - [ ] Play random track from artist
+- [ ] Enabling Discord RPC mid-track without changing anything doesn't send RPC
+  - [ ] Then when pausing & resuming gives a basic "Browsing" status
+- [ ] Add documentation / comments
+  - [x] Frontend
+  - [ ] Backend
 - [ ] Lyric support
   - [ ] Read .LRC files
   - [ ] Lyric View
-- [x] Discord RPC
+- [ ] Adding back / forward arrows
+- [x] Make slider tracker only appear on hover
+- [ ] Album artist & track artist separation (for compilations & collaborations)
+- [ ] Disc number support
+- [ ] Queue UI
+- [ ] Enqueing next & last
+- [ ] Make context menu generic accepting an object defining it's structure
+- [ ] Keyboard shortcuts
+- [x] Playlist support
+  - [x] Database methods
+  - [x] Context menu
+  - [x] Playlist page
+  - [ ] Exporting playlists to m3u8
+- [ ] mDNS remote control

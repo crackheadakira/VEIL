@@ -1,4 +1,4 @@
-# Sodapop Reimagined
+# VEIL
 
 A local music player built with **Rust**, **Vue.js**, with **Tauri**. It integrates with **Last.fm** for scrobbling and **Discord RPC** to show what you're listening to.
 
@@ -25,8 +25,8 @@ A local music player built with **Rust**, **Vue.js**, with **Tauri**. It integra
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/crackheadakira/Sodapop-Reimagined.git
-cd Sodapop-Reimagined
+git clone https://github.com/crackheadakira/VEIL.git
+cd VEIL
 ```
 
 ### 2. Install frontend dependencies

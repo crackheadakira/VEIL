@@ -1,23 +1,34 @@
 <template>
   <div
-    class="bg-bg-primary text-text-primary flex h-full w-full flex-col items-center gap-4"
+    class="bg-bg-primary text-text-primary relative flex h-full w-full flex-col items-center gap-4"
   >
-    <div
-      ref="container"
-      class="flex h-full w-full flex-wrap items-center justify-center gap-4 overflow-y-scroll"
-    >
-      <BigCard v-for="album of albums" :data="album" />
-    </div>
-    <Pagination
-      @update:page="onNewPage"
+    <h6 class="text-text-secondary w-full select-none">
+      {{ totalAlbums }} albums
+    </h6>
+    <VirtualList
+      :items="albums"
       :total="totalAlbums"
-      :items-per-page="albumsToFetch"
-    />
+      :itemHeight="bigCardHeight"
+      :itemWidth="bigCardWidth"
+      :gap="gap"
+      :fetchMore="fetchMore"
+    >
+      <template #default="{ items }">
+        <div class="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-4">
+          <BigCard
+            v-for="album in items"
+            :key="album.id"
+            :data="album"
+            class="shrink"
+          />
+        </div>
+      </template>
+    </VirtualList>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BigCard, Pagination } from "@/components/";
+import { BigCard, VirtualList } from "@/components/";
 import {
   commands,
   handleBackendError,
@@ -25,31 +36,49 @@ import {
   type Albums,
 } from "@/composables/";
 import { computed, onMounted, ref, useTemplateRef } from "vue";
+import { useResizeObserver } from "@vueuse/core";
+
+const rootFontSize = parseFloat(
+  window.getComputedStyle(document.documentElement).fontSize,
+);
+
+const tailwindSpacing =
+  parseFloat(
+    window.getComputedStyle(document.body).getPropertyValue("--spacing"),
+  ) * rootFontSize;
+
+const bigCardHeight = tailwindSpacing * 70;
+const bigCardWidth = tailwindSpacing * 48;
+const gap = tailwindSpacing * 4;
 
 const configStore = useConfigStore();
 
 const albums = ref<Albums[]>([]);
 const totalAlbums = ref<number>(0);
-const currentPage = ref(1);
 
 const container = useTemplateRef<HTMLElement>("container");
-const containerWidth = ref(container.value?.clientWidth || 1504);
 
-const albumsToFetch = computed(
-  () => Math.floor(containerWidth.value / 192) * 5,
+const containerWidth = ref(container.value?.clientWidth || 1504);
+useResizeObserver(container, (entries) => {
+  if (entries[0]) {
+    containerWidth.value = entries[0].contentRect.width;
+  }
+});
+
+const cardsPerRow = computed(() =>
+  Math.floor((containerWidth.value + gap) / (bigCardWidth + gap)),
 );
 
-async function onNewPage(page: number) {
-  currentPage.value = page;
-  const result = await commands.getAlbumsOffset(
-    albumsToFetch.value,
-    albumsToFetch.value * (page - 1),
-  );
+const albumsToFetch = computed(() => cardsPerRow.value * 6);
+
+async function fetchMore(offset: number, count: number) {
+  const result = await commands.getAlbumsOffset(count, offset);
   if (result.status === "error") return handleBackendError(result.error);
-  albums.value = result.data;
+  albums.value.push(...result.data);
 }
 
 onMounted(async () => {
+  containerWidth.value = container.value?.clientWidth || containerWidth.value;
   configStore.currentPage = "/all_albums";
   configStore.pageName = "All Albums";
 

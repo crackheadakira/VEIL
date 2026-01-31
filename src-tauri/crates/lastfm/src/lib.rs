@@ -14,7 +14,7 @@ use std::{borrow::Cow, collections::HashMap};
 type LastFMParams<'a> = HashMap<&'static str, Cow<'a, str>>;
 
 #[derive(Debug, thiserror::Error)]
-pub enum LastFMError {
+pub enum Error {
     /// [`LastFMBuilder`] is missing an API key
     #[error("Missing API key")]
     MissingAPIKey,
@@ -41,6 +41,8 @@ pub enum LastFMError {
     JsonError(#[from] serde_json::Error),
 }
 
+pub(crate) type Result<T, U = Error> = std::result::Result<T, U>;
+
 #[derive(Clone)]
 pub struct LastFM {
     /// The Last.FM API Key
@@ -53,13 +55,14 @@ pub struct LastFM {
     base_url: String,
     /// The HTTP request client
     client: reqwest::Client,
-    /// If LastFM API should be enabled, if `false` doesn't send any HTTP requests.
+    /// If `LastFM` API should be enabled, if `false` doesn't send any HTTP requests.
     ///
     /// By default is `true`.
     enabled: bool,
 }
 
 impl<'a> LastFM {
+    #[must_use]
     pub fn builder() -> LastFMBuilder {
         LastFMBuilder {
             api_key: None,
@@ -71,8 +74,8 @@ impl<'a> LastFM {
     async fn http_request(
         &self,
         method: Method,
-        params: &mut LastFMParams<'a>,
-    ) -> Result<serde_json::Value, LastFMError> {
+        params: &LastFMParams<'a>,
+    ) -> Result<serde_json::Value> {
         let url = &self.base_url;
 
         let response = match method {
@@ -85,7 +88,7 @@ impl<'a> LastFM {
                     .send()
                     .await?
             }
-            _ => return Err(LastFMError::InvalidHTTPMethod),
+            _ => return Err(Error::InvalidHTTPMethod),
         };
 
         let json = response.json().await?;
@@ -99,9 +102,9 @@ impl<'a> LastFM {
         method: Method,
         api_method: &APIMethod,
         params: &mut LastFMParams<'a>,
-    ) -> Result<T, LastFMError> {
+    ) -> Result<T> {
         if !self.enabled {
-            return Err(LastFMError::RequestWhenDisabled);
+            return Err(Error::RequestWhenDisabled);
         }
         params.insert("method", Cow::Borrowed(api_method.as_query()));
         params.insert("api_key", Cow::Borrowed(self.api_key.as_str()));
@@ -112,7 +115,7 @@ impl<'a> LastFM {
                 Cow::from(
                     self.session_key
                         .clone()
-                        .ok_or(LastFMError::MissingAuthentication)?,
+                        .ok_or(Error::MissingAuthentication)?,
                 ),
             );
         }
@@ -128,7 +131,7 @@ impl<'a> LastFM {
 
         if res.get("error").is_some() {
             let error: APIError = serde_json::from_value(res)?;
-            return Err(LastFMError::APIError(error));
+            return Err(Error::APIError(error));
         }
 
         let response: T = serde_json::from_value(res)?;
@@ -140,7 +143,7 @@ impl<'a> LastFM {
     /// This is needed by Last.FM to sign your API requests
     fn sign_api(&self, params: &mut LastFMParams) -> String {
         let mut sorted_keys = params.keys().copied().collect::<Vec<&str>>();
-        sorted_keys.sort();
+        sorted_keys.sort_unstable();
 
         let mut params_string = String::new();
 
@@ -163,6 +166,7 @@ impl<'a> LastFM {
         self.session_key = Some(session_key);
     }
 
+    #[must_use]
     pub fn session_key(&self) -> Option<String> {
         self.session_key.clone()
     }
@@ -171,18 +175,22 @@ impl<'a> LastFM {
         self.enabled = value;
     }
 
+    #[must_use]
     pub fn auth(&'_ self) -> auth::Auth<'_> {
         auth::Auth::new(self)
     }
 
+    #[must_use]
     pub fn user(&'_ self) -> user::User<'_> {
         user::User::new(self)
     }
 
+    #[must_use]
     pub fn track(&'_ self) -> track::Track<'_> {
         track::Track::new(self)
     }
 
+    #[must_use]
     pub fn album(&'_ self) -> album::Album<'_> {
         album::Album::new(self)
     }
@@ -212,24 +220,30 @@ pub struct LastFMBuilder {
 
 impl LastFMBuilder {
     /// Add `api_key` to builder
+    #[must_use]
     pub fn api_key(mut self, api_key: &str) -> Self {
-        self.api_key = Some(api_key.to_string());
+        self.api_key = Some(api_key.to_owned());
         self
     }
 
     /// Add `api_secret` to builder
+    #[must_use]
     pub fn api_secret(mut self, api_secret: &str) -> Self {
-        self.api_secret = Some(api_secret.to_string());
+        self.api_secret = Some(api_secret.to_owned());
         self
     }
 
     /// Consume `LastFMBuilder` and returns a wrapper to send API calls with.
-    pub fn build(self) -> Result<LastFM, LastFMError> {
+    ///
+    /// # Errors
+    /// Returns [`Error::MissingAPIKey`] or [`Error::MissingAPISecret`]
+    /// if the respective fields were not set on the builder.
+    pub fn build(self) -> Result<LastFM> {
         Ok(LastFM {
-            api_key: self.api_key.ok_or(LastFMError::MissingAPIKey)?,
-            api_secret: self.api_secret.ok_or(LastFMError::MissingAPISecret)?,
+            api_key: self.api_key.ok_or(Error::MissingAPIKey)?,
+            api_secret: self.api_secret.ok_or(Error::MissingAPISecret)?,
             session_key: None,
-            base_url: "http://ws.audioscrobbler.com/2.0/".to_string(),
+            base_url: "http://ws.audioscrobbler.com/2.0/".to_owned(),
             client: reqwest::Client::new(),
             enabled: true,
         })

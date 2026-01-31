@@ -1,7 +1,7 @@
 <template>
   <div class="text-text-primary flex w-full flex-col gap-8" v-if="artist_data">
     <div
-      class="sodapop-card flex max-h-72 min-h-72 items-center justify-between overflow-hidden"
+      class="veil-card flex max-h-72 min-h-72 items-center justify-between overflow-hidden"
     >
       <div class="flex h-full flex-col justify-end gap-4 p-8">
         <h4 class="text-text-primary">{{ artist_data.artist.name }}</h4>

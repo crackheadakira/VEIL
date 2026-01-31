@@ -1,78 +1,119 @@
 use specta::Type;
+use tauri_specta::Event;
 
-#[derive(thiserror::Error, Debug, serde::Serialize, Type)]
+#[derive(thiserror::Error, Debug, serde::Serialize, Type, Event, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum FrontendError {
-    #[error("IO error: {0}")]
+    #[error("[IO] {0}")]
     Io(String),
-    #[error("Metadata error: {0}")]
+
+    #[error("[Metadata] {0}")]
     Metadata(String),
-    #[error("Database error: {0}")]
+
+    #[error("[Database] {0}")]
     Database(String),
-    #[error("Player error: {0}")]
+
+    #[error("[Player] {0}")]
     Player(String),
-    #[error("Standard error: {0}")]
+
+    #[error("[Standard] {0}")]
     Standard(String),
-    #[error("LastFM error: {0}")]
+
+    #[error("[LastFM] {0}")]
     LastFMError(String),
-    #[error("Serde JSON: {0}")]
+
+    #[error("[JSON] {0}")]
     SerdeJson(String),
-    #[error("Tauri error: {0}")]
+
+    #[error("[Tauri] {0}")]
     TauriError(String),
-    #[error("Anyhow error: {0}")]
+
+    #[error("[Anyhow] {0}")]
     AnyhowError(String),
 }
 
 impl From<std::io::Error> for FrontendError {
     fn from(error: std::io::Error) -> Self {
-        Self::Io(error.to_string())
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::Io(msg)
     }
 }
 
-impl From<metadata_audio::MetadataError> for FrontendError {
-    fn from(error: metadata_audio::MetadataError) -> Self {
-        Self::Metadata(error.to_string())
+impl From<metadata_audio::Error> for FrontendError {
+    fn from(error: metadata_audio::Error) -> Self {
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::Metadata(msg)
     }
 }
 
-impl From<db::DatabaseError> for FrontendError {
-    fn from(error: db::DatabaseError) -> Self {
-        Self::Database(error.to_string())
+impl From<db::Error> for FrontendError {
+    fn from(error: db::Error) -> Self {
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::Database(msg)
     }
 }
 
-impl From<media_controls::PlayerError> for FrontendError {
-    fn from(error: media_controls::PlayerError) -> Self {
-        Self::Player(error.to_string())
+impl From<media_controls::Error> for FrontendError {
+    fn from(error: media_controls::Error) -> Self {
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::Player(msg)
     }
 }
 
-impl From<lastfm::LastFMError> for FrontendError {
-    fn from(error: lastfm::LastFMError) -> Self {
-        Self::LastFMError(error.to_string())
+impl From<lastfm::Error> for FrontendError {
+    fn from(error: lastfm::Error) -> Self {
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::LastFMError(msg)
     }
 }
 
 impl From<Box<dyn std::error::Error>> for FrontendError {
     fn from(error: Box<dyn std::error::Error>) -> Self {
-        Self::Standard(error.to_string())
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::Standard(msg)
     }
 }
 
 impl From<serde_json::Error> for FrontendError {
     fn from(error: serde_json::Error) -> Self {
-        Self::SerdeJson(error.to_string())
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::SerdeJson(msg)
     }
 }
 
 impl From<tauri::Error> for FrontendError {
     fn from(error: tauri::Error) -> Self {
-        Self::TauriError(error.to_string())
+        let msg = error.to_string();
+        logging::error!("{error:?}");
+
+        Self::TauriError(msg)
     }
 }
 
 impl From<anyhow::Error> for FrontendError {
     fn from(error: anyhow::Error) -> Self {
-        Self::AnyhowError(error.to_string())
+        let mut msg = error.to_string();
+
+        for cause in error.chain().skip(1) {
+            msg.push_str(&format!("\nCaused by: {}", cause));
+        }
+
+        logging::error!("{error:?}");
+
+        FrontendError::AnyhowError(msg)
     }
 }

@@ -3,6 +3,16 @@ name = "metadata_audio"
 version = "0.0.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
-thiserror = "2.0.12"
+thiserror = { workspace = true }
 logging.workspace = true
+
+[dev-dependencies]
+criterion = "0.8.1"
+
+[[bench]]
+name = "metadata_bench"
+harness = false

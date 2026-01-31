@@ -1,5 +1,5 @@
 use crate::{
-    LastFM, LastFMError, LastFMParams,
+    Error, LastFM, LastFMParams, Result,
     models::{APIMethod, Image},
 };
 use reqwest::Method;
@@ -36,7 +36,7 @@ impl<'a> GetUserInfo<'a> {
         }
     }
 
-    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>> {
         let mut params = HashMap::new();
 
         if let Some(u) = &self.user {
@@ -45,7 +45,7 @@ impl<'a> GetUserInfo<'a> {
             let session_key = self.last_fm.session_key.clone();
             params.insert(
                 "sk",
-                Cow::from(session_key.ok_or(LastFMError::MissingAuthentication)?),
+                Cow::from(session_key.ok_or(Error::MissingAuthentication)?),
             );
         };
 
@@ -54,7 +54,7 @@ impl<'a> GetUserInfo<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<UserInfo, LastFMError> {
+    pub async fn send(self) -> Result<UserInfo> {
         let mut params = self.params()?;
         let response: UserInfoResponse = self
             .last_fm

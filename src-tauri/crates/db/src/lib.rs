@@ -4,22 +4,26 @@ use include_dir::{Dir, include_dir};
 use once_cell::sync::Lazy;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{Error, OptionalExtension};
+use rusqlite::OptionalExtension;
 use std::{collections::HashMap, fs::create_dir, path::PathBuf};
+
+use crate::timed_connection::TimedPool;
+
+mod timed_connection;
 
 fn collect_sql_files(dir: &Dir, queries: &mut HashMap<String, String>) {
     for file in dir.files() {
-        if file.path().extension().map(|e| e == "sql").unwrap_or(false) {
-            if let Some(content) = file.contents_utf8() {
-                let file_name = file
-                    .path()
-                    .file_stem()
-                    .unwrap()
-                    .to_str()
-                    .unwrap()
-                    .to_string();
-                queries.insert(file_name, content.to_string());
-            }
+        if file.path().extension().is_some_and(|e| e == "sql")
+            && let Some(content) = file.contents_utf8()
+        {
+            let file_name = file
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_str()
+                .unwrap()
+                .to_owned();
+            queries.insert(file_name, content.to_owned());
         }
     }
 
@@ -46,7 +50,7 @@ fn query(name: &str) -> &str {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum DatabaseError {
+pub enum Error {
     #[error(transparent)]
     R2D2Error(#[from] r2d2::Error),
     #[error(transparent)]
@@ -54,8 +58,10 @@ pub enum DatabaseError {
 }
 
 pub struct Database {
-    pool: Pool<SqliteConnectionManager>,
+    pool: TimedPool,
 }
+
+type Result<T, U = Error> = std::result::Result<T, U>;
 
 impl Database {
     /// Instanties a connection with the database, creates a new sqlite file if it doesn't exist
@@ -66,7 +72,8 @@ impl Database {
 
         let manager = SqliteConnectionManager::file(path.join("db.sqlite"));
         let pool = Pool::new(manager).unwrap();
-        let conn = pool.get().unwrap();
+        let timed_pool = TimedPool(pool);
+        let conn = timed_pool.get().unwrap();
 
         conn.execute_batch(
             "PRAGMA journal_mode = WAL;
@@ -80,11 +87,11 @@ impl Database {
 
         drop(conn);
 
-        Self { pool }
+        Self { pool: timed_pool }
     }
 
     /// Writes WAL data to database
-    pub fn shutdown(&self) -> Result<(), DatabaseError> {
+    pub fn shutdown(&self) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
 
@@ -92,7 +99,7 @@ impl Database {
     }
 
     /// Get all values from table for `T`
-    pub fn all<T: NeedForDatabase>(&self) -> Result<Vec<T>, DatabaseError> {
+    pub fn all<T: Queryable>(&self) -> Result<Vec<T>> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_all"),
@@ -105,13 +112,13 @@ impl Database {
         let mut stmt = conn.prepare(stmt_to_call)?;
         let result = stmt
             .query_map([], T::from_row)?
-            .collect::<Result<Vec<T>, Error>>()?;
+            .collect::<Result<Vec<T>, rusqlite::Error>>()?;
 
         Ok(result)
     }
 
     /// Get total length of rows in `T`
-    pub fn rows<T: NeedForDatabase>(&self) -> Result<u32, DatabaseError> {
+    pub fn rows<T: Queryable>(&self) -> Result<u32> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("SELECT COUNT(*) FROM {}", T::table_name());
         let mut stmt = conn.prepare(&stmt_to_call)?;
@@ -121,7 +128,7 @@ impl Database {
     }
 
     /// Get value from `T` table where id is same
-    pub fn by_id<T: NeedForDatabase>(&self, id: &u32) -> Result<T, DatabaseError> {
+    pub fn by_id<T: Queryable>(&self, id: &u32) -> Result<T> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_id"),
@@ -138,14 +145,39 @@ impl Database {
     }
 
     /// Insert value to `T` table
-    pub fn insert<T: NeedForDatabase>(&self, data_to_pass: T) -> Result<(), DatabaseError> {
+    pub fn insert<T: Insertable + Hashable>(&self, data_to_pass: T) -> Result<()> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_insert"),
-            "albums" => query("albums_insert"),
             "tracks" => query("tracks_insert"),
             "playlists" => query("playlists_insert"),
+            _ => unreachable!("Invalid table name"),
+        };
+
+        {
+            let mut stmt = tx.prepare_cached(stmt_to_call)?;
+            let mut params = data_to_pass.to_params();
+            let hash = data_to_pass.make_hash();
+
+            if T::table_name() == "tracks" {
+                params.push(&hash);
+            }
+
+            stmt.execute(rusqlite::params_from_iter(params))?;
+        }
+
+        tx.commit()?;
+
+        Ok(())
+    }
+
+    /// Insert album`T` table
+    pub fn insert_album<T: Insertable + HasArtists>(&self, data_to_pass: T) -> Result<()> {
+        let mut conn = self.pool.get()?;
+        let tx = conn.transaction()?;
+        let stmt_to_call = match T::table_name() {
+            "albums" => query("albums_insert"),
             _ => unreachable!("Invalid table name"),
         };
 
@@ -157,7 +189,7 @@ impl Database {
             tx.last_insert_rowid()
         };
 
-        if T::table_name() == "albums" {
+        {
             let mut stmt = tx.prepare_cached(query("album_artists_insert"))?;
             stmt.execute((album_id, data_to_pass.get_artist_id()))?;
         }
@@ -168,7 +200,7 @@ impl Database {
     }
 
     /// Delete value from `T` table where id is same
-    pub fn delete<T: NeedForDatabase>(&self, id: u32) -> Result<(), DatabaseError> {
+    pub fn delete<T: Queryable>(&self, id: u32) -> Result<()> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!("DELETE FROM {} WHERE id = ?1", T::table_name());
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
@@ -178,7 +210,7 @@ impl Database {
     }
 
     /// Return latest record from `T` table
-    pub fn latest<T: NeedForDatabase>(&self) -> Result<T, DatabaseError> {
+    pub fn latest<T: Queryable>(&self) -> Result<T> {
         let conn = self.pool.get()?;
         let stmt_to_call = match T::table_name() {
             "artists" => query("artists_latest"),
@@ -195,17 +227,16 @@ impl Database {
     }
 
     /// Counts how many values `T` table has
-    pub fn count<T: NeedForDatabase>(
+    pub fn count<T: Queryable>(
         &self,
         id: u32,
-        call_where: &str,
-    ) -> Result<u32, DatabaseError> {
+        column: &str,
+        table_override: Option<&str>,
+    ) -> Result<u32> {
         let conn = self.pool.get()?;
-        let stmt_to_call = format!(
-            "SELECT COUNT(*) FROM {} WHERE {} = ?1",
-            T::table_name(),
-            call_where
-        );
+        let table = table_override.unwrap_or(T::table_name());
+
+        let stmt_to_call = format!("SELECT COUNT(*) FROM {} WHERE {} = ?1", table, column);
         let mut stmt = conn.prepare_cached(&stmt_to_call)?;
         let result = stmt.query_row([id], |row| row.get(0))?;
 
@@ -213,11 +244,7 @@ impl Database {
     }
 
     /// Checks if value exists in `T` table
-    pub fn exists<T: NeedForDatabase>(
-        &self,
-        field_to_view: &str,
-        field_data: &str,
-    ) -> Result<bool, DatabaseError> {
+    pub fn exists<T: Queryable>(&self, field_to_view: &str, field_data: &str) -> Result<bool> {
         let conn = self.pool.get()?;
         let stmt_to_call = format!(
             "SELECT 1 FROM {} WHERE {} = ?1",
@@ -231,10 +258,7 @@ impl Database {
     }
 
     /// Batch fetch `T` from DB using a `Vec<u32>` of IDs
-    pub fn batch_id<T: NeedForDatabase>(
-        &self,
-        ids: &[u32],
-    ) -> Result<Vec<Option<T>>, DatabaseError> {
+    pub fn batch_id<T: Queryable>(&self, ids: &[u32]) -> Result<Vec<Option<T>>> {
         let mut conn = self.pool.get()?;
         let tx = conn.transaction()?;
         let mut results = Vec::with_capacity(ids.len());
@@ -263,51 +287,42 @@ impl Database {
     }
 
     /// Returns 5 queries that match the `search_str` best
-    pub fn search(&self, search_str: &str) -> Result<Vec<Search>, DatabaseError> {
+    pub fn search(&self, search_str: &str) -> Result<Vec<Search>> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare_cached(query("search_find"))?;
         let result = stmt
             .query_map([search_str], Search::from_row)?
-            .collect::<Result<Vec<Search>, Error>>()?;
+            .collect::<Result<Vec<Search>, rusqlite::Error>>()?;
 
         Ok(result)
     }
 
     /// Fetch albums limited by amount & offset
-    pub fn album_pagination(&self, limit: u32, offset: u32) -> Result<Vec<Albums>, DatabaseError> {
+    pub fn album_pagination(&self, limit: u32, offset: u32) -> Result<Vec<Albums>> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare(query("albums_offset"))?;
+        let mut stmt = conn.prepare_cached(query("albums_offset"))?;
         let result = stmt
             .query_map([limit, offset], Albums::from_row)?
-            .collect::<Result<Vec<Albums>, Error>>()?;
+            .collect::<Result<Vec<Albums>, rusqlite::Error>>()?;
 
         Ok(result)
     }
 
     /// Update track duration
-    pub fn update_duration(
-        &self,
-        track_id: &u32,
-        album_id: &u32,
-        duration: &u32,
-    ) -> Result<(), DatabaseError> {
+    pub fn update_duration(&self, track_id: u32, album_id: u32, duration: u32) -> Result<()> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare(query("tracks_update_duration"))?;
         stmt.execute((duration, track_id))?;
 
         let (new_duration, track_count) = self.get_album_duration(album_id)?;
         let new_album_type = AlbumType::get(track_count, new_duration);
-        self.update_album_type(album_id, new_album_type, &(new_duration, track_count))?;
+        self.update_album_type(album_id, new_album_type, new_duration, track_count)?;
 
         Ok(())
     }
 
     /// Get album from database where `album_name` matches
-    pub fn album_by_name(
-        &self,
-        album_name: &str,
-        artist_id: &u32,
-    ) -> Result<Albums, DatabaseError> {
+    pub fn album_by_name(&self, album_name: &str, artist_id: &u32) -> Result<Albums> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare_cached(query("album_name"))?;
         let result = stmt.query_row((artist_id, album_name), Albums::from_row)?;
@@ -316,18 +331,18 @@ impl Database {
     }
 
     /// Get all albums from artist where `artist_id` matches
-    pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>, DatabaseError> {
+    pub fn albums_by_artist_id(&self, artist_id: &u32) -> Result<Vec<Albums>> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare(query("albums_artist_id"))?;
         let result = stmt
             .query_map([artist_id], Albums::from_row)?
-            .collect::<Result<Vec<Albums>, Error>>()?;
+            .collect::<Result<Vec<Albums>, rusqlite::Error>>()?;
 
         Ok(result)
     }
 
     /// Get duration of all tracks of given album
-    pub fn get_album_duration(&self, album_id: &u32) -> Result<(u32, u32), DatabaseError> {
+    pub fn get_album_duration(&self, album_id: u32) -> Result<(u32, u32)> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare(query("albums_duration"))?;
 
@@ -336,13 +351,13 @@ impl Database {
         Ok(result)
     }
 
-    pub fn album_with_tracks(&self, album_id: &u32) -> Result<AlbumWithTracks, DatabaseError> {
+    pub fn album_with_tracks(&self, album_id: &u32) -> Result<AlbumWithTracks> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare("SELECT * FROM tracks WHERE album_id = ?1")?;
 
         let tracks = stmt
             .query_map([album_id], Tracks::from_row)?
-            .collect::<Result<Vec<Tracks>, Error>>()?;
+            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
 
         let album = self.by_id::<Albums>(album_id)?;
 
@@ -351,14 +366,15 @@ impl Database {
 
     pub fn update_album_type(
         &self,
-        album_id: &u32,
+        album_id: u32,
         album_type: AlbumType,
-        duration_count: &(u32, u32),
-    ) -> Result<(), DatabaseError> {
+        duration: u32,
+        track_count: u32,
+    ) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute(
             query("albums_update_type"),
-            (album_type, duration_count.0, duration_count.1, album_id),
+            (album_type, duration, track_count, album_id),
         )?;
 
         Ok(())
@@ -366,7 +382,7 @@ impl Database {
 
     // ARTIST
 
-    pub fn artist_by_name(&self, name: &str) -> Result<Artists, DatabaseError> {
+    pub fn artist_by_name(&self, name: &str) -> Result<Artists> {
         let conn = self.pool.get()?;
         let mut stmt = conn.prepare_cached("SELECT * FROM artists WHERE name = ?1")?;
         let result = stmt.query_row([name], Artists::from_row)?;
@@ -374,14 +390,14 @@ impl Database {
         Ok(result)
     }
 
-    pub fn artist_with_albums(&self, id: &u32) -> Result<ArtistWithAlbums, DatabaseError> {
+    pub fn artist_with_albums(&self, id: &u32) -> Result<ArtistWithAlbums> {
         let artist = self.by_id::<Artists>(id)?;
         let albums = self.albums_by_artist_id(id)?;
 
         let albums_with_tracks = albums
             .iter()
             .map(|album| self.album_with_tracks(&album.id))
-            .collect::<Result<Vec<AlbumWithTracks>, DatabaseError>>()?;
+            .collect::<Result<Vec<AlbumWithTracks>>>()?;
 
         Ok(ArtistWithAlbums {
             artist,
@@ -391,44 +407,74 @@ impl Database {
 
     // PLAYLIST
 
-    pub fn get_playlist_with_tracks(
-        &self,
-        playlist_id: &u32,
-    ) -> Result<PlaylistWithTracks, DatabaseError> {
+    pub fn get_playlist_with_tracks(&self, playlist_id: &u32) -> Result<PlaylistWithTracks> {
         let conn = self.pool.get()?;
         let playlist = self.by_id::<Playlists>(playlist_id)?;
         let mut stmt = conn.prepare(query("playlists_tracks"))?;
 
         let tracks = stmt
             .query_map([playlist_id], Tracks::from_row)?
-            .collect::<Result<Vec<Tracks>, Error>>()?;
+            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
 
         Ok(PlaylistWithTracks { playlist, tracks })
     }
 
-    pub fn update_playlist(&self, playlist: &Playlists) -> Result<(), DatabaseError> {
+    /// Fetch tracks in playlist limited by amount & offset
+    pub fn playlist_track_pagination(
+        &self,
+        playlist_id: u32,
+        limit: u32,
+        offset: u32,
+    ) -> Result<PlaylistWithTracks> {
         let conn = self.pool.get()?;
-        conn.execute(query("playlists_update"), playlist.to_params().as_slice())?;
+        let playlist = self.by_id::<Playlists>(&playlist_id)?;
+
+        let mut stmt = conn.prepare_cached(query("tracks_playlist_offset"))?;
+
+        let start = std::time::Instant::now();
+        let tracks = stmt
+            .query_map([playlist_id, limit, offset], Tracks::from_row)?
+            .collect::<Result<Vec<Tracks>, rusqlite::Error>>()?;
+
+        logging::debug!("DB query took {:?}", start.elapsed());
+
+        Ok(PlaylistWithTracks { playlist, tracks })
+    }
+
+    pub fn playlist_track_count(&self, playlist_id: u32) -> Result<u32> {
+        let conn = self.pool.get()?;
+
+        let mut stmt = conn.prepare("SELECT track_count FROM playlists WHERE id = ?1;")?;
+        let result = stmt.query_row([playlist_id], |row| row.get(0))?;
+
+        Ok(result)
+    }
+
+    pub fn update_playlist(
+        &self,
+        playlist_id: u32,
+        name: Option<String>,
+        description: Option<String>,
+        cover_path: Option<String>,
+    ) -> Result<()> {
+        let conn = self.pool.get()?;
+
+        conn.execute(
+            query("playlists_update"),
+            rusqlite::params![name, description, cover_path, playlist_id],
+        )?;
 
         Ok(())
     }
 
-    pub fn insert_track_to_playlist(
-        &self,
-        playlist_id: &u32,
-        track_id: &u32,
-    ) -> Result<(), DatabaseError> {
+    pub fn insert_track_to_playlist(&self, playlist_id: &u32, track_id: &u32) -> Result<()> {
         let conn = self.pool.get()?;
         conn.execute(query("playlists_insert_track"), [playlist_id, track_id])?;
 
         Ok(())
     }
 
-    pub fn delete_track_from_playlist(
-        &self,
-        playlist_id: &u32,
-        track_id: &u32,
-    ) -> Result<(), DatabaseError> {
+    pub fn delete_track_from_playlist(&self, playlist_id: &u32, track_id: &u32) -> Result<()> {
         let conn = self.pool.get()?;
 
         conn.execute(query("playlists_delete_track"), [playlist_id, track_id])?;
@@ -436,11 +482,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn album_exists(
-        &self,
-        album_name: &str,
-        album_year: u16,
-    ) -> Result<Option<Albums>, DatabaseError> {
+    pub fn album_exists(&self, album_name: &str, album_year: u16) -> Result<Option<Albums>> {
         let conn = self.pool.get()?;
 
         let mut stmt = conn.prepare(query("artist_album"))?;

@@ -1,10 +1,9 @@
-use std::{borrow::Cow, collections::HashMap, time::UNIX_EPOCH};
+use std::{borrow::Cow, collections::HashMap, sync::LazyLock, time::UNIX_EPOCH};
 
-use once_cell::sync::Lazy;
 use reqwest::Method;
 
 use crate::{
-    LastFM, LastFMError, LastFMParams,
+    Error, LastFM, LastFMParams, Result,
     models::{APIMethod, TrackData},
 };
 
@@ -17,7 +16,7 @@ impl<'a> Track<'a> {
         Self { last_fm }
     }
 
-    pub fn update_now_playing(&'_ self, track: TrackData) -> UpdateNowPlaying<'_> {
+    pub fn update_now_playing(&'_ self, track: &'a TrackData) -> UpdateNowPlaying<'_> {
         UpdateNowPlaying::new(self.last_fm, track)
     }
 
@@ -32,12 +31,12 @@ impl<'a> Track<'a> {
 
 pub struct UpdateNowPlaying<'a> {
     last_fm: &'a LastFM,
-    track: TrackData,
+    track: &'a TrackData,
     method: APIMethod,
 }
 
 impl<'a> UpdateNowPlaying<'a> {
-    fn new(last_fm: &'a LastFM, track: TrackData) -> Self {
+    fn new(last_fm: &'a LastFM, track: &'a TrackData) -> Self {
         Self {
             last_fm,
             track,
@@ -45,17 +44,17 @@ impl<'a> UpdateNowPlaying<'a> {
         }
     }
 
-    fn params(&'a self) -> Result<LastFMParams<'a>, LastFMError> {
+    fn params(&'a self) -> LastFMParams<'a> {
         let mut params = HashMap::new();
 
         params.insert("artist", Cow::Borrowed(self.track.artist.as_str()));
         params.insert("track", Cow::Borrowed(self.track.name.as_str()));
 
-        Ok(params)
+        params
     }
 
-    pub async fn send(self) -> Result<(), LastFMError> {
-        let mut params = self.params()?;
+    pub async fn send(self) -> Result<()> {
+        let mut params = self.params();
 
         let result = self
             .last_fm
@@ -67,14 +66,12 @@ impl<'a> UpdateNowPlaying<'a> {
 
             // ignore this specific error, as we're passing in `()` as type
             // so it'll always return this
-            Err(LastFMError::JsonError(ref e))
-                if e.to_string() == "invalid type: map, expected unit" =>
-            {
+            Err(Error::JsonError(ref e)) if e.to_string() == "invalid type: map, expected unit" => {
                 Ok(())
             }
 
-            Err(LastFMError::JsonError(e)) => {
-                Err(LastFMError::JsonError(e)) // Propagate the error
+            Err(Error::JsonError(e)) => {
+                Err(Error::JsonError(e)) // Propagate the error
             }
 
             Err(e) => Err(e), // Propagate all other non-JsonError errors
@@ -93,7 +90,7 @@ pub struct TrackScrobble<'a> {
     method: APIMethod,
 }
 
-static ARTIST_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static ARTIST_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("artist[{i}]");
@@ -103,7 +100,7 @@ static ARTIST_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static ALBUM_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static ALBUM_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("artist[{i}]");
@@ -113,7 +110,7 @@ static ALBUM_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static TRACK_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static TRACK_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("track[{i}]");
@@ -123,7 +120,7 @@ static TRACK_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
     keys.try_into().unwrap()
 });
 
-static TIMESTAMP_KEYS: Lazy<[&'static str; 50]> = Lazy::new(|| {
+static TIMESTAMP_KEYS: LazyLock<[&'static str; 50]> = LazyLock::new(|| {
     let mut keys = Vec::with_capacity(50);
     for i in 0..50 {
         let s = format!("timestamp[{i}]");
@@ -142,7 +139,7 @@ impl<'a> TrackScrobble<'a> {
         }
     }
 
-    fn params(&'_ self) -> Result<LastFMParams<'_>, LastFMError> {
+    fn params(&'_ self) -> Result<LastFMParams<'_>> {
         let mut params = HashMap::new();
 
         let current_timestamp = UNIX_EPOCH.elapsed().expect("Time went backwards");
@@ -165,7 +162,7 @@ impl<'a> TrackScrobble<'a> {
             }
             ScrobbleBatch::Many(tracks) => {
                 if tracks.len() > 50 {
-                    return Err(LastFMError::BatchScrobble);
+                    return Err(Error::BatchScrobble);
                 }
 
                 for (index, track) in tracks.iter().enumerate() {
@@ -190,7 +187,7 @@ impl<'a> TrackScrobble<'a> {
         Ok(params)
     }
 
-    pub async fn send(self) -> Result<(), LastFMError> {
+    pub async fn send(self) -> Result<(), Error> {
         let mut params = self.params()?;
         let result = self
             .last_fm
@@ -202,14 +199,12 @@ impl<'a> TrackScrobble<'a> {
 
             // ignore this specific error, as we're passing in `()` as type
             // so it'll always return this
-            Err(LastFMError::JsonError(ref e))
-                if e.to_string() == "invalid type: map, expected unit" =>
-            {
+            Err(Error::JsonError(ref e)) if e.to_string() == "invalid type: map, expected unit" => {
                 Ok(())
             }
 
-            Err(LastFMError::JsonError(e)) => {
-                Err(LastFMError::JsonError(e)) // Propagate the error
+            Err(Error::JsonError(e)) => {
+                Err(Error::JsonError(e)) // Propagate the error
             }
 
             Err(e) => Err(e), // Propagate all other non-JsonError errors

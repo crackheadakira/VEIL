@@ -11,6 +11,7 @@
         :type="toast.type"
         :description="toast.description"
         :removeToast="removeToast"
+        :persistent="toast.persistent"
       />
     </TransitionGroup>
   </div>
@@ -21,21 +22,25 @@ import { Toast } from "@/components/";
 import { toastBus, ToastType } from "@/composables/";
 import { onMounted, ref } from "vue";
 
-const toasts = ref<{ id: number; type: ToastType; description: string }[]>([]);
+const toasts = ref<
+  { id: number; type: ToastType; description: string; persistent?: boolean }[]
+>([]);
 
 function addToast(type: ToastType, description: string) {
   const id = Date.now();
   toasts.value.push({ id, type, description });
 
-  setTimeout(() => removeToast(id), 2100);
+  setTimeout(() => removeToast(id), 3500);
 }
 
 function persistentToast(id: number, type: ToastType, description: string) {
-  const idIdx = toasts.value.findIndex((toast) => toast.id === id);
-  if (idIdx !== -1) {
-    toasts.value[idIdx] = { id, type, description };
+  const toast = toasts.value.find((toast) => toast.id === id);
+  if (toast) {
+    toast.type = type;
+    toast.description = description;
+    toast.persistent = true;
   } else {
-    toasts.value.push({ id, type, description });
+    toasts.value.push({ id, type, description, persistent: true });
   }
 }
 

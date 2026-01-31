@@ -23,13 +23,15 @@ import { Player, SideBar, ToastManager, TitleBar } from "@/components/";
 import {
   useConfigStore,
   commands,
-  handleBackendError,
   usePlayerStore,
   usePlaylistStore,
   PlayerProgressEvent,
+  events,
+  toastBus,
+  ThemeMode,
 } from "@/composables/";
 import { Channel } from "@tauri-apps/api/core";
-import { onMounted, watch } from "vue";
+import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -38,27 +40,17 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const currentRoute = router.currentRoute;
 
-const theme = configStore.config?.theme || "Dark";
+let unlistenConfigEvent: () => void = () => {};
 
-watch(
-  () => configStore.config?.theme,
-  (newTheme) => {
-    if (newTheme === "Dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    } else {
-      document.documentElement.removeAttribute("data-theme");
-    }
-  },
-  { immediate: true },
-);
-
-onMounted(async () => {
+function updateDocumentTheme(theme: ThemeMode) {
   if (theme === "Dark") {
     document.documentElement.setAttribute("data-theme", "dark");
   } else {
     document.documentElement.setAttribute("data-theme", "light");
   }
+}
 
+void requestAnimationFrame(async () => {
   const css = await commands.readCustomStyle();
   let styleElement = document.getElementById("custom-style");
 
@@ -68,22 +60,33 @@ onMounted(async () => {
     document.head.appendChild(styleElement);
   }
 
-  if (css.status === "ok" && styleElement) {
+  if (css.status === "ok" && css.data.length > 0 && styleElement) {
     styleElement.innerText = css.data;
   }
+});
+
+onMounted(async () => {
+  unlistenConfigEvent = await events.veilConfigEvent.listen((event) => {
+    if (!event.payload.theme) return;
+
+    updateDocumentTheme(event.payload.theme);
+  });
 
   await configStore.initialize();
+  const theme = configStore.config?.ui.theme || "Dark";
 
-  const result = await commands.getAllAlbums();
-  if (result.status === "error") return handleBackendError(result.error);
+  updateDocumentTheme(theme);
 
   const track = playerStore.currentTrack;
   const progress = playerStore.playerProgress;
 
-  if (result.data.length === 0 && track) {
+  if (track) {
+    await events.playerEvent.emit({
+      type: "Initialize",
+      data: { track, progress },
+    });
+  } else {
     playerStore.$reset();
-  } else if (track) {
-    await commands.initializePlayer(track.id, progress);
   }
 
   await playlistStore.fetchPlaylists();
@@ -93,12 +96,18 @@ onMounted(async () => {
 
   const channel = new Channel<PlayerProgressEvent>();
   channel.onmessage = async (msg) => {
-    if (msg.event === "Progress")
-      await playerStore.handleProgress(false, msg.data.progress);
-    else await playerStore.handleSongEnd();
+    await playerStore.handleProgress(false, msg.data.progress);
   };
+
+  await events.frontendError.listen((e) => {
+    toastBus.addToast("error", `${e.payload.type}: ${e.payload.data}`);
+  });
 
   const res = await commands.playerProgressChannel(channel);
   if (res.status === "error") console.error(res.error);
+});
+
+onUnmounted(() => {
+  unlistenConfigEvent();
 });
 </script>

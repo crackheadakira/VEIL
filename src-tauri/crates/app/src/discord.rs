@@ -19,19 +19,20 @@ pub struct PayloadData {
     pub album_cover: Option<String>,
     pub show_timestamps: bool,
     pub progress: f64,
-    pub duration: f32,
+    pub duration: f64,
 }
 
 impl DiscordState {
-    pub fn new(client_id: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let rpc = DiscordIpcClient::new(client_id)?;
-        Ok(Self {
+    pub fn new(client_id: &str) -> Self {
+        let rpc = DiscordIpcClient::new(client_id);
+
+        Self {
             enabled: false,
             rpc,
             payload_changed: false,
             payload: PayloadData {
                 state: String::from("Browsing"),
-                details: String::from("Sodapop Reimagined"),
+                details: String::from("VEIL"),
                 small_image: String::from("paused"),
                 small_text: String::from("Paused"),
                 album_cover: None,
@@ -39,7 +40,7 @@ impl DiscordState {
                 progress: 0.0,
                 duration: -1.0,
             },
-        })
+        }
     }
 
     pub fn enable(&mut self, enable: bool) {
@@ -48,15 +49,12 @@ impl DiscordState {
 
     pub fn connect(&mut self) -> bool {
         let res = logging::try_with_log!("Connect Discord RPC", || self.rpc.connect());
-        match res {
-            Ok(_) => {
-                self.enabled = true;
-                true
-            }
-            Err(_) => {
-                self.enabled = false;
-                false
-            }
+        if res.is_ok() {
+            self.enabled = true;
+            true
+        } else {
+            self.enabled = false;
+            false
         }
     }
 
@@ -107,12 +105,12 @@ impl DiscordState {
         }
 
         if small_image != self.payload.small_image {
-            self.payload.small_image = small_image.to_string();
+            self.payload.small_image = small_image.to_owned();
             self.payload_changed = true;
         }
 
         if small_text != self.payload.small_text {
-            self.payload.small_text = small_text.to_string();
+            self.payload.small_text = small_text.to_owned();
             self.payload_changed = true;
         }
 
@@ -121,11 +119,11 @@ impl DiscordState {
             self.payload_changed = true;
         }
 
-        if let Some(p) = progress {
-            if p != self.payload.progress {
-                self.payload.progress = p;
-                self.payload_changed = true;
-            }
+        if let Some(p) = progress
+            && p != self.payload.progress
+        {
+            self.payload.progress = p;
+            self.payload_changed = true;
         }
 
         if self.payload_changed {
@@ -142,30 +140,17 @@ impl DiscordState {
         }
     }
 
-    /// Wraps around [`DiscordState::make_activity`] and logs upon an error
-    pub fn safe_make_activity(&mut self, new_payload: &PayloadData) -> bool {
-        let res = self.make_activity(new_payload);
-
-        match res {
-            Ok(_) => true,
-            Err(e) => {
-                logging::error!("Failed to make Discord activity: {e}");
-                false
-            }
-        }
-    }
-
     fn make_activity_from_payload(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let assets = if let Some(cover) = &self.payload.album_cover {
             Assets::new()
                 .large_image(cover)
-                .large_text("Sodapop Reimagined")
+                .large_text("VEIL")
                 .small_image(&self.payload.small_image)
                 .small_text(&self.payload.small_text)
         } else {
             Assets::new()
-                .large_image("sodapop")
-                .large_text("Sodapop Reimagined")
+                .large_image("veil")
+                .large_text("VEIL")
                 .small_image(&self.payload.small_image)
                 .small_text(&self.payload.small_text)
         };
@@ -177,15 +162,12 @@ impl DiscordState {
             .assets(assets);
 
         if self.payload.show_timestamps && self.payload.duration != -1.0 {
-            let (timestamp, start) = make_timestamp();
+            let (timestamp, start) = Self::make_timestamp();
             activity = activity.timestamps(
                 timestamp
                     .start(start - self.payload.progress as i64 * 1000)
-                    .end(
-                        start
-                            + (self.payload.duration as f64 - self.payload.progress) as i64 * 1000,
-                    ),
-            )
+                    .end(start + (self.payload.duration - self.payload.progress) as i64 * 1000),
+            );
         };
 
         self.rpc.set_activity(activity)?;
@@ -213,12 +195,12 @@ impl DiscordState {
 
         Ok(update_activity)
     }
-}
 
-fn make_timestamp() -> (Timestamps, i64) {
-    let start_time = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_millis() as i64;
-    (Timestamps::new(), start_time)
+    fn make_timestamp() -> (Timestamps, i64) {
+        let start_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("Time went backwards")
+            .as_millis() as i64;
+        (Timestamps::new(), start_time)
+    }
 }

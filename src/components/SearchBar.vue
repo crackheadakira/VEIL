@@ -1,74 +1,76 @@
 <template>
-  <div
-    @click="updateDialog"
-    class="text-text-secondary sodapop-card bg-bg-primary hover:border-border-primary flex w-full cursor-pointer items-center gap-2 p-3 duration-150"
-  >
-    <span class="i-fluent-search-20-filled"></span>
-    <p>Search...</p>
-    <small
-      class="text-text-primary bg-border-secondary ml-auto rounded-sm p-1 px-2"
-      >Ctrl F</small
-    >
-  </div>
-  <Teleport to="body">
-    <div>
-      <Transition
-        enter-active-class="animate-zoomIn"
-        leave-active-class="animate-zoomOut"
+  <Modal v-model="showDialog">
+    <template #trigger>
+      <div
+        @click="updateDialog"
+        class="veil-card bg-bg-primary hover:border-border-secondary-hovered flex w-full cursor-pointer items-center gap-2 rounded-lg p-2 duration-150"
       >
-        <div
-          v-if="showDialog"
-          class="bg-bg-primary/50 absolute inset-0 z-50 flex items-center justify-center"
+        <span class="i-fluent-search-20-filled"></span>
+        <p class="text-text-tertiary">Search...</p>
+        <small
+          class="text-text-tertiary bg-bg-secondary border-border-secondary ml-auto rounded-sm border p-1.5 px-3"
+          >Ctrl+F</small
         >
-          <div class="text-text-primary flex h-72 w-96 flex-col">
-            <div
-              class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2 font-medium"
-            >
-              <span
-                class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
-              ></span>
-              <input
-                v-model="input"
-                ref="inputElement"
-                type="text"
-                @focusin="focused = true"
-                @focusout="focused = false"
-                class="placeholder-text-secondary w-full focus:outline-hidden"
-                placeholder="Search..."
-              />
-            </div>
+      </div>
+    </template>
 
-            <Transition
-              enter-active-class="animate-slideDownAndFade"
-              leave-active-class="animate-slideDownAndFade animation-reverse"
-            >
-              <div
-                v-if="searchResults && searchResults.length"
-                class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
-              >
-                <div
-                  :key="result.title + result.search_id"
-                  @click="
-                    ((showDialog = false),
-                    router.push(`/${result.search_type}/${result.search_id}`))
-                  "
-                  v-for="(result, idx) of searchResults"
-                  :class="idx === selected ? 'bg-bg-primary' : ''"
-                  ref="resultElements"
-                  class="hover:bg-bg-primary transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
-                >
-                  <p class="truncate">{{ result.title }}</p>
-                  <p class="text-text-secondary shrink-0">
-                    {{ readableCapitalization(result.search_type) }}
-                  </p>
-                </div>
-              </div>
-            </Transition>
-          </div>
+    <template #default>
+      <div class="text-text-secondary flex h-72 w-96 flex-col">
+        <div
+          class="bg-bg-primary border-border-secondary flex w-full items-center gap-2 rounded-md border p-2"
+        >
+          <span
+            class="i-fluent-search-12-filled text-text-secondary aspect-square w-5"
+          ></span>
+          <InputBar
+            v-model="input"
+            ref="inputElement"
+            input-type="text"
+            @focusin="focused = true"
+            @focusout="focused = false"
+            placeholder="Search..."
+            input-name="searchBar"
+            class="w-full"
+          />
         </div>
-      </Transition>
-    </div>
-  </Teleport>
+
+        <Transition
+          enter-active-class="animate-slideDownAndFade"
+          leave-active-class="animate-slideDownAndFade animation-reverse"
+        >
+          <div
+            v-if="searchResults && searchResults.length"
+            class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+          >
+            <div
+              :key="result.title + result.search_id"
+              @click="
+                ((showDialog = false),
+                router.push(`/${result.search_type}/${result.search_id}`))
+              "
+              v-for="(result, idx) of searchResults"
+              :class="idx === selected ? 'bg-bg-primary-hovered' : ''"
+              ref="resultElements"
+              class="hover:bg-bg-secondary-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
+            >
+              <p
+                :class="idx === selected ? 'text-text-primary-hovered' : ''"
+                class="group-hover:text-text-primary-hovered truncate"
+              >
+                {{ result.title }}
+              </p>
+              <small
+                :class="idx === selected ? 'text-text-secondary-hovered' : ''"
+                class="text-text-tertiary group-hover:text-text-tertiary-hovered shrink-0"
+              >
+                {{ readableCapitalization(result.search_type) }}
+              </small>
+            </div>
+          </div>
+        </Transition>
+      </div>
+    </template>
+  </Modal>
 </template>
 
 <script setup lang="ts">
@@ -76,6 +78,7 @@ import { nextTick, ref, useTemplateRef, watch } from "vue";
 import { Search, commands, readableCapitalization } from "@/composables/";
 import { useEventListener } from "@vueuse/core";
 import { useRouter } from "vue-router";
+import { InputBar, Modal } from "@/components/";
 
 const router = useRouter();
 
@@ -87,7 +90,7 @@ const clamp = (v: number) =>
 const showDialog = ref(false);
 const lastInput = ref(Date.now());
 
-const inputElement = useTemplateRef<HTMLInputElement>("inputElement");
+const inputElement = ref<InstanceType<typeof InputBar>>();
 const input = ref("");
 const selected = ref(0);
 const focused = ref(false);
@@ -138,13 +141,19 @@ function handleKeyDown(e: KeyboardEvent) {
   } else if (e.key === "ArrowUp") {
     if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value - 1);
-    resultElements.value[selected.value].scrollIntoView({
+    const element = resultElements.value[selected.value];
+    element.scrollIntoView({
       behavior: "smooth",
+      block: "nearest",
     });
   } else if (e.key === "ArrowDown") {
     if (!searchResults.value || !resultElements.value) return;
     selected.value = clamp(selected.value + 1);
-    resultElements.value[selected.value].scrollIntoView({ behavior: "smooth" });
+    const element = resultElements.value[selected.value];
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   } else if (e.key === "Enter") {
     if (!searchResults.value) return;
     const result = searchResults.value[selected.value];

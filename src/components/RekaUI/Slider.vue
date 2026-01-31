@@ -1,15 +1,15 @@
 <template>
   <SliderRoot
-    class="relative flex h-5 w-36 touch-none items-center select-none"
+    class="group relative flex h-5 w-36 touch-none items-center select-none"
     v-model="sliderValue"
     :max="props.max"
     :step="props.step"
   >
     <SliderTrack class="bg-border-secondary relative h-2 grow rounded-full">
-      <SliderRange class="bg-accent-secondary absolute h-full rounded-full" />
+      <SliderRange class="bg-text-secondary absolute h-full rounded-full" />
     </SliderTrack>
     <SliderThumb
-      class="bg-text-primary hover:bg-accent-secondary focus:inset-ring-text-primary block h-4 w-4 rounded-full transition-colors duration-150 focus:inset-ring-1 focus:outline-none"
+      class="bg-text-primary border-border-primary focus:inset-ring-text-primary block h-4 w-4 rounded-full border opacity-0 group-hover:opacity-100 focus:inset-ring-1 focus:outline-none"
     />
   </SliderRoot>
 </template>

@@ -6,7 +6,7 @@
   >
     <div class="flex items-center" v-for="(item, idx) in items">
       <RadioGroupItem
-        class="bg-bg-secondary border-border-primary hover:border-border-secondary h-5 w-5 rounded-full border transition-colors duration-75"
+        class="bg-bg-secondary border-border-primary data-[state=checked]:border-border-primary-active hover:border-border-primary-hovered h-5 w-5 rounded-full border transition-colors duration-75"
         :value="item"
       >
         <RadioGroupIndicator

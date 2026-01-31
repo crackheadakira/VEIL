@@ -1,4 +1,4 @@
-use crate::{LastFM, LastFMError, LastFMParams, models::APIMethod};
+use crate::{LastFM, LastFMParams, Result, models::APIMethod};
 use reqwest::Method;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, collections::HashMap};
@@ -17,14 +17,14 @@ impl<'a> Auth<'a> {
     /// # Example
     /// Assumes you have already built [`LastFM`] and are
     /// holding it under the variable `last_fm`
-    /// ```
+    /// ```ignore
     /// use lastfm::Auth;
     ///
     /// // Request a token from Last.FM that can be later
     /// // passed onto the session.
     /// let res = last_fm.auth().token().send()?;
     /// ```
-    pub fn token(&mut self) -> AuthGetToken<'_> {
+    pub fn token(&self) -> AuthGetToken<'_> {
         AuthGetToken::new(self.last_fm)
     }
 
@@ -33,14 +33,14 @@ impl<'a> Auth<'a> {
     /// # Example
     /// Assumes you have already built [`LastFM`] and are
     /// holding it under the variable `last_fm`
-    /// ```
+    /// ```ignore
     /// use lastfm::Auth;
     ///
     /// // User has already authorized the token
     /// let res = last_fm.auth().session(token).send()?;
     ///
     /// ```
-    pub fn session(&mut self, token: &'a str) -> AuthGetSession<'_> {
+    pub fn session(&self, token: &'a str) -> AuthGetSession<'_> {
         AuthGetSession::new(self.last_fm, token)
     }
 }
@@ -69,7 +69,7 @@ impl<'a> AuthGetSession<'a> {
         params
     }
 
-    pub async fn send(self) -> Result<AuthGetSessionResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetSessionResponse> {
         let mut session_params = self.params();
 
         let response = self
@@ -115,7 +115,7 @@ impl<'a> AuthGetToken<'a> {
         params
     }
 
-    pub async fn send(self) -> Result<AuthGetTokenResponse, LastFMError> {
+    pub async fn send(self) -> Result<AuthGetTokenResponse> {
         let mut token_params = self.params();
         let response = self
             .last_fm

@@ -1,31 +1,18 @@
-use crate::{TauriState, error::FrontendError};
-use lastfm::LastFMData;
+use crate::{TauriState, error::FrontendError, systems};
 
 #[tauri::command]
 #[specta::specta]
 pub async fn get_token(state: TauriState<'_>) -> Result<(String, String), FrontendError> {
     let lastfm = state.lastfm.lock().await;
-    let a = lastfm.auth().token().send().await?;
-
-    let mut url = String::new();
-    url.push_str("http://www.last.fm/api/auth/?api_key=");
-    url.push_str(&lastfm.api_key());
-    url.push_str("&token=");
-    url.push_str(&a.token);
-
-    Ok((url, a.token))
+    systems::lastfm::get_token(lastfm).await
 }
 
 #[tauri::command]
 #[specta::specta]
 pub async fn get_session(state: TauriState<'_>, token: String) -> Result<(), FrontendError> {
-    let mut lastfm = state.lastfm.lock().await;
-    let a = lastfm.auth().session(&token).send().await?;
-    lastfm.set_session_key(a.session.key.clone());
+    let lastfm = state.lastfm.lock().await;
+    let session_key = systems::lastfm::get_session(lastfm, token).await?;
 
-    let mut config = logging::lock_or_log(state.config.write(), "Config Write")?;
-    config.last_fm_key = Some(a.session.key);
-    config.write_config()?;
-
-    Ok(())
+    let config = logging::lock_or_log(state.config.write(), "Config Write")?;
+    systems::lastfm::write_session_to_config(config, session_key)
 }

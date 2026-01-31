@@ -8,8 +8,8 @@ SELECT
     t.number,
     t.duration,
     t.cover_path,
-    t.path
-
+    t.path,
+    t.hash
 FROM
     playlist_tracks pt
     JOIN tracks t ON pt.track_id = t.id

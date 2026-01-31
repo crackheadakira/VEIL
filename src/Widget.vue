@@ -1,7 +1,7 @@
 <template>
   <div
     data-tauri-drag-region
-    class="bg-bg-primary border-border-secondary flex h-screen flex-col gap-4 overflow-clip border-1 p-4 *:select-none"
+    class="bg-bg-primary border-border-secondary flex h-screen flex-col gap-4 overflow-clip border p-4 *:select-none"
   >
     <div
       @mouseover="imageHovered = true"
@@ -22,9 +22,7 @@
           v-show="imageHovered"
         >
           <PlayerControls class="text-text-primary" />
-          <VolumeControls
-            class="text-text-primary absolute bottom-1 left-1/2 -translate-x-1/2"
-          />
+          <VolumeControls class="absolute bottom-1 left-1/2 -translate-x-1/2" />
         </div>
       </Transition>
     </div>
@@ -39,7 +37,7 @@
         </p>
       </div>
       <span
-        class="i-fluent-window-new-24-filled text-text-secondary hover:text-border-primary pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
+        class="i-fluent-window-new-24-filled text-text-tertiary hover:text-text-secondary-hovered pointer-events-auto h-7 w-7 shrink-0 cursor-pointer transition-colors duration-150"
         @click="hideWidget"
       ></span>
     </div>
@@ -49,9 +47,9 @@
 <script setup lang="ts">
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { getAllWindows, getCurrentWindow } from "@tauri-apps/api/window";
-import { ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-import { usePlayerStore } from "@/composables/";
+import { commands, useConfigStore, usePlayerStore } from "@/composables/";
 import { PlayerControls, VolumeControls } from "@/components/";
 
 const playerStore = usePlayerStore();
@@ -61,10 +59,46 @@ const window = getCurrentWindow();
 
 async function hideWidget() {
   const allWindows = await getAllWindows();
-  const mainWindow = allWindows.find((w) => w.label === "sodapop-reimagined");
+  const mainWindow = allWindows.find((w) => w.label === "veil");
   if (mainWindow) {
     await window.hide();
     await mainWindow.show();
   }
 }
+
+const configStore = useConfigStore();
+const theme = configStore.config.ui.theme || "Dark";
+
+watch(
+  () => configStore.config.ui.theme,
+  (newTheme) => {
+    if (newTheme === "Dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  },
+  { immediate: true },
+);
+
+onMounted(async () => {
+  if (theme === "Dark") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
+  const css = await commands.readCustomStyle();
+  let styleElement = document.getElementById("custom-style");
+
+  if (!styleElement) {
+    styleElement = document.createElement("style");
+    styleElement.id = "custom-style";
+    document.head.appendChild(styleElement);
+  }
+
+  if (css.status === "ok" && styleElement) {
+    styleElement.innerText = css.data;
+  }
+});
 </script>

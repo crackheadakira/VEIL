@@ -1,184 +1,203 @@
-use std::{
-    collections::HashMap,
-    fs::File,
-    io::{BufReader, Read},
-    path::Path,
-};
+use std::io::{Read, Seek};
 
-use crate::{Endian, MetadataError, u32_from_bytes};
+use crate::{Error, Result, read_into_buffer_unchecked};
 
-pub enum FrameType {
-    AttachedPicture,
-    Text(String),
-    Unknown,
-}
-
-impl FrameType {
-    fn from_str(id: &str) -> Self {
-        match id {
-            "APIC" => Self::AttachedPicture,
-            id if id.starts_with('T') => Self::Text(String::from(id)),
-            _ => Self::Unknown,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum Frame {
-    Text(TextFrame),
-    AttachedPicture(AttachedPicture),
-    Unknown,
-}
-
-impl Frame {
-    pub fn read_from(reader: &mut dyn Read) -> Result<(u32, Frame), MetadataError> {
-        let mut overview = [0u8; 10];
-        reader.read_exact(&mut overview)?;
-
-        let frame_type_str = std::str::from_utf8(&overview[0..4])?;
-        let frame_type = FrameType::from_str(frame_type_str);
-        let size = u32_from_bytes(Endian::Big, &overview[4..8], &mut 0_usize);
-
-        let mut data = Vec::new();
-        reader.take(size as u64).read_to_end(&mut data)?;
-
-        let frame = match frame_type {
-            FrameType::Text(string_type) => Frame::Text(TextFrame::from_bytes(data, string_type)?),
-            FrameType::AttachedPicture => {
-                Frame::AttachedPicture(AttachedPicture::from_bytes(data)?)
-            }
-            _ => Self::Unknown,
-        };
-
-        Ok((size, frame))
-    }
-}
-
-#[derive(Debug)]
-pub struct TextFrame {
-    text_type: String,
-    string_value: String,
-}
-
-impl TextFrame {
-    pub fn new() -> Self {
-        Self {
-            text_type: String::from(""),
-            string_value: String::from(""),
-        }
-    }
-
-    pub fn from_bytes(data: Vec<u8>, string_type: String) -> Result<Self, MetadataError> {
-        let mut text_frame = TextFrame::new();
-        text_frame.text_type = string_type;
-
-        text_frame.string_value = String::from_utf8(data[1..].to_vec())?;
-
-        Ok(text_frame)
-    }
-}
-
-#[derive(Debug)]
-pub struct AttachedPicture {
-    pub picture_data: Vec<u8>,
-}
-
-impl Default for AttachedPicture {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl AttachedPicture {
-    fn new() -> Self {
-        Self {
-            picture_data: Vec::new(),
-        }
-    }
-
-    pub fn from_bytes(data: Vec<u8>) -> Result<Self, MetadataError> {
-        let mut ap = Self::new();
-        let single_terminator = (data[0] != 0 || data[0] != 3) as usize;
-        let mut i = 1; // skip text encoding
-
-        let mime_type_end = data[i..].iter().position(|&x| x == 0).unwrap() + single_terminator;
-        i += mime_type_end;
-
-        i += 1;
-
-        let description_end = data[i..].iter().position(|&x| x == 0).unwrap() + single_terminator;
-        i += description_end;
-
-        ap.picture_data = data[i..].to_vec();
-
-        Ok(ap)
-    }
-}
-
-pub struct Id3 {
-    pub file_path: String,
-    pub text_frames: HashMap<String, String>,
-    pub attached_picture: Option<AttachedPicture>,
-}
+pub struct Id3 {}
 
 impl Id3 {
-    pub fn new(file_path: &Path) -> Result<Self, MetadataError> {
-        let file = File::open(file_path)?;
-        let mut reader = BufReader::new(file);
+    pub fn read_all_frames<R: Read + Seek>(
+        block_buffer: &mut Vec<u8>,
+        reader: &mut R,
+    ) -> Result<Vec<FrameHeader>> {
+        let _header = Id3Header::parse(reader)?;
 
-        // Check the header
-        let mut header = [0u8; 10];
-        reader.read_exact(&mut header)?;
-        if &header[0..3] != b"ID3" {
-            return Err(MetadataError::InvalidId3Signature);
-        }
-        if header[3] != 3 {
-            return Err(MetadataError::UnsupportedId3Version);
-        }
+        // TODO: Depending on major & minor versions, handle different methods of parsing IF there are
+        // changes to the metadata parsing, still have to research that.
 
-        let size_bytes: &[u8] = &header[6..10];
-        let total_id3_size = ((size_bytes[0] as usize & 0x7F) << 21)
-            | ((size_bytes[1] as usize & 0x7F) << 14)
-            | ((size_bytes[2] as usize & 0x7F) << 7)
-            | (size_bytes[3] as usize & 0x7F);
+        let mut frame_headers = Vec::with_capacity(6);
+        let mut found = FoundFrames::default();
+        while let Some(mut header) = FrameHeader::parse(reader)? {
+            let start = block_buffer.len();
+            read_into_buffer_unchecked(reader, block_buffer, header.length as usize)?;
 
-        let has_extended_header = &header[6] & 0x40 != 0;
-        if has_extended_header {
-            // just skip past the extended_header
-            reader.read_exact(&mut [0u8; 10])?;
-        }
+            header.data_start = start as u32;
 
-        let mut text_frames: HashMap<String, String> = HashMap::new();
-        let mut attached_picture = None;
+            match header.frame_id {
+                FrameId::Tit2 => found.title = true,
+                FrameId::Tpe1 => found.artist = true,
+                FrameId::Talb => found.album = true,
+                FrameId::Tyer => found.year = true,
+                FrameId::Time => found.duration = true,
+                FrameId::Apic => found.picture = true,
+                FrameId::Unknown => {}
+            }
+            if header.frame_id != FrameId::Unknown {
+                frame_headers.push(header);
+            }
 
-        let mut total_read = 0;
-        loop {
-            let (frame_size, result) = Frame::read_from(&mut reader)?;
-            total_read += frame_size as usize;
-            match result {
-                Frame::Text(tf) => {
-                    text_frames.insert(tf.text_type, tf.string_value);
-                }
-                Frame::AttachedPicture(ap) => attached_picture = Some(ap),
-                Frame::Unknown => (),
-            };
-
-            if total_read >= total_id3_size
-                || (text_frames.contains_key("TIT2")
-                    && text_frames.contains_key("TRCK")
-                    && text_frames.contains_key("TYER")
-                    && text_frames.contains_key("TPE1")
-                    && text_frames.contains_key("TALB")
-                    && attached_picture.is_some())
-            {
+            if found.all() {
                 break;
             }
         }
 
-        Ok(Id3 {
-            file_path: file_path.to_string_lossy().into_owned(),
-            text_frames,
-            attached_picture,
-        })
+        Ok(frame_headers)
+    }
+}
+
+#[derive(Default)]
+struct FoundFrames {
+    title: bool,
+    artist: bool,
+    album: bool,
+    year: bool,
+    duration: bool,
+    picture: bool,
+}
+
+impl FoundFrames {
+    fn all(&self) -> bool {
+        self.title && self.artist && self.album && self.year && self.duration && self.picture
+    }
+}
+
+#[derive(Debug)]
+struct Id3Header {
+    major_version: u8,
+    minor_version: u8,
+    tag_size: u32,
+}
+
+impl Id3Header {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
+        let mut header_bytes = [0u8; 10];
+        reader.read_exact(&mut header_bytes)?;
+
+        let mut header = Self {
+            major_version: 0,
+            minor_version: 0,
+            tag_size: 0,
+        };
+
+        if &header_bytes[0..3] != b"ID3" {
+            return Err(Error::InvalidId3Signature);
+        };
+
+        header.major_version = header_bytes[3];
+        header.minor_version = header_bytes[4];
+
+        let size_bytes: &[u8] = &header_bytes[6..10];
+
+        header.tag_size = size_bytes
+            .iter()
+            .fold(0u32, |acc, &b| (acc << 7) | u32::from(b & 0x7F));
+
+        // Skip past the extended header for simplicity.
+        let has_extended_header = &header_bytes[5] & 0x40 != 0;
+        if has_extended_header {
+            let mut size_bytes = [0u8; 4];
+            reader.read_exact(&mut size_bytes)?;
+            let ext_size = u32::from_be_bytes(size_bytes);
+
+            reader.seek_relative((ext_size - 4) as i64)?;
+        }
+
+        Ok(header)
+    }
+}
+
+pub struct FrameHeader {
+    pub frame_id: FrameId,
+    pub data_start: u32,
+    pub length: u32,
+}
+
+impl FrameHeader {
+    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Option<Self>> {
+        let mut header_bytes = [0u8; 10];
+        reader.read_exact(&mut header_bytes)?;
+        let start = reader.stream_position()?;
+
+        // Padding bytes have been reached, so return None for early loop termination
+        if header_bytes[0..4].iter().all(|&b| b == 0) {
+            return Ok(None);
+        }
+
+        let frame_id = FrameId::from_bytes(&header_bytes[0..4]);
+
+        // seems to be only for ID3v2.3
+        let frame_size = u32::from_be_bytes(
+            header_bytes[4..8]
+                .try_into()
+                .expect("slice should have length 4"),
+        );
+
+        Ok(Some(Self {
+            data_start: start as u32,
+            frame_id,
+            length: frame_size,
+        }))
+    }
+}
+
+pub enum Frame<'a> {
+    Picture(&'a [u8]),
+    Text((FrameId, &'a str)),
+    Duration(f32),
+    Year(u16),
+    Unknown,
+}
+
+impl<'a> Frame<'a> {
+    pub fn parse_by_id(frame_id: FrameId, data: &'a [u8]) -> Result<Self> {
+        let parsed_frame = match frame_id {
+            FrameId::Tit2 | FrameId::Tpe1 | FrameId::Talb => {
+                let text_data = str::from_utf8(&data[1..])?.trim();
+                Self::Text((frame_id, text_data))
+            }
+            FrameId::Time => {
+                let bytes = &data[1..5]; // HHMM
+                let hours = (bytes[0] - b'0') as u32 * 10 + (bytes[1] - b'0') as u32;
+                let minutes = (bytes[2] - b'0') as u32 * 10 + (bytes[3] - b'0') as u32;
+                Self::Duration((hours * 3600 + minutes * 60) as f32)
+            }
+            FrameId::Tyer => {
+                let bytes = &data[1..5]; // YYYY
+                let year = (bytes[0] - b'0') as u16 * 1000
+                    + (bytes[1] - b'0') as u16 * 100
+                    + (bytes[2] - b'0') as u16 * 10
+                    + (bytes[3] - b'0') as u16;
+                Self::Year(year)
+            }
+            FrameId::Apic => Self::Picture(&data[1..]),
+            FrameId::Unknown => Self::Unknown,
+        };
+
+        Ok(parsed_frame)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+#[repr(u8)]
+pub enum FrameId {
+    Tit2,
+    Tpe1,
+    Talb,
+    Apic,
+    Time,
+    Tyer,
+    Unknown,
+}
+
+impl FrameId {
+    fn from_bytes(bytes: &[u8]) -> FrameId {
+        match bytes {
+            b"TIT2" => FrameId::Tit2,
+            b"TPE1" => FrameId::Tpe1,
+            b"TALB" => FrameId::Talb,
+            b"APIC" => FrameId::Apic,
+            b"TYER" => FrameId::Tyer,
+            b"TIME" => FrameId::Time,
+            _ => FrameId::Unknown,
+        }
     }
 }

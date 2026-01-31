@@ -1,5 +1,5 @@
 {
-  "name": "sodapop-reimagined",
+  "name": "veil",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,31 +7,31 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "cd src-tauri/crates/app && RUST_LOG=\"common=debug,db=debug,lastfm=debug,logging=debug,media_controls=debug,metadata_audio=debug,app=debug\" tauri"
+    "tauri": "cd src-tauri/crates/app && RUST_LOG=\"common=debug,db=debug,lastfm=debug,logging=debug,media_controls=debug,metadata_audio=debug,veil=debug\" tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "2.9.0",
-    "@vueuse/core": "^14.0.0",
-    "pinia": "^3.0.3",
-    "reka-ui": "^2.6.0",
-    "vue": "^3.5.22",
-    "vue-router": "^4.6.3"
+    "@tauri-apps/api": "2.9.1",
+    "@vueuse/core": "^14.1.0",
+    "pinia": "^3.0.4",
+    "reka-ui": "^2.7.0",
+    "vue": "^3.5.27",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@egoist/tailwindcss-icons": "^1.9.0",
-    "@iconify-json/fluent": "^1.2.34",
-    "@iconify-json/mingcute": "^1.2.5",
+    "@iconify-json/fluent": "^1.2.37",
+    "@iconify-json/mingcute": "^1.2.7",
     "@iconify-json/ph": "^1.2.2",
-    "@tauri-apps/cli": "^2.9.1",
-    "@vitejs/plugin-vue": "^6.0.1",
-    "autoprefixer": "^10.4.21",
-    "prettier": "3.6.2",
-    "prettier-plugin-tailwindcss": "^0.7.1",
-    "tailwindcss": "^4.1.16",
-    "@tailwindcss/vite": "^4.1.16",
+    "@tauri-apps/cli": "^2.9.6",
+    "@vitejs/plugin-vue": "^6.0.3",
+    "autoprefixer": "^10.4.23",
+    "prettier": "3.8.1",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "tailwindcss": "^4.1.18",
+    "@tailwindcss/vite": "^4.1.18",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
-    "vue-tsc": "^3.1.2",
-    "@types/node": "^24.9.1"
+    "vite": "^7.3.1",
+    "vue-tsc": "^3.2.3",
+    "@types/node": "^25.0.10"
   }
 }

@@ -1,32 +1,29 @@
-use std::path::PathBuf;
+use anyhow::Context;
 
-use crate::{
-    config::{SodapopConfig, config_path},
-    data_path,
-    error::FrontendError,
-};
+use crate::{config::VeilConfig, error::FrontendError, systems::utils::data_path};
 
+pub(crate) mod db;
 pub(crate) mod lastfm;
 pub(crate) mod music_folder;
 pub(crate) mod player;
 pub(crate) mod plugins;
-pub(crate) mod sqlite;
-
-fn custom_style_path() -> PathBuf {
-    data_path().join("custom.css")
-}
 
 #[tauri::command]
 #[specta::specta]
 pub fn read_custom_style() -> Result<String, FrontendError> {
-    let path = custom_style_path();
-    Ok(std::fs::read_to_string(&path)?)
+    let path = data_path().join("custom.css");
+
+    if std::fs::exists(&path)? {
+        Ok(std::fs::read_to_string(&path).context("Failed to read custom.css")?)
+    } else {
+        Ok(String::new())
+    }
 }
 
 #[tauri::command]
 #[specta::specta]
-pub fn read_config() -> Result<SodapopConfig, FrontendError> {
-    let path = config_path();
-    let json_reader = std::fs::File::open(path)?;
+pub fn read_config() -> Result<VeilConfig, FrontendError> {
+    let path = VeilConfig::config_file_path();
+    let json_reader = std::fs::File::open(path).context("Failed to read config.json")?;
     Ok(serde_json::from_reader(json_reader)?)
 }

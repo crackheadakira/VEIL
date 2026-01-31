@@ -168,58 +168,6 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async playTrack(trackId: number): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("play_track", { trackId }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async pauseTrack(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("pause_track") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async resumeTrack(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("resume_track") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async seekTrack(
-    position: number,
-    resume: boolean,
-  ): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("seek_track", { position, resume }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async setVolume(volume: number): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("set_volume", { volume }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
   async getPlayerState(): Promise<PlayerState> {
     return await TAURI_INVOKE("get_player_state");
   },
@@ -231,31 +179,6 @@ export const commands = {
   },
   async getPlayerDuration(): Promise<number> {
     return await TAURI_INVOKE("get_player_duration");
-  },
-  async stopPlayer(): Promise<Result<null, FrontendError>> {
-    try {
-      return { status: "ok", data: await TAURI_INVOKE("stop_player") };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async initializePlayer(
-    trackId: number,
-    progress: number,
-  ): Promise<Result<null, FrontendError>> {
-    try {
-      return {
-        status: "ok",
-        data: await TAURI_INVOKE("initialize_player", { trackId, progress }),
-      };
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      else return { status: "error", error: e as any };
-    }
-  },
-  async setPlayerProgress(progress: number): Promise<void> {
-    await TAURI_INVOKE("set_player_progress", { progress });
   },
   async playerHasEnded(): Promise<boolean> {
     return await TAURI_INVOKE("player_has_ended");
@@ -300,7 +223,7 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
-  async readConfig(): Promise<Result<SodapopConfig, FrontendError>> {
+  async readConfig(): Promise<Result<VeilConfig, FrontendError>> {
     try {
       return { status: "ok", data: await TAURI_INVOKE("read_config") };
     } catch (e) {
@@ -316,14 +239,90 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getPlaylistTracksOffset(
+    playlistId: number,
+    limit: number,
+    offset: number,
+  ): Promise<Result<PlaylistWithTracks, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_playlist_tracks_offset", {
+          playlistId,
+          limit,
+          offset,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTotalTracksInPlaylist(
+    playlistId: number,
+  ): Promise<Result<number, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_total_tracks_in_playlist", {
+          playlistId,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getPlaylistDetails(
+    playlistId: number,
+  ): Promise<Result<Playlists, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_playlist_details", { playlistId }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async updatePlaylist(
+    playlistId: number,
+    name: string | null,
+    description: string | null,
+    coverPath: string | null,
+  ): Promise<Result<null, FrontendError>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("update_playlist", {
+          playlistId,
+          name,
+          description,
+          coverPath,
+        }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
 
 export const events = __makeEvents__<{
-  sodapopConfigEvent: SodapopConfigEvent;
+  frontendError: FrontendError;
+  playerEvent: PlayerEvent;
+  queueEvent: QueueEvent;
+  uiUpdateEvent: UIUpdateEvent;
+  veilConfigEvent: VeilConfigEvent;
 }>({
-  sodapopConfigEvent: "sodapop-config-event",
+  frontendError: "frontend-error",
+  playerEvent: "player-event",
+  queueEvent: "queue-event",
+  uiUpdateEvent: "ui-update-event",
+  veilConfigEvent: "veil-config-event",
 });
 
 /** user-defined constants **/
@@ -372,7 +371,7 @@ export type Albums = {
    */
   duration: number;
   /**
-   * Path to album cover in Sodapop local app data
+   * Path to album cover in VEIL local app data
    */
   cover_path: string;
   /**
@@ -407,30 +406,104 @@ export type FrontendError =
   | { type: "SerdeJson"; data: string }
   | { type: "TauriError"; data: string }
   | { type: "AnyhowError"; data: string };
-export type MediaPayload =
-  | { Play: boolean }
-  | { Pause: boolean }
-  | { Next: boolean }
-  | { Previous: boolean }
+/**
+ * Integrations like Discord RPC or Last.FM
+ */
+export type IntegrationsConfig = {
   /**
-   * Volume as f64 (0.0 - 1.0)
+   * If Discord RPC should be enabled
    */
-  | { Volume: number }
+  discord_enabled: boolean;
   /**
-   * Duration as f64
+   * If Last.FM should be enabled
    */
-  | { Seek: number }
+  last_fm_enabled: boolean;
   /**
-   * Position in seconds
+   * The session key from Last.FM, used for API communication
    */
-  | { Position: number };
+  last_fm_session_key: string | null;
+};
+/**
+ * Music library settings
+ */
+export type LibraryConfig = {
+  /**
+   * The directory where all the music files are
+   */
+  music_dir: string | null;
+};
 export type MetadataEvent =
-  | { event: "Started"; data: { id: number; total: number } }
+  | { event: "Started"; data: { id: number } }
+  | { event: "Total"; data: { id: number; total: number } }
   | { event: "Progress"; data: { id: number; current: number } }
   | { event: "Finished"; data: { id: number } };
-export type PlayerProgressEvent =
-  | { event: "Progress"; data: { progress: number } }
-  | { event: "TrackEnd" };
+export type PlayButtonState = "Playing" | "Paused";
+/**
+ * Playback behavior and queue state
+ */
+export type PlaybackConfig = {
+  /**
+   * Where the queue originated from
+   */
+  queue_origin: QueueOrigin | null;
+  /**
+   * What index the queue is at
+   */
+  queue_idx: number;
+  /**
+   * What repeat mode the queue should be at
+   */
+  repeat_mode: RepeatMode;
+};
+export type PlayerEvent =
+  /**
+   * Initialize the player to load in this track, seeked to the specified position.
+   */
+  | { type: "Initialize"; data: { track: Tracks; progress: number } }
+  /**
+   * If a new track is to be played.
+   */
+  | { type: "NewTrack"; data: { track: Tracks } }
+  /**
+   * Plays the track at the current index in the queue.
+   */
+  | { type: "CurrentTrackInQueue" }
+  /**
+   * Play the previous track in the queue.
+   */
+  | { type: "PreviousTrackInQueue" }
+  /**
+   * Play the next track in the queue.
+   */
+  | { type: "NextTrackInQueue" }
+  /**
+   * If the current track is to be paused.
+   */
+  | { type: "Pause" }
+  /**
+   * If the current track is to be resumed.
+   */
+  | { type: "Resume" }
+  /**
+   * Depdenent on the state of the player either pause or resumme the track.
+   */
+  | { type: "UpdatePlayerState" }
+  /**
+   * If the current track is to be stopped.
+   */
+  | { type: "Stop" }
+  /**
+   * Where to set the progress of the currently playing track.
+   */
+  | { type: "Seek"; data: { position: number; resume: boolean } }
+  /**
+   * Set the volume of the player.
+   */
+  | { type: "SetVolume"; data: { volume: number } };
+export type PlayerProgressEvent = {
+  event: "Progress";
+  data: { progress: number };
+};
 export type PlayerState = "Playing" | "Paused";
 export type PlaylistWithTracks = {
   playlist: Playlists;
@@ -453,10 +526,46 @@ export type Playlists = {
    */
   description: string;
   /**
-   * Path to playlist cover in Sodapop local app data
+   * Path to playlist cover in VEIL local app data
    */
   cover_path: string;
 };
+export type QueueEvent =
+  /**
+   * Add to personal queue via context menu
+   */
+  | { type: "EnqueuePersonal"; data: { track_id: number } }
+  /**
+   * Sets global queue to a vec of tracks
+   */
+  | {
+      type: "SetGlobalQueue";
+      data: { tracks: number[]; queue_idx: number; origin: QueueOrigin };
+    }
+  /**
+   * Flips the shuffle boolean So these happen:
+   * - shuffle: True  --> Talse
+   * - shuffle: False --> True
+   */
+  | { type: "ShuffleGlobalQueue" }
+  | { type: "SetGlobalQueueShuffle"; data: { shuffle: boolean } }
+  | { type: "UpdateRepeatMode" };
+export type QueueOrigin =
+  | { type: "Playlist"; data: { id: number } }
+  | { type: "Album"; data: { id: number } };
+export type RepeatMode =
+  /**
+   * Do not repeat anything when the end of the queue is hit.
+   */
+  | "None"
+  /**
+   * Repeat the queue when the end of the queue is hit.
+   */
+  | "Queue"
+  /**
+   * Repeat the track when the end of the track is hit.
+   */
+  | "Track";
 export type Search = {
   /**
    * ID of the search item
@@ -470,20 +579,6 @@ export type Search = {
    * Type of the search item
    */
   search_type: string;
-};
-export type SodapopConfig = {
-  theme: ThemeMode;
-  music_dir: string | null;
-  discord_enabled: boolean;
-  last_fm_enabled: boolean;
-  last_fm_key: string | null;
-};
-export type SodapopConfigEvent = {
-  theme: ThemeMode | null;
-  discord_enabled: boolean | null;
-  last_fm_enabled: boolean | null;
-  music_dir: string | null;
-  last_fm_key: string | null;
 };
 export type ThemeMode = "Dark" | "Light" | "System";
 export type Tracks = {
@@ -520,13 +615,62 @@ export type Tracks = {
    */
   duration: number;
   /**
-   * Path to album cover in Sodapop local app data
+   * Path to album cover in VEIL local app data
    */
   cover_path: string;
   /**
    * Path to track file
    */
   path: string;
+  /**
+   * Hash of the metadata
+   */
+  hash: string;
+};
+export type UIUpdateEvent =
+  /**
+   * Updates the state of the shuffle button
+   */
+  | { type: "ShuffleButton"; data: { enabled: boolean } }
+  | { type: "LoopButton"; data: { mode: RepeatMode } }
+  | { type: "PlayButton"; data: { state: PlayButtonState } }
+  | { type: "TrackChange"; data: { track: Tracks } };
+/**
+ * UI configuration such as theme or other future endeavors
+ */
+export type UiConfig = {
+  /**
+   * What theme the user has selected
+   */
+  theme: ThemeMode;
+};
+export type VeilConfig = {
+  /**
+   * User interface–related preferences
+   */
+  ui: UiConfig;
+  /**
+   * Integration & connectivity settings
+   */
+  integrations: IntegrationsConfig;
+  /**
+   * Music library settings
+   */
+  library: LibraryConfig;
+  /**
+   * Playback behavior and queue info
+   */
+  playback: PlaybackConfig;
+};
+export type VeilConfigEvent = {
+  theme: ThemeMode | null;
+  discord_enabled: boolean | null;
+  last_fm_enabled: boolean | null;
+  music_dir: string | null;
+  last_fm_session_key: string | null;
+  queue_origin: QueueOrigin | null;
+  queue_idx: number | null;
+  repeat_mode: RepeatMode | null;
 };
 
 /** tauri-specta globals **/

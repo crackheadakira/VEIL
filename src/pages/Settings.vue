@@ -4,7 +4,7 @@
     <div class="text-text-secondary flex flex-col gap-4">
       <p>Theme</p>
       <RadioGroup
-        @update:model-value="(e: string) => updateConfig(1, e)"
+        @update:model-value="(e: string) => updateConfig('Theme', e)"
         v-model="theme as ThemeMode"
         :items="['Dark', 'Light', 'System']"
       />
@@ -21,7 +21,9 @@
       <p>Online Features</p>
       <div class="flex gap-3">
         <Switch
-          @update:model-value="(e: boolean) => updateConfig(4, e)"
+          @update:model-value="
+            (e: boolean) => updateConfig('DiscordEnabled', e)
+          "
           v-model="discordRPC"
           id="discordRPC"
         />
@@ -29,7 +31,7 @@
       </div>
       <div class="flex gap-3">
         <Switch
-          @update:model-value="(e: boolean) => updateConfig(5, e)"
+          @update:model-value="(e: boolean) => updateConfig('LastFmEnabled', e)"
           v-model="lastFM"
           id="lastFM"
         />
@@ -38,7 +40,12 @@
       <div v-if="lastFM">
         <p class="pb-2">Last.FM Session Key</p>
         <DialogGuide @close="pageIdx = 0" :current-page="pages[pageIdx]">
-          <IconButton icon="i-fluent-key-24-filled" :placeholder="lastFMKey" />
+          <template #trigger>
+            <IconButton
+              icon="i-fluent-key-24-filled"
+              :placeholder="lastFMKey"
+            />
+          </template>
         </DialogGuide>
       </div>
     </div>
@@ -52,7 +59,7 @@ import {
   toastBus,
   commands,
   events,
-  SodapopConfigEvent,
+  VeilConfigEvent,
   DialogPage,
   MetadataEvent,
   ThemeMode,
@@ -64,13 +71,17 @@ import { Channel } from "@tauri-apps/api/core";
 const onEvent = new Channel<MetadataEvent>();
 const configStore = useConfigStore();
 
-const theme = ref(configStore.config.theme);
+const theme = ref(configStore.config.ui.theme);
 const currentDirectory = ref(
-  configStore.config?.music_dir || "No Folder Selected",
+  configStore.config.library.music_dir || "No Folder Selected",
 );
-const lastFMKey = ref(configStore.config?.last_fm_key || "No Key Set");
-const discordRPC = ref(configStore.config.discord_enabled);
-const lastFM = ref(configStore.config.last_fm_enabled);
+const lastFMKey = ref(
+  configStore.config.integrations.last_fm_session_key || "No Key Set",
+);
+const discordRPC = ref(
+  configStore.config.integrations.discord_enabled ?? false,
+);
+const lastFM = ref(configStore.config.integrations.last_fm_enabled ?? false);
 
 const lastFMURL = ref<[string, string] | null>(null);
 
@@ -82,11 +93,12 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
     buttons: [
       {
         name: "revoke",
-        condition: configStore.config.last_fm_key?.length !== 0,
+        condition:
+          configStore.config.integrations.last_fm_session_key?.length !== 0,
         close: true,
         click: async () => {
-          updateConfig(3, "");
-          updateConfig(5, false);
+          updateConfig("SessionKey", "");
+          updateConfig("LastFmEnabled", false);
 
           lastFM.value = false;
           lastFMKey.value = "No Key Set";
@@ -94,7 +106,8 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
       },
       {
         name: "start",
-        condition: configStore.config.last_fm_key?.length === 0,
+        condition:
+          configStore.config.integrations.last_fm_session_key?.length === 0,
         click: getToken,
       },
     ],
@@ -113,39 +126,47 @@ const pages: ComputedRef<DialogPage[]> = computed(() => [
   },
 ]);
 
-function updateConfig(setting: number, value: any) {
+type SettingKey =
+  | "Theme"
+  | "Library"
+  | "SessionKey"
+  | "DiscordEnabled"
+  | "LastFmEnabled";
+
+function updateConfig(setting: SettingKey, value: any) {
   const updatedConfig = {
     theme: null,
     music_dir: null,
-    last_fm_key: null,
+    last_fm_session_key: null,
     discord_enabled: null,
     last_fm_enabled: null,
-  } satisfies SodapopConfigEvent;
+  } satisfies Partial<VeilConfigEvent>;
 
   switch (setting) {
-    case 1:
+    case "Theme":
       updatedConfig.theme = value;
-      configStore.config.theme = value;
+      configStore.config.ui.theme = value;
       break;
-    case 2:
+    case "Library":
       updatedConfig.music_dir = value;
-      configStore.config.music_dir = value;
+      configStore.config.library.music_dir = value;
       break;
-    case 3:
-      updatedConfig.last_fm_key = value;
-      configStore.config.last_fm_key = value;
+    case "SessionKey":
+      updatedConfig.last_fm_session_key = value;
+      configStore.config.integrations.last_fm_session_key = value;
       break;
-    case 4:
+    case "DiscordEnabled":
       updatedConfig.discord_enabled = value;
-      configStore.config.discord_enabled = value;
+      configStore.config.integrations.discord_enabled = value;
       break;
-    case 5:
+    case "LastFmEnabled":
       updatedConfig.last_fm_enabled = value;
-      configStore.config.last_fm_enabled = value;
+      configStore.config.integrations.last_fm_enabled = value;
       break;
   }
 
-  events.sodapopConfigEvent.emit(updatedConfig);
+  // as we did partial above we get error
+  events.veilConfigEvent.emit(updatedConfig as VeilConfigEvent);
 }
 
 async function getToken() {
@@ -167,7 +188,7 @@ async function registerSession() {
   await configStore.initialize();
 
   nextTick(() => {
-    lastFMKey.value = configStore.config.last_fm_key!;
+    lastFMKey.value = configStore.config.integrations.last_fm_session_key!;
   });
 }
 
@@ -177,35 +198,36 @@ async function openDialog() {
   else if (result.data !== "") {
     toastBus.addToast("success", "Music added successfully");
     currentDirectory.value = result.data;
-    updateConfig(2, result.data);
+    updateConfig("Library", result.data);
   }
 }
 
-const persistentToastId = ref<number | null>(null);
 const totalSongs = ref<number | null>(null);
 
 onEvent.onmessage = (res) => {
   if (res.event === "Started") {
-    persistentToastId.value = res.data.id;
-    totalSongs.value = res.data.total;
-
     toastBus.persistentToast(
       res.data.id,
       "info",
-      `Going to import ${res.data.total} songs!`,
+      "Preparing to import songs...",
     );
+  } else if (res.event === "Total") {
+    totalSongs.value = res.data.total;
   } else if (res.event === "Progress") {
     toastBus.persistentToast(
       res.data.id,
       "info",
       `Importing songs (${res.data.current} / ${totalSongs.value})`,
     );
-  } else {
-    setTimeout(() => {
-      toastBus.removeToast(res.data.id);
-      persistentToastId.value = null;
-      totalSongs.value = null;
-    });
+  } else if (res.event === "Finished") {
+    toastBus.removeToast(res.data.id);
+
+    toastBus.addToast(
+      "success",
+      `Successfully imported ${totalSongs.value} songs!`,
+    );
+
+    totalSongs.value = null;
   }
 };
 

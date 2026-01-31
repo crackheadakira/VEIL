@@ -15,13 +15,13 @@ pub enum APIMethod {
 impl APIMethod {
     /// If the method needs an API signature
     pub fn need_sig(&self) -> bool {
-        matches![
+        matches!(
             self,
             Self::AuthGetSession
                 | Self::AuthGetToken
                 | Self::TrackScrobble
                 | Self::TrackUpdateNowPlaying
-        ]
+        )
     }
 
     /// If the method needs authentication

@@ -1,9 +1,9 @@
 import { StorageSerializers, useStorage } from "@vueuse/core";
 import { defineStore } from "pinia";
-import { commands, SodapopConfig } from "@/composables/";
+import { commands, VeilConfig } from "@/composables/";
 
 export const useConfigStore = defineStore("config", () => {
-    const config = useStorage<SodapopConfig>("config", null, undefined, {
+    const config = useStorage<VeilConfig>("config", null, undefined, {
         serializer: StorageSerializers.object,
     });
     const currentPage = useStorage("currentPage", "/home");
