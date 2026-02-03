@@ -40,16 +40,17 @@
         >
           <div
             v-if="searchResults && searchResults.length"
-            class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col gap-2 overflow-scroll border border-t-0 p-2"
+            class="border-border-secondary bg-bg-secondary flex max-h-64 flex-col overflow-scroll border border-t-0 p-2"
           >
             <div
+              v-for="(result, idx) of searchResults"
               :key="result.title + result.search_id"
               @click="
                 ((showDialog = false),
                 router.push(`/${result.search_type}/${result.search_id}`))
               "
-              v-for="(result, idx) of searchResults"
-              :class="idx === selected ? 'bg-bg-primary-hovered' : ''"
+              @mouseover="selected = idx"
+              :class="idx === selected ? 'bg-bg-secondary-hovered' : ''"
               ref="resultElements"
               class="hover:bg-bg-secondary-hovered group transition-color flex w-full cursor-pointer items-center justify-between gap-2 rounded-md p-3 duration-75"
             >
@@ -60,7 +61,7 @@
                 {{ result.title }}
               </p>
               <small
-                :class="idx === selected ? 'text-text-secondary-hovered' : ''"
+                :class="idx === selected ? 'text-text-tertiary-hovered' : ''"
                 class="text-text-tertiary group-hover:text-text-tertiary-hovered shrink-0"
               >
                 {{ readableCapitalization(result.search_type) }}

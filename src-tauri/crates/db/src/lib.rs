@@ -353,7 +353,8 @@ impl Database {
 
     pub fn album_with_tracks(&self, album_id: &u32) -> Result<AlbumWithTracks> {
         let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT * FROM tracks WHERE album_id = ?1")?;
+        let mut stmt =
+            conn.prepare("SELECT * FROM tracks WHERE album_id = ?1 ORDER by number ASC")?;
 
         let tracks = stmt
             .query_map([album_id], Tracks::from_row)?
