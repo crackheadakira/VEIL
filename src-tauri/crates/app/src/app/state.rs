@@ -1,19 +1,19 @@
+use gpui::Global;
 use logging::{lock_or_log, try_with_log};
 use std::{
     env,
     fs::create_dir,
     sync::{Arc, Mutex, RwLock},
 };
-use tauri::{AppHandle, State};
-use tauri_specta::Event;
 use tokio::sync::Notify;
 
 use crate::{
-    config::VeilConfig,
+    config::{VeilConfig, VeilConfigEvent},
     discord::DiscordState,
     error::FrontendError,
-    queue::QueueSystem,
-    systems::{player::PlayerEvent, utils::data_path},
+    events::EventBus,
+    queue::{QueueEvent, QueueSystem},
+    systems::{player::PlayerEvent, ui::UIUpdateEvent, utils::data_path},
 };
 
 pub struct VeilState {
@@ -24,18 +24,26 @@ pub struct VeilState {
     pub config: Arc<RwLock<VeilConfig>>,
     pub lastfm: Arc<tokio::sync::Mutex<lastfm::LastFM>>,
     pub resume_notify: Arc<Notify>,
+
+    pub player_bus: EventBus<PlayerEvent>,
+    pub ui_bus: EventBus<UIUpdateEvent>,
+    pub config_bus: EventBus<VeilConfigEvent>,
+    pub queue_bus: EventBus<QueueEvent>,
 }
 
-pub type TauriState<'a> = State<'a, VeilState>;
+pub struct AppState(pub Arc<VeilState>);
 
-pub fn initialize_state(app: &mut tauri::App) -> Result<VeilState, FrontendError> {
+impl Global for AppState {}
+
+pub fn initialize_state() -> Result<VeilState, FrontendError> {
     #[cfg(not(target_os = "windows"))]
     let hwnd = None;
 
     #[cfg(target_os = "windows")]
     let hwnd = {
         use raw_window_handle::HasWindowHandle;
-        use tauri::Manager;
+
+        // TODO: WILL ERROR HERE, FIX
         if let Some(main_window) = app.get_webview_window("veil")
             && let Ok(window_handle) = main_window.window_handle()
             && let raw_window_handle::RawWindowHandle::Win32(handle) = window_handle.as_raw()
@@ -109,62 +117,47 @@ pub fn initialize_state(app: &mut tauri::App) -> Result<VeilState, FrontendError
         config: Arc::new(RwLock::new(veil_config)),
         discord: Mutex::new(discord),
         resume_notify: Arc::new(Notify::new()),
+
+        player_bus: EventBus::new(128),
+        ui_bus: EventBus::new(16),
+        config_bus: EventBus::new(16),
+        queue_bus: EventBus::new(16),
     })
 }
 
-pub fn attach_media_controls_to_player(
-    handle: &AppHandle,
-    state: &TauriState,
-) -> Result<(), anyhow::Error> {
+// TODO: MIGRATE TO EVENT MANAGER FOR GPUI
+pub fn attach_media_controls_to_player(state: Arc<VeilState>) -> Result<(), anyhow::Error> {
     let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
-    let handle = handle.clone();
+    let state = state.clone();
     player.controls.attach(move |event| {
         use media_controls::MediaControlEvent;
 
-        let result = match event {
-            MediaControlEvent::Play => PlayerEvent::emit(&PlayerEvent::Resume, &handle),
-            MediaControlEvent::Pause => PlayerEvent::emit(&PlayerEvent::Pause, &handle),
-            MediaControlEvent::Next => PlayerEvent::emit(&PlayerEvent::NextTrackInQueue, &handle),
-            MediaControlEvent::Previous => {
-                PlayerEvent::emit(&PlayerEvent::PreviousTrackInQueue, &handle)
-            }
-            MediaControlEvent::SetVolume(volume) => PlayerEvent::emit(
-                &PlayerEvent::SetVolume {
-                    volume: volume as f32,
-                },
-                &handle,
-            ),
+        match event {
+            MediaControlEvent::Play => state.player_bus.emit(PlayerEvent::Resume),
+            MediaControlEvent::Pause => state.player_bus.emit(PlayerEvent::Pause),
+            MediaControlEvent::Next => state.player_bus.emit(PlayerEvent::NextTrackInQueue),
+            MediaControlEvent::Previous => state.player_bus.emit(PlayerEvent::PreviousTrackInQueue),
+            MediaControlEvent::SetVolume(volume) => state.player_bus.emit(PlayerEvent::SetVolume {
+                volume: volume as f32,
+            }),
             MediaControlEvent::SeekBy(direction, duration) => {
                 let sign = match direction {
                     media_controls::SeekDirection::Forward => 1.0,
                     media_controls::SeekDirection::Backward => -1.0,
                 };
                 let secs = duration.as_secs_f64() * sign;
-                PlayerEvent::emit(
-                    &PlayerEvent::Seek {
-                        position: secs,
-                        resume: true,
-                    },
-                    &handle,
-                )
+                state.player_bus.emit(PlayerEvent::Seek {
+                    position: secs,
+                    resume: true,
+                })
             }
-            MediaControlEvent::SetPosition(position) => PlayerEvent::emit(
-                &PlayerEvent::Seek {
-                    position: position.0.as_secs_f64(),
-                    resume: false,
-                },
-                &handle,
-            ),
-            _ => Ok(()),
+            MediaControlEvent::SetPosition(position) => state.player_bus.emit(PlayerEvent::Seek {
+                position: position.0.as_secs_f64(),
+                resume: false,
+            }),
+            _ => (),
         };
-
-        match result {
-            Ok(_) => (),
-            Err(e) => {
-                logging::error!("Media control event got an error during emit: {e}");
-            }
-        }
     })?;
 
     Ok(())

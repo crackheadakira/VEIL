@@ -35,15 +35,13 @@ pub(crate) type Result<T, U = Error> = std::result::Result<T, U>;
 
 #[cfg(feature = "serialization")]
 use serde::Serialize;
-#[cfg(feature = "serialization")]
-use specta::Type;
 
 use crate::seams::{
     FakeMediaControls, FakeSoundFactory, KiraSoundFactory, Sound, SoundFactory, SouvlakiControls,
 };
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize))]
 pub enum PlayerState {
     Playing,
     #[default]

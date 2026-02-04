@@ -8,6 +8,4 @@ fn main() {
             panic!("Missing {} in .env for release build", var);
         }
     }
-
-    tauri_build::build();
 }

@@ -1,17 +1,15 @@
 use common::Tracks;
 use serde::{Deserialize, Serialize};
-use specta::Type;
-use tauri_specta::Event;
 
 use crate::queue::RepeatMode;
 
-#[derive(Serialize, Deserialize, Type, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum PlayButtonState {
     Playing,
     Paused,
 }
 
-#[derive(Serialize, Deserialize, Type, Event, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum UIUpdateEvent {
     /// Updates the state of the shuffle button

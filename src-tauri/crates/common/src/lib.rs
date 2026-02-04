@@ -1,7 +1,5 @@
 #[cfg(feature = "serialization")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "serialization")]
-use specta::Type;
 
 #[cfg(feature = "rusqlite")]
 mod rusqlite_impl;
@@ -9,7 +7,7 @@ mod rusqlite_impl;
 pub mod traits;
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub enum AlbumType {
     Unknown,
     Single,
@@ -32,7 +30,7 @@ impl AlbumType {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Artists {
     /// ID of artist in database
     pub id: u32,
@@ -41,7 +39,7 @@ pub struct Artists {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Albums {
     /// ID of album in database
     pub id: u32,
@@ -75,7 +73,7 @@ pub struct Albums {
 }
 
 #[derive(Debug, Clone)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Tracks {
     /// ID of track in database
     pub id: u32,
@@ -112,7 +110,7 @@ pub struct Tracks {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Playlists {
     /// ID of playlist in database
     pub id: u32,
@@ -128,7 +126,7 @@ pub struct Playlists {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Search {
     /// ID of the search item
     pub search_id: u32,
@@ -141,7 +139,7 @@ pub struct Search {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct PlaylistWithTracks {
     pub playlist: Playlists,
 
@@ -150,7 +148,7 @@ pub struct PlaylistWithTracks {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct AlbumWithTracks {
     pub album: Albums,
 
@@ -159,7 +157,7 @@ pub struct AlbumWithTracks {
 }
 
 #[derive(Debug)]
-#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize, Type))]
+#[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct ArtistWithAlbums {
     pub artist: Artists,
 

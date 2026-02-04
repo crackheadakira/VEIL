@@ -3,23 +3,20 @@ use std::collections::VecDeque;
 use logging::lock_or_log;
 use rand::{Rng, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
-use specta::Type;
-use tauri::{AppHandle, Manager};
-use tauri_specta::Event;
 
 use crate::{
     VeilState, config::VeilConfigEvent, error::FrontendError, events::EventSystemHandler,
     systems::ui::UIUpdateEvent,
 };
 
-#[derive(Serialize, Deserialize, Type, Copy, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
 #[serde(tag = "type", content = "data")]
 pub enum QueueOrigin {
     Playlist { id: u32 },
     Album { id: u32 },
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Type, Default, Debug, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Default, Debug, PartialEq)]
 pub enum RepeatMode {
     /// Do not repeat anything when the end of the queue is hit.
     #[default]
@@ -348,7 +345,7 @@ impl QueueSystem {
     }
 }
 
-#[derive(Serialize, Deserialize, Type, tauri_specta::Event, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum QueueEvent {
     /// Add to personal queue via context menu
@@ -376,24 +373,21 @@ pub enum QueueEvent {
 }
 
 impl EventSystemHandler for QueueEvent {
-    async fn handle(
-        event: tauri_specta::TypedEvent<QueueEvent>,
-        handle: &AppHandle,
-    ) -> Result<(), FrontendError> {
-        match event.payload {
+    async fn handle(event: Self, state: &VeilState) -> Result<(), FrontendError> {
+        match event {
             QueueEvent::EnqueuePersonal { track_id } => {
-                Self::enqueue_personal_track(handle, track_id)?;
+                Self::enqueue_personal_track(state, track_id)?;
             }
             QueueEvent::SetGlobalQueue {
                 tracks,
                 queue_idx,
                 origin,
-            } => Self::set_global_queue(handle, tracks, queue_idx, origin)?,
-            QueueEvent::ShuffleGlobalQueue => QueueEvent::shuffle_global_queue(handle, None)?,
+            } => Self::set_global_queue(state, tracks, queue_idx, origin)?,
+            QueueEvent::ShuffleGlobalQueue => QueueEvent::shuffle_global_queue(state, None)?,
             QueueEvent::SetGlobalQueueShuffle { shuffle } => {
-                QueueEvent::shuffle_global_queue(handle, Some(shuffle))?;
+                QueueEvent::shuffle_global_queue(state, Some(shuffle))?;
             }
-            QueueEvent::UpdateRepeatMode => QueueEvent::update_repeat_mode(handle)?,
+            QueueEvent::UpdateRepeatMode => QueueEvent::update_repeat_mode(state)?,
         }
 
         Ok(())
@@ -401,8 +395,7 @@ impl EventSystemHandler for QueueEvent {
 }
 
 impl QueueEvent {
-    fn enqueue_personal_track(handle: &AppHandle, track_id: u32) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
+    fn enqueue_personal_track(state: &VeilState, track_id: u32) -> Result<(), FrontendError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         queue.enqueue_personal(track_id);
@@ -410,12 +403,11 @@ impl QueueEvent {
     }
 
     fn set_global_queue(
-        handle: &AppHandle,
+        state: &VeilState,
         tracks: Vec<u32>,
         queue_idx: usize,
         origin: QueueOrigin,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
         let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
 
@@ -440,11 +432,7 @@ impl QueueEvent {
         Ok(())
     }
 
-    fn shuffle_global_queue(
-        handle: &AppHandle,
-        shuffle: Option<bool>,
-    ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
+    fn shuffle_global_queue(state: &VeilState, shuffle: Option<bool>) -> Result<(), FrontendError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         if let Some(shuffle) = shuffle {
@@ -460,18 +448,14 @@ impl QueueEvent {
             queue.shuffle_global();
         }
 
-        UIUpdateEvent::emit(
-            &UIUpdateEvent::ShuffleButton {
-                enabled: queue.shuffled,
-            },
-            handle,
-        )?;
+        state.ui_bus.emit(UIUpdateEvent::ShuffleButton {
+            enabled: queue.shuffled,
+        });
 
         Ok(())
     }
 
-    fn update_repeat_mode(handle: &AppHandle) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
+    fn update_repeat_mode(state: &VeilState) -> Result<(), FrontendError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         match queue.repeat_mode {
@@ -480,12 +464,9 @@ impl QueueEvent {
             RepeatMode::Track => queue.set_repeat_mode(RepeatMode::None),
         }
 
-        UIUpdateEvent::emit(
-            &UIUpdateEvent::LoopButton {
-                mode: queue.repeat_mode,
-            },
-            handle,
-        )?;
+        state.ui_bus.emit(UIUpdateEvent::LoopButton {
+            mode: queue.repeat_mode,
+        });
 
         Ok(())
     }

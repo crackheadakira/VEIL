@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     TauriState, VeilState,
     error::FrontendError,
@@ -74,10 +76,8 @@ pub fn player_progress_channel(
     Ok(())
 }
 
-pub fn initiate_track_ended_thread(handle: &AppHandle) {
-    let handle = handle.clone();
-    tauri::async_runtime::spawn(async move {
-        let state = handle.state::<VeilState>();
+pub fn initiate_track_ended_thread(state: Arc<VeilState>) {
+    tokio::spawn(async move {
         let check_interval = std::time::Duration::from_millis(25);
 
         loop {
@@ -97,7 +97,7 @@ pub fn initiate_track_ended_thread(handle: &AppHandle) {
                 try_preloading_next_sound_handle(&state, &mut player);
 
                 if let Some(track) = next_track_status(&state, &player) {
-                    let _ = PlayerEvent::emit(&PlayerEvent::NewTrack { track }, &handle);
+                    let _ = state.player_bus.emit(PlayerEvent::NewTrack { track });
                 }
             }
 
@@ -107,7 +107,7 @@ pub fn initiate_track_ended_thread(handle: &AppHandle) {
             };
 
             if queue_has_ended {
-                let _ = PlayerEvent::emit(&PlayerEvent::Stop, &handle);
+                let _ = state.player_bus.emit(PlayerEvent::Stop);
                 state.resume_notify.notified().await;
             }
         }

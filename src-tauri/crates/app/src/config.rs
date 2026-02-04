@@ -2,8 +2,6 @@ use std::{fs, path::PathBuf};
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use specta::Type;
-use tauri_specta::Event;
 
 use crate::{
     error::FrontendError,
@@ -11,7 +9,7 @@ use crate::{
     systems::utils::data_path,
 };
 
-#[derive(Serialize, Deserialize, Type, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct VeilConfig {
     /// User interface–related preferences
     pub ui: UiConfig,
@@ -27,14 +25,14 @@ pub struct VeilConfig {
 }
 
 /// UI configuration such as theme or other future endeavors
-#[derive(Serialize, Deserialize, Type, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct UiConfig {
     /// What theme the user has selected
     pub theme: ThemeMode,
 }
 
 /// Integrations like Discord RPC or Last.FM
-#[derive(Serialize, Deserialize, Type, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct IntegrationsConfig {
     /// If Discord RPC should be enabled
     pub discord_enabled: bool,
@@ -47,14 +45,14 @@ pub struct IntegrationsConfig {
 }
 
 /// Music library settings
-#[derive(Serialize, Deserialize, Type, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct LibraryConfig {
     /// The directory where all the music files are
     pub music_dir: Option<String>,
 }
 
 /// Playback behavior and queue state
-#[derive(Serialize, Deserialize, Type, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct PlaybackConfig {
     /// Where the queue originated from
     pub queue_origin: Option<QueueOrigin>,
@@ -66,7 +64,7 @@ pub struct PlaybackConfig {
     pub repeat_mode: RepeatMode,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Type, Clone, Copy, Debug, Default)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug, Default)]
 pub enum ThemeMode {
     #[default]
     Dark,
@@ -76,7 +74,7 @@ pub enum ThemeMode {
     System,
 }
 
-#[derive(Serialize, Deserialize, Type, Event, Clone, Default)]
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct VeilConfigEvent {
     pub theme: Option<ThemeMode>,
 

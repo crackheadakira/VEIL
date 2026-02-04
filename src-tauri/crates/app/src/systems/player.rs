@@ -5,14 +5,10 @@ use lastfm::TrackData;
 use logging::lock_or_log;
 use media_controls::{DefaultPlayer, PlaybackState};
 use serde::{Deserialize, Serialize};
-use specta::Type;
-use tauri::{AppHandle, Manager, ipc::Channel};
-use tauri_specta::{Event, TypedEvent};
 use tokio::sync::MutexGuard;
 
 use crate::{
-    TauriState, VeilState,
-    commands::player::PlayerProgressEvent,
+    VeilState,
     discord::PayloadData,
     error::FrontendError,
     events::EventSystemHandler,
@@ -73,7 +69,7 @@ pub async fn try_update_now_playing_to_lastfm(
 }
 
 pub fn next_track_status(
-    state: &TauriState,
+    state: &VeilState,
     player: &RwLockWriteGuard<'_, DefaultPlayer>,
 ) -> Option<Tracks> {
     player
@@ -92,8 +88,10 @@ pub fn next_track_status(
         })
 }
 
+/*
+// TODO: FIX THE CHANNEL
 pub fn send_player_progress_via_channel(
-    state: &TauriState,
+    state: &VeilState,
     on_event: &Channel<PlayerProgressEvent>,
 ) {
     let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
@@ -107,10 +105,10 @@ pub fn send_player_progress_via_channel(
             logging::error!("Progress channel closed");
         }
     }
-}
+}*/
 
 pub fn try_preloading_next_sound_handle(
-    state: &TauriState,
+    state: &VeilState,
     player: &mut RwLockWriteGuard<'_, DefaultPlayer>,
 ) -> bool {
     // We already check if the track ends soon outside the call
@@ -142,7 +140,7 @@ pub fn try_preloading_next_sound_handle(
     false
 }
 
-#[derive(Serialize, Deserialize, Type, Event, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum PlayerEvent {
     /// Initialize the player to load in this track, seeked to the specified position.
@@ -188,12 +186,7 @@ struct OnlineFeatures {
 }
 
 impl EventSystemHandler for PlayerEvent {
-    async fn handle(
-        event: TypedEvent<PlayerEvent>,
-        handle: &AppHandle,
-    ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
-
+    async fn handle(event: Self, state: &VeilState) -> Result<(), FrontendError> {
         let online = {
             let config: std::sync::RwLockReadGuard<'_, crate::config::VeilConfig> =
                 lock_or_log(state.config.read(), "Config Read")?;
@@ -205,13 +198,13 @@ impl EventSystemHandler for PlayerEvent {
 
         // TODO: Implement frontend emits.
         // These emits would then sync the frontend to the backend, with the backend being the source of truth.
-        match event.payload {
+        match event {
             PlayerEvent::Initialize { track, progress } => {
-                Self::initialize_player_with_track(handle, track, progress)?;
+                Self::initialize_player_with_track(state, track, progress)?;
             }
-            PlayerEvent::NewTrack { track } => Self::set_new_track(handle, track, online).await?,
-            PlayerEvent::Pause => Self::pause_current_track(handle, online).await?,
-            PlayerEvent::Resume => Self::resume_current_track(handle, online)?,
+            PlayerEvent::NewTrack { track } => Self::set_new_track(state, track, online).await?,
+            PlayerEvent::Pause => Self::pause_current_track(state, online).await?,
+            PlayerEvent::Resume => Self::resume_current_track(state, online)?,
             PlayerEvent::UpdatePlayerState => {
                 let playback_state = {
                     let player = lock_or_log(state.player.read(), "Player Read Lock")?;
@@ -220,9 +213,9 @@ impl EventSystemHandler for PlayerEvent {
 
                 if let Some(playback_state) = playback_state {
                     if playback_state == PlaybackState::Playing {
-                        Self::pause_current_track(handle, online).await?;
+                        Self::pause_current_track(state, online).await?;
                     } else if playback_state == PlaybackState::Paused {
-                        Self::resume_current_track(handle, online)?;
+                        Self::resume_current_track(state, online)?;
                     }
                 } else {
                     // We have to load in the track as there is no playback state yet
@@ -231,19 +224,19 @@ impl EventSystemHandler for PlayerEvent {
                     );
                 }
             }
-            PlayerEvent::Stop => Self::stop_current_track(handle)?,
+            PlayerEvent::Stop => Self::stop_current_track(state)?,
             PlayerEvent::Seek { position, resume } => {
-                Self::seek_current_track(handle, position, resume, online)?;
+                Self::seek_current_track(state, position, resume, online)?;
             }
-            PlayerEvent::SetVolume { volume } => Self::set_player_volume(handle, volume)?,
+            PlayerEvent::SetVolume { volume } => Self::set_player_volume(state, volume)?,
             PlayerEvent::PreviousTrackInQueue => {
-                Self::play_previous_track_from_queue(handle, online).await?;
+                Self::play_previous_track_from_queue(state, online).await?;
             }
             PlayerEvent::NextTrackInQueue => {
-                Self::play_next_track_from_queue(handle, online).await?;
+                Self::play_next_track_from_queue(state, online).await?;
             }
             PlayerEvent::CurrentTrackInQueue => {
-                Self::play_current_track_from_queue(handle, online).await?;
+                Self::play_current_track_from_queue(state, online).await?;
             }
         };
 
@@ -254,11 +247,10 @@ impl EventSystemHandler for PlayerEvent {
 impl PlayerEvent {
     /// Loads the track into the player at the specified position.
     fn initialize_player_with_track(
-        handle: &AppHandle,
+        state: &VeilState,
         track: Tracks,
         progress: f64,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.initialize_player(track, progress)?;
 
@@ -269,12 +261,10 @@ impl PlayerEvent {
     ///
     /// Also handles Discord RPC & Last.FM scrobbling.
     async fn set_new_track(
-        handle: &AppHandle,
+        state: &VeilState,
         track: Tracks,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
-
         let should_scrobble = {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
             player.should_scrobble()
@@ -302,6 +292,7 @@ impl PlayerEvent {
 
         state.resume_notify.notify_waiters();
 
+        /*
         UIUpdateEvent::emit(
             &UIUpdateEvent::PlayButton {
                 state: PlayButtonState::Playing,
@@ -315,11 +306,11 @@ impl PlayerEvent {
             },
             handle,
         )?;
+        */
 
         if online.discord_enabled {
             // Get album cover URL from Last.FM if Discord & Last.FM are enabled.
             let album_cover = if online.last_fm_enabled {
-                let state = handle.state::<VeilState>();
                 let lastfm = state.lastfm.lock().await;
                 match lastfm
                     .album()
@@ -369,10 +360,9 @@ impl PlayerEvent {
     /// Plays the current track in queue by passing it to [`PlayerEvent::set_new_track`]
     ///
     async fn play_current_track_from_queue(
-        handle: &AppHandle,
+        state: &VeilState,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
         let track_id = {
             let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.current()
@@ -381,7 +371,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?;
+            Self::set_new_track(state, track, online).await?;
         }
 
         Ok(())
@@ -390,10 +380,9 @@ impl PlayerEvent {
     /// Plays the next track in queue by passing it to [`PlayerEvent::set_new_track`]
     ///
     async fn play_next_track_from_queue(
-        handle: &AppHandle,
+        state: &VeilState,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.next()
@@ -402,7 +391,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?;
+            Self::set_new_track(state, track, online).await?;
         }
 
         Ok(())
@@ -411,10 +400,9 @@ impl PlayerEvent {
     /// Plays the previous track in queue by passing it to [`PlayerEvent::set_new_track`]
     ///
     async fn play_previous_track_from_queue(
-        handle: &AppHandle,
+        state: &VeilState,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.previous()
@@ -423,7 +411,7 @@ impl PlayerEvent {
         if let Some(track_id) = track_id {
             let track = state.db.by_id::<Tracks>(&track_id)?;
 
-            Self::set_new_track(handle, track, online).await?;
+            Self::set_new_track(state, track, online).await?;
         }
 
         Ok(())
@@ -434,11 +422,9 @@ impl PlayerEvent {
     /// Update Discord activity to also say paused, and will check if the current playing track
     /// should be scrobbled on Last.FM
     async fn pause_current_track(
-        handle: &AppHandle,
+        state: &VeilState,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
-
         if online.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
             discord.update_activity("paused", "Paused", false, None);
@@ -451,12 +437,9 @@ impl PlayerEvent {
             player.should_scrobble()
         };
 
-        UIUpdateEvent::emit(
-            &UIUpdateEvent::PlayButton {
-                state: PlayButtonState::Paused,
-            },
-            handle,
-        )?;
+        state.ui_bus.emit(UIUpdateEvent::PlayButton {
+            state: PlayButtonState::Paused,
+        });
 
         if online.last_fm_enabled
             && let Some((track_id, track_timestamp)) = should_scrobble
@@ -473,20 +456,15 @@ impl PlayerEvent {
     ///
     /// Updates Discord activity.
     fn resume_current_track(
-        handle: &AppHandle,
+        state: &VeilState,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
-
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.resume()?;
 
-        UIUpdateEvent::emit(
-            &UIUpdateEvent::PlayButton {
-                state: PlayButtonState::Playing,
-            },
-            handle,
-        )?;
+        state.ui_bus.emit(UIUpdateEvent::PlayButton {
+            state: PlayButtonState::Playing,
+        });
 
         if online.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
@@ -497,18 +475,14 @@ impl PlayerEvent {
     }
 
     /// Stops the current track.
-    fn stop_current_track(handle: &AppHandle) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
+    fn stop_current_track(state: &VeilState) -> Result<(), FrontendError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.stop()?;
 
-        UIUpdateEvent::emit(
-            &UIUpdateEvent::PlayButton {
-                state: PlayButtonState::Paused,
-            },
-            handle,
-        )?;
+        state.ui_bus.emit(UIUpdateEvent::PlayButton {
+            state: PlayButtonState::Paused,
+        });
 
         Ok(())
     }
@@ -517,13 +491,11 @@ impl PlayerEvent {
     ///
     /// Updates Discord activity.
     fn seek_current_track(
-        handle: &AppHandle,
+        state: &VeilState,
         position: f64,
         resume: bool,
         online: OnlineFeatures,
     ) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
-
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.seek(position, resume)?;
 
@@ -541,8 +513,7 @@ impl PlayerEvent {
         Ok(())
     }
 
-    fn set_player_volume(handle: &AppHandle, volume: f32) -> Result<(), FrontendError> {
-        let state = handle.state::<VeilState>();
+    fn set_player_volume(state: &VeilState, volume: f32) -> Result<(), FrontendError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.set_volume(volume)?;
