@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
 use anyhow::Context;
 use rfd::{AsyncFileDialog, FileHandle};
 
-use crate::{TauriState, error::FrontendError};
+use crate::{VeilState, error::FrontendError};
 
 pub fn open_url(url: &str) -> Result<(), FrontendError> {
     if !url.contains("http") {
@@ -35,7 +37,7 @@ pub fn sanitize_string(string: &str) -> String {
 }
 
 pub async fn get_handle_to_music_folder(
-    state: &TauriState<'_>,
+    state: Arc<VeilState>,
 ) -> Result<Option<FileHandle>, FrontendError> {
     let music_dir = {
         let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;

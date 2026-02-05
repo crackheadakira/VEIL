@@ -1,8 +1,5 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
 mod app;
-mod commands;
+// mod commands;
 mod config;
 mod discord;
 mod error;
@@ -10,9 +7,10 @@ mod events;
 mod queue;
 mod systems;
 
-pub use app::{TauriState, VeilState};
+pub use app::VeilState;
 
-fn main() -> Result<(), anyhow::Error> {
+#[tokio::main]
+async fn main() {
     dotenvy::dotenv().ok();
     logging::init();
 

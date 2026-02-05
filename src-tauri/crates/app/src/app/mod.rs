@@ -21,7 +21,7 @@ pub fn run() {
         handle_state_setup(cx).expect("Failed setting up the state");
 
         cx.on_app_quit(|cx: &mut App| {
-            let state = cx.global::<AppState>().0;
+            let state = cx.global::<AppState>().0.clone();
 
             async move {
                 let config = lock_or_log(state.config.read(), "Config Lock").unwrap();
@@ -38,31 +38,30 @@ pub fn run() {
 
         let bounds = Bounds::centered(None, size(px(1280.0), px(720.0)), cx);
 
-        let window = cx
-            .open_window(
-                WindowOptions {
-                    window_bounds: Some(WindowBounds::Windowed(bounds)),
-                    window_background: WindowBackgroundAppearance::Opaque,
-                    window_min_size: Some(size(px(1280.0), px(720.0))),
-                    titlebar: Some(TitlebarOptions {
-                        title: Some(SharedString::from("VEIL")),
-                        appears_transparent: true,
-                        traffic_light_position: Some(Point {
-                            x: px(12.0),
-                            y: px(11.0),
-                        }),
+        cx.open_window(
+            WindowOptions {
+                window_bounds: Some(WindowBounds::Windowed(bounds)),
+                window_background: WindowBackgroundAppearance::Opaque,
+                window_min_size: Some(size(px(1280.0), px(720.0))),
+                titlebar: Some(TitlebarOptions {
+                    title: Some(SharedString::from("VEIL")),
+                    appears_transparent: true,
+                    traffic_light_position: Some(Point {
+                        x: px(12.0),
+                        y: px(11.0),
                     }),
-                    app_id: Some("org.crackheadakira.veil".to_string()),
-                    kind: WindowKind::Normal,
-                    ..Default::default()
-                },
-                |window, cx| {
-                    window.set_window_title("VEIL");
+                }),
+                app_id: Some("org.crackheadakira.veil".to_string()),
+                kind: WindowKind::Normal,
+                ..Default::default()
+            },
+            |window, cx| {
+                window.set_window_title("VEIL");
 
-                    cx.new(|cx| AppWindow::new(cx))
-                },
-            )
-            .unwrap();
+                cx.new(|cx| AppWindow::new(cx))
+            },
+        )
+        .unwrap();
     });
 }
 
@@ -94,7 +93,7 @@ impl Render for AppWindow {
                 .text_sm()
                 .border_1()
                 .border_color(rgb(0xcccccc))
-                .child("Hello, world!"),
+                .child("Hello from GPUI!"),
         )
     }
 }

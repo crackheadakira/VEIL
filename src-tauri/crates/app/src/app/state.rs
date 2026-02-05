@@ -1,4 +1,4 @@
-use gpui::Global;
+use gpui::{App, Global};
 use logging::{lock_or_log, try_with_log};
 use std::{
     env,
@@ -35,20 +35,15 @@ pub struct AppState(pub Arc<VeilState>);
 
 impl Global for AppState {}
 
-pub fn initialize_state() -> Result<VeilState, FrontendError> {
+pub fn initialize_state(_cx: &mut App) -> Result<VeilState, FrontendError> {
     #[cfg(not(target_os = "windows"))]
     let hwnd = None;
 
     #[cfg(target_os = "windows")]
     let hwnd = {
-        use raw_window_handle::HasWindowHandle;
-
-        // TODO: WILL ERROR HERE, FIX
-        if let Some(main_window) = app.get_webview_window("veil")
-            && let Ok(window_handle) = main_window.window_handle()
-            && let raw_window_handle::RawWindowHandle::Win32(handle) = window_handle.as_raw()
-        {
-            Some(handle.hwnd.get() as *mut std::ffi::c_void)
+        // TODO: untested, will probably fail
+        if let Some(handle) = _cx.windows().get(0) {
+            handle.get_raw_handle()
         } else {
             None
         }

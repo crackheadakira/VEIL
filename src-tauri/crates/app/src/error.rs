@@ -1,7 +1,4 @@
-use specta::Type;
-use tauri_specta::Event;
-
-#[derive(thiserror::Error, Debug, serde::Serialize, Type, Event, Clone)]
+#[derive(thiserror::Error, Debug, serde::Serialize, Clone)]
 #[serde(tag = "type", content = "data")]
 pub enum FrontendError {
     #[error("[IO] {0}")]
@@ -92,15 +89,6 @@ impl From<serde_json::Error> for FrontendError {
         logging::error!("{error:?}");
 
         Self::SerdeJson(msg)
-    }
-}
-
-impl From<tauri::Error> for FrontendError {
-    fn from(error: tauri::Error) -> Self {
-        let msg = error.to_string();
-        logging::error!("{error:?}");
-
-        Self::TauriError(msg)
     }
 }
 

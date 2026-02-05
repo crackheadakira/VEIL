@@ -4,15 +4,18 @@ use gpui::App;
 use logging::lock_or_log;
 
 use crate::{
+    VeilState,
     app::state::{AppState, attach_media_controls_to_player, initialize_state},
-    commands::player::initiate_track_ended_thread,
     events::EventSystemHandler,
     queue::{QueueEvent, QueueOrigin},
-    systems::{player::PlayerEvent, utils::data_path},
+    systems::{
+        player::{PlayerEvent, next_track_status, try_preloading_next_sound_handle},
+        utils::data_path,
+    },
 };
 
 pub fn handle_state_setup(cx: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    let veil_state = initialize_state()?;
+    let veil_state = initialize_state(cx)?;
     let app_state = Arc::new(veil_state);
     cx.set_global(AppState(app_state));
 
@@ -98,4 +101,42 @@ pub fn handle_state_setup(cx: &mut App) -> Result<(), Box<dyn std::error::Error>
     initiate_track_ended_thread(state.clone());
 
     Ok(())
+}
+
+fn initiate_track_ended_thread(state: Arc<VeilState>) {
+    tokio::spawn(async move {
+        let check_interval = std::time::Duration::from_millis(25);
+
+        loop {
+            tokio::time::sleep(check_interval).await;
+
+            let ended = {
+                let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
+                player.has_ended()
+            };
+
+            if !ended {
+                continue;
+            }
+
+            {
+                let mut player = lock_or_log(state.player.write(), "Player Write Lock").unwrap();
+                try_preloading_next_sound_handle(&state, &mut player);
+
+                if let Some(track) = next_track_status(&state, &player) {
+                    let _ = state.player_bus.emit(PlayerEvent::NewTrack { track });
+                }
+            }
+
+            let queue_has_ended = {
+                let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
+                queue.reached_end
+            };
+
+            if queue_has_ended {
+                let _ = state.player_bus.emit(PlayerEvent::Stop);
+                state.resume_notify.notified().await;
+            }
+        }
+    });
 }
