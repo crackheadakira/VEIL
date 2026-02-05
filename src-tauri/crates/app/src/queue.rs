@@ -141,7 +141,11 @@ impl QueueSystem {
     ///
     /// Ignores repeat modes.
     fn get_previous_index(&self) -> usize {
-        (self.current_index - 1) % self.global_queue.len()
+        if self.current_index == 0 {
+            0
+        } else {
+            self.current_index - 1
+        }
     }
 
     /// Internal method to get the next index.

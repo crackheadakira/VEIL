@@ -1,11 +1,12 @@
 use crate::app::{builder::handle_state_setup, state::AppState};
+use common::Tracks;
 use gpui::{
-    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
-    ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, rgb,
-    size, white,
+    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
+    IntoElement, MouseButton, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions,
+    Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px,
+    rgb, size, white,
 };
-use logging::lock_or_log;
+use logging::{info, lock_or_log};
 
 pub use state::VeilState;
 
@@ -84,7 +85,7 @@ impl Focusable for AppWindow {
 }
 
 impl Render for AppWindow {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div().size_full().bg(white()).child(
             div()
                 .w_full()
@@ -93,7 +94,34 @@ impl Render for AppWindow {
                 .text_sm()
                 .border_1()
                 .border_color(rgb(0xcccccc))
-                .child("Hello from GPUI!"),
+                .child("Hello from GPUI!")
+                .child(
+                    div().size_full().bg(white()).child(
+                        div()
+                            .w_full()
+                            .p(px(12.0))
+                            .line_height(px(14.0))
+                            .text_sm()
+                            .border_1()
+                            .border_color(rgb(0xcccccc))
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|_, _, _, cx| {
+                                    let state = cx.global::<AppState>().0.clone();
+
+                                    info!("Trying to play track!");
+                                    let mut player =
+                                        lock_or_log(state.player.write(), "Player Write Lock")
+                                            .unwrap();
+
+                                    let track = state.db.by_id::<Tracks>(&1).unwrap();
+
+                                    player.play(&track, None).unwrap();
+                                }),
+                            )
+                            .child("Play"),
+                    ),
+                ),
         )
     }
 }
