@@ -1,23 +1,18 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
-    ui::{
-        components::{button::Button, switch::Switch},
-        theme::{Theme, text_elements::p},
-    },
+    ui::{theme::Theme, views::all_albums::AllAlbumsView},
 };
-use common::Tracks;
 use gpui::{
-    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, MouseButton, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions,
-    Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px,
-    size,
+    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
+    ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, size,
 };
-use logging::{debug, lock_or_log};
+use logging::lock_or_log;
 
 pub use state::VeilState;
 
 mod builder;
-mod state;
+pub mod state;
 
 actions!(app, [Quit]);
 
@@ -76,13 +71,17 @@ pub fn run() {
 
 struct AppWindow {
     focus_handle: FocusHandle,
+    all_albums_view: AllAlbumsView,
 }
 
 impl AppWindow {
     fn new(cx: &mut Context<Self>) -> Self {
         let focus_handle = cx.focus_handle();
 
-        Self { focus_handle }
+        Self {
+            focus_handle,
+            all_albums_view: AllAlbumsView::new(cx),
+        }
     }
 }
 
@@ -97,37 +96,9 @@ impl Render for AppWindow {
         let theme = cx.global::<Theme>();
 
         div()
-            .text_color(theme.text.primary.default)
             .size_full()
             .bg(theme.background.primary.default)
-            .child(
-                div()
-                    .items_start()
-                    .flex()
-                    .flex_col()
-                    .gap_2()
-                    .w_full()
-                    .p_3()
-                    .border_1()
-                    .border_color(theme.border.primary.default)
-                    .child(p("Hello from GPUI!"))
-                    .child(Button::new("play-button", "Play!").on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|_, _, _, cx| {
-                            let state = cx.global::<AppState>().0.clone();
-
-                            debug!("Trying to play track!");
-                            let mut player =
-                                lock_or_log(state.player.write(), "Player Write Lock").unwrap();
-
-                            let track = state.db.by_id::<Tracks>(&1).unwrap();
-
-                            player.play(&track, None).unwrap();
-                        }),
-                    ))
-                    .child(Switch::new("switch-1"))
-                    .child(Switch::new("switch-2").label("Discord RPC"))
-                    .child(Button::new("button-1", "Click me!")),
-            )
+            .p_8()
+            .child(self.all_albums_view.clone())
     }
 }

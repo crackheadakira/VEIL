@@ -183,58 +183,58 @@ where
 }
 
 pub mod text_elements {
-    use gpui::{FontWeight, IntoElement, ParentElement, Styled, div, rems};
+    use gpui::{Div, FontWeight, IntoElement, ParentElement, Styled, div, rems};
 
-    pub fn h1(text: impl IntoElement) -> impl IntoElement {
+    pub fn h1(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::BOLD)
             .text_size(rems(2.15))
             .child(text)
     }
 
-    pub fn h2(text: impl IntoElement) -> impl IntoElement {
+    pub fn h2(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::BOLD)
             .text_size(rems(1.925))
             .child(text)
     }
 
-    pub fn h3(text: impl IntoElement) -> impl IntoElement {
+    pub fn h3(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::BOLD)
             .text_size(rems(1.725))
             .child(text)
     }
 
-    pub fn h4(text: impl IntoElement) -> impl IntoElement {
+    pub fn h4(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::SEMIBOLD)
             .text_size(rems(1.55))
             .child(text)
     }
 
-    pub fn h5(text: impl IntoElement) -> impl IntoElement {
+    pub fn h5(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::SEMIBOLD)
             .text_size(rems(1.39375))
             .child(text)
     }
 
-    pub fn h6(text: impl IntoElement) -> impl IntoElement {
+    pub fn h6(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::MEDIUM)
             .text_size(rems(1.25))
             .child(text)
     }
 
-    pub fn p(text: impl IntoElement) -> impl IntoElement {
+    pub fn p(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::MEDIUM)
             .text_size(rems(0.8875))
             .child(text)
     }
 
-    pub fn small(text: impl IntoElement) -> impl IntoElement {
+    pub fn small(text: impl IntoElement) -> Div {
         div()
             .font_weight(FontWeight::MEDIUM)
             .text_size(rems(0.8125))

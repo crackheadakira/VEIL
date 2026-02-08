@@ -6,7 +6,7 @@ mod rusqlite_impl;
 
 pub mod traits;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub enum AlbumType {
     Unknown,
@@ -29,6 +29,18 @@ impl AlbumType {
     }
 }
 
+impl std::fmt::Display for AlbumType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let label = match self {
+            AlbumType::Unknown => "Unknown",
+            AlbumType::Single => "Single",
+            AlbumType::EP => "EP",
+            AlbumType::Album => "Album",
+        };
+        write!(f, "{}", label)
+    }
+}
+
 #[derive(Debug)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Artists {
@@ -38,7 +50,7 @@ pub struct Artists {
     pub name: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialization", derive(Serialize, Deserialize))]
 pub struct Albums {
     /// ID of album in database
