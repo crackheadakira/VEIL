@@ -1,13 +1,13 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
-    ui::{components::toggle::ToggleButton, theme::Theme},
+    ui::{components::switch::Switch, theme::Theme},
 };
 use common::Tracks;
 use gpui::{
     App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, MouseButton, ParentElement, Point, Render, ScrollHandle, SharedString, Styled,
-    TitlebarOptions, Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
-    actions, div, px, size,
+    IntoElement, MouseButton, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions,
+    Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px,
+    size,
 };
 use logging::{info, lock_or_log};
 
@@ -133,8 +133,8 @@ impl Render for AppWindow {
                             )
                             .child("Play"),
                     )
-                    .child(ToggleButton::new("toggle-1"))
-                    .child(ToggleButton::new("toggle-2").label("Discord RPC")),
+                    .child(Switch::new("switch-1"))
+                    .child(Switch::new("switch-2").label("Discord RPC")),
             )
     }
 }

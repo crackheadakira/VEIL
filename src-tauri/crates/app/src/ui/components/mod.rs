@@ -1,1 +1,1 @@
-pub mod toggle;
+pub mod switch;
