@@ -145,7 +145,7 @@ pub fn attach_media_controls_to_player(state: Arc<VeilState>) -> Result<(), anyh
                 state.player_bus.emit(PlayerEvent::Seek {
                     position: secs,
                     resume: true,
-                })
+                });
             }
             MediaControlEvent::SetPosition(position) => state.player_bus.emit(PlayerEvent::Seek {
                 position: position.0.as_secs_f64(),

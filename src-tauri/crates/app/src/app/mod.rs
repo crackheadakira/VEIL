@@ -1,10 +1,13 @@
-use crate::app::{builder::handle_state_setup, state::AppState};
+use crate::{
+    app::{builder::handle_state_setup, state::AppState},
+    ui::{components::toggle::ToggleButton, theme::Theme},
+};
 use common::Tracks;
 use gpui::{
     App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, MouseButton, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions,
-    Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px,
-    rgb, size, white,
+    IntoElement, MouseButton, ParentElement, Point, Render, ScrollHandle, SharedString, Styled,
+    TitlebarOptions, Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    actions, div, px, size,
 };
 use logging::{info, lock_or_log};
 
@@ -20,6 +23,8 @@ pub fn run() {
         cx.on_action(|_: &Quit, cx| cx.quit());
 
         handle_state_setup(cx).expect("Failed setting up the state");
+        let theme = Theme::default();
+        cx.set_global::<Theme>(theme);
 
         cx.on_app_quit(|cx: &mut App| {
             let state = cx.global::<AppState>().0.clone();
@@ -52,14 +57,14 @@ pub fn run() {
                         y: px(11.0),
                     }),
                 }),
-                app_id: Some("org.crackheadakira.veil".to_string()),
+                app_id: Some("org.crackheadakira.veil".to_owned()),
                 kind: WindowKind::Normal,
                 ..Default::default()
             },
             |window, cx| {
                 window.set_window_title("VEIL");
 
-                cx.new(|cx| AppWindow::new(cx))
+                cx.new(AppWindow::new)
             },
         )
         .unwrap();
@@ -86,24 +91,31 @@ impl Focusable for AppWindow {
 
 impl Render for AppWindow {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div().size_full().bg(white()).child(
-            div()
-                .w_full()
-                .p(px(12.0))
-                .line_height(px(14.0))
-                .text_sm()
-                .border_1()
-                .border_color(rgb(0xcccccc))
-                .child("Hello from GPUI!")
-                .child(
-                    div().size_full().bg(white()).child(
+        let theme = cx.global::<Theme>();
+
+        div()
+            .text_color(theme.text.primary.default)
+            .size_full()
+            .bg(theme.background.primary.default)
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap_2()
+                    .w_full()
+                    .p_3()
+                    .text_sm()
+                    .border_1()
+                    .border_color(theme.border.primary.default)
+                    .child("Hello from GPUI!")
+                    .child(
                         div()
+                            .bg(theme.background.secondary.default)
                             .w_full()
-                            .p(px(12.0))
-                            .line_height(px(14.0))
+                            .p_3()
                             .text_sm()
                             .border_1()
-                            .border_color(rgb(0xcccccc))
+                            .border_color(theme.border.secondary.default)
                             .on_mouse_down(
                                 MouseButton::Left,
                                 cx.listener(|_, _, _, cx| {
@@ -120,8 +132,9 @@ impl Render for AppWindow {
                                 }),
                             )
                             .child("Play"),
-                    ),
-                ),
-        )
+                    )
+                    .child(ToggleButton::new("toggle-1"))
+                    .child(ToggleButton::new("toggle-2").label("Discord RPC")),
+            )
     }
 }

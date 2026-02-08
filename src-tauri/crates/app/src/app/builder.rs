@@ -124,7 +124,7 @@ fn initiate_track_ended_thread(state: Arc<VeilState>) {
                 try_preloading_next_sound_handle(&state, &mut player);
 
                 if let Some(track) = next_track_status(&state, &player) {
-                    let _ = state.player_bus.emit(PlayerEvent::NewTrack { track });
+                    state.player_bus.emit(PlayerEvent::NewTrack { track });
                 }
             }
 
@@ -134,7 +134,7 @@ fn initiate_track_ended_thread(state: Arc<VeilState>) {
             };
 
             if queue_has_ended {
-                let _ = state.player_bus.emit(PlayerEvent::Stop);
+                state.player_bus.emit(PlayerEvent::Stop);
                 state.resume_notify.notified().await;
             }
         }

@@ -15,7 +15,7 @@ pub trait EventSystemHandler: Sized + Send + Sync + 'static {
     /// Attaches a listener to the given event on it's own async task.
     fn attach_listener(event_bus: EventBus<Self>, state: Arc<VeilState>)
     where
-        Self: Clone + Send + Sync + 'static,
+        Self: Clone,
     {
         tokio::spawn(async move {
             let mut rx = event_bus.subscribe();

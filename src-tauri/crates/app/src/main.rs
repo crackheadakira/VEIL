@@ -6,6 +6,7 @@ mod error;
 mod events;
 mod queue;
 mod systems;
+mod ui;
 
 pub use app::VeilState;
 
@@ -14,5 +15,5 @@ async fn main() {
     dotenvy::dotenv().ok();
     logging::init();
 
-    app::run()
+    app::run();
 }
