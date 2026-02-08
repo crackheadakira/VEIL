@@ -1,6 +1,9 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
-    ui::{components::switch::Switch, theme::Theme},
+    ui::{
+        components::{button::Button, switch::Switch},
+        theme::Theme,
+    },
 };
 use common::Tracks;
 use gpui::{
@@ -9,7 +12,7 @@ use gpui::{
     Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px,
     size,
 };
-use logging::{info, lock_or_log};
+use logging::{debug, lock_or_log};
 
 pub use state::VeilState;
 
@@ -99,6 +102,7 @@ impl Render for AppWindow {
             .bg(theme.background.primary.default)
             .child(
                 div()
+                    .items_start()
                     .flex()
                     .flex_col()
                     .gap_2()
@@ -108,33 +112,23 @@ impl Render for AppWindow {
                     .border_1()
                     .border_color(theme.border.primary.default)
                     .child("Hello from GPUI!")
-                    .child(
-                        div()
-                            .bg(theme.background.secondary.default)
-                            .w_full()
-                            .p_3()
-                            .text_sm()
-                            .border_1()
-                            .border_color(theme.border.secondary.default)
-                            .on_mouse_down(
-                                MouseButton::Left,
-                                cx.listener(|_, _, _, cx| {
-                                    let state = cx.global::<AppState>().0.clone();
+                    .child(Button::new("play-button", "Play!").on_mouse_down(
+                        MouseButton::Left,
+                        cx.listener(|_, _, _, cx| {
+                            let state = cx.global::<AppState>().0.clone();
 
-                                    info!("Trying to play track!");
-                                    let mut player =
-                                        lock_or_log(state.player.write(), "Player Write Lock")
-                                            .unwrap();
+                            debug!("Trying to play track!");
+                            let mut player =
+                                lock_or_log(state.player.write(), "Player Write Lock").unwrap();
 
-                                    let track = state.db.by_id::<Tracks>(&1).unwrap();
+                            let track = state.db.by_id::<Tracks>(&1).unwrap();
 
-                                    player.play(&track, None).unwrap();
-                                }),
-                            )
-                            .child("Play"),
-                    )
+                            player.play(&track, None).unwrap();
+                        }),
+                    ))
                     .child(Switch::new("switch-1"))
-                    .child(Switch::new("switch-2").label("Discord RPC")),
+                    .child(Switch::new("switch-2").label("Discord RPC"))
+                    .child(Button::new("button-1", "Click me!")),
             )
     }
 }

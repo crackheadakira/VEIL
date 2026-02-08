@@ -31,6 +31,8 @@ impl RenderOnce for Switch {
         let switch_handle = enabled.clone();
 
         let theme = cx.global::<Theme>();
+        let border_color = &theme.border.secondary;
+        let thumb_color = &theme.text.primary;
 
         // TODO: Add animations somehow when toggling
         div()
@@ -47,17 +49,11 @@ impl RenderOnce for Switch {
                     .items_center()
                     .when_else(
                         *enabled.read(cx),
-                        |this| {
-                            this.justify_end()
-                                .border_color(theme.border.secondary.active)
-                        },
-                        |this| {
-                            this.justify_start()
-                                .border_color(theme.border.secondary.default)
-                        },
+                        |this| this.justify_end().border_color(border_color.active),
+                        |this| this.justify_start().border_color(border_color.default),
                     )
-                    .hover(|this| this.border_color(theme.border.secondary.hovered))
-                    .active(|this| this.border_color(theme.border.secondary.active))
+                    .hover(|this| this.border_color(border_color.hovered))
+                    .active(|this| this.border_color(border_color.active))
                     .rounded_full()
                     .px_2()
                     .border_1()
@@ -65,7 +61,7 @@ impl RenderOnce for Switch {
                         let current = *switch_handle.read(cx);
                         switch_handle.write(cx, !current);
                     })
-                    .child(div().size_4().rounded_full().bg(theme.text.primary.default)),
+                    .child(div().size_4().rounded_full().bg(thumb_color.default)),
             )
             .when(self.label.is_some(), |this| this.child(self.label.unwrap()))
     }
