@@ -3,7 +3,7 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder,
 };
 
-use crate::ui::theme::Theme;
+use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::small};
 
 #[derive(IntoElement)]
 pub struct Switch {
@@ -52,8 +52,7 @@ impl RenderOnce for Switch {
                         |this| this.justify_end().border_color(border_color.active),
                         |this| this.justify_start().border_color(border_color.default),
                     )
-                    .hover(|this| this.border_color(border_color.hovered))
-                    .active(|this| this.border_color(border_color.active))
+                    .border_from(border_color)
                     .rounded_full()
                     .px_2()
                     .border_1()
@@ -63,6 +62,6 @@ impl RenderOnce for Switch {
                     })
                     .child(div().size_4().rounded_full().bg(thumb_color.default)),
             )
-            .when(self.label.is_some(), |this| this.child(self.label.unwrap()))
+            .when_some(self.label, |this, label| this.child(small(label)))
     }
 }

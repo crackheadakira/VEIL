@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use gpui::{Global, Rgba};
+use gpui::{Global, InteractiveElement, Rgba, StatefulInteractiveElement, Styled};
 use serde::Deserialize;
 
 #[derive(Clone, Copy, Deserialize)]
@@ -153,10 +153,91 @@ const fn rgb(r: u8, g: u8, b: u8) -> Rgba {
     }
 }
 
-/*impl Theme {
-    pub fn load_from_file<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
-        let data = std::fs::read_to_string(path)?;
-        let theme: Theme = serde_json::from_str(&data)?;
-        Ok(theme)
+pub trait StyleFromColorSet {
+    fn border_from(self, colors: &ColorSet) -> Self;
+    fn text_from(self, colors: &ColorSet) -> Self;
+    fn bg_from(self, colors: &ColorSet) -> Self;
+}
+
+impl<T> StyleFromColorSet for T
+where
+    T: Styled + InteractiveElement + StatefulInteractiveElement,
+{
+    fn border_from(self, colors: &ColorSet) -> Self {
+        self.border_color(colors.default)
+            .hover(|s| s.border_color(colors.hovered))
+            .active(|s| s.border_color(colors.active))
     }
-}*/
+
+    fn text_from(self, colors: &ColorSet) -> Self {
+        self.text_color(colors.default)
+            .hover(|s| s.text_color(colors.hovered))
+            .active(|s| s.text_color(colors.active))
+    }
+
+    fn bg_from(self, colors: &ColorSet) -> Self {
+        self.bg(colors.default)
+            .hover(|s| s.bg(colors.hovered))
+            .active(|s| s.bg(colors.active))
+    }
+}
+
+pub mod text_elements {
+    use gpui::{FontWeight, IntoElement, ParentElement, Styled, div, rems};
+
+    pub fn h1(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::BOLD)
+            .text_size(rems(2.15))
+            .child(text)
+    }
+
+    pub fn h2(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::BOLD)
+            .text_size(rems(1.925))
+            .child(text)
+    }
+
+    pub fn h3(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::BOLD)
+            .text_size(rems(1.725))
+            .child(text)
+    }
+
+    pub fn h4(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::SEMIBOLD)
+            .text_size(rems(1.55))
+            .child(text)
+    }
+
+    pub fn h5(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::SEMIBOLD)
+            .text_size(rems(1.39375))
+            .child(text)
+    }
+
+    pub fn h6(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::MEDIUM)
+            .text_size(rems(1.25))
+            .child(text)
+    }
+
+    pub fn p(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::MEDIUM)
+            .text_size(rems(0.8875))
+            .child(text)
+    }
+
+    pub fn small(text: impl IntoElement) -> impl IntoElement {
+        div()
+            .font_weight(FontWeight::MEDIUM)
+            .text_size(rems(0.8125))
+            .child(text)
+    }
+}

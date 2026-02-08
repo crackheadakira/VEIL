@@ -1,9 +1,9 @@
 use gpui::{
     App, Div, ElementId, InteractiveElement, IntoElement, ParentElement, RenderOnce, SharedString,
-    Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Window, div,
+    Stateful, StyleRefinement, Styled, Window, div,
 };
 
-use crate::ui::theme::Theme;
+use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::p};
 
 #[derive(IntoElement)]
 pub struct Button {
@@ -35,9 +35,6 @@ impl Styled for Button {
 impl RenderOnce for Button {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-        let border_color = &theme.border.secondary;
-        let text_color = &theme.text.secondary;
-
         self.div
             .flex()
             .items_center()
@@ -47,12 +44,10 @@ impl RenderOnce for Button {
             .rounded_md()
             .p_3()
             .border_1()
-            .text_color(text_color.default)
-            .border_color(border_color.default)
+            .text_color(theme.text.secondary.default)
+            .border_from(&theme.border.secondary)
             .bg(theme.background.primary.default)
-            .hover(|this| this.border_color(border_color.hovered))
-            .active(|this| this.border_color(border_color.active))
-            .child(self.label)
+            .child(p(self.label))
             .cursor_pointer()
     }
 }

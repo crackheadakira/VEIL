@@ -2,7 +2,7 @@ use crate::{
     app::{builder::handle_state_setup, state::AppState},
     ui::{
         components::{button::Button, switch::Switch},
-        theme::Theme,
+        theme::{Theme, text_elements::p},
     },
 };
 use common::Tracks;
@@ -108,10 +108,9 @@ impl Render for AppWindow {
                     .gap_2()
                     .w_full()
                     .p_3()
-                    .text_sm()
                     .border_1()
                     .border_color(theme.border.primary.default)
-                    .child("Hello from GPUI!")
+                    .child(p("Hello from GPUI!"))
                     .child(Button::new("play-button", "Play!").on_mouse_down(
                         MouseButton::Left,
                         cx.listener(|_, _, _, cx| {
