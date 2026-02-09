@@ -1,15 +1,16 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
     ui::{
-        components::{button::Button, switch::Switch},
+        components::{button::Button, sidebar::Sidebar, switch::Switch},
         theme::Theme,
         views::all_albums::AllAlbumsView,
     },
 };
 use gpui::{
-    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
-    ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
-    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, size,
+    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
+    IntoElement, ParentElement, Point, Render, SharedString, StatefulInteractiveElement, Styled,
+    TitlebarOptions, Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    actions, div, px, size,
 };
 use logging::lock_or_log;
 
@@ -102,9 +103,17 @@ impl Render for AppWindow {
         div()
             .size_full()
             .bg(theme.background.primary.default)
-            .p_8()
-            .child(Switch::new("switch-1"))
-            .child(Button::new("button-1", "Click me!"))
-            .child(self.all_albums_view.clone())
+            .flex()
+            .flex_col()
+            .child(
+                div().flex().size_full().child(Sidebar::new()).child(
+                    div()
+                        .flex_grow()
+                        .p_8()
+                        /*.child(Switch::new("switch-1"))
+                        .child(Button::new("button-1", "Click me!"))*/
+                        .child(self.all_albums_view.clone()),
+                ),
+            )
     }
 }

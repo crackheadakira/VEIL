@@ -7,7 +7,7 @@ use gpui::{
 
 use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::small};
 
-use gpui_transitions::{Lerp, WindowUseTransition};
+use gpui_transitions::WindowUseTransition;
 
 #[derive(IntoElement)]
 pub struct Switch {

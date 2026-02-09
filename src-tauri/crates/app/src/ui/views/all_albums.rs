@@ -44,6 +44,7 @@ impl RenderOnce for AllAlbumsView {
 
                 div()
                     .group(&group_name)
+                    .cursor_pointer()
                     .flex()
                     .flex_col()
                     .h(rems(17.5))
@@ -104,10 +105,12 @@ impl RenderOnce for AllAlbumsView {
             .child(
                 div()
                     .id("all_albums_view")
-                    .overflow_scroll()
-                    .h_full()
-                    .grid()
-                    .grid_cols(5)
+                    .overflow_y_scroll()
+                    .w_full()
+                    .flex()
+                    .flex_wrap()
+                    .flex_grow()
+                    .justify_center()
                     .gap_4()
                     .children(cards),
             )
