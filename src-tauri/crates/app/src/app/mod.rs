@@ -1,6 +1,6 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
-    ui::{theme::Theme, views::all_albums::AllAlbumsView},
+    ui::{components::switch::Switch, theme::Theme, views::all_albums::AllAlbumsView},
 };
 use gpui::{
     App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
@@ -99,6 +99,7 @@ impl Render for AppWindow {
             .size_full()
             .bg(theme.background.primary.default)
             .p_8()
+            .child(Switch::new("switch-1"))
             .child(self.all_albums_view.clone())
     }
 }

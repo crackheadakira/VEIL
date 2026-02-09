@@ -29,6 +29,9 @@ metadata_audio = { path = "crates/metadata_audio" }
 thiserror = "^2.0.12"
 anyhow = "^1.0.100"
 
+gpui = "0.2.2"
+gpui_transitions = "0.1.5"
+
 [workspace.lints.clippy]
 all = { level = "warn", priority = 0 }
 suspicious = { level = "warn", priority = 1 }
@@ -119,3 +122,6 @@ opt-level = 2
 strip = false
 debug = true
 panic = "unwind"
+
+[patch.crates-io]
+gpui = { git = "https://github.com/zed-industries/zed" }

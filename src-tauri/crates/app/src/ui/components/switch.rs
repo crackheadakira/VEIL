@@ -1,9 +1,13 @@
+use std::time::Duration;
+
 use gpui::{
     App, ElementId, InteractiveElement, IntoElement, ParentElement, RenderOnce, SharedString,
-    StatefulInteractiveElement, Styled, Window, div, prelude::FluentBuilder,
+    StatefulInteractiveElement, Styled, Window, div, ease_out_quint, prelude::FluentBuilder, rems,
 };
 
 use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::small};
+
+use gpui_transitions::{Lerp, WindowUseTransition};
 
 #[derive(IntoElement)]
 pub struct Switch {
@@ -28,13 +32,22 @@ impl Switch {
 impl RenderOnce for Switch {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let enabled = window.use_keyed_state(self.id.clone(), cx, |_, _| false);
+        let enabled_transition = window
+            .use_keyed_transition(
+                format!("{}:transition", self.id),
+                cx,
+                Duration::from_millis(75),
+                |_, _| 0.0_f32,
+            )
+            .with_easing(ease_out_quint());
         let switch_handle = enabled.clone();
+
+        let enabled_delta = *enabled_transition.evaluate(window, cx);
 
         let theme = cx.global::<Theme>();
         let border_color = &theme.border.secondary;
         let thumb_color = &theme.text.primary;
 
-        // TODO: Add animations somehow when toggling
         div()
             .flex()
             .gap_4()
@@ -47,11 +60,6 @@ impl RenderOnce for Switch {
                     .h_8()
                     .flex()
                     .items_center()
-                    .when_else(
-                        *enabled.read(cx),
-                        |this| this.justify_end().border_color(border_color.active),
-                        |this| this.justify_start().border_color(border_color.default),
-                    )
                     .border_from(border_color)
                     .rounded_full()
                     .px_2()
@@ -59,8 +67,21 @@ impl RenderOnce for Switch {
                     .on_click(move |_, _, cx| {
                         let current = *switch_handle.read(cx);
                         switch_handle.write(cx, !current);
+
+                        let new_goal = if current { 0.0 } else { 1.0 };
+                        enabled_transition.update(cx, |this, cx| {
+                            *this = new_goal;
+                            cx.notify();
+                        });
                     })
-                    .child(div().size_4().rounded_full().bg(thumb_color.default)),
+                    .child(
+                        div()
+                            .size_4()
+                            .rounded_full()
+                            .bg(thumb_color.default)
+                            .absolute()
+                            .left(rems(0.5 + enabled_delta * 2.0)),
+                    ),
             )
             .when_some(self.label, |this, label| this.child(small(label)))
     }

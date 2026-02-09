@@ -21,8 +21,8 @@ tokio = { version = "1.49.0", features = ["full"] }
 webbrowser = { version = "1.0.6", features = ["hardened", "disable-wsl"] }
 rfd = { version = "0.17.2", default-features = false, features = ["gtk3"] }
 
-gpui = { git = "https://github.com/zed-industries/zed" }
-gpui_transitions = "0.1.5"
+gpui = { workspace = true }
+gpui_transitions = { workspace = true }
 unicode-segmentation = "1.12.0"
 
 common = { workspace = true, features = ["serialization"] }
