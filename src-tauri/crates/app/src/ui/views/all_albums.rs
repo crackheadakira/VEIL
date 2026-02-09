@@ -3,7 +3,7 @@ use std::sync::Arc;
 use common::Albums;
 use gpui::{
     App, ImageFormat, ImageSource, InteractiveElement, IntoElement, ParentElement, RenderOnce,
-    StatefulInteractiveElement, Styled, StyledImage, Window, div, img, rems,
+    StatefulInteractiveElement, Styled, StyledImage, Window, div, img, px, rems,
 };
 
 use crate::app::state::AppState;
@@ -54,13 +54,14 @@ impl RenderOnce for AllAlbumsView {
                             .size_full()
                             .object_fit(gpui::ObjectFit::Cover)
                             .rounded_md()
-                            .group_hover(&group_name, |this| this.opacity(0.7)),
+                            .group_hover(&group_name, |this| this.opacity(0.9)),
                     )
+                    // https://github.com/zed-industries/zed/issues/43214
+                    // group hover for some reason still doesn't apply
                     .child(
                         div()
                             .flex()
                             .flex_col()
-                            .gap_1()
                             .child(
                                 h6(album.name)
                                     .text_color(theme.text.primary.default)
@@ -90,13 +91,16 @@ impl RenderOnce for AllAlbumsView {
 
         div()
             .bg(theme.background.primary.default)
-            .text_color(theme.text.primary.default)
             .flex()
             .flex_col()
             .items_center()
             .size_full()
             .gap_4()
-            .child(h6(format!("{} albums", cards.len())).w_full())
+            .child(
+                h6(format!("{} albums", cards.len()))
+                    .w_full()
+                    .text_color(theme.text.primary.default),
+            )
             .child(
                 div()
                     .id("all_albums_view")

@@ -1,6 +1,10 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
-    ui::{components::switch::Switch, theme::Theme, views::all_albums::AllAlbumsView},
+    ui::{
+        components::{button::Button, switch::Switch},
+        theme::Theme,
+        views::all_albums::AllAlbumsView,
+    },
 };
 use gpui::{
     App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
@@ -100,6 +104,7 @@ impl Render for AppWindow {
             .bg(theme.background.primary.default)
             .p_8()
             .child(Switch::new("switch-1"))
+            .child(Button::new("button-1", "Click me!"))
             .child(self.all_albums_view.clone())
     }
 }
