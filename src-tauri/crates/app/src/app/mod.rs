@@ -1,7 +1,7 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
     ui::{
-        components::sidebar::Sidebar,
+        components::{sidebar::Sidebar, slider},
         theme::Theme,
         views::{all_albums::AllAlbumsView, home::Home},
     },
@@ -27,6 +27,8 @@ pub fn run() {
         handle_state_setup(cx).expect("Failed setting up the state");
         let theme = Theme::default();
         cx.set_global::<Theme>(theme);
+
+        slider::bind_keys(cx);
 
         cx.on_app_quit(|cx: &mut App| {
             let state = cx.global::<AppState>().0.clone();
@@ -85,6 +87,7 @@ pub enum Route {
 struct AppWindow {
     focus_handle: FocusHandle,
     all_albums_view: Option<AllAlbumsView>,
+    home: Option<Home>,
     route: Route,
 }
 
@@ -95,6 +98,7 @@ impl AppWindow {
         Self {
             focus_handle,
             all_albums_view: None,
+            home: None,
             route: Route::Home,
         }
     }
@@ -106,7 +110,12 @@ impl AppWindow {
 
     fn render_route(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         match &self.route {
-            Route::Home => Home {}.into_any_element(),
+            Route::Home => {
+                let view = self
+                    .home
+                    .get_or_insert_with(|| Home::new(self.focus_handle.clone()));
+                view.clone().into_any_element()
+            }
             Route::AllAlbums => {
                 let view = self
                     .all_albums_view

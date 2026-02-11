@@ -35,7 +35,7 @@ impl Sidebar {
         label: impl Into<SharedString> + IntoElement + Clone,
         route: Route,
         navigate: Option<NavigateHandler>,
-    ) -> impl IntoElement {
+    ) -> impl IntoElement + InteractiveElement {
         div()
             .id(format!("sidebar:{}", label.clone().into()))
             .text_color(theme.text.tertiary.default)
