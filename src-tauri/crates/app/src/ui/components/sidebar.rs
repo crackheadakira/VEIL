@@ -5,7 +5,10 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div,
 };
 
-use crate::{app::Route, ui::theme::Theme};
+use crate::{
+    app::Route,
+    ui::theme::{Theme, text_elements::small},
+};
 
 type NavigateHandler = Rc<dyn Fn(&Route, &mut Window, &mut App)>;
 
@@ -28,12 +31,16 @@ impl Sidebar {
     }
 
     fn route_button(
+        theme: &Theme,
         label: impl Into<SharedString> + IntoElement + Clone,
         route: Route,
         navigate: Option<NavigateHandler>,
     ) -> impl IntoElement {
         div()
             .id(format!("sidebar:{}", label.clone().into()))
+            .text_color(theme.text.tertiary.default)
+            .hover(|this| this.text_color(theme.text.tertiary.hovered))
+            .active(|this| this.text_color(theme.text.tertiary.active))
             .on_click({
                 let navigate = navigate.clone();
                 move |_, window, app| {
@@ -58,18 +65,24 @@ impl RenderOnce for Sidebar {
             .flex_shrink_0()
             .h_full()
             .w_72()
+            .p_8()
+            .gap_8()
             .bg(theme.background.primary.default)
             .border_r_1()
             .border_color(theme.border.secondary.default)
             .text_color(theme.text.primary.default)
             .flex()
             .flex_col()
-            .gap_2()
-            .child(Self::route_button("Home", Route::Home, navigate.clone()))
-            .child(Self::route_button(
-                "All Albums",
-                Route::AllAlbums,
-                navigate.clone(),
-            ))
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap_6()
+                    .child(small("General").text_color(theme.text.tertiary.default))
+                    .child(div().flex().flex_col().gap_4().px_2().children(vec![
+                        Self::route_button(theme, "Home", Route::Home, navigate.clone()),
+                        Self::route_button(theme, "Albums", Route::AllAlbums, navigate.clone()),
+                    ])),
+            )
     }
 }

@@ -1,15 +1,13 @@
-use std::sync::Arc;
-
 use common::Albums;
 use gpui::{
-    App, ImageFormat, ImageSource, InteractiveElement, IntoElement, ParentElement, RenderOnce,
-    StatefulInteractiveElement, Styled, StyledImage, Window, div, img, px, rems,
+    App, InteractiveElement, IntoElement, ParentElement, RenderOnce, StatefulInteractiveElement,
+    Styled, Window, div,
 };
 
 use crate::app::state::AppState;
 use crate::ui::components::album_card::AlbumCard;
 use crate::ui::theme::Theme;
-use crate::ui::theme::text_elements::{h6, p};
+use crate::ui::theme::text_elements::h6;
 
 #[derive(Clone, IntoElement)]
 pub struct AllAlbumsView {

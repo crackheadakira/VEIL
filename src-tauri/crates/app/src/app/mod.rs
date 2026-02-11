@@ -1,16 +1,15 @@
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
     ui::{
-        components::{button::Button, sidebar::Sidebar, switch::Switch},
+        components::sidebar::Sidebar,
         theme::Theme,
-        views::all_albums::AllAlbumsView,
+        views::{all_albums::AllAlbumsView, home::Home},
     },
 };
 use gpui::{
-    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, InteractiveElement,
-    IntoElement, ParentElement, Point, Render, SharedString, StatefulInteractiveElement, Styled,
-    TitlebarOptions, Window, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
-    actions, div, px, size,
+    App, AppContext, Application, Bounds, Context, FocusHandle, Focusable, IntoElement,
+    ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, size,
 };
 use logging::lock_or_log;
 
@@ -107,6 +106,7 @@ impl AppWindow {
 
     fn render_route(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         match &self.route {
+            Route::Home => Home {}.into_any_element(),
             Route::AllAlbums => {
                 let view = self
                     .all_albums_view
@@ -142,14 +142,7 @@ impl Render for AppWindow {
                             this.navigate(route.clone(), cx);
                         },
                     )))
-                    .child(
-                        div()
-                            .flex_grow()
-                            .p_8()
-                            /*.child(Switch::new("switch-1"))
-                            .child(Button::new("button-1", "Click me!"))*/
-                            .child(self.render_route(cx)),
-                    ),
+                    .child(div().flex_grow().p_8().child(self.render_route(cx))),
             )
     }
 }
