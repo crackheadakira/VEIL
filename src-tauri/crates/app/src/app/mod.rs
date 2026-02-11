@@ -74,9 +74,19 @@ pub fn run() {
     });
 }
 
+#[derive(Clone, Copy)]
+pub enum Route {
+    Home,
+    AllAlbums,
+    Album { id: u32 },
+    Playlist { id: u32 },
+    Settings,
+}
+
 struct AppWindow {
     focus_handle: FocusHandle,
-    all_albums_view: AllAlbumsView,
+    all_albums_view: Option<AllAlbumsView>,
+    route: Route,
 }
 
 impl AppWindow {
@@ -85,7 +95,25 @@ impl AppWindow {
 
         Self {
             focus_handle,
-            all_albums_view: AllAlbumsView::new(cx),
+            all_albums_view: None,
+            route: Route::Home,
+        }
+    }
+
+    fn navigate(&mut self, route: Route, cx: &mut Context<Self>) {
+        self.route = route;
+        cx.notify();
+    }
+
+    fn render_route(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        match &self.route {
+            Route::AllAlbums => {
+                let view = self
+                    .all_albums_view
+                    .get_or_insert_with(|| AllAlbumsView::new(cx));
+                view.clone().into_any_element()
+            }
+            _ => div().into_any_element(),
         }
     }
 }
@@ -106,14 +134,22 @@ impl Render for AppWindow {
             .flex()
             .flex_col()
             .child(
-                div().flex().size_full().child(Sidebar::new()).child(
-                    div()
-                        .flex_grow()
-                        .p_8()
-                        /*.child(Switch::new("switch-1"))
-                        .child(Button::new("button-1", "Click me!"))*/
-                        .child(self.all_albums_view.clone()),
-                ),
+                div()
+                    .flex()
+                    .size_full()
+                    .child(Sidebar::new().on_navigate(cx.listener(
+                        |this: &mut AppWindow, route: &Route, _, cx| {
+                            this.navigate(route.clone(), cx);
+                        },
+                    )))
+                    .child(
+                        div()
+                            .flex_grow()
+                            .p_8()
+                            /*.child(Switch::new("switch-1"))
+                            .child(Button::new("button-1", "Click me!"))*/
+                            .child(self.render_route(cx)),
+                    ),
             )
     }
 }
