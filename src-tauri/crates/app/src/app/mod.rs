@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use gpui::{
-    App, AppContext, Application, AssetSource, Bounds, Context, FocusHandle, Focusable,
+    App, AppContext, Application, AssetSource, Bounds, Context, Entity, FocusHandle, Focusable,
     IntoElement, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
     WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, size,
 };
@@ -106,7 +106,7 @@ pub enum Route {
 
 struct AppWindow {
     focus_handle: FocusHandle,
-    all_albums_view: Option<AllAlbumsView>,
+    all_albums_view: Option<Entity<AllAlbumsView>>,
     home: Option<Home>,
     route: Route,
 }
@@ -139,7 +139,8 @@ impl AppWindow {
             Route::AllAlbums => {
                 let view = self
                     .all_albums_view
-                    .get_or_insert_with(|| AllAlbumsView::new(cx));
+                    .get_or_insert_with(|| cx.new(|cx| AllAlbumsView::new(cx)));
+
                 view.clone().into_any_element()
             }
             _ => div().into_any_element(),

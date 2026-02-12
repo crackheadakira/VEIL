@@ -26,6 +26,7 @@ impl RenderOnce for AlbumCard {
             .flex_col()
             .h(rems(17.5))
             .w_48()
+            .pb_4()
             .gap_4()
             .child(
                 img(self.album.cover_path)

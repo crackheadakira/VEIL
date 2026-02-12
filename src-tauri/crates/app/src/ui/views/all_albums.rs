@@ -1,15 +1,12 @@
 use common::Albums;
-use gpui::{
-    App, InteractiveElement, IntoElement, ParentElement, RenderOnce, StatefulInteractiveElement,
-    Styled, Window, div,
-};
+use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div, uniform_list};
 
 use crate::app::state::AppState;
 use crate::ui::components::album_card::AlbumCard;
 use crate::ui::theme::Theme;
 use crate::ui::theme::text_elements::h6;
 
-#[derive(Clone, IntoElement)]
+#[derive(Clone)]
 pub struct AllAlbumsView {
     albums: Vec<Albums>,
 }
@@ -19,23 +16,22 @@ impl AllAlbumsView {
         let state = &cx.global::<AppState>().0;
         let albums = state
             .db
-            .album_pagination(50, 0)
+            .all::<Albums>()
             .expect("failed to fetch all albums");
 
         Self { albums }
     }
 }
 
-impl RenderOnce for AllAlbumsView {
-    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+impl Render for AllAlbumsView {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
-
         div()
+            .size_full()
             .bg(theme.background.primary.default)
             .flex()
             .flex_col()
             .items_center()
-            .size_full()
             .gap_4()
             .child(
                 h6(format!("{} albums", self.albums.len()))
@@ -43,15 +39,23 @@ impl RenderOnce for AllAlbumsView {
                     .text_color(theme.text.primary.default),
             )
             .child(
-                div()
-                    .id("all_albums_view")
-                    .overflow_y_scroll()
-                    .w_full()
-                    .flex()
-                    .flex_wrap()
-                    .justify_center()
-                    .gap_4()
-                    .children(self.albums.into_iter().map(|album| AlbumCard { album })),
+                uniform_list(
+                    "all_albums_list",
+                    self.albums.len(),
+                    cx.processor(|this, range, _window, _cx| {
+                        let mut items = Vec::new();
+                        for idx in range {
+                            let item: &Albums = &this.albums[idx];
+
+                            items.push(AlbumCard {
+                                album: item.clone(),
+                            })
+                        }
+
+                        items
+                    }),
+                )
+                .size_full(),
             )
     }
 }
