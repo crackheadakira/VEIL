@@ -1,15 +1,12 @@
 use common::Albums;
 use gpui::{
     App, InteractiveElement, IntoElement, ParentElement, RenderOnce, Styled, StyledImage, Window,
-    div, img, list, rems,
+    div, img, rems,
 };
 
-use crate::ui::{
-    image_cache::AlbumCoverCache,
-    theme::{
-        Theme,
-        text_elements::{p, small},
-    },
+use crate::ui::theme::{
+    Theme,
+    text_elements::{p, small},
 };
 
 #[derive(Clone, IntoElement)]
@@ -19,13 +16,8 @@ pub struct AlbumCard {
 
 impl RenderOnce for AlbumCard {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let image = {
-            let cache = cx.global_mut::<AlbumCoverCache>();
-            cache.get_or_load(&self.album.cover_path)
-        };
-
         let theme = cx.global::<Theme>();
-        let group_name = format!("big-card-{}", self.album.id);
+        let group_name = format!("card:album_{}", self.album.id);
 
         div()
             .group(&group_name)
@@ -36,7 +28,7 @@ impl RenderOnce for AlbumCard {
             .w_48()
             .gap_4()
             .child(
-                img(image)
+                img(self.album.cover_path)
                     .size_full()
                     .object_fit(gpui::ObjectFit::Cover)
                     .rounded_md()

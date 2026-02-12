@@ -19,7 +19,7 @@ impl AllAlbumsView {
         let state = &cx.global::<AppState>().0;
         let albums = state
             .db
-            .album_pagination(20, 0)
+            .album_pagination(50, 0)
             .expect("failed to fetch all albums");
 
         Self { albums }

@@ -71,7 +71,7 @@ pub fn handle_state_setup(cx: &mut App) -> Result<(), Box<dyn std::error::Error>
     let covers = path.join("covers");
     if !covers.exists() {
         fs::create_dir_all(&covers).expect("Error creating covers directory");
-        let pc = include_bytes!("../../../../../public/placeholder.png");
+        let pc = include_bytes!("../../../../../assets/placeholder.png");
 
         fs::write(covers.join("placeholder.png"), pc)?;
     }
