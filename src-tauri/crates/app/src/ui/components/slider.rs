@@ -134,7 +134,6 @@ impl RenderOnce for Slider {
             })
             .child(
                 div()
-                    .id(format!("{}:track", &self.id))
                     .size_full()
                     .bg(theme.border.secondary.default)
                     .rounded_full()
@@ -142,7 +141,6 @@ impl RenderOnce for Slider {
             )
             .child(
                 div()
-                    .id(format!("{}:range", &self.id))
                     .w(relative(normalized_value))
                     .h_full()
                     .bg(theme.text.secondary.default)
@@ -161,7 +159,8 @@ impl RenderOnce for Slider {
                             .border_1()
                             .border_color(theme.border.primary.default)
                             .opacity(0.0)
-                            .group_hover(&group_name, |this| this.opacity(1.0)),
+                            .group_hover(&group_name, |this| this.opacity(1.0))
+                            .in_focus(|this| this.border_color(theme.text.primary.default)),
                     ),
             )
     }

@@ -19,7 +19,7 @@ impl AllAlbumsView {
         let state = &cx.global::<AppState>().0;
         let albums = state
             .db
-            .album_pagination(50, 0)
+            .album_pagination(20, 0)
             .expect("failed to fetch all albums");
 
         Self { albums }
@@ -30,12 +30,6 @@ impl RenderOnce for AllAlbumsView {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let theme = cx.global::<Theme>();
 
-        let cards = self
-            .albums
-            .into_iter()
-            .map(|album| AlbumCard { album })
-            .collect::<Vec<AlbumCard>>();
-
         div()
             .bg(theme.background.primary.default)
             .flex()
@@ -44,7 +38,7 @@ impl RenderOnce for AllAlbumsView {
             .size_full()
             .gap_4()
             .child(
-                h6(format!("{} albums", cards.len()))
+                h6(format!("{} albums", self.albums.len()))
                     .w_full()
                     .text_color(theme.text.primary.default),
             )
@@ -55,10 +49,9 @@ impl RenderOnce for AllAlbumsView {
                     .w_full()
                     .flex()
                     .flex_wrap()
-                    .flex_grow()
                     .justify_center()
                     .gap_4()
-                    .children(cards),
+                    .children(self.albums.into_iter().map(|album| AlbumCard { album })),
             )
     }
 }

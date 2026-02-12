@@ -40,6 +40,7 @@ impl Sidebar {
             .id(format!("sidebar:{}", label.clone().into()))
             .text_color(theme.text.tertiary.default)
             .hover(|this| this.text_color(theme.text.tertiary.hovered))
+            .focus_visible(|this| this.text_color(theme.text.tertiary.hovered))
             .active(|this| this.text_color(theme.text.tertiary.active))
             .on_click({
                 let navigate = navigate.clone();

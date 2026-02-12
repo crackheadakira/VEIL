@@ -1,14 +1,15 @@
-use std::sync::Arc;
-
 use common::Albums;
 use gpui::{
-    App, ImageFormat, ImageSource, InteractiveElement, IntoElement, ParentElement, RenderOnce,
-    Styled, StyledImage, Window, div, img, rems,
+    App, InteractiveElement, IntoElement, ParentElement, RenderOnce, Styled, StyledImage, Window,
+    div, img, list, rems,
 };
 
-use crate::ui::theme::{
-    Theme,
-    text_elements::{h6, p},
+use crate::ui::{
+    image_cache::AlbumCoverCache,
+    theme::{
+        Theme,
+        text_elements::{p, small},
+    },
 };
 
 #[derive(Clone, IntoElement)]
@@ -18,12 +19,13 @@ pub struct AlbumCard {
 
 impl RenderOnce for AlbumCard {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let image = {
+            let cache = cx.global_mut::<AlbumCoverCache>();
+            cache.get_or_load(&self.album.cover_path)
+        };
+
         let theme = cx.global::<Theme>();
         let group_name = format!("big-card-{}", self.album.id);
-
-        // TODO: add an image cache
-        let file_bytes = std::fs::read(&self.album.cover_path).unwrap();
-        let image = gpui::Image::from_bytes(ImageFormat::Jpeg, file_bytes);
 
         div()
             .group(&group_name)
@@ -34,28 +36,26 @@ impl RenderOnce for AlbumCard {
             .w_48()
             .gap_4()
             .child(
-                img(ImageSource::Image(Arc::new(image)))
+                img(image)
                     .size_full()
                     .object_fit(gpui::ObjectFit::Cover)
                     .rounded_md()
                     .group_hover(&group_name, |this| this.opacity(0.9)),
             )
-            // https://github.com/zed-industries/zed/issues/43214
-            // group hover for some reason still doesn't apply
             .child(
                 div()
-                    .flex()
-                    .flex_col()
                     .child(
-                        h6(self.album.name)
-                            .text_color(theme.text.primary.default)
+                        p(self.album.name)
+                            .id(format!("{group_name}:album_name"))
                             .truncate()
+                            .text_color(theme.text.primary.default)
                             .group_hover(&group_name, |this| {
                                 this.text_color(theme.text.primary.hovered)
                             }),
                     )
                     .child(
                         p(self.album.artist_name)
+                            .id(format!("{group_name}:artist_name"))
                             .text_color(theme.text.secondary.default)
                             .truncate()
                             .group_hover(&group_name, |this| {
@@ -63,7 +63,8 @@ impl RenderOnce for AlbumCard {
                             }),
                     )
                     .child(
-                        p(self.album.album_type.to_string())
+                        small(self.album.album_type.to_string())
+                            .id(format!("{group_name}:album_type"))
                             .text_color(theme.text.tertiary.default)
                             .group_hover(&group_name, |this| {
                                 this.text_color(theme.text.tertiary.hovered)

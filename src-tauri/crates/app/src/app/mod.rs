@@ -2,6 +2,7 @@ use crate::{
     app::{builder::handle_state_setup, state::AppState},
     ui::{
         components::{sidebar::Sidebar, slider},
+        image_cache::AlbumCoverCache,
         theme::Theme,
         views::{all_albums::AllAlbumsView, home::Home},
     },
@@ -27,6 +28,9 @@ pub fn run() {
         handle_state_setup(cx).expect("Failed setting up the state");
         let theme = Theme::default();
         cx.set_global::<Theme>(theme);
+
+        let image_cache = AlbumCoverCache::new(64);
+        cx.set_global::<AlbumCoverCache>(image_cache);
 
         slider::bind_keys(cx);
 
