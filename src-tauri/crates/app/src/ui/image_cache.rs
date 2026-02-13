@@ -91,11 +91,19 @@ impl ImageCache for AlbumCoverCache {
 
         if self.usage_list.len() >= self.max_items {
             if let Some(old) = self.usage_list.pop_back() {
-                if let Some((mut old_item, old_resource)) = self.cache.remove(&old) {
-                    if let Some(Ok(image)) = old_item.get() {
-                        cx.drop_image(image, Some(window));
+                if let Some((old_item, _)) = self.cache.get(&old) {
+                    match old_item {
+                        ImageCacheItem::Loaded(_) => {
+                            let (mut item, resource) = self.cache.remove(&old).unwrap();
+                            if let Some(Ok(image)) = item.get() {
+                                cx.drop_image(image, Some(window));
+                            }
+                            ImageSource::Resource(resource).remove_asset(cx);
+                        }
+                        ImageCacheItem::Loading(_) => {
+                            self.usage_list.push_back(old);
+                        }
                     }
-                    ImageSource::Resource(old_resource).remove_asset(cx);
                 }
             }
         }

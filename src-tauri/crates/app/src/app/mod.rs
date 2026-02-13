@@ -159,7 +159,7 @@ impl Render for AppWindow {
         let theme = cx.global::<Theme>();
 
         div()
-            .image_cache(AlbumCoverCacheProvider::new("all_albums_cache", 64))
+            .image_cache(AlbumCoverCacheProvider::new("all_albums_cache", 72))
             .size_full()
             .bg(theme.background.primary.default)
             .flex()

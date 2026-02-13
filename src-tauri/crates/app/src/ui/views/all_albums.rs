@@ -1,14 +1,16 @@
 use common::Albums;
-use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div, uniform_list};
+use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div, rems};
 
 use crate::app::state::AppState;
 use crate::ui::components::album_card::AlbumCard;
+use crate::ui::components::uniform_grid::{UniformGridScrollHandle, uniform_grid};
 use crate::ui::theme::Theme;
 use crate::ui::theme::text_elements::h6;
 
 #[derive(Clone)]
 pub struct AllAlbumsView {
     albums: Vec<Albums>,
+    scroll_handle: UniformGridScrollHandle,
 }
 
 impl AllAlbumsView {
@@ -19,7 +21,10 @@ impl AllAlbumsView {
             .all::<Albums>()
             .expect("failed to fetch all albums");
 
-        Self { albums }
+        Self {
+            albums,
+            scroll_handle: UniformGridScrollHandle::new(),
+        }
     }
 }
 
@@ -39,7 +44,7 @@ impl Render for AllAlbumsView {
                     .text_color(theme.text.primary.default),
             )
             .child(
-                uniform_list(
+                uniform_grid(
                     "all_albums_list",
                     self.albums.len(),
                     cx.processor(|this, range, _window, _cx| {
@@ -55,7 +60,10 @@ impl Render for AllAlbumsView {
                         items
                     }),
                 )
-                .size_full(),
+                .size_full()
+                .gap(rems(1.0))
+                .track_scroll(&self.scroll_handle)
+                .preload_rows(1),
             )
     }
 }
