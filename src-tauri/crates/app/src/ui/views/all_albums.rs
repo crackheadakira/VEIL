@@ -4,6 +4,7 @@ use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div
 use crate::app::state::AppState;
 use crate::ui::components::album_card::AlbumCard;
 use crate::ui::components::uniform_grid::{UniformGridScrollHandle, uniform_grid};
+use crate::ui::image_cache::AlbumCoverCacheProvider;
 use crate::ui::theme::Theme;
 use crate::ui::theme::text_elements::h6;
 
@@ -31,7 +32,9 @@ impl AllAlbumsView {
 impl Render for AllAlbumsView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.global::<Theme>();
+
         div()
+            .image_cache(AlbumCoverCacheProvider::new("all_albums_cache", 72))
             .size_full()
             .bg(theme.background.primary.default)
             .flex()
@@ -47,23 +50,18 @@ impl Render for AllAlbumsView {
                 uniform_grid(
                     "all_albums_list",
                     self.albums.len(),
-                    cx.processor(|this, range, _window, _cx| {
-                        let mut items = Vec::new();
-                        for idx in range {
-                            let item: &Albums = &this.albums[idx];
-
-                            items.push(AlbumCard {
-                                album: item.clone(),
+                    cx.processor(|this, range: std::ops::Range<usize>, _window, _cx| {
+                        range
+                            .map(|idx| AlbumCard {
+                                album: this.albums[idx].clone(),
                             })
-                        }
-
-                        items
+                            .collect::<Vec<_>>()
                     }),
                 )
                 .size_full()
                 .gap(rems(1.0))
                 .track_scroll(&self.scroll_handle)
-                .preload_rows(1),
+                .preload_rows(2),
             )
     }
 }
