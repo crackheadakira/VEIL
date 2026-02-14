@@ -10,6 +10,7 @@ use crate::{
     queue::{QueueEvent, QueueOrigin},
     systems::{
         player::{PlayerEvent, next_track_status, try_preloading_next_sound_handle},
+        ui::UIUpdateEvent,
         utils::data_path,
     },
 };
@@ -95,10 +96,24 @@ pub fn handle_state_setup(cx: &mut App) -> Result<(), Box<dyn std::error::Error>
             }
         }
 
+        let saved_progress = config.playback.progress;
         queue.set_current_index(config.playback.queue_idx);
+
+        if let Some(track_id) = queue.current() {
+            drop(queue);
+            drop(config);
+
+            if let Ok(track) = state.db.by_id::<common::Tracks>(&track_id) {
+                state.player_bus.emit(PlayerEvent::Initialize {
+                    track,
+                    progress: saved_progress,
+                });
+            }
+        }
     }
 
     initiate_track_ended_thread(state.clone());
+    initiate_player_progress_thread(state.clone());
 
     Ok(())
 }
@@ -136,6 +151,32 @@ fn initiate_track_ended_thread(state: Arc<VeilState>) {
             if queue_has_ended {
                 state.player_bus.emit(PlayerEvent::Stop);
                 state.resume_notify.notified().await;
+            }
+        }
+    });
+}
+
+fn initiate_player_progress_thread(state: Arc<VeilState>) {
+    tokio::spawn(async move {
+        let check_interval = std::time::Duration::from_millis(400);
+
+        loop {
+            tokio::time::sleep(check_interval).await;
+
+            let progress = {
+                let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
+
+                if matches!(player.state, media_controls::PlayerState::Playing) {
+                    Some(player.get_progress())
+                } else {
+                    None
+                }
+            };
+
+            if let Some(progress) = progress {
+                state
+                    .ui_bus
+                    .emit(UIUpdateEvent::ProgressUpdate { progress })
             }
         }
     });

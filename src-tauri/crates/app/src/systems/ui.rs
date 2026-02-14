@@ -1,16 +1,14 @@
 use common::Tracks;
-use serde::{Deserialize, Serialize};
 
 use crate::queue::RepeatMode;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone)]
 pub enum PlayButtonState {
     Playing,
     Paused,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-#[serde(tag = "type", content = "data")]
+#[derive(Clone)]
 pub enum UIUpdateEvent {
     /// Updates the state of the shuffle button
     ShuffleButton {
@@ -27,5 +25,9 @@ pub enum UIUpdateEvent {
 
     TrackChange {
         track: Tracks,
+    },
+
+    ProgressUpdate {
+        progress: f64,
     },
 }

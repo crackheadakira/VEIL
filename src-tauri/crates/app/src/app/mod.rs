@@ -2,11 +2,12 @@ use std::borrow::Cow;
 
 use crate::{
     app::{builder::handle_state_setup, state::AppState},
+    config::VeilConfigEvent,
     ui::{
-        components::{sidebar::Sidebar, slider},
+        components::{modal, sidebar::Sidebar, slider},
         image_cache::AlbumCoverCacheProvider,
         theme::Theme,
-        views::{all_albums::AllAlbumsView, home::Home},
+        views::{all_albums::AllAlbumsView, home::Home, player::PlayerView},
     },
 };
 use gpui::{
@@ -49,12 +50,19 @@ pub fn run() {
             cx.set_global::<Theme>(theme);
 
             slider::bind_keys(cx);
+            modal::bind_keys(cx);
 
             cx.on_app_quit(|cx: &mut App| {
                 let state = cx.global::<AppState>().0.clone();
 
                 async move {
-                    let config = lock_or_log(state.config.read(), "Config Lock").unwrap();
+                    let progress = {
+                        let player = lock_or_log(state.player.read(), "Player Read Lock").unwrap();
+                        player.track.as_ref().map(|t| t.progress)
+                    };
+
+                    let mut config =
+                        lock_or_log(state.config.write(), "Config Write Lock").unwrap();
                     let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex").unwrap();
 
                     if config.integrations.discord_enabled {
@@ -62,6 +70,15 @@ pub fn run() {
                     };
 
                     state.db.shutdown().unwrap();
+
+                    if let Some(progress) = progress {
+                        config
+                            .update_config_and_write(VeilConfigEvent {
+                                progress: Some(progress),
+                                ..VeilConfigEvent::default()
+                            })
+                            .expect("error writing config on app exit");
+                    }
                 }
             })
             .detach();
@@ -107,7 +124,8 @@ pub enum Route {
 struct AppWindow {
     focus_handle: FocusHandle,
     all_albums_view: Option<Entity<AllAlbumsView>>,
-    home: Option<Home>,
+    home: Option<Entity<Home>>,
+    player_view: Entity<PlayerView>,
     route: Route,
 }
 
@@ -120,6 +138,7 @@ impl AppWindow {
             all_albums_view: None,
             home: None,
             route: Route::Home,
+            player_view: cx.new(|cx| PlayerView::new(cx)),
         }
     }
 
@@ -133,7 +152,7 @@ impl AppWindow {
             Route::Home => {
                 let view = self
                     .home
-                    .get_or_insert_with(|| Home::new(self.focus_handle.clone()));
+                    .get_or_insert_with(|| cx.new(|_| Home::new(self.focus_handle.clone())));
                 view.clone().into_any_element()
             }
             Route::AllAlbums => {
@@ -174,5 +193,6 @@ impl Render for AppWindow {
                     )))
                     .child(div().flex_grow().p_8().child(self.render_route(cx))),
             )
+            .child(self.player_view.clone())
     }
 }

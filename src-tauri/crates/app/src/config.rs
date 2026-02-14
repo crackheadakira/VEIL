@@ -62,6 +62,12 @@ pub struct PlaybackConfig {
 
     /// What repeat mode the queue should be at
     pub repeat_mode: RepeatMode,
+
+    /// How far the track has progressed
+    pub progress: f64,
+
+    /// What volume the playback should be at
+    pub volume: f64,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Clone, Copy, Debug, Default)]
@@ -91,6 +97,10 @@ pub struct VeilConfigEvent {
     pub queue_idx: Option<usize>,
 
     pub repeat_mode: Option<RepeatMode>,
+
+    pub progress: Option<f64>,
+
+    pub volume: Option<f64>,
 }
 
 impl VeilConfig {
@@ -114,6 +124,8 @@ impl VeilConfig {
                     queue_origin: None,
                     queue_idx: 0,
                     repeat_mode: RepeatMode::None,
+                    progress: 0.0,
+                    volume: 0.5,
                 },
             };
             config.write_config()?;
@@ -146,6 +158,8 @@ impl VeilConfig {
         self.playback.queue_origin = config.queue_origin.or(self.playback.queue_origin.take());
         self.playback.queue_idx = config.queue_idx.unwrap_or(self.playback.queue_idx);
         self.playback.repeat_mode = config.repeat_mode.unwrap_or(self.playback.repeat_mode);
+        self.playback.progress = config.progress.unwrap_or(self.playback.progress);
+        self.playback.volume = config.volume.unwrap_or(self.playback.volume);
     }
 
     /// Update config field values and writes it to disk

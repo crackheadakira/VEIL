@@ -1,6 +1,6 @@
 use gpui::{
     App, Div, ElementId, InteractiveElement, IntoElement, ParentElement, RenderOnce, SharedString,
-    Stateful, StyleRefinement, Styled, Window, div,
+    Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Window, div,
 };
 
 use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::p};
@@ -19,6 +19,8 @@ impl Button {
         }
     }
 }
+
+impl StatefulInteractiveElement for Button {}
 
 impl InteractiveElement for Button {
     fn interactivity(&mut self) -> &mut gpui::Interactivity {

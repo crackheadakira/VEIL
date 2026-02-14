@@ -2,8 +2,8 @@ use std::{cell::Cell, rc::Rc};
 
 use gpui::{
     App, Bounds, ElementId, Entity, FocusHandle, InteractiveElement, IntoElement, KeyBinding,
-    MouseButton, ParentElement, Pixels, RenderOnce, Styled, Window, actions, canvas, div, relative,
-    rems,
+    MouseButton, ParentElement, Pixels, Refineable, RenderOnce, StyleRefinement, Styled, Window,
+    actions, canvas, div, relative, rems,
 };
 
 use crate::ui::theme::Theme;
@@ -19,6 +19,8 @@ pub fn bind_keys(cx: &mut App) {
     ]);
 }
 
+type ChangeCallback = dyn Fn(f32, &mut App);
+
 #[derive(Clone, IntoElement)]
 pub struct Slider {
     id: ElementId,
@@ -27,29 +29,50 @@ pub struct Slider {
     min: f32,
     max: f32,
     step: f32,
+    initial_value: f32,
+
+    style: StyleRefinement,
+    on_change: Option<Rc<ChangeCallback>>,
 }
 
 impl Slider {
     pub fn new(
-        id: impl Into<ElementId>,
+        id: impl Into<ElementId> + Clone,
         focus_handle: FocusHandle,
         min: f32,
         max: f32,
         step: f32,
+        initial_value: f32,
     ) -> Self {
         Self {
-            id: id.into(),
+            id: id.clone().into(),
             focus_handle,
             min,
             max,
             step,
+            initial_value,
+            style: StyleRefinement::default(),
+            on_change: None,
         }
+    }
+
+    pub fn on_change(mut self, callback: impl Fn(f32, &mut App) + 'static) -> Self {
+        self.on_change = Some(Rc::new(callback));
+        self
+    }
+}
+
+impl Styled for Slider {
+    fn style(&mut self) -> &mut StyleRefinement {
+        &mut self.style
     }
 }
 
 impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let keyed_value = window.use_keyed_state(self.id.clone(), cx, |_, _| 0.0_f32);
+        let keyed_value = window.use_keyed_state(self.id.clone(), cx, |_, _| self.initial_value);
+        let is_dragging = window.use_keyed_state(format!("{}-dragging", self.id), cx, |_, _| false);
+
         let theme = cx.global::<Theme>();
         let group_name = format!("{}:group", &self.id);
 
@@ -61,6 +84,8 @@ impl RenderOnce for Slider {
             let steps = ((clamped - self.min) / self.step).round();
             let final_value = self.min + steps * self.step;
             keyed_value.write(cx, final_value);
+
+            final_value
         };
 
         let value_from_mouse = move |x: Pixels, bounds: Bounds<Pixels>| {
@@ -72,33 +97,53 @@ impl RenderOnce for Slider {
 
         // man wtf have i written.
 
-        div()
+        let mut root = div()
             .id(self.id.clone())
             .track_focus(&self.focus_handle)
             .on_action({
                 let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
                 move |_: &Decrease, _window, cx| {
                     let current = keyed_value.read(cx);
-                    calculate_and_set(current - self.step, &keyed_value, cx);
+                    let final_value = calculate_and_set(current - self.step, &keyed_value, cx);
+
+                    if let Some(ref callback) = on_change {
+                        callback(final_value, cx);
+                    }
                 }
             })
             .on_action({
                 let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
                 move |_: &Increase, _window, cx| {
                     let current = keyed_value.read(cx);
-                    calculate_and_set(current + self.step, &keyed_value, cx);
+                    let final_value = calculate_and_set(current - self.step, &keyed_value, cx);
+
+                    if let Some(ref callback) = on_change {
+                        callback(final_value, cx);
+                    }
                 }
             })
             .on_action({
                 let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
                 move |_: &JumpStart, _window, cx| {
                     keyed_value.write(cx, self.min);
+
+                    if let Some(ref callback) = on_change {
+                        callback(self.min, cx);
+                    }
                 }
             })
             .on_action({
                 let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
                 move |_: &JumpEnd, _window, cx| {
                     keyed_value.write(cx, self.max);
+
+                    if let Some(ref callback) = on_change {
+                        callback(self.max, cx);
+                    }
                 }
             })
             .group(&group_name)
@@ -117,18 +162,45 @@ impl RenderOnce for Slider {
             .on_mouse_down(MouseButton::Left, {
                 let keyed_value = keyed_value.clone();
                 let track_bounds = track_bounds.clone();
+                let is_dragging = is_dragging.clone();
                 move |event, _window, cx| {
+                    is_dragging.write(cx, true);
                     let new_value = value_from_mouse(event.position.x, track_bounds.get());
                     calculate_and_set(new_value, &keyed_value, cx);
                 }
             })
             .on_mouse_move({
                 let keyed_value = keyed_value.clone();
-                let track_bounds = track_bounds.clone();
                 move |event, _window, cx| {
                     if event.dragging() {
                         let new_value = value_from_mouse(event.position.x, track_bounds.get());
                         calculate_and_set(new_value, &keyed_value, cx);
+                    }
+                }
+            })
+            .on_mouse_up(MouseButton::Left, {
+                let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
+                let is_dragging = is_dragging.clone();
+                move |_event, _window, cx| {
+                    is_dragging.write(cx, false);
+                    if let Some(ref callback) = on_change {
+                        let final_value = keyed_value.read(cx);
+                        callback(*final_value, cx);
+                    }
+                }
+            })
+            .on_mouse_up_out(MouseButton::Left, {
+                let keyed_value = keyed_value.clone();
+                let on_change = self.on_change.clone();
+                let is_dragging = is_dragging.clone();
+                move |_event, _window, cx| {
+                    if *is_dragging.read(cx) {
+                        is_dragging.write(cx, false);
+                        if let Some(ref callback) = on_change {
+                            let final_value = keyed_value.read(cx);
+                            callback(*final_value, cx);
+                        }
                     }
                 }
             })
@@ -162,6 +234,10 @@ impl RenderOnce for Slider {
                             .group_hover(&group_name, |this| this.opacity(1.0))
                             .in_focus(|this| this.border_color(theme.text.primary.default)),
                     ),
-            )
+            );
+
+        root.style().refine(&self.style);
+
+        root
     }
 }
