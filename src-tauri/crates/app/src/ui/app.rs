@@ -4,9 +4,11 @@ use crate::{
     events::VeilConfigEvent,
     state::{AppState, handle_state_setup},
     ui::{
-        components::{modal, sidebar::Sidebar, slider},
-        theme::Theme,
-        views::{all_albums::AllAlbumsView, home::Home, player::PlayerView},
+        Sidebar, Theme, slider,
+        views::{
+            AllAlbumsView, Home, ModalLayer, PlayerView,
+            modal_layer::{self, GlobalModalLayer},
+        },
     },
 };
 use gpui::{
@@ -41,11 +43,15 @@ pub fn run() {
             cx.on_action(|_: &Quit, cx| cx.quit());
 
             handle_state_setup(cx).expect("Failed setting up the state");
+
             let theme = Theme::default();
             cx.set_global::<Theme>(theme);
 
+            let modal_layer = cx.new(ModalLayer::new);
+            cx.set_global(GlobalModalLayer(modal_layer));
+
             slider::bind_keys(cx);
-            modal::bind_keys(cx);
+            modal_layer::bind_keys(cx);
 
             cx.on_app_quit(|cx: &mut App| {
                 let state = cx.global::<AppState>().0.clone();
@@ -121,12 +127,14 @@ struct AppWindow {
     all_albums_view: Option<Entity<AllAlbumsView>>,
     home: Option<Entity<Home>>,
     player_view: Entity<PlayerView>,
+    modal_layer: Entity<ModalLayer>,
     route: Route,
 }
 
 impl AppWindow {
     fn new(cx: &mut Context<Self>) -> Self {
         let focus_handle = cx.focus_handle();
+        let modal_layer = cx.global::<GlobalModalLayer>().0.clone();
 
         Self {
             focus_handle,
@@ -134,6 +142,7 @@ impl AppWindow {
             home: None,
             route: Route::Home,
             player_view: cx.new(PlayerView::new),
+            modal_layer,
         }
     }
 
@@ -174,6 +183,7 @@ impl Render for AppWindow {
 
         div()
             .size_full()
+            .relative()
             .bg(theme.background.primary.default)
             .flex()
             .flex_col()
@@ -189,5 +199,6 @@ impl Render for AppWindow {
                     .child(div().flex_grow().p_8().child(self.render_route(cx))),
             )
             .child(self.player_view.clone())
+            .child(self.modal_layer.clone())
     }
 }

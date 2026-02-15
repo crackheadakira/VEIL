@@ -1,6 +1,5 @@
 pub mod album_card;
 pub mod button;
-pub mod modal;
 pub mod sidebar;
 pub mod slider;
 pub mod switch;
@@ -8,7 +7,6 @@ pub mod uniform_grid;
 
 pub use album_card::AlbumCard;
 pub use button::Button;
-pub use modal::Modal;
 pub use sidebar::Sidebar;
 pub use slider::Slider;
 pub use switch::Switch;

@@ -1,22 +1,30 @@
 use gpui::{
-    Context, FocusHandle, InteractiveElement, IntoElement, ParentElement, Render,
+    AppContext, Context, FocusHandle, InteractiveElement, IntoElement, ParentElement, Render,
     StatefulInteractiveElement, Styled, Window, div,
 };
 
-use crate::ui::{Button, Modal, Slider, Switch, Theme};
+use crate::ui::{
+    Button, Slider, Switch, Theme,
+    views::modal_layer::{GlobalModalLayer, ModalView},
+};
 
 #[derive(Clone)]
 pub struct Home {
     focus_handle: FocusHandle,
-    show_modal: bool,
 }
 
 impl Home {
     pub fn new(focus_handle: FocusHandle) -> Self {
-        Self {
-            focus_handle,
-            show_modal: false,
-        }
+        Self { focus_handle }
+    }
+}
+
+struct TestModal;
+
+impl Render for TestModal {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.global::<Theme>();
+        div().child("Hello!").text_color(theme.text.primary.default)
     }
 }
 
@@ -25,15 +33,20 @@ impl Render for Home {
         let theme = cx.global::<Theme>();
         let weak = cx.weak_entity();
 
-        let mut home = div()
+        div()
             .flex()
             .track_focus(&self.focus_handle)
             .gap_4()
             .flex_wrap()
             .child(Switch::new("switch-1"))
             .child(
-                Button::new("button-1", "Click me!").on_click(cx.listener(|this, _, _, _| {
-                    this.show_modal = true;
+                Button::new("button-1", "Click me!").on_click(cx.listener(|this, _, _, cx| {
+                    let modal = cx.new(|_| TestModal {});
+                    let modal_layer = cx.global::<GlobalModalLayer>().0.clone();
+
+                    modal_layer.update(cx, |layer, cx| {
+                        layer.show_modal(modal.into(), cx);
+                    });
                 })),
             )
             .child(Slider::new(
@@ -43,9 +56,9 @@ impl Render for Home {
                 100.0,
                 1.0,
                 40.0,
-            ));
+            ))
 
-        if self.show_modal {
+        /*if self.show_modal {
             home = home.child(
                 Modal::new()
                     .text_color(theme.text.primary.default)
@@ -57,8 +70,6 @@ impl Render for Home {
                         .expect("failed to close modal on home");
                     }),
             );
-        };
-
-        home
+        };*/
     }
 }
