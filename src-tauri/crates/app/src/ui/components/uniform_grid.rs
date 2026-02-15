@@ -1,18 +1,18 @@
 // Based off https://github.com/zed-industries/zed/blob/44015e0379b6c868258318d9c159134adbf801d9/crates/gpui/src/elements/uniform_list.rs
 
 use gpui::{
-    AnyElement, App, AvailableSpace, Bounds, ContentMask, Div, Element, ElementId, Entity,
-    GlobalElementId, Hitbox, InspectorElementId, InteractiveElement, Interactivity, IntoElement,
-    IsZero, LayoutId, Overflow, Pixels, Point, Rems, ScrollHandle, Size, Stateful,
-    StatefulInteractiveElement, StyleRefinement, Styled, Window, div, point, rems, size,
+    AnyElement, App, AvailableSpace, Bounds, ContentMask, Div, Element, ElementId, GlobalElementId,
+    Hitbox, InspectorElementId, InteractiveElement, Interactivity, IntoElement, IsZero, LayoutId,
+    Overflow, Pixels, Point, Rems, ScrollHandle, Size, Stateful, StatefulInteractiveElement,
+    StyleRefinement, Styled, Window, div, point, rems, size,
 };
 use smallvec::SmallVec;
 use std::{cell::RefCell, cmp, ops::Range, rc::Rc};
 
-/// uniform_grid provides lazy rendering for a set of items with uniform width and height.
+/// `uniform_grid` provides lazy rendering for a set of items with uniform width and height.
 /// Items are arranged in a grid that wraps based on available width.
 /// When rendered into a container with overflow-y: hidden and a fixed (or max) height,
-/// uniform_grid will only render the visible subset of items.
+/// `uniform_grid` will only render the visible subset of items.
 #[track_caller]
 pub fn uniform_grid<R>(
     id: impl Into<ElementId>,
@@ -43,7 +43,7 @@ where
             .size_full()
             .overflow_scroll()
             .track_scroll(&scroll_handle),
-        id: id.into(),
+        id,
         scroll_handle,
         gap: rems(0.0),
         preload_rows: 0,
@@ -51,6 +51,7 @@ where
 }
 
 /// A grid element for efficiently laying out and displaying items in a wrapping grid.
+#[allow(clippy::type_complexity)]
 pub struct UniformGrid {
     item_count: usize,
     item_to_measure_index: usize,
@@ -64,7 +65,7 @@ pub struct UniformGrid {
     preload_rows: usize,
 }
 
-/// Frame state used by the UniformGrid.
+/// Frame state used by the `UniformGrid`.
 pub struct UniformGridFrameState {
     items: SmallVec<[AnyElement; 32]>,
 }
@@ -73,7 +74,7 @@ pub struct UniformGridFrameState {
 #[derive(Clone, Debug, Default)]
 pub struct UniformGridScrollHandle {
     pub state: Rc<RefCell<UniformGridScrollState>>,
-    pub base_handle: ScrollHandle,
+    base_handle: ScrollHandle,
 }
 
 /// Where to place the element scrolled to.
@@ -114,41 +115,6 @@ impl UniformGridScrollHandle {
             })),
             base_handle: ScrollHandle::new(),
         }
-    }
-
-    /// Scroll the grid so that the given item index is visible.
-    pub fn scroll_to_item(&self, ix: usize, strategy: ScrollStrategy) {
-        self.state.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
-            item_index: ix,
-            strategy,
-            scroll_strict: false,
-        });
-    }
-
-    /// Scroll the grid so that the given item index is at scroll strategy position.
-    pub fn scroll_to_item_strict(&self, ix: usize, strategy: ScrollStrategy) {
-        self.state.borrow_mut().deferred_scroll_to_item = Some(DeferredScrollToItem {
-            item_index: ix,
-            strategy,
-            scroll_strict: true,
-        });
-    }
-
-    /// Checks if the grid can be scrolled vertically.
-    pub fn is_scrollable(&self) -> bool {
-        if let (Some(item_size), Some(content_size)) = (
-            self.state.borrow().last_item_size,
-            self.state.borrow().last_content_size,
-        ) {
-            content_size.height > item_size.height
-        } else {
-            false
-        }
-    }
-
-    /// Scroll to the bottom of the grid.
-    pub fn scroll_to_bottom(&self) {
-        self.scroll_to_item(usize::MAX, ScrollStrategy::Bottom);
     }
 }
 
@@ -286,7 +252,7 @@ impl Element for UniformGrid {
         let total_rows = if self.item_count == 0 {
             0
         } else {
-            (self.item_count + items_per_row - 1) / items_per_row
+            self.item_count.div_ceil(items_per_row)
         };
 
         let row_height = item_size.height;
@@ -377,9 +343,7 @@ impl Element for UniformGrid {
                         }
                     }
 
-                    self.scroll_handle
-                        .base_handle
-                        .set_offset(updated_scroll_offset);
+                    self.scroll_handle.set_offset(updated_scroll_offset);
                     scroll_offset = updated_scroll_offset;
                 }
 
@@ -460,7 +424,7 @@ impl Element for UniformGrid {
                     item.paint(window, cx);
                 }
             },
-        )
+        );
     }
 }
 
@@ -473,12 +437,6 @@ impl IntoElement for UniformGrid {
 }
 
 impl UniformGrid {
-    /// Selects a specific item for measurement.
-    pub fn with_width_from_item(mut self, item_index: Option<usize>) -> Self {
-        self.item_to_measure_index = item_index.unwrap_or(0);
-        self
-    }
-
     /// Sets the gap between items in the grid.
     pub fn gap(mut self, gap: impl Into<Rems>) -> Self {
         self.gap = gap.into();

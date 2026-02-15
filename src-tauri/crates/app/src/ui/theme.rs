@@ -1,4 +1,4 @@
-use std::path::Path;
+
 
 use gpui::{Global, InteractiveElement, Rgba, StatefulInteractiveElement, Styled};
 use serde::Deserialize;

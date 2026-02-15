@@ -3,9 +3,9 @@ fn main() {
 
     for var in &["LASTFM_API_KEY", "LASTFM_API_SECRET", "DISCORD_CLIENT_ID"] {
         if let Ok(val) = std::env::var(var) {
-            println!("cargo:rustc-env={}={}", var, val);
+            println!("cargo:rustc-env={var}={val}");
         } else {
-            panic!("Missing {} in .env for release build", var);
+            panic!("Missing {var} in .env for release build");
         }
     }
 }

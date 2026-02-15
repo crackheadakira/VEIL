@@ -176,8 +176,8 @@ fn initiate_player_progress_thread(state: Arc<VeilState>) {
             if let Some(progress) = progress {
                 state
                     .ui_bus
-                    .emit(UIUpdateEvent::ProgressUpdate { progress })
-            }
+                    .emit(UIUpdateEvent::ProgressUpdate { progress });
+            };
         }
     });
 }

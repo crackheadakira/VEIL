@@ -37,7 +37,7 @@ impl std::fmt::Display for AlbumType {
             AlbumType::EP => "EP",
             AlbumType::Album => "Album",
         };
-        write!(f, "{}", label)
+        write!(f, "{label}",)
     }
 }
 

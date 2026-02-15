@@ -31,12 +31,12 @@ impl PlayerView {
             cached_progress: None,
         };
 
-        view.subscribe_to_events(cx);
+        Self::subscribe_to_events(cx);
 
         view
     }
 
-    fn subscribe_to_events(&self, cx: &mut Context<Self>) {
+    fn subscribe_to_events(cx: &mut Context<Self>) {
         cx.spawn(async move |view, cx| {
             let player_bus = cx.read_global::<AppState, _>(|state, _| state.0.player_bus.clone());
             let mut receiver = player_bus.subscribe();
@@ -75,7 +75,7 @@ impl PlayerView {
 
         let progress = self.cached_progress.unwrap_or_else(|| {
             let player = state.0.player.try_read().unwrap();
-            player.track.as_ref().map(|t| t.progress).unwrap_or(0.0)
+            player.track.as_ref().map_or(0.0, |t| t.progress)
         });
 
         let track = state.0.db.by_id::<Tracks>(&track_id).ok()?;
@@ -145,11 +145,7 @@ impl Render for PlayerView {
                                                 .state;
                                             let player_bus = &state.0.player_bus;
 
-                                            let resume = if player_state == PlayerState::Playing {
-                                                true
-                                            } else {
-                                                false
-                                            };
+                                            let resume = player_state == PlayerState::Playing;
 
                                             player_bus.emit(PlayerEvent::Seek {
                                                 position: progress as f64,

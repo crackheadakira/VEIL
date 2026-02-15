@@ -57,10 +57,10 @@ impl Render for Home {
                         weak.update(cx, |this, _| {
                             this.show_modal = false;
                         })
-                        .expect("failed to close modal on home")
+                        .expect("failed to close modal on home");
                     }),
-            )
-        }
+            );
+        };
 
         home
     }

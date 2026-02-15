@@ -5,7 +5,6 @@ use crate::{
     config::VeilConfigEvent,
     ui::{
         components::{modal, sidebar::Sidebar, slider},
-        image_cache::AlbumCoverCacheProvider,
         theme::Theme,
         views::{all_albums::AllAlbumsView, home::Home, player::PlayerView},
     },
@@ -138,7 +137,7 @@ impl AppWindow {
             all_albums_view: None,
             home: None,
             route: Route::Home,
-            player_view: cx.new(|cx| PlayerView::new(cx)),
+            player_view: cx.new(PlayerView::new),
         }
     }
 
@@ -188,7 +187,7 @@ impl Render for AppWindow {
                     .size_full()
                     .child(Sidebar::new().on_navigate(cx.listener(
                         |this: &mut AppWindow, route: &Route, _, cx| {
-                            this.navigate(route.clone(), cx);
+                            this.navigate(*route, cx);
                         },
                     )))
                     .child(div().flex_grow().p_8().child(self.render_route(cx))),

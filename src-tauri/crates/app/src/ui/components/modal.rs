@@ -6,10 +6,12 @@ use gpui::{
     prelude::FluentBuilder, px, rgba,
 };
 
+type CloseCallback = dyn Fn(&mut Window, &mut App);
+
 #[derive(IntoElement)]
 pub struct Modal {
     div: Stateful<Div>,
-    on_close: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
+    on_close: Option<Rc<CloseCallback>>,
 }
 
 actions!(modal, [Close]);
@@ -71,11 +73,11 @@ impl RenderOnce for Modal {
                     let on_close_clone = on_close.clone();
 
                     this.on_mouse_down(MouseButton::Left, move |_, window, cx| {
-                        on_close_clone(window, cx)
+                        on_close_clone(window, cx);
                     })
                     .on_action(move |_: &Close, window, cx| {
                         println!("Close action fired!");
-                        on_close(window, cx)
+                        on_close(window, cx);
                     })
                 })
                 .child(self.div.occlude()),

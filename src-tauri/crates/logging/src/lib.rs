@@ -48,8 +48,7 @@ pub fn lock_or_log<T>(
     match guard {
         Ok(g) => Ok(g),
         Err(poisoned) => {
-            error!("{} lock poisoned: {:?}", lock_name, poisoned);
-            bail!("{} lock poisoned: {:?}", lock_name, poisoned);
+            bail!("{lock_name} lock poisoned: {poisoned:?}");
         }
     }
 }

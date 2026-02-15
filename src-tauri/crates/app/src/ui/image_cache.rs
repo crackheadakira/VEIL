@@ -89,21 +89,20 @@ impl ImageCache for AlbumCoverCache {
         let load_future = AssetLogger::<ImageAssetLoader>::load(resource.clone(), cx);
         let task = cx.background_executor().spawn(load_future).shared();
 
-        if self.usage_list.len() >= self.max_items {
-            if let Some(old) = self.usage_list.pop_back() {
-                if let Some((old_item, _)) = self.cache.get(&old) {
-                    match old_item {
-                        ImageCacheItem::Loaded(_) => {
-                            let (mut item, resource) = self.cache.remove(&old).unwrap();
-                            if let Some(Ok(image)) = item.get() {
-                                cx.drop_image(image, Some(window));
-                            }
-                            ImageSource::Resource(resource).remove_asset(cx);
-                        }
-                        ImageCacheItem::Loading(_) => {
-                            self.usage_list.push_back(old);
-                        }
+        if self.usage_list.len() >= self.max_items
+            && let Some(old) = self.usage_list.pop_back()
+            && let Some((old_item, _)) = self.cache.get(&old)
+        {
+            match old_item {
+                ImageCacheItem::Loaded(_) => {
+                    let (mut item, resource) = self.cache.remove(&old).unwrap();
+                    if let Some(Ok(image)) = item.get() {
+                        cx.drop_image(image, Some(window));
                     }
+                    ImageSource::Resource(resource).remove_asset(cx);
+                }
+                ImageCacheItem::Loading(_) => {
+                    self.usage_list.push_back(old);
                 }
             }
         }
