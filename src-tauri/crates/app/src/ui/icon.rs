@@ -1,5 +1,6 @@
 use gpui::{IntoElement, RenderOnce, SharedString, StyleRefinement, Styled, Svg, svg};
 
+#[derive(Clone, Copy)]
 pub enum IconVariants {
     Add,
     AddSquareMultiple,
@@ -89,7 +90,7 @@ impl Styled for Icon {
 }
 
 impl RenderOnce for Icon {
-    fn render(self, _: &mut gpui::Window, _cx: &mut gpui::App) -> impl IntoElement {
+    fn render(self, _window: &mut gpui::Window, _cx: &mut gpui::App) -> impl IntoElement {
         self.svg.path(self.icon)
     }
 }

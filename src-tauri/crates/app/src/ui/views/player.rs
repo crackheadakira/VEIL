@@ -1,7 +1,7 @@
 use common::Tracks;
 use gpui::{
-    Context, FocusHandle, InteractiveElement, IntoElement, ParentElement, Render, Styled, Window,
-    div, img, rems,
+    Context, FocusHandle, InteractiveElement, IntoElement, ParentElement, Render,
+    StatefulInteractiveElement, Styled, Window, div, img, rems,
 };
 use media_controls::PlayerState;
 
@@ -18,6 +18,7 @@ pub struct PlayerView {
     focus_handle: FocusHandle,
     progress_slider: f64,
     is_seeking: bool,
+    player_state: PlayerState,
 }
 
 impl PlayerView {
@@ -29,10 +30,21 @@ impl PlayerView {
             config.playback.progress
         };
 
+        let player_state = {
+            let state = cx.app_state();
+
+            state
+                .player
+                .read()
+                .expect("error reading player lock")
+                .state
+        };
+
         let view = Self {
             focus_handle: cx.focus_handle(),
             progress_slider: progress,
             is_seeking: false,
+            player_state,
         };
 
         Self::subscribe_to_events(cx);
@@ -46,17 +58,28 @@ impl PlayerView {
             let mut receiver = player_bus.subscribe();
 
             while let Ok(event) = receiver.recv().await {
-                let _ = view.update(cx, |view, cx| {
-                    if let PlayerEvent::Seek {
+                let _ = view.update(cx, |view, cx| match event {
+                    PlayerEvent::Seek {
                         position,
                         resume: _,
-                    } = event
-                    {
+                    } => {
                         view.progress_slider = position;
                         view.is_seeking = false;
 
                         cx.notify();
                     }
+                    PlayerEvent::Pause => {
+                        view.player_state = PlayerState::Paused;
+                        cx.notify();
+                    }
+                    PlayerEvent::Resume
+                    | PlayerEvent::NewTrack { track: _ }
+                    | PlayerEvent::NextTrackInQueue
+                    | PlayerEvent::PreviousTrackInQueue => {
+                        view.player_state = PlayerState::Playing;
+                        cx.notify();
+                    }
+                    _ => (),
                 });
             }
         })
@@ -104,6 +127,11 @@ impl Render for PlayerView {
 
         let Some(track) = Self::get_player_info(cx) else {
             return div();
+        };
+
+        let play_icon = match self.player_state {
+            PlayerState::Playing => IconVariants::Pause,
+            PlayerState::Paused => IconVariants::Play,
         };
 
         div()
@@ -157,58 +185,140 @@ impl Render for PlayerView {
                     .w_full()
                     .child(
                         div()
-                            .w_full()
                             .flex()
-                            .items_center()
+                            .flex_col()
+                            .w_full()
                             .gap_4()
                             .px_6()
                             .child(
-                                small(format_time(self.progress_slider))
-                                    .text_color(theme.text.tertiary.default),
+                                div()
+                                    .w_full()
+                                    .flex()
+                                    .items_center()
+                                    .gap_4()
+                                    .px_6()
+                                    .child(
+                                        small(format_time(self.progress_slider))
+                                            .text_color(theme.text.tertiary.default)
+                                            .w_10(),
+                                    )
+                                    .child(
+                                        Slider::new(
+                                            "player:progress_slider",
+                                            self.focus_handle.clone(),
+                                        )
+                                        .value(self.progress_slider)
+                                        .max(track.duration as f64)
+                                        .w_full()
+                                        .on_commit({
+                                            let entity = cx.entity();
+                                            move |progress, cx| {
+                                                entity.update(cx, |this, cx| {
+                                                    this.is_seeking = false;
+
+                                                    let state = cx.app_state();
+                                                    let player_bus = &state.player_bus;
+
+                                                    let resume =
+                                                        this.player_state == PlayerState::Playing;
+
+                                                    player_bus.emit(PlayerEvent::Seek {
+                                                        position: progress,
+                                                        resume,
+                                                    });
+                                                });
+                                            }
+                                        })
+                                        .on_input({
+                                            let entity = cx.entity();
+
+                                            move |slider_value, cx| {
+                                                entity.update(cx, |this, cx| {
+                                                    this.progress_slider = slider_value;
+                                                    this.is_seeking = true;
+                                                    cx.notify();
+                                                });
+                                            }
+                                        }),
+                                    )
+                                    .child(
+                                        small(format_time(track.duration as f64))
+                                            .text_color(theme.text.tertiary.default)
+                                            .w_10(),
+                                    ),
                             )
                             .child(
-                                Slider::new("player:progress_slider", self.focus_handle.clone())
-                                    .value(self.progress_slider)
-                                    .max(track.duration as f64)
-                                    .w_full()
-                                    .on_commit({
-                                        let entity = cx.entity();
-                                        move |progress, cx| {
-                                            entity.update(cx, |this, cx| {
-                                                this.is_seeking = false;
-
+                                div()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .gap_8()
+                                    .children(vec![
+                                        div()
+                                            .id("player:shuffle")
+                                            .text_from(&theme.text.tertiary)
+                                            .cursor_pointer()
+                                            .child(
+                                                Icon::new(IconVariants::ArrowShuffle)
+                                                    .size_5()
+                                                    .text_color(theme.text.tertiary.default),
+                                            ),
+                                        div()
+                                            .id("player:previous")
+                                            .text_from(&theme.text.tertiary)
+                                            .cursor_pointer()
+                                            .on_click(cx.listener(|_, _, _, cx| {
                                                 let state = cx.app_state();
                                                 let player_bus = &state.player_bus;
 
-                                                let resume = state
-                                                    .player
-                                                    .read()
-                                                    .expect("error reading player lock")
-                                                    .state
-                                                    == PlayerState::Playing;
+                                                player_bus.emit(PlayerEvent::PreviousTrackInQueue);
+                                            }))
+                                            .child(
+                                                Icon::new(IconVariants::Previous)
+                                                    .size_5()
+                                                    .text_color(theme.text.secondary.default),
+                                            ),
+                                        div()
+                                            .id("player:play")
+                                            .text_from(&theme.text.tertiary)
+                                            .cursor_pointer()
+                                            .on_click(cx.listener(|this, _, _, cx| {
+                                                let state = cx.app_state();
+                                                let player_bus = &state.player_bus;
 
-                                                player_bus.emit(PlayerEvent::Seek {
-                                                    position: progress,
-                                                    resume,
-                                                });
-                                            });
-                                        }
-                                    })
-                                    .on_input({
-                                        let entity = cx.entity();
+                                                if this.player_state == PlayerState::Playing {
+                                                    this.player_state = PlayerState::Paused;
+                                                    player_bus.emit(PlayerEvent::Pause);
+                                                } else {
+                                                    this.player_state = PlayerState::Playing;
+                                                    player_bus.emit(PlayerEvent::Resume);
+                                                }
+                                            }))
+                                            .child(
+                                                Icon::new(play_icon)
+                                                    .size_6()
+                                                    .text_color(theme.text.secondary.default),
+                                            ),
+                                        div()
+                                            .id("player:next")
+                                            .cursor_pointer()
+                                            .on_click(cx.listener(|_, _, _, cx| {
+                                                let state = cx.app_state();
+                                                let player_bus = &state.player_bus;
 
-                                        move |slider_value, cx| {
-                                            entity.update(cx, |this, cx| {
-                                                this.progress_slider = slider_value;
-                                                this.is_seeking = true;
-                                                cx.notify();
-                                            });
-                                        }
-                                    }),
-                            )
-                            .child(
-                                small(format_time(track.duration as f64))
-                                    .text_color(theme.text.tertiary.default),
+                                                player_bus.emit(PlayerEvent::NextTrackInQueue);
+                                            }))
+                                            .child(
+                                                Icon::new(IconVariants::Next)
+                                                    .size_5()
+                                                    .text_color(theme.text.secondary.default),
+                                            ),
+                                        div().id("player:repeat").cursor_pointer().child(
+                                            Icon::new(IconVariants::ArrowRepeatAll)
+                                                .size_5()
+                                                .text_color(theme.text.tertiary.default),
+                                        ),
+                                    ]),
                             ),
                     ),
             )
