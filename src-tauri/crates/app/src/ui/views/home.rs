@@ -3,10 +3,7 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div,
 };
 
-use crate::ui::{
-    Button, Slider, Switch, Theme,
-    views::modal_layer::{GlobalModalLayer, ModalView},
-};
+use crate::ui::{Button, Slider, Switch, Theme, views::modal_layer::GlobalModalLayer};
 
 #[derive(Clone)]
 pub struct Home {
@@ -30,9 +27,6 @@ impl Render for TestModal {
 
 impl Render for Home {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
-        let weak = cx.weak_entity();
-
         div()
             .flex()
             .track_focus(&self.focus_handle)
@@ -49,27 +43,6 @@ impl Render for Home {
                     });
                 })),
             )
-            .child(Slider::new(
-                "slider-1",
-                self.focus_handle.clone(),
-                0.0,
-                100.0,
-                1.0,
-                40.0,
-            ))
-
-        /*if self.show_modal {
-            home = home.child(
-                Modal::new()
-                    .text_color(theme.text.primary.default)
-                    .child("Hello")
-                    .on_close(move |_, cx| {
-                        weak.update(cx, |this, _| {
-                            this.show_modal = false;
-                        })
-                        .expect("failed to close modal on home");
-                    }),
-            );
-        };*/
+            .child(Slider::new("slider-1", self.focus_handle.clone(), 40.0))
     }
 }
