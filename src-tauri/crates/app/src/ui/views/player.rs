@@ -8,12 +8,15 @@ use media_controls::PlayerState;
 use crate::{
     AppState,
     events::{PlayerEvent, UIUpdateEvent},
-    ui::{AlbumCoverCacheProvider, AppStateContext, Slider, StyleFromColorSet, p, small},
+    ui::{
+        AlbumCoverCacheProvider, AppStateContext, Icon, IconVariants, Slider, StyleFromColorSet, p,
+        small,
+    },
 };
 
 pub struct PlayerView {
     focus_handle: FocusHandle,
-    slider_value: f64,
+    progress_slider: f64,
     is_seeking: bool,
 }
 
@@ -28,7 +31,7 @@ impl PlayerView {
 
         let view = Self {
             focus_handle: cx.focus_handle(),
-            slider_value: progress,
+            progress_slider: progress,
             is_seeking: false,
         };
 
@@ -49,7 +52,7 @@ impl PlayerView {
                         resume: _,
                     } = event
                     {
-                        view.slider_value = position;
+                        view.progress_slider = position;
                         view.is_seeking = false;
 
                         cx.notify();
@@ -68,7 +71,7 @@ impl PlayerView {
                     if let UIUpdateEvent::ProgressUpdate { progress } = event
                         && !view.is_seeking
                     {
-                        view.slider_value = progress;
+                        view.progress_slider = progress;
 
                         cx.notify();
                     }
@@ -160,12 +163,12 @@ impl Render for PlayerView {
                             .gap_4()
                             .px_6()
                             .child(
-                                small(format_time(self.slider_value))
+                                small(format_time(self.progress_slider))
                                     .text_color(theme.text.tertiary.default),
                             )
                             .child(
                                 Slider::new("player:progress_slider", self.focus_handle.clone())
-                                    .value(self.slider_value)
+                                    .value(self.progress_slider)
                                     .max(track.duration as f64)
                                     .w_full()
                                     .on_commit({
@@ -196,7 +199,7 @@ impl Render for PlayerView {
 
                                         move |slider_value, cx| {
                                             entity.update(cx, |this, cx| {
-                                                this.slider_value = slider_value;
+                                                this.progress_slider = slider_value;
                                                 this.is_seeking = true;
                                                 cx.notify();
                                             });
@@ -209,7 +212,13 @@ impl Render for PlayerView {
                             ),
                     ),
             )
-            .child(div().col_span(1).child("volume"))
+            .child(
+                div().col_span(1).child("volume").child(
+                    Icon::new(IconVariants::Speaker)
+                        .text_color(theme.text.tertiary.default)
+                        .size_4(),
+                ),
+            )
     }
 }
 

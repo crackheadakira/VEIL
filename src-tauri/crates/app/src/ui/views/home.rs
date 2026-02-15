@@ -34,7 +34,7 @@ impl Render for Home {
             .flex_wrap()
             .child(Switch::new("switch-1"))
             .child(
-                Button::new("button-1", "Click me!").on_click(cx.listener(|this, _, _, cx| {
+                Button::new("button-1", "Click me!").on_click(cx.listener(|_, _, _, cx| {
                     let modal = cx.new(|_| TestModal {});
                     let modal_layer = cx.global::<GlobalModalLayer>().0.clone();
 

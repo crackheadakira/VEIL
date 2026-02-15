@@ -1,7 +1,6 @@
 use common::Albums;
 use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div, rems};
 
-use crate::AppState;
 use crate::ui::{
     AlbumCard, AlbumCoverCacheProvider, AppStateContext, Theme, UniformGridScrollHandle, h6,
     uniform_grid,

@@ -26,6 +26,7 @@ gpui_transitions = { workspace = true }
 unicode-segmentation = "1.12.0"
 futures = "0.3.31"
 smallvec = "1.15.1"
+rust-embed = "8.11.0"
 
 common = { workspace = true, features = ["serialization"] }
 db.workspace = true

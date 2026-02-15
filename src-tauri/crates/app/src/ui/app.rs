@@ -1,11 +1,13 @@
-use std::{borrow::Cow, sync::Arc};
+use std::sync::Arc;
 
 use crate::{
     VeilState,
     events::VeilConfigEvent,
     state::{AppState, handle_state_setup},
     ui::{
-        Sidebar, Theme, slider,
+        Sidebar, Theme,
+        assets::VeilAssetSource,
+        slider,
         views::{
             AllAlbumsView, Home, ModalLayer, PlayerView,
             modal_layer::{self, GlobalModalLayer},
@@ -13,33 +15,17 @@ use crate::{
     },
 };
 use gpui::{
-    App, AppContext, Application, AssetSource, Bounds, Context, Entity, FocusHandle, Focusable,
-    IntoElement, ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
+    App, AppContext, Application, Bounds, Context, Entity, FocusHandle, Focusable, IntoElement,
+    ParentElement, Point, Render, SharedString, Styled, TitlebarOptions, Window,
     WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, actions, div, px, size,
 };
 use logging::lock_or_log;
 
 actions!(app, [Quit]);
 
-struct DiskAssets;
-
-impl AssetSource for DiskAssets {
-    fn list(&self, _path: &str) -> gpui::Result<Vec<SharedString>> {
-        Ok(Vec::new())
-    }
-
-    fn load(&self, path: &str) -> gpui::Result<Option<Cow<'static, [u8]>>> {
-        match std::fs::read(path) {
-            Ok(bytes) => Ok(Some(Cow::Owned(bytes))),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(e.into()),
-        }
-    }
-}
-
 pub fn run() {
     Application::new()
-        .with_assets(DiskAssets)
+        .with_assets(VeilAssetSource)
         .run(|cx: &mut App| {
             cx.on_action(|_: &Quit, cx| cx.quit());
 
