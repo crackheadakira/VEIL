@@ -1,6 +1,7 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, sync::Arc};
 
 use crate::{
+    VeilState,
     events::VeilConfigEvent,
     state::{AppState, handle_state_setup},
     ui::{
@@ -54,7 +55,7 @@ pub fn run() {
             modal_layer::bind_keys(cx);
 
             cx.on_app_quit(|cx: &mut App| {
-                let state = cx.global::<AppState>().0.clone();
+                let state = cx.app_state().clone();
 
                 async move {
                     let progress = {
@@ -200,5 +201,32 @@ impl Render for AppWindow {
             )
             .child(self.player_view.clone())
             .child(self.modal_layer.clone())
+    }
+}
+
+pub trait AppStateContext {
+    fn app_state(&self) -> &Arc<VeilState>;
+    fn app_theme(&self) -> &Theme;
+
+    // TODO: maybe add more convenience methods
+}
+
+impl<V> AppStateContext for Context<'_, V> {
+    fn app_state(&self) -> &Arc<VeilState> {
+        &self.global::<AppState>().0
+    }
+
+    fn app_theme(&self) -> &Theme {
+        self.global::<Theme>()
+    }
+}
+
+impl AppStateContext for App {
+    fn app_state(&self) -> &Arc<VeilState> {
+        &self.global::<AppState>().0
+    }
+
+    fn app_theme(&self) -> &Theme {
+        self.global::<Theme>()
     }
 }

@@ -43,6 +43,6 @@ impl Render for Home {
                     });
                 })),
             )
-            .child(Slider::new("slider-1", self.focus_handle.clone(), 40.0))
+            .child(Slider::new("slider-1", self.focus_handle.clone()))
     }
 }

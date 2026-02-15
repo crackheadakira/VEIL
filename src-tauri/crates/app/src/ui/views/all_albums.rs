@@ -3,7 +3,8 @@ use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div
 
 use crate::AppState;
 use crate::ui::{
-    AlbumCard, AlbumCoverCacheProvider, Theme, UniformGridScrollHandle, h6, uniform_grid,
+    AlbumCard, AlbumCoverCacheProvider, AppStateContext, Theme, UniformGridScrollHandle, h6,
+    uniform_grid,
 };
 
 #[derive(Clone)]
@@ -14,7 +15,7 @@ pub struct AllAlbumsView {
 
 impl AllAlbumsView {
     pub fn new(cx: &mut App) -> Self {
-        let state = &cx.global::<AppState>().0;
+        let state = cx.app_state();
         let albums = state
             .db
             .all::<Albums>()
@@ -32,7 +33,7 @@ impl Render for AllAlbumsView {
         let theme = cx.global::<Theme>();
 
         div()
-            .image_cache(AlbumCoverCacheProvider::new("all_albums_cache", 72))
+            .image_cache(AlbumCoverCacheProvider::new("cache:all_albums", 72))
             .size_full()
             .bg(theme.background.primary.default)
             .flex()

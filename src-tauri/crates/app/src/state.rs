@@ -19,6 +19,7 @@ use crate::{
         player::{next_track_status, try_preloading_next_sound_handle},
         utils::data_path,
     },
+    ui::AppStateContext,
 };
 
 pub struct VeilState {
@@ -168,7 +169,7 @@ pub fn handle_state_setup(cx: &mut App) -> Result<(), Box<dyn std::error::Error>
     let app_state = Arc::new(veil_state);
     cx.set_global(AppState(app_state));
 
-    let state = cx.global::<AppState>().0.clone();
+    let state = cx.app_state();
 
     {
         let config = lock_or_log(state.config.read(), "Config RwLock")?;

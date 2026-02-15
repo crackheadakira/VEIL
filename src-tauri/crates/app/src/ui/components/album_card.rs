@@ -4,7 +4,7 @@ use gpui::{
     div, img, rems,
 };
 
-use crate::ui::{Theme, p, small};
+use crate::ui::{AppStateContext, p, small};
 
 #[derive(Clone, IntoElement)]
 pub struct AlbumCard {
@@ -13,7 +13,7 @@ pub struct AlbumCard {
 
 impl RenderOnce for AlbumCard {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.app_theme();
         let group_name = format!("card:album_{}", self.album.id);
 
         div()

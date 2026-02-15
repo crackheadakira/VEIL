@@ -171,7 +171,7 @@ impl Render for ModalLayer {
                     .flex()
                     .flex_col()
                     .gap_2()
-                    .children(self.toasts.iter().map(|toast| toast.clone())),
+                    .children(self.toasts.iter().cloned()),
             )
     }
 }

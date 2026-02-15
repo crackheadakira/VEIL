@@ -6,7 +6,7 @@ use gpui::{
     Styled, Window, actions, canvas, div, relative, rems,
 };
 
-use crate::ui::Theme;
+use crate::ui::AppStateContext;
 
 actions!(slider, [Decrease, Increase, JumpStart, JumpEnd]);
 
@@ -19,29 +19,18 @@ pub fn bind_keys(cx: &mut App) {
     ]);
 }
 
-type ChangeCallback = dyn Fn(f32, &mut App);
-
-#[derive(Clone, IntoElement)]
-pub struct Slider {
-    id: ElementId,
-    focus_handle: FocusHandle,
-    state: SliderState,
-    on_commit: Option<Rc<ChangeCallback>>,
-    style: StyleRefinement,
-}
-
 #[derive(Clone, Copy)]
 pub struct SliderState {
-    default_value: f32,
-    min: f32,
-    max: f32,
-    step: f32,
+    value: f64,
+    min: f64,
+    max: f64,
+    step: f64,
 }
 
 impl Default for SliderState {
     fn default() -> Self {
         Self {
-            default_value: 0.0,
+            value: 0.0,
             min: 0.0,
             max: 100.0,
             step: 1.0,
@@ -50,73 +39,88 @@ impl Default for SliderState {
 }
 
 impl SliderState {
-    pub fn snap_to_step(&self, value: f32) -> f32 {
+    pub fn snap_to_step(&self, value: f64) -> f64 {
         let clamped = value.clamp(self.min, self.max);
         let steps = ((clamped - self.min) / self.step).round();
 
         self.min + steps * self.step
     }
 
-    pub fn mouse_to_value(&self, mouse: Point<Pixels>, bounds: Bounds<Pixels>) -> f32 {
+    pub fn mouse_to_value(&self, mouse: Point<Pixels>, bounds: Bounds<Pixels>) -> f64 {
         let mouse_x = mouse.x - bounds.origin.x;
         let track_width = bounds.size.width;
 
-        let normalized = (mouse_x / track_width).clamp(0.0, 1.0);
+        let normalized = (mouse_x / track_width).clamp(0.0, 1.0) as f64;
         self.snap_to_step(self.min + normalized * (self.max - self.min))
     }
 }
 
+type ChangeCallback = dyn Fn(f64, &mut App);
+
+#[derive(Clone, IntoElement)]
+pub struct Slider {
+    id: ElementId,
+    focus_handle: FocusHandle,
+    state: SliderState,
+    style: StyleRefinement,
+
+    on_commit: Option<Rc<ChangeCallback>>,
+    on_input: Option<Rc<ChangeCallback>>,
+}
+
 impl Slider {
-    pub fn new(
-        id: impl Into<ElementId> + Clone,
-        focus_handle: FocusHandle,
-        default_value: f32,
-    ) -> Self {
+    pub fn new(id: impl Into<ElementId> + Clone, focus_handle: FocusHandle) -> Self {
         Self {
             id: id.clone().into(),
             focus_handle,
-            on_commit: None,
             state: SliderState {
-                default_value,
                 ..SliderState::default()
             },
             style: StyleRefinement::default(),
+            on_commit: None,
+            on_input: None,
         }
     }
 
-    pub fn on_commit(mut self, callback: impl Fn(f32, &mut App) + 'static) -> Self {
+    pub fn on_commit(mut self, callback: impl Fn(f64, &mut App) + 'static) -> Self {
         self.on_commit = Some(Rc::new(callback));
         self
     }
 
-    pub fn min(mut self, min: f32) -> Self {
+    pub fn on_input(mut self, callback: impl Fn(f64, &mut App) + 'static) -> Self {
+        self.on_input = Some(Rc::new(callback));
+        self
+    }
+
+    pub fn min(mut self, min: f64) -> Self {
         self.state.min = min;
         self
     }
 
-    pub fn max(mut self, max: f32) -> Self {
+    pub fn max(mut self, max: f64) -> Self {
         self.state.max = max;
         self
     }
 
-    pub fn step(mut self, step: f32) -> Self {
+    pub fn step(mut self, step: f64) -> Self {
         self.state.step = step;
+        self
+    }
+
+    pub fn value(mut self, value: f64) -> Self {
+        self.state.value = value;
         self
     }
 
     fn action<T>(
         &self,
-        internal: &Entity<f32>,
-        f: impl Fn(f32, SliderState) -> f32 + 'static,
+        f: impl Fn(f64, SliderState) -> f64 + 'static,
     ) -> impl Fn(&T, &mut Window, &mut App) + 'static {
-        let internal = internal.clone();
         let on_commit = self.on_commit.clone();
         let state = self.state;
 
         move |_, _window, cx| {
-            let current = internal.read(cx);
-            let new_value = f(*current, state);
-            internal.write(cx, new_value);
+            let new_value = f(state.value, state);
 
             if let Some(ref callback) = on_commit {
                 callback(new_value, cx);
@@ -126,16 +130,15 @@ impl Slider {
 
     fn stop_drag_handler<T>(
         &self,
-        internal: &Entity<f32>,
         is_dragging: &Entity<bool>,
         check_drag: bool,
     ) -> impl Fn(&T, &mut Window, &mut App) + 'static
     where
         T: MouseEvent,
     {
-        let internal = internal.clone();
         let is_dragging = is_dragging.clone();
         let on_commit = self.on_commit.clone();
+        let state = self.state;
 
         move |_event, _window, cx| {
             let should_stop = !check_drag || *is_dragging.read(cx);
@@ -143,8 +146,7 @@ impl Slider {
             if should_stop {
                 is_dragging.write(cx, false);
                 if let Some(ref cb) = on_commit {
-                    let final_value = *internal.read(cx);
-                    cb(final_value, cx);
+                    cb(state.value, cx);
                 }
             }
         }
@@ -159,19 +161,16 @@ impl Styled for Slider {
 
 impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        // TODO: rework this so the parent passes in the value instead of using a keyed state.
-
-        let internal = window.use_keyed_state(self.id.clone(), cx, |_, _| self.state.default_value);
         let is_dragging = window.use_keyed_state(format!("{}-dragging", self.id), cx, |_, _| false);
 
-        let theme = cx.global::<Theme>();
-        let group_name = format!("{}:group", &self.id);
+        let theme = cx.app_theme();
 
         let track_bounds = Rc::new(Cell::new(Bounds::default()));
 
         let normalized_value =
-            (internal.read(cx) - self.state.min) / (self.state.max - self.state.min);
+            (self.state.value - self.state.min) / (self.state.max - self.state.min);
 
+        let group_name = format!("{}:group", &self.id);
         let mut root = div()
             .id(self.id.clone())
             .track_focus(&self.focus_handle)
@@ -184,43 +183,47 @@ impl RenderOnce for Slider {
                 },
                 |_bounds, _state, _window, _cx| {},
             ))
-            .on_action::<Decrease>(self.action(&internal, |v, s| s.snap_to_step(v - s.step)))
-            .on_action::<Increase>(self.action(&internal, |v, s| s.snap_to_step(v + s.step)))
-            .on_action::<JumpStart>(self.action(&internal, |_, s| s.min))
-            .on_action::<JumpEnd>(self.action(&internal, |_, s| s.max))
+            .on_action::<Decrease>(self.action(|v, s| s.snap_to_step(v - s.step)))
+            .on_action::<Increase>(self.action(|v, s| s.snap_to_step(v + s.step)))
+            .on_action::<JumpStart>(self.action(|_, s| s.min))
+            .on_action::<JumpEnd>(self.action(|_, s| s.max))
             .on_mouse_down(MouseButton::Left, {
-                let internal = internal.clone();
                 let track_bounds = track_bounds.clone();
                 let is_dragging = is_dragging.clone();
+                let on_input = self.on_input.clone();
 
                 move |event, _window, cx| {
                     is_dragging.write(cx, true);
                     let new_value = self
                         .state
                         .mouse_to_value(event.position, track_bounds.get());
-                    internal.write(cx, new_value);
-                }
-            })
-            .on_mouse_move({
-                let internal = internal.clone();
 
-                move |event, _window, cx| {
-                    if event.dragging() {
-                        let new_value = self
-                            .state
-                            .mouse_to_value(event.position, track_bounds.get());
-                        internal.write(cx, new_value);
+                    if let Some(ref cb) = on_input {
+                        cb(new_value, cx);
                     }
                 }
             })
             .on_mouse_up(
                 MouseButton::Left,
-                self.stop_drag_handler(&internal, &is_dragging, false),
+                self.stop_drag_handler(&is_dragging, false),
             )
             .on_mouse_up_out(
                 MouseButton::Left,
-                self.stop_drag_handler(&internal, &is_dragging, true),
+                self.stop_drag_handler(&is_dragging, true),
             )
+            .on_mouse_move({
+                move |event, _window, cx| {
+                    if event.dragging() {
+                        let new_value = self
+                            .state
+                            .mouse_to_value(event.position, track_bounds.get());
+
+                        if let Some(ref cb) = self.on_input {
+                            cb(new_value, cx);
+                        }
+                    }
+                }
+            })
             .group(&group_name)
             .min_w(rems(9.0))
             .h_2()
@@ -234,7 +237,7 @@ impl RenderOnce for Slider {
             )
             .child(
                 div()
-                    .w(relative(normalized_value))
+                    .w(relative(normalized_value as f32))
                     .h_full()
                     .bg(theme.text.secondary.default)
                     .rounded_full()

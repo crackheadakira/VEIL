@@ -3,7 +3,7 @@ use gpui::{
     Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Window, div,
 };
 
-use crate::ui::{StyleFromColorSet, Theme, p};
+use crate::ui::{AppStateContext, StyleFromColorSet, p};
 
 #[derive(IntoElement)]
 pub struct Button {
@@ -36,7 +36,8 @@ impl Styled for Button {
 
 impl RenderOnce for Button {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.app_theme();
+
         self.div
             .flex()
             .items_center()

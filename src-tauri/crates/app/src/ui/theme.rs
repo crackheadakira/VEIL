@@ -169,8 +169,8 @@ where
     fn text_from(self, colors: &ColorSet) -> Self {
         self.text_color(colors.default)
             .hover(|s| s.text_color(colors.hovered))
-            .active(|s| s.text_color(colors.active))
             .focus_visible(|s| s.text_color(colors.hovered))
+            .active(|s| s.text_color(colors.active))
     }
 }
 

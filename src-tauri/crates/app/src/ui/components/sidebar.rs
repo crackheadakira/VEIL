@@ -5,10 +5,7 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div,
 };
 
-use crate::{
-    ui::app::Route,
-    ui::{StyleFromColorSet, Theme, small},
-};
+use crate::ui::{AppStateContext, StyleFromColorSet, Theme, app::Route, small};
 
 type NavigateHandler = Rc<dyn Fn(&Route, &mut Window, &mut App)>;
 
@@ -54,7 +51,7 @@ impl Sidebar {
 
 impl RenderOnce for Sidebar {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.app_theme();
         let navigate = self.on_navigate.clone();
 
         div()

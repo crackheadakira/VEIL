@@ -8,24 +8,28 @@ use media_controls::PlayerState;
 use crate::{
     AppState,
     events::{PlayerEvent, UIUpdateEvent},
-    ui::{Slider, StyleFromColorSet, Theme, p, small},
+    ui::{AlbumCoverCacheProvider, AppStateContext, Slider, StyleFromColorSet, p, small},
 };
 
 pub struct PlayerView {
     focus_handle: FocusHandle,
-    cached_progress: Option<f64>,
-}
-
-struct PlayerInfo {
-    progress: f64,
-    track: Tracks,
+    slider_value: f64,
+    is_seeking: bool,
 }
 
 impl PlayerView {
     pub fn new(cx: &mut Context<Self>) -> Self {
+        let progress = {
+            let state = cx.app_state();
+            let config = state.config.try_read().expect("error reading config lock");
+
+            config.playback.progress
+        };
+
         let view = Self {
             focus_handle: cx.focus_handle(),
-            cached_progress: None,
+            slider_value: progress,
+            is_seeking: false,
         };
 
         Self::subscribe_to_events(cx);
@@ -45,10 +49,11 @@ impl PlayerView {
                         resume: _,
                     } = event
                     {
-                        view.cached_progress = Some(position);
-                    }
+                        view.slider_value = position;
+                        view.is_seeking = false;
 
-                    cx.notify();
+                        cx.notify();
+                    }
                 });
             }
         })
@@ -60,54 +65,46 @@ impl PlayerView {
 
             while let Ok(event) = receiver.recv().await {
                 let _ = view.update(cx, |view, cx| {
-                    if let UIUpdateEvent::ProgressUpdate { progress } = event {
-                        view.cached_progress = Some(progress);
-                    }
+                    if let UIUpdateEvent::ProgressUpdate { progress } = event
+                        && !view.is_seeking
+                    {
+                        view.slider_value = progress;
 
-                    cx.notify();
+                        cx.notify();
+                    }
                 });
             }
         })
         .detach();
     }
 
-    fn get_player_info(&self, cx: &Context<Self>) -> Option<PlayerInfo> {
-        let state = cx.global::<AppState>();
+    fn get_player_info(cx: &Context<Self>) -> Option<Tracks> {
+        let state = cx.app_state();
 
         let track_id = {
-            let queue = state.0.queue.try_lock().ok()?;
+            let queue = state.queue.try_lock().ok()?;
             queue.current()?
         };
 
         // TODO: this whole thing should be improved somehow, code feels messy
         // especially regarding sliders.
-        let progress = self.cached_progress.unwrap_or_else(|| {
-            let config = state
-                .0
-                .config
-                .try_read()
-                .expect("error reading config lock");
 
-            config.playback.progress
-        });
+        let track = state.db.by_id::<Tracks>(&track_id).ok()?;
 
-        let track = state.0.db.by_id::<Tracks>(&track_id).ok()?;
-
-        let info = PlayerInfo { progress, track };
-
-        Some(info)
+        Some(track)
     }
 }
 
 impl Render for PlayerView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.global::<Theme>();
+        let theme = cx.app_theme();
 
-        let Some(info) = self.get_player_info(cx) else {
+        let Some(track) = Self::get_player_info(cx) else {
             return div();
         };
 
         div()
+            .image_cache(AlbumCoverCacheProvider::new("cache:player", 3))
             .track_focus(&self.focus_handle)
             .h(rems(7.0))
             .w_full()
@@ -124,7 +121,7 @@ impl Render for PlayerView {
                     .col_span(1)
                     .flex()
                     .gap_5()
-                    .child(img(info.track.cover_path).size_20().rounded_md())
+                    .child(img(track.cover_path).size_20().rounded_md())
                     .child(
                         div()
                             .flex()
@@ -132,14 +129,14 @@ impl Render for PlayerView {
                             .justify_center()
                             .gap_1()
                             .child(
-                                p(info.track.name)
+                                p(track.name)
                                     .id("player:track_name")
                                     .text_from(&theme.text.primary)
                                     .cursor_pointer()
                                     .truncate(),
                             )
                             .child(
-                                small(info.track.artist_name)
+                                small(track.artist_name)
                                     .id("player:artist_name")
                                     .text_from(&theme.text.secondary)
                                     .cursor_pointer()
@@ -163,37 +160,51 @@ impl Render for PlayerView {
                             .gap_4()
                             .px_6()
                             .child(
-                                small(format_time(info.progress))
+                                small(format_time(self.slider_value))
                                     .text_color(theme.text.tertiary.default),
                             )
                             .child(
-                                Slider::new(
-                                    "player:progress_slider",
-                                    self.focus_handle.clone(),
-                                    info.progress as f32,
-                                )
-                                .max(info.track.duration as f32)
-                                .w_full()
-                                .on_commit(move |progress, cx| {
-                                    let state = cx.global::<AppState>();
-                                    let player_state = state
-                                        .0
-                                        .player
-                                        .read()
-                                        .expect("error setting RwLock for player")
-                                        .state;
-                                    let player_bus = &state.0.player_bus;
+                                Slider::new("player:progress_slider", self.focus_handle.clone())
+                                    .value(self.slider_value)
+                                    .max(track.duration as f64)
+                                    .w_full()
+                                    .on_commit({
+                                        let entity = cx.entity();
+                                        move |progress, cx| {
+                                            entity.update(cx, |this, cx| {
+                                                this.is_seeking = false;
 
-                                    let resume = player_state == PlayerState::Playing;
+                                                let state = cx.app_state();
+                                                let player_bus = &state.player_bus;
 
-                                    player_bus.emit(PlayerEvent::Seek {
-                                        position: progress as f64,
-                                        resume,
-                                    });
-                                }),
+                                                let resume = state
+                                                    .player
+                                                    .read()
+                                                    .expect("error reading player lock")
+                                                    .state
+                                                    == PlayerState::Playing;
+
+                                                player_bus.emit(PlayerEvent::Seek {
+                                                    position: progress,
+                                                    resume,
+                                                });
+                                            });
+                                        }
+                                    })
+                                    .on_input({
+                                        let entity = cx.entity();
+
+                                        move |slider_value, cx| {
+                                            entity.update(cx, |this, cx| {
+                                                this.slider_value = slider_value;
+                                                this.is_seeking = true;
+                                                cx.notify();
+                                            });
+                                        }
+                                    }),
                             )
                             .child(
-                                small(format_time(info.track.duration as f64))
+                                small(format_time(track.duration as f64))
                                     .text_color(theme.text.tertiary.default),
                             ),
                     ),
