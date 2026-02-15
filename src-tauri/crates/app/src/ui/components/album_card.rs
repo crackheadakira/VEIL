@@ -4,10 +4,7 @@ use gpui::{
     div, img, rems,
 };
 
-use crate::ui::theme::{
-    Theme,
-    text_elements::{p, small},
-};
+use crate::ui::{Theme, p, small};
 
 #[derive(Clone, IntoElement)]
 pub struct AlbumCard {

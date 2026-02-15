@@ -1,4 +1,4 @@
-use crate::{VeilState, error::FrontendError};
+use crate::{VeilState, error::VeilError};
 use std::{future::Future, sync::Arc};
 use tokio::sync::broadcast;
 
@@ -10,7 +10,7 @@ pub trait EventSystemHandler: Sized + Send + Sync + 'static {
     fn handle(
         event: Self,
         state: &VeilState,
-    ) -> impl Future<Output = Result<(), FrontendError>> + Send;
+    ) -> impl Future<Output = Result<(), VeilError>> + Send;
 
     /// Attaches a listener to the given event on it's own async task.
     fn attach_listener(event_bus: EventBus<Self>, state: Arc<VeilState>)

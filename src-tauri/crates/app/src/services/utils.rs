@@ -3,13 +3,11 @@ use std::sync::Arc;
 use anyhow::Context;
 use rfd::{AsyncFileDialog, FileHandle};
 
-use crate::{VeilState, error::FrontendError};
+use crate::{VeilState, error::VeilError};
 
-pub fn open_url(url: &str) -> Result<(), FrontendError> {
+pub fn open_url(url: &str) -> Result<(), VeilError> {
     if !url.contains("http") {
-        return Err(FrontendError::Standard(
-            "URL does not contain HTTP".to_owned(),
-        ));
+        return Err(VeilError::Standard("URL does not contain HTTP".to_owned()));
     }
 
     webbrowser::open(url).context("Failed to open URL in browser")?;
@@ -38,7 +36,7 @@ pub fn sanitize_string(string: &str) -> String {
 
 pub async fn get_handle_to_music_folder(
     state: Arc<VeilState>,
-) -> Result<Option<FileHandle>, FrontendError> {
+) -> Result<Option<FileHandle>, VeilError> {
     let music_dir = {
         let config_path = logging::lock_or_log(state.config.read(), "Config Read")?;
         config_path.library.music_dir.clone()

@@ -6,8 +6,8 @@ use gpui::{
 };
 
 use crate::{
-    app::Route,
-    ui::theme::{Theme, text_elements::small},
+    ui::app::Route,
+    ui::{StyleFromColorSet, Theme, small},
 };
 
 type NavigateHandler = Rc<dyn Fn(&Route, &mut Window, &mut App)>;
@@ -38,10 +38,7 @@ impl Sidebar {
     ) -> impl IntoElement + InteractiveElement {
         div()
             .id(format!("sidebar:{}", label.clone().into()))
-            .text_color(theme.text.tertiary.default)
-            .hover(|this| this.text_color(theme.text.tertiary.hovered))
-            .focus_visible(|this| this.text_color(theme.text.tertiary.hovered))
-            .active(|this| this.text_color(theme.text.tertiary.active))
+            .text_from(&theme.text.tertiary)
             .on_click({
                 let navigate = navigate.clone();
                 move |_, window, app| {

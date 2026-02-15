@@ -3,10 +3,7 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div,
 };
 
-use crate::ui::{
-    components::{button::Button, modal::Modal, slider::Slider, switch::Switch},
-    theme::Theme,
-};
+use crate::ui::{Button, Modal, Slider, Switch, Theme};
 
 #[derive(Clone)]
 pub struct Home {

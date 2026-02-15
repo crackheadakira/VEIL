@@ -274,7 +274,7 @@ impl Element for UniformGrid {
             handle.deferred_scroll_to_item.take()
         };
 
-        let mut updated_scroll_offset = self.scroll_handle.base_handle.offset();
+        let mut updated_scroll_offset = self.scroll_handle.offset();
 
         self.base.interactivity().prepaint(
             global_id,

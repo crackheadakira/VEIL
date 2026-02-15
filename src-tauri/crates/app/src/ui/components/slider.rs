@@ -6,7 +6,7 @@ use gpui::{
     actions, canvas, div, relative, rems,
 };
 
-use crate::ui::theme::Theme;
+use crate::ui::Theme;
 
 actions!(slider, [Decrease, Increase, JumpStart, JumpEnd]);
 

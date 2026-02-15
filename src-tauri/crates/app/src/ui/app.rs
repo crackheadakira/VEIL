@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use crate::{
-    app::{builder::handle_state_setup, state::AppState},
-    config::VeilConfigEvent,
+    events::VeilConfigEvent,
+    state::{AppState, handle_state_setup},
     ui::{
         components::{modal, sidebar::Sidebar, slider},
         theme::Theme,
@@ -16,10 +16,6 @@ use gpui::{
 };
 use logging::lock_or_log;
 
-pub use state::VeilState;
-
-mod builder;
-pub mod state;
 actions!(app, [Quit]);
 
 struct DiskAssets;

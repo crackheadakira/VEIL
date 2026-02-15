@@ -1,5 +1,3 @@
-
-
 use gpui::{Global, InteractiveElement, Rgba, StatefulInteractiveElement, Styled};
 use serde::Deserialize;
 
@@ -156,7 +154,6 @@ const fn rgb(r: u8, g: u8, b: u8) -> Rgba {
 pub trait StyleFromColorSet {
     fn border_from(self, colors: &ColorSet) -> Self;
     fn text_from(self, colors: &ColorSet) -> Self;
-    fn bg_from(self, colors: &ColorSet) -> Self;
 }
 
 impl<T> StyleFromColorSet for T
@@ -172,13 +169,8 @@ where
     fn text_from(self, colors: &ColorSet) -> Self {
         self.text_color(colors.default)
             .hover(|s| s.text_color(colors.hovered))
+            .focus_visible(|s| s.text_color(colors.hovered))
             .active(|s| s.text_color(colors.active))
-    }
-
-    fn bg_from(self, colors: &ColorSet) -> Self {
-        self.bg(colors.default)
-            .hover(|s| s.bg(colors.hovered))
-            .active(|s| s.bg(colors.active))
     }
 }
 

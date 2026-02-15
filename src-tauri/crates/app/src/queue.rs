@@ -5,8 +5,9 @@ use rand::{Rng, SeedableRng, rngs::SmallRng};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    VeilState, config::VeilConfigEvent, error::FrontendError, events::EventSystemHandler,
-    systems::ui::UIUpdateEvent,
+    VeilState,
+    error::VeilError,
+    events::{EventSystemHandler, UIUpdateEvent, VeilConfigEvent},
 };
 
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq)]
@@ -377,7 +378,7 @@ pub enum QueueEvent {
 }
 
 impl EventSystemHandler for QueueEvent {
-    async fn handle(event: Self, state: &VeilState) -> Result<(), FrontendError> {
+    async fn handle(event: Self, state: &VeilState) -> Result<(), VeilError> {
         match event {
             QueueEvent::EnqueuePersonal { track_id } => {
                 Self::enqueue_personal_track(state, track_id)?;
@@ -399,7 +400,7 @@ impl EventSystemHandler for QueueEvent {
 }
 
 impl QueueEvent {
-    fn enqueue_personal_track(state: &VeilState, track_id: u32) -> Result<(), FrontendError> {
+    fn enqueue_personal_track(state: &VeilState, track_id: u32) -> Result<(), VeilError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         queue.enqueue_personal(track_id);
@@ -411,7 +412,7 @@ impl QueueEvent {
         tracks: Vec<u32>,
         queue_idx: usize,
         origin: QueueOrigin,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
         let mut config = lock_or_log(state.config.write(), "Config Write Lock")?;
 
@@ -436,7 +437,7 @@ impl QueueEvent {
         Ok(())
     }
 
-    fn shuffle_global_queue(state: &VeilState, shuffle: Option<bool>) -> Result<(), FrontendError> {
+    fn shuffle_global_queue(state: &VeilState, shuffle: Option<bool>) -> Result<(), VeilError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         if let Some(shuffle) = shuffle {
@@ -459,7 +460,7 @@ impl QueueEvent {
         Ok(())
     }
 
-    fn update_repeat_mode(state: &VeilState) -> Result<(), FrontendError> {
+    fn update_repeat_mode(state: &VeilState) -> Result<(), VeilError> {
         let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex")?;
 
         match queue.repeat_mode {

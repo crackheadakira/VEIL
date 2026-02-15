@@ -6,12 +6,9 @@ use gpui::{
 use media_controls::PlayerState;
 
 use crate::{
-    app::state::AppState,
-    systems::{player::PlayerEvent, ui::UIUpdateEvent},
-    ui::{
-        components::slider::Slider,
-        theme::{Theme, text_elements::small},
-    },
+    AppState,
+    events::{PlayerEvent, UIUpdateEvent},
+    ui::{Slider, Theme, small},
 };
 
 pub struct PlayerView {

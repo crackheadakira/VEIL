@@ -4,9 +4,9 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    error::FrontendError,
+    error::VeilError,
     queue::{QueueOrigin, RepeatMode},
-    systems::utils::data_path,
+    services::utils::data_path,
 };
 
 #[derive(Serialize, Deserialize, Clone, Default)]
@@ -104,7 +104,7 @@ pub struct VeilConfigEvent {
 }
 
 impl VeilConfig {
-    pub fn new() -> Result<Self, FrontendError> {
+    pub fn new() -> Result<Self, VeilError> {
         let path = Self::config_file_path();
         if path.exists() {
             let json_reader = fs::File::open(path).expect("error opening config.json reader");
@@ -163,17 +163,14 @@ impl VeilConfig {
     }
 
     /// Update config field values and writes it to disk
-    pub fn update_config_and_write(
-        &mut self,
-        config: VeilConfigEvent,
-    ) -> Result<(), FrontendError> {
+    pub fn update_config_and_write(&mut self, config: VeilConfigEvent) -> Result<(), VeilError> {
         self.update_config(config);
         self.write_config()?;
 
         Ok(())
     }
 
-    pub fn write_config(&self) -> Result<(), FrontendError> {
+    pub fn write_config(&self) -> Result<(), VeilError> {
         fs::write(
             Self::config_file_path(),
             serde_json::to_string_pretty(&self)?,

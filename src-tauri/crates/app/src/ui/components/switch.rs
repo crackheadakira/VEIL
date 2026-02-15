@@ -5,7 +5,7 @@ use gpui::{
     StatefulInteractiveElement, Styled, Window, div, ease_out_quint, prelude::FluentBuilder, rems,
 };
 
-use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::small};
+use crate::ui::{StyleFromColorSet, Theme, small};
 
 use gpui_transitions::WindowUseTransition;
 

@@ -1,12 +1,10 @@
 use common::Albums;
 use gpui::{App, Context, IntoElement, ParentElement, Render, Styled, Window, div, rems};
 
-use crate::app::state::AppState;
-use crate::ui::components::album_card::AlbumCard;
-use crate::ui::components::uniform_grid::{UniformGridScrollHandle, uniform_grid};
-use crate::ui::image_cache::AlbumCoverCacheProvider;
-use crate::ui::theme::Theme;
-use crate::ui::theme::text_elements::h6;
+use crate::AppState;
+use crate::ui::{
+    AlbumCard, AlbumCoverCacheProvider, Theme, UniformGridScrollHandle, h6, uniform_grid,
+};
 
 #[derive(Clone)]
 pub struct AllAlbumsView {

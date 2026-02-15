@@ -10,9 +10,9 @@ use tokio::sync::MutexGuard;
 use crate::{
     VeilState,
     discord::PayloadData,
-    error::FrontendError,
+    error::VeilError,
     events::EventSystemHandler,
-    systems::ui::{PlayButtonState, UIUpdateEvent},
+    services::ui::{PlayButtonState, UIUpdateEvent},
 };
 
 /// Try to scrobble the track to `LastFM`.
@@ -22,7 +22,7 @@ pub async fn try_scrobble_track_to_lastfm(
     lastfm: MutexGuard<'_, lastfm::LastFM>,
     track: Tracks,
     track_timestamp: i64,
-) -> Result<(), FrontendError> {
+) -> Result<(), VeilError> {
     let res = lastfm
         .track()
         .scrobble_one(&TrackData {
@@ -48,7 +48,7 @@ pub async fn try_scrobble_track_to_lastfm(
 pub async fn try_update_now_playing_to_lastfm(
     lastfm: MutexGuard<'_, lastfm::LastFM>,
     track: Tracks,
-) -> Result<(), FrontendError> {
+) -> Result<(), VeilError> {
     let res = lastfm
         .track()
         .update_now_playing(&TrackData {
@@ -186,7 +186,7 @@ struct OnlineFeatures {
 }
 
 impl EventSystemHandler for PlayerEvent {
-    async fn handle(event: Self, state: &VeilState) -> Result<(), FrontendError> {
+    async fn handle(event: Self, state: &VeilState) -> Result<(), VeilError> {
         let online = {
             let config: std::sync::RwLockReadGuard<'_, crate::config::VeilConfig> =
                 lock_or_log(state.config.read(), "Config Read")?;
@@ -250,7 +250,7 @@ impl PlayerEvent {
         state: &VeilState,
         track: Tracks,
         progress: f64,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.initialize_player(track, progress)?;
 
@@ -264,7 +264,7 @@ impl PlayerEvent {
         state: &VeilState,
         track: Tracks,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let should_scrobble = {
             let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
             player.should_scrobble()
@@ -362,7 +362,7 @@ impl PlayerEvent {
     async fn play_current_track_from_queue(
         state: &VeilState,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let track_id = {
             let queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.current()
@@ -382,7 +382,7 @@ impl PlayerEvent {
     async fn play_next_track_from_queue(
         state: &VeilState,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.next()
@@ -402,7 +402,7 @@ impl PlayerEvent {
     async fn play_previous_track_from_queue(
         state: &VeilState,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let track_id = {
             let mut queue = lock_or_log(state.queue.lock(), "Queue Mutex").unwrap();
             queue.previous()
@@ -424,7 +424,7 @@ impl PlayerEvent {
     async fn pause_current_track(
         state: &VeilState,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         if online.discord_enabled {
             let mut discord = lock_or_log(state.discord.lock(), "Discord Mutex")?;
             discord.update_activity("paused", "Paused", false, None);
@@ -455,10 +455,7 @@ impl PlayerEvent {
     /// Resumes the current track.
     ///
     /// Updates Discord activity.
-    fn resume_current_track(
-        state: &VeilState,
-        online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    fn resume_current_track(state: &VeilState, online: OnlineFeatures) -> Result<(), VeilError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.resume()?;
 
@@ -475,7 +472,7 @@ impl PlayerEvent {
     }
 
     /// Stops the current track.
-    fn stop_current_track(state: &VeilState) -> Result<(), FrontendError> {
+    fn stop_current_track(state: &VeilState) -> Result<(), VeilError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.stop()?;
@@ -495,7 +492,7 @@ impl PlayerEvent {
         position: f64,
         resume: bool,
         online: OnlineFeatures,
-    ) -> Result<(), FrontendError> {
+    ) -> Result<(), VeilError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
         player.seek(position, resume)?;
 
@@ -513,7 +510,7 @@ impl PlayerEvent {
         Ok(())
     }
 
-    fn set_player_volume(state: &VeilState, volume: f32) -> Result<(), FrontendError> {
+    fn set_player_volume(state: &VeilState, volume: f32) -> Result<(), VeilError> {
         let mut player = lock_or_log(state.player.write(), "Player Write Lock")?;
 
         player.set_volume(volume)?;

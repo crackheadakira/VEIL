@@ -1,6 +1,6 @@
 #[derive(thiserror::Error, Debug, serde::Serialize, Clone)]
 #[serde(tag = "type", content = "data")]
-pub enum FrontendError {
+pub enum VeilError {
     #[error("[IO] {0}")]
     Io(String),
 
@@ -29,7 +29,7 @@ pub enum FrontendError {
     AnyhowError(String),
 }
 
-impl From<std::io::Error> for FrontendError {
+impl From<std::io::Error> for VeilError {
     fn from(error: std::io::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -38,7 +38,7 @@ impl From<std::io::Error> for FrontendError {
     }
 }
 
-impl From<metadata_audio::Error> for FrontendError {
+impl From<metadata_audio::Error> for VeilError {
     fn from(error: metadata_audio::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -47,7 +47,7 @@ impl From<metadata_audio::Error> for FrontendError {
     }
 }
 
-impl From<db::Error> for FrontendError {
+impl From<db::Error> for VeilError {
     fn from(error: db::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -56,7 +56,7 @@ impl From<db::Error> for FrontendError {
     }
 }
 
-impl From<media_controls::Error> for FrontendError {
+impl From<media_controls::Error> for VeilError {
     fn from(error: media_controls::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -65,7 +65,7 @@ impl From<media_controls::Error> for FrontendError {
     }
 }
 
-impl From<lastfm::Error> for FrontendError {
+impl From<lastfm::Error> for VeilError {
     fn from(error: lastfm::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -74,7 +74,7 @@ impl From<lastfm::Error> for FrontendError {
     }
 }
 
-impl From<Box<dyn std::error::Error>> for FrontendError {
+impl From<Box<dyn std::error::Error>> for VeilError {
     fn from(error: Box<dyn std::error::Error>) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -83,7 +83,7 @@ impl From<Box<dyn std::error::Error>> for FrontendError {
     }
 }
 
-impl From<serde_json::Error> for FrontendError {
+impl From<serde_json::Error> for VeilError {
     fn from(error: serde_json::Error) -> Self {
         let msg = error.to_string();
         logging::error!("{error:?}");
@@ -92,7 +92,7 @@ impl From<serde_json::Error> for FrontendError {
     }
 }
 
-impl From<anyhow::Error> for FrontendError {
+impl From<anyhow::Error> for VeilError {
     fn from(error: anyhow::Error) -> Self {
         let mut msg = error.to_string();
 
@@ -102,6 +102,6 @@ impl From<anyhow::Error> for FrontendError {
 
         logging::error!("{error:?}");
 
-        FrontendError::AnyhowError(msg)
+        VeilError::AnyhowError(msg)
     }
 }

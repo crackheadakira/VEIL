@@ -3,7 +3,7 @@ use gpui::{
     Stateful, StatefulInteractiveElement, StyleRefinement, Styled, Window, div,
 };
 
-use crate::ui::theme::{StyleFromColorSet, Theme, text_elements::p};
+use crate::ui::{StyleFromColorSet, Theme, p};
 
 #[derive(IntoElement)]
 pub struct Button {

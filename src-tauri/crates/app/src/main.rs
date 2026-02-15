@@ -1,19 +1,27 @@
-mod app;
 // mod commands;
 mod config;
 mod discord;
 mod error;
-mod events;
+mod event_bus;
 mod queue;
-mod systems;
+mod services;
+mod state;
 mod ui;
 
-pub use app::VeilState;
+pub(crate) use state::{AppState, VeilState};
+
+pub mod events {
+    pub use super::config::VeilConfigEvent;
+    pub use super::event_bus::{EventBus, EventSystemHandler};
+    pub use super::queue::QueueEvent;
+    pub use super::services::player::PlayerEvent;
+    pub use super::services::ui::UIUpdateEvent;
+}
 
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
     logging::init();
 
-    app::run();
+    ui::app::run();
 }
